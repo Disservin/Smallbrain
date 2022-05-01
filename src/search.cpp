@@ -219,6 +219,7 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
             << ms
             << " pv " << get_pv() << std::endl;
     }
+    std::cout << "bestmove " << board.printMove(prev_bestmove) << std::endl;
     stopped = true;
     return 0;
 }
