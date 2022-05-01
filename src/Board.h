@@ -6,17 +6,19 @@
 
 #include "types.h"
 #include "helper.h"
+#include "psqt.h"
+#include "zobrist.h"
 
 struct State {
 	Square enPassant{};
 	uint8_t castling{};
 	uint8_t halfMove{};
 	Piece capturedPiece = None;
-	U64 hash{};
+	U64 h{};
 	State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, 
 		  uint8_t halfMoveCopy = {}, Piece capturedPieceCopy = None, U64 hashCopy = {}) :
 			enPassant(enpassantCopy), castling(castlingRightsCopy), 
-			halfMove(halfMoveCopy), capturedPiece(capturedPieceCopy), hash(hashCopy) {}
+			halfMove(halfMoveCopy), capturedPiece(capturedPieceCopy), h(hashCopy){}
 };
 
 struct States {
@@ -78,9 +80,13 @@ public:
 	U64 occBlack{};
 	U64 occAll{};
 	
+	int psqt_mg{};
+	int psqt_eg{};
+
 	U64 hashHistory[1024]{};
 	States prevStates{};
 	Board();
+	U64 zobristHash();
 	
 	void initializeLookupTables();
 	Piece pieceAtBB(Square sq);
@@ -91,8 +97,8 @@ public:
 	Piece makePiece(PieceType type, Color c);
 	PieceType piece_type(Piece piece);
 	std::string printMove(Move& move);
-	
-	U64 hyp_quint(Square sq, U64 Occ, U64 mask);
+	bool isRepetition(int draw = 2);
+	bool nonPawnMat(Color c);
 
 	U64 PawnAttacks(Square sq, Color c);
 	U64 KnightAttacks(Square sq);
@@ -146,5 +152,7 @@ public:
 
 	void makeMove(Move& move);
 	void unmakeMove(Move& move);
+	void makeNullMove();
+	void unmakeNullMove();	
 };
 

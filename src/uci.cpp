@@ -55,7 +55,7 @@ Move convert_uci_to_Move(std::string input, Board& board) {
         };
         char prom = input.at(4);
         PieceType piece = PieceType(piece_to_int[prom]);
-        return Move(piece,source, target, true);
+        return Move(piece, source, target, true);
     }
     else {
         std::cout << "FALSE INPUT" << std::endl;
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
             std::cout << "readyok\n" << std::endl;
         }
         if (input == "ucinewgame") {
-            board = Board();
+            board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         }
         if (input == "quit") {
             thread.stop();
@@ -100,20 +100,20 @@ int main(int argc, char** argv) {
         }
         if (input == "print") {
             board.print();
-            // search.startsearch(depth);
         }
         if (input == "moves") {
             Movelist ml = board.legalmoves();
             for (int i = 0; i < ml.size; i++) {
                 std::cout << board.printMove(ml.list[i]) << std::endl;
             }
-
+        }
+        if (input == "rep") {
+            std::cout << board.isRepetition(3) << std::endl;
         }
         if (input.find("position") != std::string::npos) {
             std::vector<std::string> tokens = split_input(input);
-            if (tokens[1] == "startpos") {
-                board = Board();
-            }
+            board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
             if (tokens[1] == "fen") {
                 std::size_t start_index = input.find("fen");
                 std::string fen = input.substr(start_index + 4);
@@ -126,24 +126,43 @@ int main(int argc, char** argv) {
                 for (; index < tokens.size(); index++) {
                     Move move = convert_uci_to_Move(tokens[index], board);
                     board.makeMove(move);
+                    
                 }
             }
         }
+        if (input.find("go perft") != std::string::npos) {
+            std::vector<std::string> tokens = split_input(input);
+            int depth = std::stoi(tokens[2]);
+            Search searcher_class = Search(board);
+            std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
+            threads.join();
+        }
         if (input.find("go depth") != std::string::npos) {
+            thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = std::stoi(tokens[2]);
             thread.begin(board, depth);
         }
         if (input.find("go infinite") != std::string::npos) {
+            thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = 120;
             thread.begin(board, depth);
         }
         if (input.find("go wtime") != std::string::npos) {
+            thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = 120;
             int64_t timegiven = board.sideToMove == White ? std::stoi(tokens[2]) : std::stoi(tokens[4]);
-            thread.begin(board, depth, false, timegiven / 20);
+            // int64_t inc = board.sideToMove == White ? std::stoi(tokens[3]) : std::stoi(tokens[5]);
+            int64_t searchTime = timegiven / 20;
+            if (searchTime == 0) {
+                searchTime = 10;
+                if (searchTime >= timegiven){
+                    searchTime = 5;
+                }
+            }
+            thread.begin(board, depth, false, searchTime);
         }
     }
 }

@@ -25,14 +25,17 @@ public:
         board = brd;
         t0 = std::chrono::high_resolution_clock::now();
     }
-    //int qsearch(int depth, int alpha, int beta, int player, int ply);
-    int absearch(int depth, int alpha, int beta, int player, int ply);
+    void perf_Test(int depth, int max);
+    U64 perft(int depth, int max);
+    int qsearch(int depth, int alpha, int beta, int player, int ply);
+    int absearch(int depth, int alpha, int beta, int player, int ply, bool null);
     int aspiration_search(int player, int depth, int prev_eval);
-    int iterative_deepening(int depth, bool bench, unsigned long long time);
+    int iterative_deepening(int depth, bool bench, long long time);
     int start_bench();
     bool exit_early();
-    int mmlva(Move move);
-    int score_move(Move move, int ply);
+    int mmlva(Move& move);
+    int score_move(Move& move, int ply);
+	std::string get_pv();
 };
 
 inline bool operator==(Move& m, Move& m2);

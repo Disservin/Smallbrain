@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "Board.h"
+#include "board.h"
 #include "helper.h"
 #include "sliders.hpp"
 
@@ -27,6 +27,50 @@ void Board::initializeLookupTables() {
 
 Board::Board() {
     initializeLookupTables();
+}
+
+U64 Board::zobristHash() {
+    U64 hash = 0ULL;
+    U64 wPieces = Us(White);
+    U64 bPieces = Us(Black);
+
+    while (wPieces) {
+        Square sq = bsf(wPieces);
+        PieceType piece = piece_type(pieceAtB(sq));
+        if (piece != NONETYPE) {
+            hash ^= RANDOM_ARRAY[64 * (piece * 2 + 1) + sq];
+        }
+        poplsb(wPieces);
+    }
+    while (bPieces) {
+        Square sq = bsf(bPieces);
+        PieceType piece = piece_type(pieceAtB(sq));
+        if (piece != NONETYPE) {
+            hash ^= RANDOM_ARRAY[64 * (piece * 2) + sq];
+        }
+        poplsb(bPieces);
+    }
+
+    U64 ep_hash = 0ULL;
+    if (enPassantSquare != NO_SQ) {
+        ep_hash = RANDOM_ARRAY[772 + square_file(enPassantSquare)];
+    }
+    U64 turn_hash = sideToMove == White ? RANDOM_ARRAY[780] : 0;
+    U64 cast_hash = 0ULL;
+    if (castlingRights & 1) {
+        cast_hash ^= RANDOM_ARRAY[768];
+    }
+    if (castlingRights & 2) {
+        cast_hash ^= RANDOM_ARRAY[768 + 1];
+    }
+    if (castlingRights & 4) {
+        cast_hash ^= RANDOM_ARRAY[768 + 2];
+    }
+    if (castlingRights & 8) {
+        cast_hash ^= RANDOM_ARRAY[768 + 3];
+    }
+
+    return hash ^ cast_hash ^ turn_hash ^ ep_hash;
 }
 
 Piece Board::pieceAtBB(Square sq) {
@@ -96,7 +140,7 @@ void Board::applyFen(std::string fen) {
                 Bitboards[piece] |= (1ULL << sq);
                 pos++;
             }
-            if (letter - '0' >= 2 and letter - '0' <= 7) {
+            if (letter - '0' >= 2 && letter - '0' <= 7) {
                 file += letter - '0' - 1;
                 pos++;
             }
@@ -157,6 +201,26 @@ void Board::applyFen(std::string fen) {
             board[sq] = None;
         }
     }
+
+    U64 pieces_white = Us(White);
+	U64 pieces_black = Us(Black);
+    psqt_mg = 0;
+    psqt_eg = 0;
+	while (pieces_white) {
+		Square square = poplsb(pieces_white);
+		Piece piece = pieceAtB(square);
+		psqt_mg += piece_to_mg[piece][square];
+		psqt_eg += piece_to_eg[piece][square];
+	}
+	while (pieces_black) {
+		Square square = poplsb(pieces_black);
+		Piece piece = pieceAtB(square);
+		psqt_mg -= piece_to_mg[piece][square];
+		psqt_eg -= piece_to_eg[piece][square];
+	}
+    
+    prevStates.size = 0;
+    hashKey = zobristHash();
 }
 
 void Board::printBitboard(U64 bb) {
@@ -206,8 +270,23 @@ std::string Board::printMove(Move& move) {
     std::string m = "";
     m += squareToString[move.from];
 	m += squareToString[move.to];
-	if (move.promoted) m += pieceToChar[Piece(move.piece)];
+	if (move.promoted) m += PieceToPromPiece[Piece(move.piece)];
     return m;
+}
+
+bool Board::isRepetition(int draw) {
+    int8_t count = 0;
+    for (int i = sideToMove; i < fullMoveNumber && i + 2 < 1024; i += 2) {
+        if (hashHistory[i] == hashKey) {
+            count++;
+        }
+        if (count + 1 >= draw) return true;
+    }
+    return false;
+}
+
+bool Board::nonPawnMat(Color c) {
+    return Knights(c) | Bishops(c) | Rooks(c) | Queens(c);
 }
 
 U64 Board::PawnAttacks(Square sq, Color c) {
@@ -256,10 +335,26 @@ U64 Board::Kings(Color c) {
 void Board::removePiece(Piece piece, Square sq) {
 	Bitboards[piece] &= ~(1ULL << sq);
 	board[sq] = None;
+    if (piece > WhiteKing) {
+        psqt_mg += piece_to_mg[piece][sq];
+        psqt_eg += piece_to_eg[piece][sq];
+
+    }else{
+        psqt_mg -= piece_to_mg[piece][sq];
+        psqt_eg -= piece_to_eg[piece][sq];
+    }
 }
 void Board::placePiece(Piece piece, Square sq) {
 	Bitboards[piece] |= (1ULL << sq);
 	board[sq] = piece;
+    if (piece > WhiteKing) {
+        psqt_mg -= piece_to_mg[piece][sq];
+        psqt_eg -= piece_to_eg[piece][sq];
+
+    }else{
+        psqt_mg += piece_to_mg[piece][sq];
+        psqt_eg += piece_to_eg[piece][sq];
+    }
 }
 
 Square Board::KingSQ(Color c) {
@@ -619,7 +714,7 @@ Movelist Board::capturemoves() {
 
     }
     Square from = KingSQ(sideToMove);
-    U64 moves = LegalKingMoves(sideToMove, from);
+    U64 moves = LegalKingMoves(sideToMove, from) & Enemy(sideToMove);
     while (moves) {
         Square to = poplsb(moves);
         movelist.Add(Move(KING, from, to, false));
@@ -634,9 +729,12 @@ void Board::makeMove(Move& move) {
 	Square to = move.to;
     bool promotion = move.promoted;
     Piece capture = board[to];
+    
+    hashHistory[fullMoveNumber] = hashKey;
     State store = State(enPassantSquare, castlingRights, halfMoveClock, capture, hashKey);
     prevStates.Add(store);
     halfMoveClock++;
+    
     fullMoveNumber++;
 	
     if (move.piece == KING) {
@@ -729,8 +827,8 @@ void Board::makeMove(Move& move) {
 		removePiece(piece, from);
 		placePiece(piece, to);
 	}
-	
     sideToMove = ~sideToMove;
+    hashKey = zobristHash();
 }
 
 void Board::unmakeMove(Move& move) {
@@ -739,9 +837,9 @@ void Board::unmakeMove(Move& move) {
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
     Piece capture = restore.capturedPiece;
-    hashKey = restore.hash;
-
-    
+    hashKey = restore.h;
+    fullMoveNumber--;
+	
     Square from = move.from;
     Square to = move.to;
     bool promotion = move.promoted;
@@ -789,4 +887,24 @@ void Board::unmakeMove(Move& move) {
 			placePiece(BlackRook, SQ_A8);
 		}
 	}
+}
+
+void Board::makeNullMove() {
+    State store = State(enPassantSquare, castlingRights, halfMoveClock, None, hashKey);
+    prevStates.Add(store);
+    sideToMove = ~sideToMove;
+	hashKey = zobristHash();
+    enPassantSquare = NO_SQ;
+    fullMoveNumber++;
+}
+
+void Board::unmakeNullMove() {
+    State restore = prevStates.Get();
+    enPassantSquare = restore.enPassant;
+    castlingRights = restore.castling;
+    halfMoveClock = restore.halfMove;
+    hashKey = restore.h;
+    fullMoveNumber--;
+    sideToMove = ~sideToMove;
+	
 }
