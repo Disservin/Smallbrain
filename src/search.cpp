@@ -106,37 +106,33 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
     uint16_t madeMoves = 0;
     int score = 0;
+    bool doFullSearch = false;
+
 	for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
         bool capture = board.pieceAtB(move.to) != None;
+        
         nodes++;
         madeMoves++;
 		board.makeMove(move);
-		
-        if (madeMoves == 1) {
-            score = -absearch(depth - 1, -beta, -alpha, -player, ply + 1, false);
-            if (score > alpha) {
-                if (score >= beta) {
-                    board.unmakeMove(move);
-                    return score;
-                }
-                alpha = score;
-            }
+        
+        if (depth >= 3 && !PvNode && !inCheck && madeMoves > 3 + 2 * RootNode) {
+            score = -absearch(depth - 2, -alpha - 1, -alpha, -player, ply + 1, false);
+            doFullSearch = score > alpha;
         }
-        else {
-            if (depth >= 3 && !PvNode && !inCheck && madeMoves > 3 + 2 * RootNode) {
-                score = -absearch(depth - 2, -beta, -alpha, -player, ply + 1, false);
-            }
-            else {
-				score = -absearch(depth - 1, -alpha - 1, -alpha, -player, ply + 1, false);
-                if (score > alpha && score < beta) {
-                    score = -absearch(depth - 1, -beta, -alpha, -player, ply + 1, false);
-                    if (score > alpha) alpha = score;
-                }
-            }
+        else
+            doFullSearch = !PvNode || madeMoves > 1;
 
+        if (doFullSearch) {
+            score = -absearch(depth - 1, -alpha - 1, -alpha, -player, ply + 1, false);
         }
-		board.unmakeMove(move);	
+
+        if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
+            score = -absearch(depth - 1, -beta, -alpha, -player, ply + 1, false);
+        }
+		
+        board.unmakeMove(move);	
+
 		if (score > best) {
             best = score;
 
