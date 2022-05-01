@@ -27,11 +27,11 @@ U64 Search::perft(int depth, int max){
 int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
     if (exit_early()) return 0;
     int stand_pat = evaluation(board) * player;
-    // Color color = player == 1 ? White : Black;
-    // bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
+
+    if (ply > MAX_PLY - 1) return stand_pat;
     
     if (stand_pat >= beta) return beta;
-    if (alpha < stand_pat) alpha = stand_pat;
+    if (stand_pat > alpha) alpha = stand_pat;
 
     if (depth == 0) return alpha;
 
@@ -42,7 +42,7 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
     }
 
 
-    std::sort(std::begin(ml.list), ml.list+ml.size, [&](const Move& m1, const Move& m2)
+    std::sort(std::begin(ml.list), ml.list + ml.size, [&](const Move& m1, const Move& m2)
         {return m1.value > m2.value; });
 
     for (int i = 0; i < (int)ml.size; i++) {
@@ -51,12 +51,9 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
         board.makeMove(move);
         int score = -qsearch(depth - 1, -beta, -alpha, -player, ply + 1);
         board.unmakeMove(move);
-        if (score > stand_pat) {
-            stand_pat = score;
-            if (score > alpha) {
-                alpha = score;
-                if (score >= beta) break;
-            }
+        if (score > alpha) {
+            alpha = score;
+            if (score >= beta) break;
         }
     }
     return stand_pat;

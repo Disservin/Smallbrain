@@ -5,6 +5,8 @@
 
 static constexpr int MAX_PLY = 120;
 
+static constexpr int lmpM[4] = {0, 8, 12, 24};
+
 enum Color : uint8_t{
     White, Black
 };
