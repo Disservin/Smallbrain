@@ -113,6 +113,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         Move move = ml.list[i];
         bool capture = board.pieceAtB(move.to) != None;
         nodes++;
+        madeMoves++;
 		board.makeMove(move);
 		
         if (madeMoves == 1) {
@@ -131,11 +132,12 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
             }
             else {
 				score = -absearch(depth - 1, -alpha - 1, -alpha, -player, ply + 1, false);
+                if (score > alpha && score < beta) {
+                    score = -absearch(depth - 1, -beta, -alpha, -player, ply + 1, false);
+                    if (score > alpha) alpha = score;
+                }
             }
-            if (score > alpha && score < beta) {
-                score = -absearch(depth - 1, -beta, -alpha, -player, ply + 1, false);
-                if (score > alpha) alpha = score;
-            }
+
         }
 		board.unmakeMove(move);	
 		if (score > best) {
