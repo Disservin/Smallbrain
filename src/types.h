@@ -6,6 +6,8 @@
 static constexpr int MAX_PLY = 120;
 
 static constexpr int lmpM[4] = {0, 8, 12, 24};
+static constexpr U64 RANK_8 = 18374686479671623680ULL;
+static constexpr U64 RANK_1 = 255ULL;
 
 enum Color : uint8_t{
     White, Black
@@ -37,17 +39,6 @@ enum Square : uint8_t {
     SQ_A8, SQ_B8, SQ_C8, SQ_D8, SQ_E8, SQ_F8, SQ_G8, SQ_H8,
     NO_SQ
 };
-
-inline Square& operator++(Square& s) { return s = Square(int(s) + 1); }
-constexpr Square operator+(Square s, int num) { return Square(int(s) + int(num)); }
-constexpr Square operator-(Square s, int num) { return Square(int(s) - int(num)); }
-inline Square& operator+=(Square& s, int num) { return s = s + num; }
-inline Square& operator-=(Square& s, int num) { return s = s - num; }
-
-constexpr Square operator+(Square s, Square num) { return Square(int(s) + int(num)); }
-constexpr Square operator-(Square s, Square num) { return Square(int(s) - int(num)); }
-inline Square& operator+=(Square& s, Square num) { return s = s + num; }
-inline Square& operator-=(Square& s, Square num) { return s = s - num; }
 
 enum Value : int {
     VALUE_MATE = 32000,

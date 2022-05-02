@@ -665,7 +665,7 @@ Movelist Board::capturemoves() {
         U64 enemy = Enemy(sideToMove);
         while (pawns_mask) {
             Square from = poplsb(pawns_mask);
-            U64 moves = LegalPawnMoves(sideToMove, from, enPassantSquare) & enemy;
+            U64 moves = LegalPawnMoves(sideToMove, from, enPassantSquare) & (enemy | RANK_1 | RANK_8);
             while (moves) {
                 Square to = poplsb(moves);
                 if (square_rank(to) == 7 || square_rank(to) == 0) {
