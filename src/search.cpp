@@ -121,6 +121,11 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         madeMoves++;
 		board.makeMove(move);
         
+        if (depth <= 3 && !PvNode && !inCheck && madeMoves > lmpM[depth] && !(board.isSquareAttacked(color, board.KingSQ(~color)) || move.promoted)){
+            board.unmakeMove(move);
+            continue;
+        }
+
         if (depth >= 3 && !PvNode && !inCheck && madeMoves > 3 + 2 * RootNode) {
             score = -absearch(depth - 2, -alpha - 1, -alpha, -player, ply + 1, false);
             doFullSearch = score > alpha;
