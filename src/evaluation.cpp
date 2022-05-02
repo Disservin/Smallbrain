@@ -52,6 +52,15 @@ int evaluation(Board& board) {
 	eval_mg += board.psqt_mg;
 	eval_eg += board.psqt_eg;
 
+	if (board.Pawns(White) & RANK_7) {
+		eval_mg += 20;
+		eval_eg += 30;
+	}
+	if (board.Pawns(Black) & RANK_2) {
+		eval_mg -= 20;
+		eval_eg -= 30;
+	}
+
 	phase = 24 - phase;
 	phase = (phase * 256 + (24 / 2)) / 24;
 	return ((eval_mg * (256 - phase)) + (eval_eg * phase)) / 256;

@@ -8,6 +8,8 @@ static constexpr int MAX_PLY = 120;
 static constexpr int lmpM[4] = {0, 8, 12, 24};
 static constexpr U64 RANK_8 = 18374686479671623680ULL;
 static constexpr U64 RANK_1 = 255ULL;
+static constexpr U64 RANK_2 = 65280ULL;
+static constexpr U64 RANK_7 = 71776119061217280ULL;
 
 enum Color : uint8_t{
     White, Black
