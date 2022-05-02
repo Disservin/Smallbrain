@@ -110,7 +110,8 @@ uint8_t popcount(U64 b) {
 
 Square poplsb(U64& mask) {
     int8_t s = bsf(mask);
-    mask = _blsr_u64(mask);
+    mask &= mask - 1;
+    // mask = _blsr_u64(mask);
     return Square(s);
 }
 

@@ -3,7 +3,6 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <intrin.h>
 
 #include "types.h"
 

@@ -38,6 +38,17 @@ enum Square : uint8_t {
     NO_SQ
 };
 
+inline Square& operator++(Square& s) { return s = Square(int(s) + 1); }
+constexpr Square operator+(Square s, int num) { return Square(int(s) + int(num)); }
+constexpr Square operator-(Square s, int num) { return Square(int(s) - int(num)); }
+inline Square& operator+=(Square& s, int num) { return s = s + num; }
+inline Square& operator-=(Square& s, int num) { return s = s - num; }
+
+constexpr Square operator+(Square s, Square num) { return Square(int(s) + int(num)); }
+constexpr Square operator-(Square s, Square num) { return Square(int(s) - int(num)); }
+inline Square& operator+=(Square& s, Square num) { return s = s + num; }
+inline Square& operator-=(Square& s, Square num) { return s = s - num; }
+
 enum Value : int {
     VALUE_MATE = 32000,
     VALUE_INFINITE = 32001,

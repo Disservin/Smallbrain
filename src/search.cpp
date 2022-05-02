@@ -13,11 +13,13 @@ U64 Search::perft(int depth, int max){
     }
     U64 nodesIt = 0;
     for(int i = 0; i < ml.size; i++){
-        board.makeMove(ml.list[i]);
+        Move move = ml.list[i];
+        board.makeMove(move);
         nodesIt += perft(depth - 1, depth);
-        board.unmakeMove(ml.list[i]);
+        board.unmakeMove(move);
         if (depth == max){
             nodes += nodesIt;
+            std::cout << board.printMove(move) << " " << nodesIt << std::endl;
             nodesIt = 0;
         }
     }
