@@ -49,6 +49,9 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
 
     for (int i = 0; i < (int)ml.size; i++) {
         Move move = ml.list[i];
+
+        if (stand_pat + 400 + (move.piece + 1) * 100 < alpha && !move.promoted && popcount(board.All()) - 1 > 13) continue;
+
         nodes++;
         board.makeMove(move);
         int score = -qsearch(depth - 1, -beta, -alpha, -player, ply + 1);
