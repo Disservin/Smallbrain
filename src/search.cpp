@@ -49,19 +49,18 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
 
     for (int i = 0; i < (int)ml.size; i++) {
         Move move = ml.list[i];
-
         if (stand_pat + 400 + (move.piece + 1) * 100 < alpha && !move.promoted && popcount(board.All()) - 1 > 13) continue;
 
         nodes++;
         board.makeMove(move);
         int score = -qsearch(depth - 1, -beta, -alpha, -player, ply + 1);
         board.unmakeMove(move);
+        if (score >= beta) return beta;
         if (score > alpha) {
             alpha = score;
-            if (score >= beta) break;
         }
     }
-    return stand_pat;
+    return alpha;
 }
 
 int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool null) {
@@ -79,9 +78,12 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     bool RootNode = ply == 0;
 	
 	if (inCheck && depth <= 0) depth++;
-    if (depth == 0 && !inCheck) return qsearch(10, alpha, beta, player, ply);
-	
-    int staticEval = evaluation(board) * player;
+    if (depth <= 0 && !inCheck) return qsearch(15, alpha, beta, player, ply);
+
+    if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
+        int staticEval = evaluation(board) * player;
+        if (staticEval - 120 * depth >= beta) return beta;
+    }
 
     if (board.nonPawnMat(color) && !null && depth >= 3 && !inCheck && !PvNode) {
         int r = depth > 6 ? 3 : 2;
@@ -89,10 +91,6 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         int score = -absearch(depth - 1 - r, -beta, -beta + 1, -player, ply + 1, true);
         board.unmakeNullMove();
         if (score >= beta) return beta;
-    }
-
-    if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
-        if (staticEval - 150 * depth >= beta) return beta;
     }
 
     Movelist ml = board.legalmoves();
@@ -206,7 +204,7 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
         searchDepth = depth;
         
         result = aspiration_search(player, depth, result);
-        
+
         if (exit_early()) {
             std::string move = board.printMove(prev_bestmove);
             if (depth == 1) std::cout << "bestmove " << board.printMove(pv_table[0][0]) << std::endl; 
