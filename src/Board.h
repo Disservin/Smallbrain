@@ -92,6 +92,7 @@ public:
 	Piece pieceAtBB(Square sq);
 	Piece pieceAtB(Square sq);
 	void applyFen(std::string fen);
+	std::string getFen();
 	void printBitboard(U64 bb);
 	void print();
 	Piece makePiece(PieceType type, Color c);

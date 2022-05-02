@@ -223,6 +223,53 @@ void Board::applyFen(std::string fen) {
     hashKey = zobristHash();
 }
 
+std::string Board::getFen(){
+int sq;
+    char letter;
+    std::string fen = "";
+    for (int rank = 7; rank >= 0; rank--) {
+        int free_space = 0;
+        for (int file = 0; file < 8; file++) {
+            sq = rank * 8 + file;
+            Piece piece = pieceAtB(Square(sq));
+            if (piece != None) {
+                if (free_space) {
+                    fen += std::to_string(free_space);
+                    free_space = 0;
+                }
+                letter = pieceToChar[piece];
+                fen += letter;
+            }
+            else {
+                free_space++;
+            }  
+        }
+        if (free_space != 0) {
+            fen += std::to_string(free_space);
+        }
+        fen += rank > 0 ? "/" : "";
+    }
+    fen += sideToMove == White ? " w " : " b ";
+    if (castlingRights & wk)
+        fen += "K";
+    if (castlingRights & wq)
+        fen += "Q";
+    if (castlingRights & bk)
+        fen += "k";
+    if (castlingRights & bq)
+        fen += "q";
+    if (castlingRights == 0)
+        fen += " - ";
+    if (enPassantSquare == NO_SQ)
+        fen += " - ";
+    else
+        fen += " "+ squareToString[enPassantSquare] + " ";
+	
+    fen += std::to_string(halfMoveClock);
+    fen += " " + std::to_string(fullMoveNumber/2);
+    return fen;
+}
+
 void Board::printBitboard(U64 bb) {
 	std::bitset<64> b(bb);
     std::string str_bitset = b.to_string();

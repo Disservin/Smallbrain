@@ -100,6 +100,7 @@ int main(int argc, char** argv) {
         }
         if (input == "print") {
             board.print();
+            std::cout << board.getFen() << std::endl;
         }
         if (input == "moves") {
             Movelist ml = board.legalmoves();
