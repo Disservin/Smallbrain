@@ -3,7 +3,7 @@
 #include <chrono>
 #include <algorithm>
 
-#include "Board.h"
+#include "board.h"
 
 extern std::atomic<bool> stopped;
 
