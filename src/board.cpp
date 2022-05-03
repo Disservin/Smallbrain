@@ -33,22 +33,13 @@ U64 Board::zobristHash() {
     U64 hash = 0ULL;
     U64 wPieces = Us(White);
     U64 bPieces = Us(Black);
-
     while (wPieces) {
-        Square sq = bsf(wPieces);
-        PieceType piece = piece_type(pieceAtB(sq));
-        if (piece != NONETYPE) {
-            hash ^= RANDOM_ARRAY[64 * (piece * 2 + 1) + sq];
-        }
-        poplsb(wPieces);
+        Square sq = poplsb(wPieces);
+        hash ^= RANDOM_ARRAY[64 * (piece_type(pieceAtB(sq)) * 2 + 1) + sq];
     }
     while (bPieces) {
-        Square sq = bsf(bPieces);
-        PieceType piece = piece_type(pieceAtB(sq));
-        if (piece != NONETYPE) {
-            hash ^= RANDOM_ARRAY[64 * (piece * 2) + sq];
-        }
-        poplsb(bPieces);
+        Square sq = poplsb(bPieces);
+        hash ^= RANDOM_ARRAY[64 * (piece_type(pieceAtB(sq)) * 2) + sq];
     }
 
     U64 ep_hash = 0ULL;
