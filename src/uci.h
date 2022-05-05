@@ -1,8 +1,13 @@
 #pragma once
-#include "board.h"
-#include "search.h"
+
 #include <sstream>
 #include <map>
+#include <atomic>
+#include <thread>
+#include <algorithm>
+
+#include "board.h"
+#include "search.h"
 
 std::vector<std::string> split_input(std::string fen);
 

@@ -1,10 +1,8 @@
-#include <sstream>
-#include <map>
-
 #include "board.h"
 #include "search.h"
 #include "threadmanager.h"
 #include "psqt.h"
+#include "uci.h"
 
 std::atomic<bool> stopped;
 ThreadManager thread;
@@ -155,14 +153,31 @@ int main(int argc, char** argv) {
             thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = 120;
+            // go wtime 100 btime 100 winc 100 binc 100
             int64_t timegiven = board.sideToMove == White ? std::stoi(tokens[2]) : std::stoi(tokens[4]);
-            // int64_t inc = board.sideToMove == White ? std::stoi(tokens[3]) : std::stoi(tokens[5]);
+            int64_t inc = 0;
+            int64_t mtg = 0;
+            if (input.find("winc") != std::string::npos && tokens.size() > 4){
+                std::string inc_str = board.sideToMove == White ? "winc" : "binc";
+                auto it = find(tokens.begin(), tokens.end(), inc_str);
+                int index = it - tokens.begin();
+                inc = std::stoi(tokens[index + 1]);
+            }
+            if (input.find("movestogo") != std::string::npos){
+                auto it = find(tokens.begin(), tokens.end(), "movestogo");
+                int index = it - tokens.begin();
+                mtg = std::stoi(tokens[index + 1]);
+            }
+
             int64_t searchTime = timegiven / 20;
-            if (searchTime == 0) {
-                searchTime = 10;
-                if (searchTime >= timegiven){
-                    searchTime = 5;
-                }
+            if (mtg > 0) {
+                searchTime = timegiven / mtg;
+            }else{
+                searchTime = timegiven / 20;
+            }
+            searchTime += inc/2;
+            if (searchTime >= timegiven){
+                searchTime = std::clamp(searchTime, 1LL, timegiven/20);
             }
             thread.begin(board, depth, false, searchTime);
         }
