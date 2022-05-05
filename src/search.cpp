@@ -287,11 +287,11 @@ int Search::score_move(Move& move, int ply) {
     else if (killerMoves[0][ply] == move) {
         return 5000;
     }
-    else if (killerMoves[1][ply] == move) {
-        return 4000;
-    }
     else if (history_table[IsWhite][move.from][move.to]) {
         return history_table[IsWhite][move.from][move.to];
+    }
+    else if (killerMoves[1][ply] == move) {
+        return 1;
     }
     else {
         return 0;
