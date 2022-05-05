@@ -6,8 +6,6 @@
 // Values were taken from Stockfish https://github.com/official-stockfish/Stockfish/blob/master/src/psqt.cpp
 // Released under GNU General Public License v3.0 https://github.com/official-stockfish/Stockfish/blob/master/Copying.txt
 
-constexpr int piece_values[2][6] = { { 126, 781, 825, 1276, 2538, 0}, { 208, 854, 915, 1380,  2682, 0} };
-
 int evaluation(Board& board) {
 	int eval_mg = 0;
 	int eval_eg = 0;
@@ -30,17 +28,17 @@ int evaluation(Board& board) {
 	phase += (wrook + brook) * 2;
 	phase += (wqueen + bqueen) * 4;
 
-	eval_mg += (wpawns-bpawns)       * piece_values[0][0] 
-	           + (wknight - bknight) * piece_values[0][1] 
-			   + (wbishop - bbishop) * piece_values[0][2] 
-			   + (wrook - brook)     * piece_values[0][3] 
-			   + (wqueen - bqueen)   * piece_values[0][4];
+	eval_mg += (wpawns-bpawns)       * piece_values[0][PAWN] 
+	           + (wknight - bknight) * piece_values[0][KNIGHT] 
+			   + (wbishop - bbishop) * piece_values[0][BISHOP] 
+			   + (wrook - brook)     * piece_values[0][ROOK] 
+			   + (wqueen - bqueen)   * piece_values[0][QUEEN];
 
-	eval_eg += (wpawns-bpawns)       * piece_values[1][0] 
-	           + (wknight - bknight) * piece_values[1][1]
-			   + (wbishop - bbishop) * piece_values[1][2]
-			   + (wrook - brook)     * piece_values[1][3]
-			   + (wqueen - bqueen)   * piece_values[1][4];
+	eval_eg += (wpawns-bpawns)       * piece_values[1][PAWN] 
+	           + (wknight - bknight) * piece_values[1][KNIGHT]
+			   + (wbishop - bbishop) * piece_values[1][BISHOP]
+			   + (wrook - brook)     * piece_values[1][ROOK]
+			   + (wqueen - bqueen)   * piece_values[1][QUEEN];
 
 	eval_mg += board.psqt_mg;
 	eval_eg += board.psqt_eg;

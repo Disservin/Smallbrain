@@ -1,5 +1,5 @@
-smallbrain: uci.o search.o board.o threadmanager.o evaluation.o helper.o 
-	g++ uci.o search.o board.o threadmanager.o evaluation.o helper.o -o smallbrain 
+smallbrain: uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o
+	g++ uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o -o smallbrain 
 
 uci.o: uci.cpp uci.h
 	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -lpthread -Wall uci.cpp
@@ -19,5 +19,7 @@ evaluation.o: evaluation.cpp evaluation.h
 helper.o: helper.cpp helper.h
 	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -lpthread -Wall helper.cpp
 
+psqt.o: psqt.cpp psqt.h
+	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -lpthread -Wall psqt.cpp
 clean:
 	rm *.o *.exe

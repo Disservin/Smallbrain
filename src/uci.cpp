@@ -4,6 +4,7 @@
 #include "board.h"
 #include "search.h"
 #include "threadmanager.h"
+#include "psqt.h"
 
 std::atomic<bool> stopped;
 ThreadManager thread;
@@ -164,6 +165,39 @@ int main(int argc, char** argv) {
                 }
             }
             thread.begin(board, depth, false, searchTime);
+        }
+        if (input.find("setoption") != std::string::npos) {
+            std::vector<std::string> tokens = split_input(input);
+            if (tokens[2] == "PAWN_EVAL_MG") {
+                piece_values[0][PAWN] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "PAWN_EVAL_EG") {
+                piece_values[1][PAWN] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "KNIGHT_EVAL_MG") {
+                piece_values[0][KNIGHT] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "KNIGHT_EVAL_EG") {
+                piece_values[1][KNIGHT] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "BISHOP_EVAL_MG") {
+                piece_values[0][BISHOP] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "BISHOP_EVAL_EG") {
+                piece_values[1][BISHOP] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "ROOK_EVAL_MG") {
+                piece_values[0][ROOK] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "ROOK_EVAL_EG") {
+                piece_values[1][ROOK] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "QUEEN_EVAL_MG") {
+                piece_values[0][QUEEN] = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "QUEEN_EVAL_EG") {
+                piece_values[1][QUEEN] = std::stoi(tokens[4]);
+            }
         }
     }
 }
