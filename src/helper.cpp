@@ -122,7 +122,3 @@ uint8_t diagonal_of(Square sq) {
 uint8_t anti_diagonal_of(Square sq) {
     return square_rank(sq) + square_file(sq);
 }
-
-uint8_t manhatten_distance(Square sq1, Square sq2) {
-	return std::abs(square_file(sq1) - square_file(sq2)) + std::abs(square_rank(sq1) - square_rank(sq2));
-}

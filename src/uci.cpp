@@ -3,22 +3,9 @@
 #include "threadmanager.h"
 #include "psqt.h"
 #include "uci.h"
-#include "tt.h"
-#include "evaluation.h"
-
-#include <signal.h>
-
 
 std::atomic<bool> stopped;
 ThreadManager thread;
-U64 TT_SIZE = 524287;
-TEntry* TTable{};
-
-void signal_callback_handler(int signum) {
-	thread.stop();
-	free(TTable);
-	exit(signum);
-}
 
 Move convert_uci_to_Move(std::string input, Board& board) {
     Move move;
@@ -78,14 +65,8 @@ Move convert_uci_to_Move(std::string input, Board& board) {
 int main(int argc, char** argv) {
     Board board = Board();
     board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    //board.print();
     stopped = false;
-    signal(SIGINT, signal_callback_handler);
-	TEntry* oldbuffer;
-	if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
-		std::cout << "Error: Could not allocate memory for TT\n";
-		exit(1);
-	}
-
     while (true) {
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
@@ -120,19 +101,6 @@ int main(int argc, char** argv) {
             board.print();
             std::cout << board.getFen() << std::endl;
         }
-		if (input.find("setoption name Hash value") != std::string::npos) {
-			std::size_t start_index = input.find("value");
-			std::string size_str = input.substr(start_index + 6);
-			U64 elements = (static_cast<unsigned long long>(std::stoi(size_str)) * 1000000) / sizeof(TEntry);
-			oldbuffer = TTable;
-			if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
-			{
-				std::cout << "Error: Could not allocate memory for TT\n";
-				free(oldbuffer);
-				exit(1);
-			}
-			TT_SIZE = elements;
-		}
         if (input == "moves") {
             Movelist ml = board.legalmoves();
             for (int i = 0; i < ml.size; i++) {
@@ -141,9 +109,6 @@ int main(int argc, char** argv) {
         }
         if (input == "rep") {
             std::cout << board.isRepetition(3) << std::endl;
-        }
-        if (input == "eval") {
-            std::cout << evaluation(board) << std::endl;
         }
         if (input.find("position") != std::string::npos) {
             std::vector<std::string> tokens = split_input(input);

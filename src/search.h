@@ -4,21 +4,17 @@
 #include <algorithm>
 
 #include "board.h"
-#include "tt.h"
 
 extern std::atomic<bool> stopped;
-extern TEntry* TTable;
-extern U64 TT_SIZE;
 
 class Search {
 public:
     uint64_t nodes{};
     Board board{};
     Move bestMove{};
-    uint16_t startAge{};
     uint8_t searchDepth{};
     int64_t searchTime{};
-    uint8_t seldepth{};
+    int current_ply{};
     uint8_t pv_length[MAX_PLY]{};
     Move pv_table[MAX_PLY][MAX_PLY]{};
     int history_table[2][64][64] = { {0},{0} };
@@ -38,9 +34,8 @@ public:
     int start_bench();
     bool exit_early();
     int mmlva(Move& move);
-    int score_move(Move& move, int ply, bool ttMove);
+    int score_move(Move& move, int ply);
 	std::string get_pv();
-    bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
 };
 
 inline bool operator==(Move& m, Move& m2);

@@ -148,11 +148,9 @@
     <ClCompile Include="board.cpp" />
     <ClCompile Include="evaluation.cpp" />
     <ClCompile Include="helper.cpp" />
-    <ClCompile Include="psqt.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="threadmanager.cpp" />
     <ClCompile Include="uci.cpp" />
-    <ClCompile Include="zobrist.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="board.h" />
@@ -162,7 +160,6 @@
     <ClInclude Include="search.h" />
     <ClInclude Include="sliders.hpp" />
     <ClInclude Include="threadmanager.h" />
-    <ClInclude Include="tt.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="uci.h" />
     <ClInclude Include="zobrist.h" />

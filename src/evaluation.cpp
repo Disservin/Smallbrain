@@ -28,50 +28,31 @@ int evaluation(Board& board) {
 	phase += (wrook + brook) * 2;
 	phase += (wqueen + bqueen) * 4;
 
-	eval_mg +=   (wpawns  - bpawns)  * piece_values[0][PAWN] 
+	eval_mg += (wpawns-bpawns)       * piece_values[0][PAWN] 
 	           + (wknight - bknight) * piece_values[0][KNIGHT] 
 			   + (wbishop - bbishop) * piece_values[0][BISHOP] 
-			   + (wrook   - brook)   * piece_values[0][ROOK] 
-			   + (wqueen  - bqueen)  * piece_values[0][QUEEN];
+			   + (wrook - brook)     * piece_values[0][ROOK] 
+			   + (wqueen - bqueen)   * piece_values[0][QUEEN];
 
-	eval_eg +=   (wpawns  - bpawns)  * piece_values[1][PAWN] 
+	eval_eg += (wpawns-bpawns)       * piece_values[1][PAWN] 
 	           + (wknight - bknight) * piece_values[1][KNIGHT]
 			   + (wbishop - bbishop) * piece_values[1][BISHOP]
-			   + (wrook   - brook)   * piece_values[1][ROOK]
-			   + (wqueen  - bqueen)  * piece_values[1][QUEEN];
+			   + (wrook - brook)     * piece_values[1][ROOK]
+			   + (wqueen - bqueen)   * piece_values[1][QUEEN];
 
 	eval_mg += board.psqt_mg;
 	eval_eg += board.psqt_eg;
 
-	Square WK = board.KingSQ(White);
-	Square BK = board.KingSQ(Black);
-	if (manhatten_distance(WK, BK) == 2) {
-		if (board.sideToMove == White) {
-			eval_mg -= 10;
-			eval_eg -= 20;
-		}
-		if (board.sideToMove == Black) {
-			eval_mg += 10;
-			eval_eg += 20;
-		}
+	if (board.Pawns(White) & RANK_7) {
+		eval_mg += 20;
+		eval_eg += 30;
+	}
+	if (board.Pawns(Black) & RANK_2) {
+		eval_mg -= 20;
+		eval_eg -= 30;
 	}
 
-	eval_eg -= arrCenterManhattanDistance[WK];
-	eval_eg += arrCenterManhattanDistance[BK];
-	
-	U64 WP = board.Bitboards[WhitePawn];
-	U64 BP = board.Bitboards[BlackPawn];
-	if (WP << 8 & BP) {
-		eval_mg -= 10;
-		eval_eg -= 20;
-	}
-	if (BP << 8 & WP) {
-		eval_mg += 10;
-		eval_eg += 20;
-	}
-	
 	phase = 24 - phase;
-	
 	phase = (phase * 256 + (24 / 2)) / 24;
 	return ((eval_mg * (256 - phase)) + (eval_eg * phase)) / 256;
 }

@@ -26,5 +26,3 @@ uint8_t diagonal_of(Square sq);
 
 // returns anti diagonal of given square
 uint8_t anti_diagonal_of(Square sq);
-
-uint8_t manhatten_distance(Square sq1, Square sq2);

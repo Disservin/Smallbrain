@@ -36,6 +36,16 @@ struct States {
 	}
 };
 
+struct Move {
+	PieceType piece{ NONETYPE };
+	Square from{NO_SQ};
+	Square to{NO_SQ};
+	bool promoted{};
+	int value{};
+	Move (PieceType p= NONETYPE, Square f=NO_SQ, Square t=NO_SQ, bool pr = false) :
+		piece(p), from(f), to(t), promoted(pr) {}
+};
+
 struct Movelist {
 	Move list[256]{};
 	uint8_t size{};

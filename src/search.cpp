@@ -43,6 +43,7 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
         ml.list[i].value = mmlva(ml.list[i]);
     }
 
+
     std::sort(std::begin(ml.list), ml.list + ml.size, [&](const Move& m1, const Move& m2)
         {return m1.value > m2.value; });
 
@@ -64,12 +65,11 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
 
 int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool null) {
     if (exit_early()) return 0;	
-	if (ply > MAX_PLY - 1) return evaluation(board);
-
+	
     int best = -VALUE_INFINITE;
     Color color = player == 1 ? White : Black;
     pv_length[ply] = ply;	
-	int oldAlpha = alpha;
+	
     if (ply >= 1 && board.isRepetition()) return 0;
 
     bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
@@ -78,24 +78,6 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 	
 	if (inCheck && depth <= 0) depth++;
     if (depth <= 0 && !inCheck) return qsearch(15, alpha, beta, player, ply);
-
-    if (ply > seldepth) seldepth = ply;
-
-	U64 index = board.hashKey % TT_SIZE;
-	bool ttMove = false;
-	
-	if (TTable[index].key == board.hashKey && TTable[index].depth >= depth && !RootNode && !PvNode) {
-		if (TTable[index].flag == EXACT) return TTable[index].score;
-		else if (TTable[index].flag == LOWERBOUND) {
-			alpha = std::max(alpha, TTable[index].score);
-		}
-		else if (TTable[index].flag == UPPERBOUND) {
-			beta = std::min(beta, TTable[index].score);
-		}
-		if (alpha >= beta) return TTable[index].score;
-		// use TT move
-		ttMove = true;
-	}
 
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
         int staticEval = evaluation(board) * player;
@@ -118,7 +100,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     }
 
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = score_move(ml.list[i], ply, ttMove);
+        ml.list[i].value = score_move(ml.list[i], ply);
     }
 
     std::sort(std::begin(ml.list), ml.list + ml.size, [&](const Move& m1, const Move& m2)
@@ -131,16 +113,12 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 	for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
         bool capture = board.pieceAtB(move.to) != None;
-
+        
         nodes++;
         madeMoves++;
 		board.makeMove(move);
         
-        if (depth <= 3 && !PvNode 
-            && !inCheck && madeMoves > lmpM[depth] 
-            && !(board.isSquareAttacked(color, board.KingSQ(~color)))
-			&& !capture
-            && !move.promoted){
+        if (depth <= 3 && !PvNode && !inCheck && madeMoves > lmpM[depth] && !(board.isSquareAttacked(color, board.KingSQ(~color)) || move.promoted)){
             board.unmakeMove(move);
             continue;
         }
@@ -186,8 +164,6 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
             }
 		}
 	}
-    // Store position in TT
-	store_entry(index, depth, best, oldAlpha, beta, board.hashKey, ply);
     return best;
 }
 
@@ -222,8 +198,7 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
     }
 
     int player = color == White ? 1 : -1;
-    seldepth = 0;
-    startAge = board.fullMoveNumber;
+
     for (int depth = 1; depth <= search_depth; depth++) {
         searchDepth = depth;
         
@@ -241,7 +216,6 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
         auto t2 = std::chrono::high_resolution_clock::now();
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         std::cout << "info depth " << signed(depth)
-            << " seldepth " << signed(seldepth)
             << " score cp " << result
             << " nodes " << nodes << " nps "
             << signed((nodes / (ms + 1)) * 1000) << " time "
@@ -298,12 +272,9 @@ int Search::mmlva(Move& move) {
     return mvvlva[victim][attacker];
 }
 
-int Search::score_move(Move& move, int ply, bool ttMove) {
+int Search::score_move(Move& move, int ply) {
     if (move == pv_table[0][ply]) {
         return 100000;
-    }
-    else if (ttMove && move == TTable[board.hashKey % TT_SIZE].move) {
-        return 90000;
     }
     else if (move.promoted) {
         return 80000;
@@ -336,26 +307,4 @@ std::string Search::get_pv() {
 
 inline bool operator==(Move& m, Move& m2) {
     return m.piece == m2.piece && m.from == m2.from && m.to == m2.to && m.promoted == m2.promoted;
-}
-
-bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply) {
-	if (!exit_early() && !(bestvalue >= 19000) && !(bestvalue <= -19000) &&
-		(TTable[index].depth < depth || TTable[index].age + 3 <= startAge)) {
-		TTable[index].flag = EXACT;
-		// Upperbound
-		if (bestvalue <= old_alpha) {
-			TTable[index].flag = UPPERBOUND;
-		}
-		// Lowerbound
-		else if (bestvalue >= beta) {
-			TTable[index].flag = LOWERBOUND;
-		}
-		TTable[index].depth = depth;
-		TTable[index].score = bestvalue;
-		TTable[index].age = startAge;
-		TTable[index].key = key;
-		TTable[index].move = pv_table[0][ply];
-        return true;
-	}
-	return false;
 }
