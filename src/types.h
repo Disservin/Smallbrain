@@ -50,6 +50,10 @@ enum Value : int {
     VALUE_MATED_IN_PLY = -VALUE_MATE_IN_PLY
 };
 
+enum Flag : uint8_t {
+    UPPERBOUND, LOWERBOUND, EXACT, NONEBOUND
+};
+
 enum { wk = 1, wq = 2, bk = 4, bq = 8};
 
 static std::unordered_map<Piece, char> pieceToChar({
@@ -215,4 +219,14 @@ static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
         0x2000000000000, 0x5000000000000, 0xa000000000000, 0x14000000000000,
         0x28000000000000, 0x50000000000000, 0xa0000000000000, 0x40000000000000
       }
+};
+
+struct Move {
+	PieceType piece{ NONETYPE };
+	Square from{NO_SQ};
+	Square to{NO_SQ};
+	bool promoted{};
+	int value{};
+	Move (PieceType p= NONETYPE, Square f=NO_SQ, Square t=NO_SQ, bool pr = false) :
+		piece(p), from(f), to(t), promoted(pr) {}
 };

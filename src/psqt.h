@@ -32,3 +32,5 @@ extern int b_king_eg[64];
 extern std::map<int, int*> piece_to_mg;
 
 extern std::map<int, int*> piece_to_eg;
+
+extern uint8_t arrCenterManhattanDistance[64];
