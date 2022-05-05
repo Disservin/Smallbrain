@@ -274,21 +274,20 @@ int Search::mmlva(Move& move) {
 }
 
 int Search::score_move(Move& move, int ply) {
-    int IsWhite = board.sideToMove ? 0 : 1;
     if (move == pv_table[0][ply]) {
         return 100000;
     }
     else if (move.promoted) {
         return 80000;
     }
-    else if (board.pieceAtBB(move.to) != None) {
+    else if (board.pieceAtB(move.to) != None) {
         return mmlva(move) * 100;
     }
     else if (killerMoves[0][ply] == move) {
         return 5000;
     }
-    else if (history_table[IsWhite][move.from][move.to]) {
-        return history_table[IsWhite][move.from][move.to];
+    else if (history_table[board.sideToMove][move.from][move.to]) {
+        return history_table[board.sideToMove][move.from][move.to];
     }
     else if (killerMoves[1][ply] == move) {
         return 1;
