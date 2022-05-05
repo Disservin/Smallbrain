@@ -70,7 +70,6 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     Color color = player == 1 ? White : Black;
     pv_length[ply] = ply;	
 	
-    if (ply == 0 && board.isRepetition(3)) return 0;
     if (ply >= 1 && board.isRepetition()) return 0;
 
     bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
