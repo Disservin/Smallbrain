@@ -318,7 +318,7 @@ bool Board::isRepetition(int draw) {
         if (hashHistory[i] == hashKey) {
             count++;
         }
-        if (count + 1 >= draw) return true;
+        if (count>= draw) return true;
     }
     return false;
 }
