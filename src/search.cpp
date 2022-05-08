@@ -110,15 +110,20 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
 
     Movelist ml = board.capturemoves();
 
+    // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
         ml.list[i].value = mmlva(ml.list[i]);
     }
 
+    // sort the moves
     std::sort(std::begin(ml.list), ml.list + ml.size, [&](const Move& m1, const Move& m2)
         {return m1.value > m2.value; });
 
+    // search the moves
     for (int i = 0; i < (int)ml.size; i++) {
         Move move = ml.list[i];
+
+        // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
         if (stand_pat + 400 + (move.piece + 1) * 100 < alpha && !move.promoted && popcount(board.All()) - 1 > 13) continue;
 
         nodes++;
@@ -147,14 +152,19 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     bool PvNode = beta - alpha > 1;
     bool RootNode = ply == 0;
 
+    // Check extension
     if (inCheck && depth <= 0) depth++;
+
+    // Enter qsearch
     if (depth <= 0 && !inCheck) return qsearch(15, alpha, beta, player, ply);
 
+    // Selective depth (heighest depth we have ever reached)
     if (ply > seldepth) seldepth = ply;
 
     U64 index = board.hashKey % TT_SIZE;
     bool ttMove = false;
 
+    // Look up in the TT
     if (TTable[index].key == board.hashKey && TTable[index].depth >= depth && !RootNode && !PvNode) {
         if (TTable[index].flag == EXACT) return TTable[index].score;
         else if (TTable[index].flag == LOWERBOUND) {
@@ -168,11 +178,13 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         ttMove = true;
     }
 
+    // Razor-like pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
         int staticEval = evaluation(board) * player;
         if (staticEval - 120 * depth >= beta) return beta;
     }
 
+    // Null move pruning
     if (board.nonPawnMat(color) && !null && depth >= 3 && !inCheck && !PvNode) {
         int r = depth > 6 ? 3 : 2;
         board.makeNullMove();
@@ -183,15 +195,18 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
     Movelist ml = board.legalmoves();
 
+    // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {
         if (inCheck) return -VALUE_MATE + ply;
         return 0;
     }
 
+    // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
         ml.list[i].value = score_move(ml.list[i], ply, ttMove);
     }
 
+    // sort the moves
     std::sort(std::begin(ml.list), ml.list + ml.size, [&](const Move& m1, const Move& m2)
         {return m1.value > m2.value; });
 
@@ -207,6 +222,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         madeMoves++;
         board.makeMove(move);
 
+        // late move pruning/movecount pruning
         if (depth <= 3 && !PvNode
             && !inCheck && madeMoves > lmpM[depth]
             && !(board.isSquareAttacked(color, board.KingSQ(~color)))
@@ -216,6 +232,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
             continue;
         }
 
+        // late move reduction
         if (depth >= 3 && !PvNode && !inCheck && madeMoves > 3 + 2 * RootNode) {
             score = -absearch(depth - 2, -alpha - 1, -alpha, -player, ply + 1, false);
             doFullSearch = score > alpha;
@@ -223,10 +240,12 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         else
             doFullSearch = !PvNode || madeMoves > 1;
 
+        // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
             score = -absearch(depth - 1, -alpha - 1, -alpha, -player, ply + 1, false);
         }
 
+        // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
             score = -absearch(depth - 1, -beta, -alpha, -player, ply + 1, false);
         }
@@ -236,6 +255,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         if (score > best) {
             best = score;
 
+            // update the PV
             pv_table[ply][ply] = move;
             for (int next_ply = ply + 1; next_ply < pv_length[ply + 1]; next_ply++) {
                 pv_table[ply][next_ply] = pv_table[ply + 1][next_ply];
@@ -244,10 +264,13 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
             if (score > alpha) {
                 alpha = score;
+
+                // update History Table
                 if (!capture) {
                     history_table[color][move.from][move.to] += depth * depth;
                 }
                 if (score >= beta) {
+                    // update Killer Moves
                     if (!capture) {
                         killerMoves[1][ply] = killerMoves[0][ply];
                         killerMoves[0][ply] = move;
@@ -267,14 +290,17 @@ int Search::aspiration_search(int player, int depth, int prev_eval) {
     int beta = VALUE_INFINITE;
     int result = 0;
     int ply = 0;
+    // Start search with full sized window
     if (depth == 1) {
         result = absearch(1, -VALUE_INFINITE, VALUE_INFINITE, player, ply, false);
     }
     else {
+        // Use previous evaluation as a starting point and search with a smaller window
         alpha = prev_eval - 100;
         beta = prev_eval + 100;
         result = absearch(depth, alpha, beta, player, ply, false);
     }
+    // In case the result is outside the bounds we have to do a research
     if (result <= alpha || result >= beta) {
         return absearch(depth, -VALUE_INFINITE, VALUE_INFINITE, player, ply, false);
     }
@@ -300,6 +326,7 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
 
         result = aspiration_search(player, depth, result);
 
+        // Can we exit the search?
         if (exit_early()) {
             std::string move = board.printMove(prev_bestmove);
             if (depth == 1) std::cout << "bestmove " << board.printMove(pv_table[0][0]) << std::endl;
@@ -307,6 +334,7 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
             stopped = true;
             return 0;
         }
+        // Update the previous best move and print information
         prev_bestmove = pv_table[0][0];
         std::string move = board.printMove(pv_table[0][0]);
         auto t2 = std::chrono::high_resolution_clock::now();
@@ -330,7 +358,7 @@ int Search::start_bench() {
     int player = color == White ? 1 : -1;
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    for (int depth = 1; depth <= 5; depth++) {
+    for (int depth = 1; depth <= 10; depth++) {
         searchDepth = depth;
         result = aspiration_search(player, depth, result);
     }

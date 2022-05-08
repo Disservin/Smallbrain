@@ -33,6 +33,7 @@ U64 Board::zobristHash() {
     U64 hash = 0ULL;
     U64 wPieces = Us(White);
     U64 bPieces = Us(Black);
+    // Piece hashes
     while (wPieces) {
         Square sq = poplsb(wPieces);
         hash ^= RANDOM_ARRAY[64 * (piece_type(pieceAtB(sq)) * 2 + 1) + sq];
@@ -41,12 +42,14 @@ U64 Board::zobristHash() {
         Square sq = poplsb(bPieces);
         hash ^= RANDOM_ARRAY[64 * (piece_type(pieceAtB(sq)) * 2) + sq];
     }
-
+    // Ep hash
     U64 ep_hash = 0ULL;
     if (enPassantSquare != NO_SQ) {
         ep_hash = RANDOM_ARRAY[772 + square_file(enPassantSquare)];
     }
+    // Turn hash
     U64 turn_hash = sideToMove == White ? RANDOM_ARRAY[780] : 0;
+    // Castle hash
     U64 cast_hash = 0ULL;
     if (castlingRights & 1) {
         cast_hash ^= RANDOM_ARRAY[768];

@@ -80,18 +80,41 @@ public:
 	U64 zobristHash();
 
 	void initializeLookupTables();
+	
+	// Finds what piece are on the square using the bitboards
 	Piece pieceAtBB(Square sq);
+
+	// Finds what piece are on the square using the board (more performant)
 	Piece pieceAtB(Square sq);
+
+	// aplys a new Fen to the board
 	void applyFen(std::string fen);
+
+	// returns a Fen string of the current board
 	std::string getFen();
+
+	// prints any bitboard passed to it
 	void printBitboard(U64 bb);
+
+	// prints the board
 	void print();
+
+	// makes a Piece from only the piece type and color
 	Piece makePiece(PieceType type, Color c);
+
+	// returns the piecetype of a piece
 	PieceType piece_type(Piece piece);
+
+	// prints a move in uci format
 	std::string printMove(Move& move);
+
+	// detects if the position is a repetition by default 2, fide would be 3
 	bool isRepetition(int draw = 2);
+
+	// only pawns + king = true else false
 	bool nonPawnMat(Color c);
 
+	// Attacks of each piece
 	U64 PawnAttacks(Square sq, Color c);
 	U64 KnightAttacks(Square sq);
 	U64 BishopAttacks(Square sq, U64 occupied);
@@ -99,6 +122,7 @@ public:
 	U64 QueenAttacks(Square sq, U64 occupied);
 	U64 KingAttacks(Square sq);
 
+	// Gets the piece of the specified color
 	U64 Pawns(Color c);
 	U64 Knights(Color c);
 	U64 Bishops(Color c);
@@ -106,32 +130,44 @@ public:
 	U64 Queens(Color c);
 	U64 Kings(Color c);
 
+	// removes a piece from a square, also removes psqt values
 	void removePiece(Piece piece, Square sq);
 	void placePiece(Piece piece, Square sq);
 
+	// returns the King Square of the specified color
 	Square KingSQ(Color c);
 
+	// returns all pieces of color
 	U64 Us(Color c);
 
+	// returns all pieces of the other color
 	U64 Enemy(Color c);
 
+	// returns all pieces color
 	U64 All();
 
+	// returns all empty squares
 	U64 Empty();
 
+	// returns all empty squares or squares with an enemy on them
 	U64 EnemyEmpty(Color c);
 
+	// creates the checkmask
 	U64 DoCheckmask(Color c, Square sq);
 
+	// creates the pinmask
 	void DoPinMask(Color c, Square sq);
 
+	// creates the pinmask and checkmask
 	void init(Color c, Square sq);
 
 	// Is square attacked by color c
 	bool isSquareAttacked(Color c, Square sq);
 
+	// returns a pawn push (only 1 square)
 	U64 PawnPush(Color c, Square sq);
 
+	// all legal moves for each piece
 	U64 LegalPawnMoves(Color c, Square sq, Square ep);
 	U64 LegalKnightMoves(Color c, Square sq);
 	U64 LegalBishopMoves(Color c, Square sq);
@@ -139,9 +175,11 @@ public:
 	U64 LegalQueenMoves(Color c, Square sq);
 	U64 LegalKingMoves(Color c, Square sq);
 
+	// all legal moves for a position
 	Movelist legalmoves();
 	Movelist capturemoves();
 
+	// plays the move on the internal board
 	void makeMove(Move& move);
 	void unmakeMove(Move& move);
 	void makeNullMove();
