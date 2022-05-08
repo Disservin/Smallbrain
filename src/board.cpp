@@ -12,13 +12,13 @@ void Board::initializeLookupTables() {
     for (int sq1 = 0; sq1 <= 63; ++sq1) {
         for (int sq2 = 0; sq2 <= 63; ++sq2) {
             sqs = (1ULL << sq1) | (1ULL << sq2);
-            if (square_file(Square(sq1)) == square_file(Square(sq2)) 
+            if (square_file(Square(sq1)) == square_file(Square(sq2))
                 || square_rank(Square(sq1)) == square_rank(Square(sq2)))
                 SQUARES_BETWEEN_BB[sq1][sq2] =
                 RookAttacks(Square(sq1), sqs) & RookAttacks(Square(sq2), sqs);
-			
-            else if (diagonal_of(Square(sq1)) == diagonal_of(Square(sq2)) 
-                     || anti_diagonal_of(Square(sq1)) == anti_diagonal_of(Square(sq2)))
+
+            else if (diagonal_of(Square(sq1)) == diagonal_of(Square(sq2))
+                || anti_diagonal_of(Square(sq1)) == anti_diagonal_of(Square(sq2)))
                 SQUARES_BETWEEN_BB[Square(sq1)][sq2] =
                 BishopAttacks(Square(sq1), sqs) & BishopAttacks(Square(sq2), sqs);
         }
@@ -65,18 +65,18 @@ U64 Board::zobristHash() {
 }
 
 Piece Board::pieceAtBB(Square sq) {
-	if (Bitboards[WhitePawn] & (1ULL << sq)) return WhitePawn;
-	if (Bitboards[WhiteKnight] & (1ULL << sq)) return WhiteKnight;
-	if (Bitboards[WhiteBishop] & (1ULL << sq)) return WhiteBishop;
-	if (Bitboards[WhiteRook] & (1ULL << sq)) return WhiteRook;
-	if (Bitboards[WhiteQueen] & (1ULL << sq)) return WhiteQueen;
-	if (Bitboards[WhiteKing] & (1ULL << sq)) return WhiteKing;
-	if (Bitboards[BlackPawn] & (1ULL << sq)) return BlackPawn;
-	if (Bitboards[BlackKnight] & (1ULL << sq)) return BlackKnight;
-	if (Bitboards[BlackBishop] & (1ULL << sq)) return BlackBishop;
-	if (Bitboards[BlackRook] & (1ULL << sq)) return BlackRook;
-	if (Bitboards[BlackQueen] & (1ULL << sq)) return BlackQueen;
-	if (Bitboards[BlackKing] & (1ULL << sq)) return BlackKing;
+    if (Bitboards[WhitePawn] & (1ULL << sq)) return WhitePawn;
+    if (Bitboards[WhiteKnight] & (1ULL << sq)) return WhiteKnight;
+    if (Bitboards[WhiteBishop] & (1ULL << sq)) return WhiteBishop;
+    if (Bitboards[WhiteRook] & (1ULL << sq)) return WhiteRook;
+    if (Bitboards[WhiteQueen] & (1ULL << sq)) return WhiteQueen;
+    if (Bitboards[WhiteKing] & (1ULL << sq)) return WhiteKing;
+    if (Bitboards[BlackPawn] & (1ULL << sq)) return BlackPawn;
+    if (Bitboards[BlackKnight] & (1ULL << sq)) return BlackKnight;
+    if (Bitboards[BlackBishop] & (1ULL << sq)) return BlackBishop;
+    if (Bitboards[BlackRook] & (1ULL << sq)) return BlackRook;
+    if (Bitboards[BlackQueen] & (1ULL << sq)) return BlackQueen;
+    if (Bitboards[BlackKing] & (1ULL << sq)) return BlackKing;
     return None;
 }
 
@@ -85,22 +85,22 @@ Piece Board::pieceAtB(Square sq) {
 }
 
 void Board::applyFen(std::string fen) {
-	for (int i = 0; i < 12; i++) {
-		Bitboards[i] = 0ULL;
-	}
+    for (int i = 0; i < 12; i++) {
+        Bitboards[i] = 0ULL;
+    }
     std::vector<std::string> params = split_input(fen);
-    std::string position   = params[0];
+    std::string position = params[0];
     std::string move_right = params[1];
-    std::string castling   = params[2];
+    std::string castling = params[2];
     std::string en_passant = params[3];
     // default
     std::string half_move_clock = "0";
     std::string full_move_counter = "1";
     if (params.size() > 4) {
-        half_move_clock   = params[4];
+        half_move_clock = params[4];
         full_move_counter = params[5];
     }
-	sideToMove = (move_right == "w") ? White : Black;
+    sideToMove = (move_right == "w") ? White : Black;
     size_t pos = 0;
     int sq;
     char letter;
@@ -169,10 +169,10 @@ void Board::applyFen(std::string fen) {
             castlingRights |= bq;
         }
     }
-    if (en_passant == "-"){
+    if (en_passant == "-") {
         enPassantSquare = NO_SQ;
     }
-    else{
+    else {
         letter = en_passant[0];
         int file = letter - 96;
         int rank = en_passant[1] - 48;
@@ -183,7 +183,7 @@ void Board::applyFen(std::string fen) {
 
     // full_move_counter actually half moves
     fullMoveNumber = std::stoi(full_move_counter) * 2;
-	
+
     for (int sq = 0; sq < 64; sq++) {
         if (pieceAtBB(Square(sq)) != None) {
             board[sq] = pieceAtBB(Square(sq));
@@ -194,28 +194,28 @@ void Board::applyFen(std::string fen) {
     }
 
     U64 pieces_white = Us(White);
-	U64 pieces_black = Us(Black);
+    U64 pieces_black = Us(Black);
     psqt_mg = 0;
     psqt_eg = 0;
-	while (pieces_white) {
-		Square square = poplsb(pieces_white);
-		Piece piece = pieceAtB(square);
-		psqt_mg += piece_to_mg[piece][square];
-		psqt_eg += piece_to_eg[piece][square];
-	}
-	while (pieces_black) {
-		Square square = poplsb(pieces_black);
-		Piece piece = pieceAtB(square);
-		psqt_mg -= piece_to_mg[piece][square];
-		psqt_eg -= piece_to_eg[piece][square];
-	}
-    
+    while (pieces_white) {
+        Square square = poplsb(pieces_white);
+        Piece piece = pieceAtB(square);
+        psqt_mg += piece_to_mg[piece][square];
+        psqt_eg += piece_to_eg[piece][square];
+    }
+    while (pieces_black) {
+        Square square = poplsb(pieces_black);
+        Piece piece = pieceAtB(square);
+        psqt_mg -= piece_to_mg[piece][square];
+        psqt_eg -= piece_to_eg[piece][square];
+    }
+
     prevStates.size = 0;
     hashKey = zobristHash();
 }
 
-std::string Board::getFen(){
-int sq;
+std::string Board::getFen() {
+    int sq;
     char letter;
     std::string fen = "";
     for (int rank = 7; rank >= 0; rank--) {
@@ -233,7 +233,7 @@ int sq;
             }
             else {
                 free_space++;
-            }  
+            }
         }
         if (free_space != 0) {
             fen += std::to_string(free_space);
@@ -254,15 +254,15 @@ int sq;
     if (enPassantSquare == NO_SQ)
         fen += " - ";
     else
-        fen += " "+ squareToString[enPassantSquare] + " ";
-	
+        fen += " " + squareToString[enPassantSquare] + " ";
+
     fen += std::to_string(halfMoveClock);
-    fen += " " + std::to_string(fullMoveNumber/2);
+    fen += " " + std::to_string(fullMoveNumber / 2);
     return fen;
 }
 
 void Board::printBitboard(U64 bb) {
-	std::bitset<64> b(bb);
+    std::bitset<64> b(bb);
     std::string str_bitset = b.to_string();
     for (int i = 0; i < 64; i += 8)
     {
@@ -277,26 +277,26 @@ void Board::print() {
     for (int i = 63; i >= 0; i -= 8)
     {
         std::cout << " " << pieceToChar[board[i - 7]]
-                  << " " << pieceToChar[board[i - 6]]
-                  << " " << pieceToChar[board[i - 5]]
-                  << " " << pieceToChar[board[i - 4]]
-                  << " " << pieceToChar[board[i - 3]]
-                  << " " << pieceToChar[board[i - 2]]
-                  << " " << pieceToChar[board[i - 1]]
-                  << " " << pieceToChar[board[i]]
-                  << " " << std::endl;
+            << " " << pieceToChar[board[i - 6]]
+            << " " << pieceToChar[board[i - 5]]
+            << " " << pieceToChar[board[i - 4]]
+            << " " << pieceToChar[board[i - 3]]
+            << " " << pieceToChar[board[i - 2]]
+            << " " << pieceToChar[board[i - 1]]
+            << " " << pieceToChar[board[i]]
+            << " " << std::endl;
     }
     std::cout << '\n' << std::endl;
-	std::cout << "Side to move: " << (int)sideToMove << std::endl;
-	std::cout << "Castling rights: " << (int)castlingRights << std::endl;
+    std::cout << "Side to move: " << (int)sideToMove << std::endl;
+    std::cout << "Castling rights: " << (int)castlingRights << std::endl;
     std::cout << "Halfmoves: " << (int)halfMoveClock << std::endl;
-    std::cout << "Fullmoves: " << (int)fullMoveNumber/2 << std::endl;
+    std::cout << "Fullmoves: " << (int)fullMoveNumber / 2 << std::endl;
     std::cout << "EP: " << (int)enPassantSquare << std::endl;
 }
 
 Piece Board::makePiece(PieceType type, Color c) {
-	if (type == NONETYPE) return None;
-	return Piece(type + 6 * c);
+    if (type == NONETYPE) return None;
+    return Piece(type + 6 * c);
 }
 
 PieceType Board::piece_type(Piece piece) {
@@ -307,8 +307,8 @@ PieceType Board::piece_type(Piece piece) {
 std::string Board::printMove(Move& move) {
     std::string m = "";
     m += squareToString[move.from];
-	m += squareToString[move.to];
-	if (move.promoted) m += PieceToPromPiece[Piece(move.piece)];
+    m += squareToString[move.to];
+    if (move.promoted) m += PieceToPromPiece[Piece(move.piece)];
     return m;
 }
 
@@ -318,7 +318,7 @@ bool Board::isRepetition(int draw) {
         if (hashHistory[i] == hashKey) {
             count++;
         }
-        if (count>= draw) return true;
+        if (count >= draw) return true;
     }
     return false;
 }
@@ -348,48 +348,50 @@ U64 Board::QueenAttacks(Square sq, U64 occupied) {
 }
 
 U64 Board::KingAttacks(Square sq) {
-	return KING_ATTACKS_TABLE[sq];
+    return KING_ATTACKS_TABLE[sq];
 }
 
 U64 Board::Pawns(Color c) {
-	return Bitboards[PAWN + c * 6];
+    return Bitboards[PAWN + c * 6];
 }
 U64 Board::Knights(Color c) {
-	return Bitboards[KNIGHT + c * 6];
+    return Bitboards[KNIGHT + c * 6];
 }
 U64 Board::Bishops(Color c) {
-	return Bitboards[BISHOP + c * 6];
+    return Bitboards[BISHOP + c * 6];
 }
 U64 Board::Rooks(Color c) {
-	return Bitboards[ROOK + c * 6];
+    return Bitboards[ROOK + c * 6];
 }
 U64 Board::Queens(Color c) {
-	return Bitboards[QUEEN + c * 6];
+    return Bitboards[QUEEN + c * 6];
 }
 U64 Board::Kings(Color c) {
-	return Bitboards[KING + c * 6];
+    return Bitboards[KING + c * 6];
 }
 
 void Board::removePiece(Piece piece, Square sq) {
-	Bitboards[piece] &= ~(1ULL << sq);
-	board[sq] = None;
+    Bitboards[piece] &= ~(1ULL << sq);
+    board[sq] = None;
     if (piece > WhiteKing) {
         psqt_mg += piece_to_mg[piece][sq];
         psqt_eg += piece_to_eg[piece][sq];
 
-    }else{
+    }
+    else {
         psqt_mg -= piece_to_mg[piece][sq];
         psqt_eg -= piece_to_eg[piece][sq];
     }
 }
 void Board::placePiece(Piece piece, Square sq) {
-	Bitboards[piece] |= (1ULL << sq);
-	board[sq] = piece;
+    Bitboards[piece] |= (1ULL << sq);
+    board[sq] = piece;
     if (piece > WhiteKing) {
         psqt_mg -= piece_to_mg[piece][sq];
         psqt_eg -= piece_to_eg[piece][sq];
 
-    }else{
+    }
+    else {
         psqt_mg += piece_to_mg[piece][sq];
         psqt_eg += piece_to_eg[piece][sq];
     }
@@ -400,13 +402,13 @@ Square Board::KingSQ(Color c) {
 }
 
 U64 Board::Us(Color c) {
-	return Bitboards[PAWN + c * 6]   | Bitboards[KNIGHT + c * 6] |
-		   Bitboards[BISHOP + c * 6] | Bitboards[ROOK + c * 6]   |
-		   Bitboards[QUEEN + c * 6]  | Bitboards[KING + c * 6];
+    return Bitboards[PAWN + c * 6] | Bitboards[KNIGHT + c * 6] |
+        Bitboards[BISHOP + c * 6] | Bitboards[ROOK + c * 6] |
+        Bitboards[QUEEN + c * 6] | Bitboards[KING + c * 6];
 }
 
 U64 Board::Enemy(Color c) {
-	return Us(~c);
+    return Us(~c);
 }
 
 U64 Board::All() {
@@ -414,15 +416,15 @@ U64 Board::All() {
 }
 
 U64 Board::Empty() {
-	return ~All();
+    return ~All();
 }
 
 U64 Board::EnemyEmpty(Color c) {
-	return ~Us(c);
+    return ~Us(c);
 }
 
 U64 Board::DoCheckmask(Color c, Square sq) {
-	U64 Occ = occAll;
+    U64 Occ = occAll;
     U64 checks = 0ULL;
     U64 pawn_mask = Pawns(~c) & PawnAttacks(sq, c);
     U64 knight_mask = Knights(~c) & KnightAttacks(sq);
@@ -480,10 +482,10 @@ void Board::DoPinMask(Color c, Square sq) {
     pinD = bishop_pin;
 }
 
-void Board::init(Color c, Square sq) {    
+void Board::init(Color c, Square sq) {
     occAll = All();
-	occWhite = Us(White);
-	occBlack = Us(Black);
+    occWhite = Us(White);
+    occBlack = Us(Black);
     U64 newMask = DoCheckmask(c, sq);
     checkMask = newMask ? newMask : 18446744073709551615ULL;
     DoPinMask(c, sq);
@@ -491,17 +493,17 @@ void Board::init(Color c, Square sq) {
 }
 
 bool Board::isSquareAttacked(Color c, Square sq) {
-	if (PawnAttacks(sq, ~c) & Pawns(c)) return true;
-	if (KnightAttacks(sq) & Knights(c)) return true;
-	if (BishopAttacks(sq, All()) & (Bishops(c) | Queens(c))) return true;
-	if (RookAttacks(sq, All()) & (Rooks(c) | Queens(c))) return true;
-	if (KingAttacks(sq) & Kings(c)) return true;
+    if (PawnAttacks(sq, ~c) & Pawns(c)) return true;
+    if (KnightAttacks(sq) & Knights(c)) return true;
+    if (BishopAttacks(sq, All()) & (Bishops(c) | Queens(c))) return true;
+    if (RookAttacks(sq, All()) & (Rooks(c) | Queens(c))) return true;
+    if (KingAttacks(sq) & Kings(c)) return true;
     return false;
 }
 
 U64 Board::PawnPush(Color c, Square sq) {
-	if (c==White) return (1ULL << (sq + 8));
-	return (1ULL << (sq - 8));
+    if (c == White) return (1ULL << (sq + 8));
+    return (1ULL << (sq - 8));
 }
 
 U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
@@ -510,10 +512,10 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
     if (pinD & (1ULL << sq)) return PawnAttacks(sq, c) & pinD & checkMask & enemy;
     // Calculate pawn pushs
     U64 push = PawnPush(c, sq) & ~occAll;
-    push |= (c==White) ? square_rank(sq) == 1 ? (push << 8) & ~occAll : 0ULL : square_rank(sq) == 6 ? (push >> 8) & ~occAll : 0ULL;
+    push |= (c == White) ? square_rank(sq) == 1 ? (push << 8) & ~occAll : 0ULL : square_rank(sq) == 6 ? (push >> 8) & ~occAll : 0ULL;
     // If we are pinned horizontally we can do no moves but if we are pinned vertically we can only do pawn pushs
     if (pinHV & (1ULL << sq)) return push & pinHV & checkMask;
-    int8_t offset = (c==White) ? -8 : 8;
+    int8_t offset = (c == White) ? -8 : 8;
     U64 attacks = PawnAttacks(sq, c);
     // If we are in check and  the en passant square lies on our attackmask and the en passant piece gives check
     // return the ep mask as a move square
@@ -527,8 +529,8 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
     // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant 
     // remove both the pawn that made the push and our pawn that could take in theory and check if that would give check
     if (ep != NO_SQ && square_distance(sq, ep) == 1 && (1ULL << ep) & attacks) {
-        Piece ourPawn = c==White ? WhitePawn : BlackPawn;
-        Piece theirPawn = c==White ? BlackPawn : WhitePawn;
+        Piece ourPawn = c == White ? WhitePawn : BlackPawn;
+        Piece theirPawn = c == White ? BlackPawn : WhitePawn;
         Square kSQ = KingSQ(c);
         removePiece(ourPawn, sq);
         removePiece(theirPawn, Square((int)ep + offset));
@@ -542,34 +544,34 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
 }
 
 U64 Board::LegalKnightMoves(Color c, Square sq) {
-	if (pinD & (1ULL << sq) || pinHV & (1ULL << sq)) return 0ULL;
-	return KnightAttacks(sq) & EnemyEmpty(c) & checkMask;
+    if (pinD & (1ULL << sq) || pinHV & (1ULL << sq)) return 0ULL;
+    return KnightAttacks(sq) & EnemyEmpty(c) & checkMask;
 }
 
 U64 Board::LegalBishopMoves(Color c, Square sq) {
-	if (pinHV & (1ULL << sq)) return 0ULL;
-	if (pinD & (1ULL << sq)) return BishopAttacks(sq, occAll) & EnemyEmpty(c) & pinD & checkMask;
-	return BishopAttacks(sq, occAll) & EnemyEmpty(c) & checkMask;
+    if (pinHV & (1ULL << sq)) return 0ULL;
+    if (pinD & (1ULL << sq)) return BishopAttacks(sq, occAll) & EnemyEmpty(c) & pinD & checkMask;
+    return BishopAttacks(sq, occAll) & EnemyEmpty(c) & checkMask;
 }
 
 U64 Board::LegalRookMoves(Color c, Square sq) {
-	if (pinD & (1ULL << sq)) return 0ULL;
-	if (pinHV & (1ULL << sq)) return RookAttacks(sq, occAll) & EnemyEmpty(c) & pinHV & checkMask;
-	return RookAttacks(sq, occAll) & EnemyEmpty(c) & checkMask;
+    if (pinD & (1ULL << sq)) return 0ULL;
+    if (pinHV & (1ULL << sq)) return RookAttacks(sq, occAll) & EnemyEmpty(c) & pinHV & checkMask;
+    return RookAttacks(sq, occAll) & EnemyEmpty(c) & checkMask;
 }
 
 U64 Board::LegalQueenMoves(Color c, Square sq) {
-	return LegalRookMoves(c, sq) | LegalBishopMoves(c, sq);
+    return LegalRookMoves(c, sq) | LegalBishopMoves(c, sq);
 }
 
 U64 Board::LegalKingMoves(Color c, Square sq) {
     U64 moves = KingAttacks(sq) & EnemyEmpty(c);
     U64 final_moves = 0ULL;
-	Piece k = c==White ? WhiteKing : BlackKing;
+    Piece k = c == White ? WhiteKing : BlackKing;
     removePiece(k, sq);
     while (moves) {
-		Square index = poplsb(moves);
-		if (isSquareAttacked(~c, index)) continue;
+        Square index = poplsb(moves);
+        if (isSquareAttacked(~c, index)) continue;
         final_moves |= (1ULL << index);
     }
     placePiece(k, sq);
@@ -595,23 +597,23 @@ U64 Board::LegalKingMoves(Color c, Square sq) {
             }
         }
         else {
-			if (castlingRights & bk
-				&& !(Occ & (1ULL << SQ_F8))
-				&& !(Occ & (1ULL << SQ_G8))
-				&& (Bitboards[BlackRook] & (1ULL << SQ_H8))
-				&& !isSquareAttacked(White, SQ_F8)
-				&& !isSquareAttacked(White, SQ_G8)) {
-				final_moves |= (1ULL << SQ_G8);
-			}
-			if (castlingRights & bq
-				&& !(Occ & (1ULL << SQ_D8))
-				&& !(Occ & (1ULL << SQ_C8))
-				&& !(Occ & (1ULL << SQ_B8))
-				&& (Bitboards[BlackRook] & (1ULL << SQ_A8))
-				&& !isSquareAttacked(White, SQ_D8)
-				&& !isSquareAttacked(White, SQ_C8)) {
-				final_moves |= (1ULL << SQ_C8);
-			}
+            if (castlingRights & bk
+                && !(Occ & (1ULL << SQ_F8))
+                && !(Occ & (1ULL << SQ_G8))
+                && (Bitboards[BlackRook] & (1ULL << SQ_H8))
+                && !isSquareAttacked(White, SQ_F8)
+                && !isSquareAttacked(White, SQ_G8)) {
+                final_moves |= (1ULL << SQ_G8);
+            }
+            if (castlingRights & bq
+                && !(Occ & (1ULL << SQ_D8))
+                && !(Occ & (1ULL << SQ_C8))
+                && !(Occ & (1ULL << SQ_B8))
+                && (Bitboards[BlackRook] & (1ULL << SQ_A8))
+                && !isSquareAttacked(White, SQ_D8)
+                && !isSquareAttacked(White, SQ_C8)) {
+                final_moves |= (1ULL << SQ_C8);
+            }
         }
     }
     return final_moves;
@@ -619,21 +621,21 @@ U64 Board::LegalKingMoves(Color c, Square sq) {
 
 Movelist Board::legalmoves() {
     Move move{};
-	Movelist movelist{};
+    Movelist movelist{};
     movelist.size = 0;
-	
+
     init(sideToMove, KingSQ(sideToMove));
     if (doubleCheck < 2) {
-		U64 pawns_mask = Pawns(sideToMove);
-		U64 knights_mask = Knights(sideToMove);
-		U64 bishops_mask = Bishops(sideToMove);
-		U64 rooks_mask = Rooks(sideToMove);
-		U64 queens_mask = Queens(sideToMove);
+        U64 pawns_mask = Pawns(sideToMove);
+        U64 knights_mask = Knights(sideToMove);
+        U64 bishops_mask = Bishops(sideToMove);
+        U64 rooks_mask = Rooks(sideToMove);
+        U64 queens_mask = Queens(sideToMove);
         while (pawns_mask) {
-			Square from = poplsb(pawns_mask);
-			U64 moves = LegalPawnMoves(sideToMove, from, enPassantSquare);        
-			while (moves) {
-				Square to = poplsb(moves);
+            Square from = poplsb(pawns_mask);
+            U64 moves = LegalPawnMoves(sideToMove, from, enPassantSquare);
+            while (moves) {
+                Square to = poplsb(moves);
                 if (square_rank(to) == 7 || square_rank(to) == 0) {
                     movelist.Add(Move(QUEEN, from, to, true));
                     movelist.Add(Move(ROOK, from, to, true));
@@ -643,15 +645,15 @@ Movelist Board::legalmoves() {
                 else {
                     movelist.Add(Move(PAWN, from, to, false));
                 }
-			}
+            }
         }
         while (knights_mask) {
-			Square from = poplsb(knights_mask);
-			U64 moves = LegalKnightMoves(sideToMove, from);
-			while (moves) {
-				Square to = poplsb(moves);
-				movelist.Add(Move(KNIGHT, from, to, false));
-			}
+            Square from = poplsb(knights_mask);
+            U64 moves = LegalKnightMoves(sideToMove, from);
+            while (moves) {
+                Square to = poplsb(moves);
+                movelist.Add(Move(KNIGHT, from, to, false));
+            }
         }
         while (bishops_mask) {
             Square from = poplsb(bishops_mask);
@@ -677,14 +679,14 @@ Movelist Board::legalmoves() {
                 movelist.Add(Move(QUEEN, from, to, false));
             }
         }
-		
+
     }
-	Square from = KingSQ(sideToMove);
+    Square from = KingSQ(sideToMove);
     U64 moves = LegalKingMoves(sideToMove, from);
     while (moves) {
         Square to = poplsb(moves);
         movelist.Add(Move(KING, from, to, false));
-    }   
+    }
     return movelist;
 }
 
@@ -763,22 +765,22 @@ Movelist Board::capturemoves() {
 
 void Board::makeMove(Move& move) {
     Piece piece = makePiece(move.piece, sideToMove);
-	Square from = move.from;
-	Square to = move.to;
+    Square from = move.from;
+    Square to = move.to;
     bool promotion = move.promoted;
     Piece capture = board[to];
-    
+
     hashHistory[fullMoveNumber] = hashKey;
     State store = State(enPassantSquare, castlingRights, halfMoveClock, capture, hashKey);
     prevStates.Add(store);
     halfMoveClock++;
-    
+
     fullMoveNumber++;
-	
+
     if (move.piece == KING) {
         if (sideToMove == White) {
             if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
-				removePiece(WhiteRook, SQ_H1);
+                removePiece(WhiteRook, SQ_H1);
                 placePiece(WhiteRook, SQ_F1);
             }
             if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
@@ -799,139 +801,139 @@ void Board::makeMove(Move& move) {
             castlingRights &= ~(bq | bk);
         }
     }
-	
+
     if (move.piece == ROOK) {
         if (sideToMove == White) {
             if (from == SQ_A1) {
-				castlingRights &= ~wq;
-			}
-			else if (from == SQ_H1) {
-				castlingRights &= ~wk;
-			}
-		}
-		else {
-			if (from == SQ_A8) {
-				castlingRights &= ~bq;
-			}
-			else if (from == SQ_H8) {
-				castlingRights &= ~bk;
-			}
+                castlingRights &= ~wq;
+            }
+            else if (from == SQ_H1) {
+                castlingRights &= ~wk;
+            }
+        }
+        else {
+            if (from == SQ_A8) {
+                castlingRights &= ~bq;
+            }
+            else if (from == SQ_H8) {
+                castlingRights &= ~bk;
+            }
         }
     }
 
     if (piece_type(capture) == ROOK) {
-		if (to == SQ_A1) {
-			castlingRights &= ~wq;
-		}
-		else if (to == SQ_H1) {
-			castlingRights &= ~wk;
-		}
-		if (to == SQ_A8) {
-			castlingRights &= ~bq;
-		}
-		else if (to == SQ_H8) {
-			castlingRights &= ~bk;
-		}
+        if (to == SQ_A1) {
+            castlingRights &= ~wq;
+        }
+        else if (to == SQ_H1) {
+            castlingRights &= ~wk;
+        }
+        if (to == SQ_A8) {
+            castlingRights &= ~bq;
+        }
+        else if (to == SQ_H8) {
+            castlingRights &= ~bk;
+        }
     }
 
     bool ep = to == enPassantSquare;
     enPassantSquare = NO_SQ;
 
-	if (move.piece == PAWN) {
+    if (move.piece == PAWN) {
         halfMoveClock = 0;
         if (ep) {
             int8_t offset = sideToMove == White ? -8 : 8;
-			removePiece(makePiece(PAWN, ~sideToMove), Square(to + offset));
+            removePiece(makePiece(PAWN, ~sideToMove), Square(to + offset));
         }
         if (std::abs(from - to) == 16) {
             int8_t offset = sideToMove == White ? -8 : 8;
             U64 epMask = PawnAttacks(Square(to + offset), sideToMove);
-			if (epMask & Pawns(~sideToMove)) {
-				enPassantSquare = Square(to + offset);
-			}
+            if (epMask & Pawns(~sideToMove)) {
+                enPassantSquare = Square(to + offset);
+            }
         }
-	}
-	
+    }
+
     if (capture != None) {
         halfMoveClock = 0;
         removePiece(capture, to);
     }
-	
-	if (promotion) {
-		removePiece(makePiece(PAWN, sideToMove), from);
-		placePiece(piece, to);
-	}
-	else {
-		removePiece(piece, from);
-		placePiece(piece, to);
-	}
+
+    if (promotion) {
+        removePiece(makePiece(PAWN, sideToMove), from);
+        placePiece(piece, to);
+    }
+    else {
+        removePiece(piece, from);
+        placePiece(piece, to);
+    }
     sideToMove = ~sideToMove;
     hashKey = zobristHash();
 }
 
 void Board::unmakeMove(Move& move) {
-	State restore = prevStates.Get();
+    State restore = prevStates.Get();
     enPassantSquare = restore.enPassant;
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
     Piece capture = restore.capturedPiece;
     hashKey = restore.h;
     fullMoveNumber--;
-	
+
     Square from = move.from;
     Square to = move.to;
     bool promotion = move.promoted;
     sideToMove = ~sideToMove;
     Piece piece = makePiece(move.piece, sideToMove);
-	
+
     if (promotion) {
-		removePiece(piece, to);
-		placePiece(makePiece(PAWN, sideToMove), from);
+        removePiece(piece, to);
+        placePiece(makePiece(PAWN, sideToMove), from);
         if (capture != None) {
             placePiece(capture, to);
         }
         return;
-	}
-	else {
-		removePiece(piece, to);
-		placePiece(piece, from );
+    }
+    else {
+        removePiece(piece, to);
+        placePiece(piece, from);
     }
 
     if (to == enPassantSquare && move.piece == PAWN) {
         int8_t offset = sideToMove == White ? -8 : 8;
-        placePiece(makePiece(PAWN, ~sideToMove), Square(enPassantSquare+offset));
+        placePiece(makePiece(PAWN, ~sideToMove), Square(enPassantSquare + offset));
     }
 
-	if (capture != None) {
-		placePiece(capture, to);
-	}
+    if (capture != None) {
+        placePiece(capture, to);
+    }
 
-	if (move.piece == KING) {
-		if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
-			removePiece(WhiteRook, SQ_F1);
-			placePiece(WhiteRook, SQ_H1);
-		}
-		if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
-			removePiece(WhiteRook, SQ_D1);
-			placePiece(WhiteRook, SQ_A1);
-		}
+    if (move.piece == KING) {
+        if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
+            removePiece(WhiteRook, SQ_F1);
+            placePiece(WhiteRook, SQ_H1);
+        }
+        if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
+            removePiece(WhiteRook, SQ_D1);
+            placePiece(WhiteRook, SQ_A1);
+        }
 
-		if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
-			removePiece(BlackRook, SQ_F8);
-			placePiece(BlackRook, SQ_H8);
-		}
-		if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
-			removePiece(BlackRook, SQ_D8);
-			placePiece(BlackRook, SQ_A8);
-		}
-	}
+        if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
+            removePiece(BlackRook, SQ_F8);
+            placePiece(BlackRook, SQ_H8);
+        }
+        if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
+            removePiece(BlackRook, SQ_D8);
+            placePiece(BlackRook, SQ_A8);
+        }
+    }
 }
 
 void Board::makeNullMove() {
     State store = State(enPassantSquare, castlingRights, halfMoveClock, None, hashKey);
     prevStates.Add(store);
     sideToMove = ~sideToMove;
-	hashKey = zobristHash();
+    hashKey = zobristHash();
     enPassantSquare = NO_SQ;
     fullMoveNumber++;
 }
@@ -944,5 +946,5 @@ void Board::unmakeNullMove() {
     hashKey = restore.h;
     fullMoveNumber--;
     sideToMove = ~sideToMove;
-	
+
 }

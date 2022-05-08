@@ -15,10 +15,10 @@ struct State {
 	uint8_t halfMove{};
 	Piece capturedPiece = None;
 	U64 h{};
-	State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, 
-		  uint8_t halfMoveCopy = {}, Piece capturedPieceCopy = None, U64 hashCopy = {}) :
-			enPassant(enpassantCopy), castling(castlingRightsCopy), 
-			halfMove(halfMoveCopy), capturedPiece(capturedPieceCopy), h(hashCopy){}
+	State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {},
+		uint8_t halfMoveCopy = {}, Piece capturedPieceCopy = None, U64 hashCopy = {}) :
+		enPassant(enpassantCopy), castling(castlingRightsCopy),
+		halfMove(halfMoveCopy), capturedPiece(capturedPieceCopy), h(hashCopy) {}
 };
 
 struct States {
@@ -54,11 +54,11 @@ public:
 	uint8_t halfMoveClock{};
 	uint16_t fullMoveNumber{};
 	Color sideToMove = White;
-	
-	Piece board[64]{None};
+
+	Piece board[64]{ None };
 	U64 Bitboards[12]{};
 	U64 SQUARES_BETWEEN_BB[64][64]{};
-	
+
 	// all bits set
 	U64 checkMask = 18446744073709551615ULL;
 
@@ -69,7 +69,7 @@ public:
 	U64 occWhite{};
 	U64 occBlack{};
 	U64 occAll{};
-	
+
 	int psqt_mg{};
 	int psqt_eg{};
 
@@ -77,7 +77,7 @@ public:
 	States prevStates{};
 	Board();
 	U64 zobristHash();
-	
+
 	void initializeLookupTables();
 	Piece pieceAtBB(Square sq);
 	Piece pieceAtB(Square sq);
@@ -104,7 +104,7 @@ public:
 	U64 Rooks(Color c);
 	U64 Queens(Color c);
 	U64 Kings(Color c);
-	
+
 	void removePiece(Piece piece, Square sq);
 	void placePiece(Piece piece, Square sq);
 
@@ -144,6 +144,6 @@ public:
 	void makeMove(Move& move);
 	void unmakeMove(Move& move);
 	void makeNullMove();
-	void unmakeNullMove();	
+	void unmakeNullMove();
 };
 

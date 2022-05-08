@@ -15,9 +15,9 @@ U64 TT_SIZE = 131071;
 TEntry* TTable{};
 
 void signal_callback_handler(int signum) {
-	thread.stop();
-	free(TTable);
-	exit(signum);
+    thread.stop();
+    free(TTable);
+    exit(signum);
 }
 
 Move convert_uci_to_Move(std::string input, Board& board) {
@@ -71,7 +71,7 @@ Move convert_uci_to_Move(std::string input, Board& board) {
     }
     else {
         std::cout << "FALSE INPUT" << std::endl;
-        return Move(NONETYPE,NO_SQ, NO_SQ, false);
+        return Move(NONETYPE, NO_SQ, NO_SQ, false);
     }
 }
 
@@ -80,11 +80,11 @@ int main(int argc, char** argv) {
     board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     stopped = false;
     signal(SIGINT, signal_callback_handler);
-	TEntry* oldbuffer;
-	if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
-		std::cout << "Error: Could not allocate memory for TT\n";
-		exit(1);
-	}
+    TEntry* oldbuffer;
+    if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
+        std::cout << "Error: Could not allocate memory for TT\n";
+        exit(1);
+    }
 
     while (true) {
         if (argc > 1) {
@@ -120,19 +120,19 @@ int main(int argc, char** argv) {
             board.print();
             std::cout << board.getFen() << std::endl;
         }
-		if (input.find("setoption name Hash value") != std::string::npos) {
-			std::size_t start_index = input.find("value");
-			std::string size_str = input.substr(start_index + 6);
-			U64 elements = (static_cast<unsigned long long>(std::stoi(size_str)) * 1000000) / sizeof(TEntry);
-			oldbuffer = TTable;
-			if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
-			{
-				std::cout << "Error: Could not allocate memory for TT\n";
-				free(oldbuffer);
-				exit(1);
-			}
-			TT_SIZE = elements;
-		}
+        if (input.find("setoption name Hash value") != std::string::npos) {
+            std::size_t start_index = input.find("value");
+            std::string size_str = input.substr(start_index + 6);
+            U64 elements = (static_cast<unsigned long long>(std::stoi(size_str)) * 1000000) / sizeof(TEntry);
+            oldbuffer = TTable;
+            if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
+            {
+                std::cout << "Error: Could not allocate memory for TT\n";
+                free(oldbuffer);
+                exit(1);
+            }
+            TT_SIZE = elements;
+        }
         if (input == "moves") {
             Movelist ml = board.legalmoves();
             for (int i = 0; i < ml.size; i++) {
@@ -161,7 +161,7 @@ int main(int argc, char** argv) {
                 for (; index < tokens.size(); index++) {
                     Move move = convert_uci_to_Move(tokens[index], board);
                     board.makeMove(move);
-                    
+
                 }
             }
         }
@@ -192,13 +192,13 @@ int main(int argc, char** argv) {
             int64_t timegiven = board.sideToMove == White ? std::stoi(tokens[2]) : std::stoi(tokens[4]);
             int64_t inc = 0;
             int64_t mtg = 0;
-            if (input.find("winc") != std::string::npos && tokens.size() > 4){
+            if (input.find("winc") != std::string::npos && tokens.size() > 4) {
                 std::string inc_str = board.sideToMove == White ? "winc" : "binc";
                 auto it = find(tokens.begin(), tokens.end(), inc_str);
                 int index = it - tokens.begin();
                 inc = std::stoi(tokens[index + 1]);
             }
-            if (input.find("movestogo") != std::string::npos){
+            if (input.find("movestogo") != std::string::npos) {
                 auto it = find(tokens.begin(), tokens.end(), "movestogo");
                 int index = it - tokens.begin();
                 mtg = std::stoi(tokens[index + 1]);
@@ -207,12 +207,13 @@ int main(int argc, char** argv) {
             int64_t searchTime = timegiven / 20;
             if (mtg > 0) {
                 searchTime = timegiven / mtg;
-            }else{
+            }
+            else {
                 searchTime = timegiven / 20;
             }
-            searchTime += inc/2;
-            if (searchTime >= timegiven){
-                searchTime = std::clamp(searchTime, 1LL, timegiven/20);
+            searchTime += inc / 2;
+            if (searchTime >= timegiven) {
+                searchTime = std::clamp(searchTime, 1LL, timegiven / 20);
             }
             thread.begin(board, depth, false, searchTime);
         }

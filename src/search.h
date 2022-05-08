@@ -39,7 +39,7 @@ public:
     bool exit_early();
     int mmlva(Move& move);
     int score_move(Move& move, int ply, bool ttMove);
-	std::string get_pv();
+    std::string get_pv();
     bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
 };
 

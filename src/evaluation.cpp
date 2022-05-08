@@ -11,34 +11,34 @@ int evaluation(Board& board) {
 	int eval_eg = 0;
 	int phase = 0;
 
-	int wpawns  = popcount(board.Bitboards[WhitePawn]);
+	int wpawns = popcount(board.Bitboards[WhitePawn]);
 	int wknight = popcount(board.Bitboards[WhiteKnight]);
 	int wbishop = popcount(board.Bitboards[WhiteBishop]);
-	int wrook   = popcount(board.Bitboards[WhiteRook]);
-	int wqueen  = popcount(board.Bitboards[WhiteQueen]);
+	int wrook = popcount(board.Bitboards[WhiteRook]);
+	int wqueen = popcount(board.Bitboards[WhiteQueen]);
 
-	int bpawns  = popcount(board.Bitboards[BlackPawn]);
+	int bpawns = popcount(board.Bitboards[BlackPawn]);
 	int bknight = popcount(board.Bitboards[BlackKnight]);
 	int bbishop = popcount(board.Bitboards[BlackBishop]);
-	int brook   = popcount(board.Bitboards[BlackRook]);
-	int bqueen  = popcount(board.Bitboards[BlackQueen]);
+	int brook = popcount(board.Bitboards[BlackRook]);
+	int bqueen = popcount(board.Bitboards[BlackQueen]);
 
 	phase += wknight + bknight;
 	phase += wbishop + bbishop;
 	phase += (wrook + brook) * 2;
 	phase += (wqueen + bqueen) * 4;
 
-	eval_mg += (wpawns-bpawns)       * piece_values[0][PAWN] 
-	           + (wknight - bknight) * piece_values[0][KNIGHT] 
-			   + (wbishop - bbishop) * piece_values[0][BISHOP] 
-			   + (wrook - brook)     * piece_values[0][ROOK] 
-			   + (wqueen - bqueen)   * piece_values[0][QUEEN];
+	eval_mg += (wpawns - bpawns) * piece_values[0][PAWN]
+		+ (wknight - bknight) * piece_values[0][KNIGHT]
+		+ (wbishop - bbishop) * piece_values[0][BISHOP]
+		+ (wrook - brook) * piece_values[0][ROOK]
+		+ (wqueen - bqueen) * piece_values[0][QUEEN];
 
-	eval_eg += (wpawns-bpawns)       * piece_values[1][PAWN] 
-	           + (wknight - bknight) * piece_values[1][KNIGHT]
-			   + (wbishop - bbishop) * piece_values[1][BISHOP]
-			   + (wrook - brook)     * piece_values[1][ROOK]
-			   + (wqueen - bqueen)   * piece_values[1][QUEEN];
+	eval_eg += (wpawns - bpawns) * piece_values[1][PAWN]
+		+ (wknight - bknight) * piece_values[1][KNIGHT]
+		+ (wbishop - bbishop) * piece_values[1][BISHOP]
+		+ (wrook - brook) * piece_values[1][ROOK]
+		+ (wqueen - bqueen) * piece_values[1][QUEEN];
 
 	eval_mg += board.psqt_mg;
 	eval_eg += board.psqt_eg;

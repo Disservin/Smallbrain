@@ -5,13 +5,13 @@
 
 static constexpr int MAX_PLY = 120;
 
-static constexpr int lmpM[4] = {0, 8, 12, 24};
+static constexpr int lmpM[4] = { 0, 8, 12, 24 };
 static constexpr U64 RANK_8 = 18374686479671623680ULL;
 static constexpr U64 RANK_1 = 255ULL;
 static constexpr U64 RANK_2 = 65280ULL;
 static constexpr U64 RANK_7 = 71776119061217280ULL;
 
-enum Color : uint8_t{
+enum Color : uint8_t {
     White, Black
 };
 
@@ -54,7 +54,7 @@ enum Flag : uint8_t {
     UPPERBOUND, LOWERBOUND, EXACT, NONEBOUND
 };
 
-enum { wk = 1, wq = 2, bk = 4, bq = 8};
+enum { wk = 1, wq = 2, bk = 4, bq = 8 };
 
 static std::unordered_map<Piece, char> pieceToChar({
     { WhitePawn, 'P' },
@@ -86,7 +86,7 @@ static std::unordered_map<char, Piece> charToPiece({
     { 'q', BlackQueen },
     { 'k', BlackKing },
     { '.', None }
-	});
+    });
 
 static std::unordered_map<Piece, char> PieceToPromPiece({
     { WhiteKnight, 'n' },
@@ -97,7 +97,7 @@ static std::unordered_map<Piece, char> PieceToPromPiece({
     { BlackBishop, 'b' },
     { BlackRook, 'r' },
     { BlackQueen, 'q' }
-	});
+    });
 
 const std::string squareToString[64] = {
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
@@ -222,11 +222,11 @@ static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
 };
 
 struct Move {
-	PieceType piece{ NONETYPE };
-	Square from{NO_SQ};
-	Square to{NO_SQ};
-	bool promoted{};
-	int value{};
-	Move (PieceType p= NONETYPE, Square f=NO_SQ, Square t=NO_SQ, bool pr = false) :
-		piece(p), from(f), to(t), promoted(pr) {}
+    PieceType piece{ NONETYPE };
+    Square from{ NO_SQ };
+    Square to{ NO_SQ };
+    bool promoted{};
+    int value{};
+    Move(PieceType p = NONETYPE, Square f = NO_SQ, Square t = NO_SQ, bool pr = false) :
+        piece(p), from(f), to(t), promoted(pr) {}
 };
