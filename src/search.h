@@ -30,6 +30,7 @@ public:
         t0 = std::chrono::high_resolution_clock::now();
     }
     void perf_Test(int depth, int max);
+    void testAllPos();
     U64 perft(int depth, int max);
     int qsearch(int depth, int alpha, int beta, int player, int ply);
     int absearch(int depth, int alpha, int beta, int player, int ply, bool null);

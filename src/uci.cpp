@@ -171,6 +171,13 @@ int main(int argc, char** argv) {
             Search searcher_class = Search(board);
             std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
             threads.join();
+            return 0;
+        }
+        if (input.find("perft") != std::string::npos) {
+            Search searcher_class = Search(board);
+            std::thread threads = std::thread(&Search::testAllPos, searcher_class);
+            threads.join();
+            return 0;
         }
         if (input.find("go depth") != std::string::npos) {
             thread.stop();

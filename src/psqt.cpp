@@ -29,34 +29,6 @@ int b_queen_eg[64] = { -74, -52, -43, -34, -34, -43, -52, -74, -50, -27, -24, -8
 int w_king_eg[64] = { 1, 45, 85, 76, 76, 85, 45, 1, 53, 100, 133, 135, 135, 133, 100, 53, 88, 130, 169, 175, 175, 169, 130, 88, 103, 156, 172, 172, 172, 172, 156, 103, 96, 166, 199, 199, 199, 199, 166, 96, 92, 172, 184, 191, 191, 184, 172, 92, 47, 121, 116, 131, 131, 116, 121, 47, 11, 59, 73, 78, 78, 73, 59, 11 };
 int b_king_eg[64] = { 11, 59, 73, 78, 78, 73, 59, 11, 47, 121, 116, 131, 131, 116, 121, 47, 92, 172, 184, 191, 191, 184, 172, 92, 96, 166, 199, 199, 199, 199, 166, 96, 103, 156, 172, 172, 172, 172, 156, 103, 88, 130, 169, 175, 175, 169, 130, 88, 53, 100, 133, 135, 135, 133, 100, 53, 1, 45, 85, 76, 76, 85, 45, 1 };
 
-std::map<int, int*> piece_to_mg =
-{
-{ 0,   w_pawn_mg},
-{ 1,   w_knight_mg},
-{ 2,   w_bishop_mg},
-{ 3,   w_rook_mg },
-{ 4,   w_queen_mg },
-{ 5,   w_king_mg },
-{ 6,   b_pawn_mg},
-{ 7,   b_knight_mg},
-{ 8,   b_bishop_mg },
-{ 9,   b_rook_mg },
-{ 10,  b_queen_mg },
-{ 11,  b_king_mg },
-};
+int* piece_to_mg[12] = { w_pawn_mg, w_knight_mg, w_bishop_mg, w_rook_mg, w_queen_mg, w_king_mg, b_pawn_mg, b_knight_mg, b_bishop_mg, b_rook_mg, b_queen_mg, b_king_mg };
 
-std::map<int, int*> piece_to_eg =
-{
-{ 0,   w_pawn_eg},
-{ 1,   w_knight_eg},
-{ 2,   w_bishop_eg},
-{ 3,   w_rook_eg },
-{ 4,   w_queen_eg },
-{ 5,   w_king_eg },
-{ 6,   b_pawn_eg},
-{ 7,   b_knight_eg},
-{ 8,   b_bishop_eg },
-{ 9,   b_rook_eg },
-{ 10,  b_queen_eg },
-{ 11,  b_king_eg },
-};
+int* piece_to_eg[12] = { w_pawn_eg, w_knight_eg, w_bishop_eg, w_rook_eg, w_queen_eg, w_king_eg, b_pawn_eg, b_knight_eg, b_bishop_eg, b_rook_eg, b_queen_eg, b_king_eg };
