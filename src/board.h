@@ -69,6 +69,7 @@ public:
 	U64 occWhite{};
 	U64 occBlack{};
 	U64 occAll{};
+	U64 enemyEmptyBB{};
 
 	int psqt_mg{};
 	int psqt_eg{};

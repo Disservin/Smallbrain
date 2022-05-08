@@ -1,5 +1,4 @@
 #pragma once
-#include <map>
 
 extern int piece_values[2][6];
 
@@ -29,6 +28,9 @@ extern int b_queen_eg[64];
 extern int w_king_eg[64];
 extern int b_king_eg[64];
 
-extern std::map<int, int*> piece_to_mg;
+// extern std::map<int, int*> piece_to_mg;
+extern int* piece_to_mg[12];
 
-extern std::map<int, int*> piece_to_eg;
+extern int* piece_to_eg[12];
+
+// extern std::map<int, int*> piece_to_eg;

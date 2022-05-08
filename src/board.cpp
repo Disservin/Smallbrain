@@ -376,7 +376,6 @@ void Board::removePiece(Piece piece, Square sq) {
     if (piece > WhiteKing) {
         psqt_mg += piece_to_mg[piece][sq];
         psqt_eg += piece_to_eg[piece][sq];
-
     }
     else {
         psqt_mg -= piece_to_mg[piece][sq];
@@ -389,7 +388,6 @@ void Board::placePiece(Piece piece, Square sq) {
     if (piece > WhiteKing) {
         psqt_mg -= piece_to_mg[piece][sq];
         psqt_eg -= piece_to_eg[piece][sq];
-
     }
     else {
         psqt_mg += piece_to_mg[piece][sq];
@@ -486,6 +484,7 @@ void Board::init(Color c, Square sq) {
     occAll = All();
     occWhite = Us(White);
     occBlack = Us(Black);
+    enemyEmptyBB = EnemyEmpty(c);
     U64 newMask = DoCheckmask(c, sq);
     checkMask = newMask ? newMask : 18446744073709551615ULL;
     DoPinMask(c, sq);
@@ -512,7 +511,9 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
     if (pinD & (1ULL << sq)) return PawnAttacks(sq, c) & pinD & checkMask & enemy;
     // Calculate pawn pushs
     U64 push = PawnPush(c, sq) & ~occAll;
-    push |= (c == White) ? square_rank(sq) == 1 ? (push << 8) & ~occAll : 0ULL : square_rank(sq) == 6 ? (push >> 8) & ~occAll : 0ULL;
+    push |= (c == White) ?
+        (square_rank(sq) == 1 ? (push << 8) & ~occAll : 0ULL) :
+        (square_rank(sq) == 6 ? (push >> 8) & ~occAll : 0ULL);
     // If we are pinned horizontally we can do no moves but if we are pinned vertically we can only do pawn pushs
     if (pinHV & (1ULL << sq)) return push & pinHV & checkMask;
     int8_t offset = (c == White) ? -8 : 8;
@@ -535,7 +536,8 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
         removePiece(ourPawn, sq);
         removePiece(theirPawn, Square((int)ep + offset));
         placePiece(ourPawn, ep);
-        if (!isSquareAttacked(~c, kSQ)) moves |= (1ULL << ep);
+        if (!((RookAttacks(kSQ, All()) & (Rooks(~c) | Queens(~c))))) moves |= (1ULL << ep);
+        // if (!isSquareAttacked(~c, kSQ)) moves |= (1ULL << ep);
         placePiece(ourPawn, sq);
         placePiece(theirPawn, Square((int)ep + offset));
         removePiece(ourPawn, ep);
@@ -545,19 +547,19 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
 
 U64 Board::LegalKnightMoves(Color c, Square sq) {
     if (pinD & (1ULL << sq) || pinHV & (1ULL << sq)) return 0ULL;
-    return KnightAttacks(sq) & EnemyEmpty(c) & checkMask;
+    return KnightAttacks(sq) & enemyEmptyBB & checkMask;
 }
 
 U64 Board::LegalBishopMoves(Color c, Square sq) {
     if (pinHV & (1ULL << sq)) return 0ULL;
-    if (pinD & (1ULL << sq)) return BishopAttacks(sq, occAll) & EnemyEmpty(c) & pinD & checkMask;
-    return BishopAttacks(sq, occAll) & EnemyEmpty(c) & checkMask;
+    if (pinD & (1ULL << sq)) return BishopAttacks(sq, occAll) & enemyEmptyBB & pinD & checkMask;
+    return BishopAttacks(sq, occAll) & enemyEmptyBB & checkMask;
 }
 
 U64 Board::LegalRookMoves(Color c, Square sq) {
     if (pinD & (1ULL << sq)) return 0ULL;
-    if (pinHV & (1ULL << sq)) return RookAttacks(sq, occAll) & EnemyEmpty(c) & pinHV & checkMask;
-    return RookAttacks(sq, occAll) & EnemyEmpty(c) & checkMask;
+    if (pinHV & (1ULL << sq)) return RookAttacks(sq, occAll) & enemyEmptyBB & pinHV & checkMask;
+    return RookAttacks(sq, occAll) & enemyEmptyBB & checkMask;
 }
 
 U64 Board::LegalQueenMoves(Color c, Square sq) {
@@ -565,7 +567,7 @@ U64 Board::LegalQueenMoves(Color c, Square sq) {
 }
 
 U64 Board::LegalKingMoves(Color c, Square sq) {
-    U64 moves = KingAttacks(sq) & EnemyEmpty(c);
+    U64 moves = KingAttacks(sq) & enemyEmptyBB;
     U64 final_moves = 0ULL;
     Piece k = c == White ? WhiteKing : BlackKing;
     removePiece(k, sq);
@@ -767,14 +769,13 @@ void Board::makeMove(Move& move) {
     Piece piece = makePiece(move.piece, sideToMove);
     Square from = move.from;
     Square to = move.to;
-    bool promotion = move.promoted;
     Piece capture = board[to];
 
     hashHistory[fullMoveNumber] = hashKey;
     State store = State(enPassantSquare, castlingRights, halfMoveClock, capture, hashKey);
     prevStates.Add(store);
-    halfMoveClock++;
 
+    halfMoveClock++;
     fullMoveNumber++;
 
     if (move.piece == KING) {
@@ -783,7 +784,7 @@ void Board::makeMove(Move& move) {
                 removePiece(WhiteRook, SQ_H1);
                 placePiece(WhiteRook, SQ_F1);
             }
-            if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
+            else if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
                 removePiece(WhiteRook, SQ_A1);
                 placePiece(WhiteRook, SQ_D1);
             }
@@ -794,7 +795,7 @@ void Board::makeMove(Move& move) {
                 removePiece(BlackRook, SQ_H8);
                 placePiece(BlackRook, SQ_F8);
             }
-            if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
+            else if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
                 removePiece(BlackRook, SQ_A8);
                 placePiece(BlackRook, SQ_D8);
             }
@@ -828,7 +829,7 @@ void Board::makeMove(Move& move) {
         else if (to == SQ_H1) {
             castlingRights &= ~wk;
         }
-        if (to == SQ_A8) {
+        else if (to == SQ_A8) {
             castlingRights &= ~bq;
         }
         else if (to == SQ_H8) {
@@ -845,7 +846,7 @@ void Board::makeMove(Move& move) {
             int8_t offset = sideToMove == White ? -8 : 8;
             removePiece(makePiece(PAWN, ~sideToMove), Square(to + offset));
         }
-        if (std::abs(from - to) == 16) {
+        else if (std::abs(from - to) == 16) {
             int8_t offset = sideToMove == White ? -8 : 8;
             U64 epMask = PawnAttacks(Square(to + offset), sideToMove);
             if (epMask & Pawns(~sideToMove)) {
@@ -859,7 +860,7 @@ void Board::makeMove(Move& move) {
         removePiece(capture, to);
     }
 
-    if (promotion) {
+    if (move.promoted) {
         removePiece(makePiece(PAWN, sideToMove), from);
         placePiece(piece, to);
     }
