@@ -230,3 +230,9 @@ struct Move {
     Move(PieceType p = NONETYPE, Square f = NO_SQ, Square t = NO_SQ, bool pr = false) :
         piece(p), from(f), to(t), promoted(pr) {}
 };
+
+static constexpr U64 WK_CASTLE_MASK = (1ULL << SQ_F1) | (1ULL << SQ_G1);
+static constexpr U64 WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL << SQ_B1);
+
+static constexpr U64 BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
+static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);

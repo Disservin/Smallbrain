@@ -580,38 +580,34 @@ U64 Board::LegalKingMoves(Color c, Square sq) {
     U64 Occ = All();
     if (checkMask == 18446744073709551615ULL) {
         if (c == White) {
+            U64 WR = Bitboards[WhiteRook];
             if (castlingRights & wk
-                && !(Occ & (1ULL << SQ_F1))
-                && !(Occ & (1ULL << SQ_G1))
-                && (Bitboards[WhiteRook] & (1ULL << SQ_H1))
+                && (WR & (1ULL << SQ_H1))
+                && !(WK_CASTLE_MASK & Occ)
                 && !isSquareAttacked(Black, SQ_F1)
                 && !isSquareAttacked(Black, SQ_G1)) {
                 final_moves |= (1ULL << SQ_G1);
             }
             if (castlingRights & wq
-                && !(Occ & (1ULL << SQ_D1))
-                && !(Occ & (1ULL << SQ_C1))
-                && !(Occ & (1ULL << SQ_B1))
-                && (Bitboards[WhiteRook] & (1ULL << SQ_A1))
+                && (WR & (1ULL << SQ_A1))
+                && !(WQ_CASTLE_MASK & Occ)
                 && !isSquareAttacked(Black, SQ_D1)
                 && !isSquareAttacked(Black, SQ_C1)) {
                 final_moves |= (1ULL << SQ_C1);
             }
         }
         else {
+            U64 BR = Bitboards[BlackRook];
             if (castlingRights & bk
-                && !(Occ & (1ULL << SQ_F8))
-                && !(Occ & (1ULL << SQ_G8))
-                && (Bitboards[BlackRook] & (1ULL << SQ_H8))
+                && (BR & (1ULL << SQ_H8))
+                && !(BK_CASTLE_MASK & Occ)
                 && !isSquareAttacked(White, SQ_F8)
                 && !isSquareAttacked(White, SQ_G8)) {
                 final_moves |= (1ULL << SQ_G8);
             }
             if (castlingRights & bq
-                && !(Occ & (1ULL << SQ_D8))
-                && !(Occ & (1ULL << SQ_C8))
-                && !(Occ & (1ULL << SQ_B8))
-                && (Bitboards[BlackRook] & (1ULL << SQ_A8))
+                && (BR & (1ULL << SQ_A8))
+                && !(BQ_CASTLE_MASK & Occ)
                 && !isSquareAttacked(White, SQ_D8)
                 && !isSquareAttacked(White, SQ_C8)) {
                 final_moves |= (1ULL << SQ_C8);
