@@ -9,8 +9,12 @@ else
 	TARGET = -march=native
 endif
 
+ifeq ($(build), release)
+	CFLAGS = -static-libgcc -static-libstdc++ -static
+endif
+
 smallbrain: uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o
-	g++ uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o -o smallbrain -lpthread -static-libgcc -static-libstdc++ -static
+	g++ uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o $(CFLAGS) -o smallbrain -lpthread 
 
 uci.o: uci.cpp uci.h
 	g++ -c -flto -O3 $(TARGET) -std=c++20 -static -Wall uci.cpp 
