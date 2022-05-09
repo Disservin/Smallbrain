@@ -454,12 +454,12 @@ bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int
 }
 
 void sortMoves(Movelist& moves){
-    for (int i = 0; i < moves.size; i++){
-        for (int j = i + 1; j < moves.size; j++){
-            if (moves.list[i].value < moves.list[j].value){
-                Move temp = moves.list[i];
-                moves.list[i] = moves.list[j];
-                moves.list[j] = temp;
+    for (int cmove = 0; cmove < moves.size; cmove++){
+        for (int nmove = cmove + 1; nmove < moves.size; nmove++){
+            if (moves.list[cmove].value < moves.list[nmove].value){
+                Move temp = moves.list[cmove];
+                moves.list[cmove] = moves.list[nmove];
+                moves.list[nmove] = temp;
             }
         }
     }
