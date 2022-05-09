@@ -1,4 +1,4 @@
-# cppsmallbrain
+# Smallbrain
 
 ## Compile
 
