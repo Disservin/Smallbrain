@@ -459,6 +459,7 @@ void sortMoves(Movelist& moves){
             if (moves.list[i].value < moves.list[j].value){
                 Move temp = moves.list[i];
                 moves.list[i] = moves.list[j];
+                moves.list[j] = temp;
             }
         }
     }
