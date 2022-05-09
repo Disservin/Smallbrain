@@ -211,6 +211,7 @@ int main(int argc, char** argv) {
                 mtg = std::stoi(tokens[index + 1]);
             }
 
+            int64_t minimumTime = 1; 
             int64_t searchTime = timegiven / 20;
             if (mtg > 0) {
                 searchTime = timegiven / mtg;
@@ -220,7 +221,7 @@ int main(int argc, char** argv) {
             }
             searchTime += inc / 2;
             if (searchTime >= timegiven) {
-                searchTime = std::clamp(searchTime, 1LL, timegiven / 20);
+                searchTime = std::clamp(searchTime, minimumTime, timegiven / 20);
             }
             thread.begin(board, depth, false, searchTime);
         }
