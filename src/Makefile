@@ -1,25 +1,37 @@
+ifeq ($(OS), Windows_NT)
+    uname_S := Windows
+else
+	uname_S := $(shell uname -s)
+endif
+
+ifeq ($(uname_S), Darwin)
+	TARGET = -mcpu=apple-a14
+else
+	TARGET = -march=native
+endif
+
 smallbrain: uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o
 	g++ uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o -o smallbrain -lpthread 
 
 uci.o: uci.cpp uci.h
-	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -Wall uci.cpp -lpthread 
+	g++ -c -flto -O3 $(TARGET) -std=c++20 -static-libgcc -static-libstdc++ -static -Wall uci.cpp 
 
 search.o: search.cpp search.h
-	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -Wall search.cpp -lpthread 
+	g++ -c -flto -O3 $(TARGET) -std=c++20 -static-libgcc -static-libstdc++ -static -Wall search.cpp
 
 board.o: board.cpp board.h sliders.hpp
-	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -Wall board.cpp -lpthread 
+	g++ -c -flto -O3 $(TARGET) -std=c++20 -static-libgcc -static-libstdc++ -static -Wall board.cpp 
 
 threadmanager.o: threadmanager.cpp threadmanager.h
-	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -Wall threadmanager.cpp -lpthread 
+	g++ -c -flto -O3 $(TARGET) -std=c++20 -static-libgcc -static-libstdc++ -static -Wall threadmanager.cpp 
 
 evaluation.o: evaluation.cpp evaluation.h
-	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -Wall evaluation.cpp -lpthread 
+	g++ -c -flto -O3 $(TARGET) -std=c++20 -static-libgcc -static-libstdc++ -static -Wall evaluation.cpp 
 
 helper.o: helper.cpp helper.h
-	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -Wall helper.cpp -lpthread 
+	g++ -c -flto -O3 $(TARGET) -std=c++20 -static-libgcc -static-libstdc++ -static -Wall helper.cpp 
 
 psqt.o: psqt.cpp psqt.h
-	g++ -c -flto -O3 -march=native -std=c++20 -static-libgcc -static-libstdc++ -static -Wall psqt.cpp -lpthread 
+	g++ -c -flto -O3 $(TARGET) -std=c++20 -static-libgcc -static-libstdc++ -static -Wall psqt.cpp 
 clean:
 	rm *.o *.exe
