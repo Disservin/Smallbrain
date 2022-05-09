@@ -32,11 +32,12 @@ uint8_t square_distance(Square a, Square b) {
 #if defined(__GNUC__)  // GCC, Clang, ICC
 
 Square bsf(U64 b) {
+    if (!b) return NO_SQ;
     return Square(__builtin_ctzll(b));
 }
 
 Square bsr(U64 b) {
-
+    if (!b) return NO_SQ;
     return Square(63 ^ __builtin_clzll(b));
 }
 
