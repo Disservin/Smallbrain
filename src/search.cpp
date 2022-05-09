@@ -116,8 +116,7 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
     }
 
     // sort the moves
-    std::sort(std::begin(ml.list), ml.list + ml.size, [&](const Move& m1, const Move& m2)
-        {return m1.value > m2.value; });
+    sortMoves(ml);
 
     // search the moves
     for (int i = 0; i < (int)ml.size; i++) {
@@ -207,8 +206,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     }
 
     // sort the moves
-    std::sort(std::begin(ml.list), ml.list + ml.size, [&](const Move& m1, const Move& m2)
-        {return m1.value > m2.value; });
+    sortMoves(ml);
 
     uint16_t madeMoves = 0;
     int score = 0;
@@ -433,10 +431,6 @@ std::string Search::get_pv() {
     return line;
 }
 
-inline bool operator==(Move& m, Move& m2) {
-    return m.piece == m2.piece && m.from == m2.from && m.to == m2.to && m.promoted == m2.promoted;
-}
-
 bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply) {
     if (!exit_early() && !(bestvalue >= 19000) && !(bestvalue <= -19000) &&
         (TTable[index].depth < depth || TTable[index].age + 3 <= startAge)) {
@@ -457,4 +451,19 @@ bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int
         return true;
     }
     return false;
+}
+
+void sortMoves(Movelist& moves){
+    int i = moves.size;
+    for (int cmove = 1; cmove < moves.size; cmove++){
+        Move temp = moves.list[cmove];
+        for (i=cmove-1; i>=0 && (moves.list[i].value < temp.value ); i--){
+            moves.list[i+1] = moves.list[i];
+        }
+        moves.list[i+1] = temp;
+    }
+}
+
+inline bool operator==(Move& m, Move& m2) {
+    return m.piece == m2.piece && m.from == m2.from && m.to == m2.to && m.promoted == m2.promoted;
 }
