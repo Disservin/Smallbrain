@@ -495,11 +495,11 @@ void Board::init(Color c, Square sq) {
 }
 
 bool Board::isSquareAttacked(Color c, Square sq) {
-    if (PawnAttacks(sq, ~c) & Pawns(c)) return true;
-    if (KnightAttacks(sq) & Knights(c)) return true;
-    if (BishopAttacks(sq, All()) & (Bishops(c) | Queens(c))) return true;
-    if (RookAttacks(sq, All()) & (Rooks(c) | Queens(c))) return true;
-    if (KingAttacks(sq) & Kings(c)) return true;
+    if (Pawns(c) & PawnAttacks(sq, ~c)) return true;
+    if (Knights(c) & KnightAttacks(sq)) return true;
+    if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, All())) return true;
+    if ((Rooks(c) | Queens(c)) & RookAttacks(sq, All())) return true;
+    if (Kings(c) & KingAttacks(sq) ) return true;
     return false;
 }
 
