@@ -409,10 +409,10 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
         return mmlva(move) * 1000;
     }
     else if (killerMoves[0][ply] == move) {
-        return 5000;
+        return 50000;
     }
     else if (killerMoves[1][ply] == move) {
-        return 4000;
+        return 40000;
     }
     else if (history_table[board.sideToMove][move.from][move.to]) {
         return history_table[board.sideToMove][move.from][move.to];
