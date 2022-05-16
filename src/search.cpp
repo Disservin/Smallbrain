@@ -381,12 +381,12 @@ bool Search::exit_early() {
 
 int Search::mmlva(Move& move) {
     static constexpr int mvvlva[7][7] = { {0, 0, 0, 0, 0, 0, 0},
-    {0, 205, 204, 203, 202, 201, 200},
-    {0, 305, 304, 303, 302, 301, 300},
-    {0, 405, 404, 403, 402, 401, 400},
-    {0, 505, 504, 503, 502, 501, 500},
-    {0, 605, 604, 603, 602, 601, 600},
-    {0, 705, 704, 703, 702, 701, 700} };
+    {0, 2005, 2004, 2003, 2002, 2001, 2000},
+    {0, 3005, 3004, 3003, 3002, 3001, 3000},
+    {0, 4005, 4004, 4003, 4002, 4001, 4000},
+    {0, 5005, 5004, 5003, 5002, 5001, 5000},
+    {0, 6005, 6004, 6003, 6002, 6001, 6000},
+    {0, 7005, 7004, 7003, 7002, 7001, 7000} };
     int attacker = board.piece_type(board.pieceAtB(move.from)) + 1;
     int victim = board.piece_type(board.pieceAtB(move.to)) + 1;
     if (victim == -1) {
@@ -397,16 +397,16 @@ int Search::mmlva(Move& move) {
 
 int Search::score_move(Move& move, int ply, bool ttMove) {
     if (move == pv_table[0][ply]) {
-        return 100000;
+        return 2147483647;
     }
     else if (ttMove && move == TTable[board.hashKey % TT_SIZE].move) {
-        return 90000;
+        return 2147483647 - 1;
     }
     else if (move.promoted) {
-        return 80000;
+        return 2147483647 - 2;
     }
     else if (board.pieceAtB(move.to) != None) {
-        return mmlva(move) * 100;
+        return mmlva(move) * 1000;
     }
     else if (killerMoves[0][ply] == move) {
         return 5000;
