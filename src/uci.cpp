@@ -257,6 +257,12 @@ int main(int argc, char** argv) {
             if (tokens[2] == "QUEEN_EVAL_EG") {
                 piece_values[1][QUEEN] = std::stoi(tokens[4]);
             }
+            if (tokens[2] == "killer1") {
+                killerscore1 = std::stoi(tokens[4]);
+            }
+            if (tokens[2] == "killer2") {
+                killerscore2 = std::stoi(tokens[4]);
+            }
         }
     }
 }

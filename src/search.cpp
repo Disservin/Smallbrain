@@ -265,7 +265,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
                 // update History Table
                 if (!capture) {
-                    history_table[color][move.from][move.to] += depth * depth;
+                    history_table[color][move.from][move.to] += depth;
                 }
                 if (score >= beta) {
                     // update Killer Moves
@@ -389,8 +389,8 @@ int Search::mmlva(Move& move) {
     {0, 7005, 7004, 7003, 7002, 7001, 7000} };
     int attacker = board.piece_type(board.pieceAtB(move.from)) + 1;
     int victim = board.piece_type(board.pieceAtB(move.to)) + 1;
-    if (victim == -1) {
-        victim = 0;
+    if (victim == NONETYPE) {
+        victim = PAWN;
     }
     return mvvlva[victim][attacker];
 }
@@ -409,10 +409,10 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
         return mmlva(move) * 1000;
     }
     else if (killerMoves[0][ply] == move) {
-        return 5000;
+        return killerscore1;
     }
     else if (killerMoves[1][ply] == move) {
-        return 4000;
+        return killerscore2;
     }
     else if (history_table[board.sideToMove][move.from][move.to]) {
         return history_table[board.sideToMove][move.from][move.to];
