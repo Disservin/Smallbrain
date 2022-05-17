@@ -389,8 +389,8 @@ int Search::mmlva(Move& move) {
     {0, 7005, 7004, 7003, 7002, 7001, 7000} };
     int attacker = board.piece_type(board.pieceAtB(move.from)) + 1;
     int victim = board.piece_type(board.pieceAtB(move.to)) + 1;
-    if (victim == -1) {
-        victim = 0;
+    if (victim == NONETYPE) {
+        victim = PAWN;
     }
     return mvvlva[victim][attacker];
 }
