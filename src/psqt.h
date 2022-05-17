@@ -34,3 +34,6 @@ extern int* piece_to_mg[12];
 extern int* piece_to_eg[12];
 
 // extern std::map<int, int*> piece_to_eg;
+
+extern int killerscore1;
+extern int killerscore2;

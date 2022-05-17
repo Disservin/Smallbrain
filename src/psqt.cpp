@@ -32,3 +32,6 @@ int b_king_eg[64] = { 11, 59, 73, 78, 78, 73, 59, 11, 47, 121, 116, 131, 131, 11
 int* piece_to_mg[12] = { w_pawn_mg, w_knight_mg, w_bishop_mg, w_rook_mg, w_queen_mg, w_king_mg, b_pawn_mg, b_knight_mg, b_bishop_mg, b_rook_mg, b_queen_mg, b_king_mg };
 
 int* piece_to_eg[12] = { w_pawn_eg, w_knight_eg, w_bishop_eg, w_rook_eg, w_queen_eg, w_king_eg, b_pawn_eg, b_knight_eg, b_bishop_eg, b_rook_eg, b_queen_eg, b_king_eg };
+
+int killerscore1 = 1000000;
+int killerscore2 = 0;
