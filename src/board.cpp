@@ -860,6 +860,7 @@ void Board::makeMove(Move& move) {
     }
 
     if (move.promoted) {
+        halfMoveClock = 0;
         removePiece(makePiece(PAWN, sideToMove), from);
         placePiece(piece, to);
     }

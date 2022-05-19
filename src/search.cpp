@@ -147,12 +147,13 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     Color color = player == 1 ? White : Black;
     pv_length[ply] = ply;
     int oldAlpha = alpha;
+    bool RootNode = ply == 0;
+
     if (ply >= 1 && board.isRepetition()) return 0;
-    if (board.halfMoveClock >= 100) return 0;
+    if (!RootNode && board.halfMoveClock >= 100) return 0;
 
     bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
-    bool RootNode = ply == 0;
 
     // Check extension
     if (inCheck && depth <= 0) depth++;
