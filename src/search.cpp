@@ -146,6 +146,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     pv_length[ply] = ply;
     int oldAlpha = alpha;
     if (ply >= 1 && board.isRepetition()) return 0;
+    if (board.halfMoveClock >= 100) return 0;
 
     bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
