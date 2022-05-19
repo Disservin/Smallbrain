@@ -50,6 +50,11 @@ enum Value : int {
     VALUE_MATED_IN_PLY = -VALUE_MATE_IN_PLY
 };
 
+enum Phase: int {
+    MG,
+    EG
+};
+
 enum Flag : uint8_t {
     UPPERBOUND, LOWERBOUND, EXACT, NONEBOUND
 };
