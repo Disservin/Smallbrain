@@ -182,7 +182,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     }
 
     // Razor-like pruning
-    if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
+    if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck) {
         int staticEval = evaluation(board) * player;
         if (staticEval - 120 * depth >= beta) return beta;
     }
