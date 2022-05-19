@@ -778,46 +778,37 @@ void Board::makeMove(Move& move) {
     fullMoveNumber++;
 
     if (move.piece == KING) {
-        if (sideToMove == White) {
-            if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
-                removePiece(WhiteRook, SQ_H1);
-                placePiece(WhiteRook, SQ_F1);
-            }
-            else if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
-                removePiece(WhiteRook, SQ_A1);
-                placePiece(WhiteRook, SQ_D1);
-            }
-            castlingRights &= ~(wk | wq);
+        if (sideToMove == White && from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
+            removePiece(WhiteRook, SQ_H1);
+            placePiece(WhiteRook, SQ_F1);
         }
-        else {
-            if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
-                removePiece(BlackRook, SQ_H8);
-                placePiece(BlackRook, SQ_F8);
-            }
-            else if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
-                removePiece(BlackRook, SQ_A8);
-                placePiece(BlackRook, SQ_D8);
-            }
-            castlingRights &= ~(bq | bk);
+        else if (sideToMove == White && from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
+            removePiece(WhiteRook, SQ_A1);
+            placePiece(WhiteRook, SQ_D1);
         }
+        else if (sideToMove == Black && from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
+            removePiece(BlackRook, SQ_H8);
+            placePiece(BlackRook, SQ_F8);
+        }
+        else if (sideToMove == Black && from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
+            removePiece(BlackRook, SQ_A8);
+            placePiece(BlackRook, SQ_D8);
+        }
+        castlingRights &= sideToMove == White ? ~(wk | wq) : ~(bq | bk);
     }
 
     if (move.piece == ROOK) {
-        if (sideToMove == White) {
-            if (from == SQ_A1) {
-                castlingRights &= ~wq;
-            }
-            else if (from == SQ_H1) {
-                castlingRights &= ~wk;
-            }
+        if (sideToMove == White && from == SQ_A1 ) {
+            castlingRights &= ~wq;
         }
-        else {
-            if (from == SQ_A8) {
-                castlingRights &= ~bq;
-            }
-            else if (from == SQ_H8) {
-                castlingRights &= ~bk;
-            }
+        else if (sideToMove == White && from == SQ_H1) {
+            castlingRights &= ~wk;
+        }
+        else if (sideToMove == Black && from == SQ_A8) {
+            castlingRights &= ~bq;
+        }
+        else if (sideToMove == Black && from == SQ_H8) {
+            castlingRights &= ~bk;
         }
     }
 
