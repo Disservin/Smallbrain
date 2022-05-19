@@ -185,7 +185,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     }
 
     // Null move pruning
-    if (board.nonPawnMat(color) && !null && depth >= 3 && !inCheck && !PvNode) {
+    if (board.nonPawnMat(color) && !null && depth >= 3 && !inCheck) {
         int r = depth > 6 ? 3 : 2;
         board.makeNullMove();
         int score = -absearch(depth - 1 - r, -beta, -beta + 1, -player, ply + 1, true);
