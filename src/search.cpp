@@ -150,7 +150,12 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     bool RootNode = ply == 0;
 
     if (ply >= 1 && board.isRepetition()) return 0;
-    if (!RootNode && board.halfMoveClock >= 100) return 0;
+    if (!RootNode){
+        if (board.halfMoveClock >= 100) return 0;
+        alpha = std::max(alpha, -VALUE_MATE + ply);
+        beta = std::min(beta, VALUE_MATE - ply - 1);
+        if (alpha >= beta) return alpha;
+    }
 
     bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
@@ -200,8 +205,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {
-        if (inCheck) return -VALUE_MATE + ply;
-        return 0;
+        return inCheck ?-VALUE_MATE + ply : 0;
     }
 
     // assign a value to each move
@@ -343,12 +347,21 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
         auto t2 = std::chrono::high_resolution_clock::now();
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         std::cout << "info depth " << signed(depth)
-            << " seldepth " << signed(seldepth)
-            << " score cp " << result
-            << " nodes " << nodes << " nps "
-            << signed((nodes / (ms + 1)) * 1000) << " time "
-            << ms
-            << " pv " << get_pv() << std::endl;
+        << " seldepth " << signed(seldepth);
+        if (result >= VALUE_MATE_IN_PLY){
+            std::cout << " score cp " << "M" << ((VALUE_MATE - result) / 2) + ((VALUE_MATE - result) & 1);  
+        }
+        else if (result <= VALUE_MATED_IN_PLY) {
+            std::cout << " score cp " << "-M" << ((VALUE_MATE + result) / 2) + ((VALUE_MATE + result) & 1);       
+        }
+        else{
+            std::cout << " score cp " << result;
+        }
+        std::cout << " nodes " << nodes << " nps "
+        << signed((nodes / (ms + 1)) * 1000) << " time "
+        << ms
+        << " pv " << get_pv() << std::endl;  
+
     }
     std::cout << "bestmove " << board.printMove(prev_bestmove) << std::endl;
     stopped = true;
