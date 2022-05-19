@@ -349,10 +349,10 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
         std::cout << "info depth " << signed(depth)
         << " seldepth " << signed(seldepth);
         if (result >= VALUE_MATE_IN_PLY){
-            std::cout << " score cp " << "M" << ((VALUE_MATE - result) / 2) + ((VALUE_MATE - result) & 1);  
+            std::cout << " score cp " << "mate " << ((VALUE_MATE - result) / 2) + ((VALUE_MATE - result) & 1);  
         }
         else if (result <= VALUE_MATED_IN_PLY) {
-            std::cout << " score cp " << "-M" << ((VALUE_MATE + result) / 2) + ((VALUE_MATE + result) & 1);       
+            std::cout << " score cp " << "mate " << -((VALUE_MATE + result) / 2) + ((VALUE_MATE + result) & 1);       
         }
         else{
             std::cout << " score cp " << result;
