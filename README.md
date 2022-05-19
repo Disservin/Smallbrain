@@ -31,3 +31,13 @@ the same, unless I screwed up.
   * Material evaluation
   * Piece square table
 
+19/05/2020 (DD/MM/YY) <br>
+SHA: cc5236ec07f36e1660d1030776a10340b99fcb43<br>
+TC: 40/240 (4 minutes) <br>
+
+    # PLAYER         : RATING  ERROR   POINTS  PLAYED    (%)
+    1 Smallbrain     : 2225.4   94.0     36.5      50   73.0%
+    2 Drofa 1.0.0    : 2051.0   ----     13.5      50   27.0%
+
+    White advantage = 8.89 +/- 48.64
+    Draw rate (equal opponents) = 30.98 % +/- 8.03
