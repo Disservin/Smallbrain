@@ -203,14 +203,14 @@ void Board::applyFen(std::string fen) {
     while (pieces_white) {
         Square square = poplsb(pieces_white);
         Piece piece = pieceAtB(square);
-        psqt_mg += piece_to_mg[piece][square];
-        psqt_eg += piece_to_eg[piece][square];
+        psqt_mg += pieceSquareScore[MG][piece%6][square^56];
+        psqt_eg += pieceSquareScore[EG][piece%6][square^56];
     }
     while (pieces_black) {
         Square square = poplsb(pieces_black);
         Piece piece = pieceAtB(square);
-        psqt_mg -= piece_to_mg[piece][square];
-        psqt_eg -= piece_to_eg[piece][square];
+        psqt_mg -= pieceSquareScore[MG][piece%6][square];
+        psqt_eg -= pieceSquareScore[EG][piece%6][square];
     }
 
     prevStates.size = 0;
@@ -377,24 +377,24 @@ void Board::removePiece(Piece piece, Square sq) {
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
     if (piece > WhiteKing) {
-        psqt_mg += piece_to_mg[piece][sq];
-        psqt_eg += piece_to_eg[piece][sq];
+        psqt_mg += pieceSquareScore[MG][piece%6][sq];
+        psqt_eg += pieceSquareScore[EG][piece%6][sq];
     }
     else {
-        psqt_mg -= piece_to_mg[piece][sq];
-        psqt_eg -= piece_to_eg[piece][sq];
+        psqt_mg -= pieceSquareScore[MG][piece%6][sq^56];
+        psqt_eg -= pieceSquareScore[EG][piece%6][sq^56];
     }
 }
 void Board::placePiece(Piece piece, Square sq) {
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
     if (piece > WhiteKing) {
-        psqt_mg -= piece_to_mg[piece][sq];
-        psqt_eg -= piece_to_eg[piece][sq];
+        psqt_mg -= pieceSquareScore[MG][piece%6][sq];
+        psqt_eg -= pieceSquareScore[EG][piece%6][sq];
     }
     else {
-        psqt_mg += piece_to_mg[piece][sq];
-        psqt_eg += piece_to_eg[piece][sq];
+        psqt_mg += pieceSquareScore[MG][piece%6][sq^56];
+        psqt_eg += pieceSquareScore[EG][piece%6][sq^56];
     }
 }
 
