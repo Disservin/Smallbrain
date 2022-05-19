@@ -100,6 +100,7 @@ U64 Search::perft(int depth, int max) {
 int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
     if (exit_early()) return 0;
     int stand_pat = evaluation(board) * player;
+    Color color = player == 1 ? White : Black;
 
     if (ply > MAX_PLY - 1) return stand_pat;
 
@@ -122,8 +123,9 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
     for (int i = 0; i < (int)ml.size; i++) {
         Move move = ml.list[i];
 
+        Piece captured = board.pieceAtB(move.to);
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
-        if (stand_pat + 400 + (move.piece + 1) * 100 < alpha && !move.promoted && popcount(board.All()) - 1 > 13) continue;
+        if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted && board.nonPawnMat(color)) continue;
 
         nodes++;
         board.makeMove(move);
