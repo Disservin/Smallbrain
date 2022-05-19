@@ -270,6 +270,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
                 if (!capture) {
                     history_table[color][move.from][move.to] += depth;
                 }
+                
                 if (score >= beta) {
                     // update Killer Moves
                     if (!capture) {
