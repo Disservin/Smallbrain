@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
         std::string input;
         std::getline(std::cin, input);
         if (input == "uci") {
-            std::cout << "id name Chess\n" <<
+            std::cout << "id name Smallbrain Version 1.0\n" <<
                 "id author Disservin\n" <<
                 "uciok\n" << std::endl;
 
