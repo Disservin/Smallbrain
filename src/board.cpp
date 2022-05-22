@@ -777,6 +777,9 @@ void Board::makeMove(Move& move) {
     halfMoveClock++;
     fullMoveNumber++;
 
+    bool ep = to == enPassantSquare;
+    enPassantSquare = NO_SQ;
+
     if (move.piece == KING) {
         if (sideToMove == White && from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
             removePiece(WhiteRook, SQ_H1);
@@ -796,8 +799,7 @@ void Board::makeMove(Move& move) {
         }
         castlingRights &= sideToMove == White ? ~(wk | wq) : ~(bq | bk);
     }
-
-    if (move.piece == ROOK) {
+    else if (move.piece == ROOK) {
         if (sideToMove == White && from == SQ_A1 ) {
             castlingRights &= ~wq;
         }
@@ -811,26 +813,7 @@ void Board::makeMove(Move& move) {
             castlingRights &= ~bk;
         }
     }
-
-    if (piece_type(capture) == ROOK) {
-        if (to == SQ_A1) {
-            castlingRights &= ~wq;
-        }
-        else if (to == SQ_H1) {
-            castlingRights &= ~wk;
-        }
-        else if (to == SQ_A8) {
-            castlingRights &= ~bq;
-        }
-        else if (to == SQ_H8) {
-            castlingRights &= ~bk;
-        }
-    }
-
-    bool ep = to == enPassantSquare;
-    enPassantSquare = NO_SQ;
-
-    if (move.piece == PAWN) {
+    else if (move.piece == PAWN) {
         halfMoveClock = 0;
         if (ep) {
             int8_t offset = sideToMove == White ? -8 : 8;
@@ -848,6 +831,20 @@ void Board::makeMove(Move& move) {
     if (capture != None) {
         halfMoveClock = 0;
         removePiece(capture, to);
+        if (piece_type(capture) == ROOK) {
+            if (to == SQ_A1) {
+                castlingRights &= ~wq;
+            }
+            else if (to == SQ_H1) {
+                castlingRights &= ~wk;
+            }
+            else if (to == SQ_A8) {
+                castlingRights &= ~bq;
+            }
+            else if (to == SQ_H8) {
+                castlingRights &= ~bk;
+            }
+        }
     }
 
     if (move.promoted) {
@@ -895,8 +892,7 @@ void Board::unmakeMove(Move& move) {
         int8_t offset = sideToMove == White ? -8 : 8;
         placePiece(makePiece(PAWN, ~sideToMove), Square(enPassantSquare + offset));
     }
-
-    if (capture != None) {
+    else if (capture != None) {
         placePiece(capture, to);
     }
 
@@ -905,16 +901,16 @@ void Board::unmakeMove(Move& move) {
             removePiece(WhiteRook, SQ_F1);
             placePiece(WhiteRook, SQ_H1);
         }
-        if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
+        else if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
             removePiece(WhiteRook, SQ_D1);
             placePiece(WhiteRook, SQ_A1);
         }
 
-        if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
+        else if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
             removePiece(BlackRook, SQ_F8);
             placePiece(BlackRook, SQ_H8);
         }
-        if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
+        else if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
             removePiece(BlackRook, SQ_D8);
             placePiece(BlackRook, SQ_A8);
         }
