@@ -504,8 +504,7 @@ bool Board::isSquareAttacked(Color c, Square sq) {
 }
 
 U64 Board::PawnPush(Color c, Square sq) {
-    if (c == White) return (1ULL << (sq + 8));
-    return (1ULL << (sq - 8));
+    return (1ULL << (sq + (c * -2 + 1) * 8));
 }
 
 U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
@@ -519,11 +518,10 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
         (square_rank(sq) == 6 ? (push >> 8) & ~occAll : 0ULL);
     // If we are pinned horizontally we can do no moves but if we are pinned vertically we can only do pawn pushs
     if (pinHV & (1ULL << sq)) return push & pinHV & checkMask;
-    int8_t offset = (c == White) ? -8 : 8;
     U64 attacks = PawnAttacks(sq, c);
     // If we are in check and  the en passant square lies on our attackmask and the en passant piece gives check
     // return the ep mask as a move square
-    if (checkMask != 18446744073709551615ULL && ep != NO_SQ && attacks & (1ULL << ep) && checkMask & (1ULL << (ep + offset))) return (attacks & (1ULL << ep));
+    if (checkMask != 18446744073709551615ULL && ep != NO_SQ && attacks & (1ULL << ep) && checkMask & (1ULL << (ep - (c * -2 + 1) * 8))) return (attacks & (1ULL << ep));
     // If we are in check we can do all moves that are on the checkmask
     if (checkMask != 18446744073709551615ULL) return ((attacks & enemy) | push) & checkMask;
 
@@ -537,12 +535,12 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
         Piece theirPawn = c == White ? BlackPawn : WhitePawn;
         Square kSQ = KingSQ(c);
         removePiece(ourPawn, sq);
-        removePiece(theirPawn, Square((int)ep + offset));
+        removePiece(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
         placePiece(ourPawn, ep);
         if (!((RookAttacks(kSQ, All()) & (Rooks(~c) | Queens(~c))))) moves |= (1ULL << ep);
         // if (!isSquareAttacked(~c, kSQ)) moves |= (1ULL << ep);
         placePiece(ourPawn, sq);
-        placePiece(theirPawn, Square((int)ep + offset));
+        placePiece(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
         removePiece(ourPawn, ep);
     }
     return moves;
@@ -777,6 +775,9 @@ void Board::makeMove(Move& move) {
     halfMoveClock++;
     fullMoveNumber++;
 
+    bool ep = to == enPassantSquare;
+    enPassantSquare = NO_SQ;
+
     if (move.piece == KING) {
         if (sideToMove == White && from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
             removePiece(WhiteRook, SQ_H1);
@@ -796,8 +797,7 @@ void Board::makeMove(Move& move) {
         }
         castlingRights &= sideToMove == White ? ~(wk | wq) : ~(bq | bk);
     }
-
-    if (move.piece == ROOK) {
+    else if (move.piece == ROOK) {
         if (sideToMove == White && from == SQ_A1 ) {
             castlingRights &= ~wq;
         }
@@ -811,36 +811,15 @@ void Board::makeMove(Move& move) {
             castlingRights &= ~bk;
         }
     }
-
-    if (piece_type(capture) == ROOK) {
-        if (to == SQ_A1) {
-            castlingRights &= ~wq;
-        }
-        else if (to == SQ_H1) {
-            castlingRights &= ~wk;
-        }
-        else if (to == SQ_A8) {
-            castlingRights &= ~bq;
-        }
-        else if (to == SQ_H8) {
-            castlingRights &= ~bk;
-        }
-    }
-
-    bool ep = to == enPassantSquare;
-    enPassantSquare = NO_SQ;
-
-    if (move.piece == PAWN) {
+    else if (move.piece == PAWN) {
         halfMoveClock = 0;
         if (ep) {
-            int8_t offset = sideToMove == White ? -8 : 8;
-            removePiece(makePiece(PAWN, ~sideToMove), Square(to + offset));
+            removePiece(makePiece(PAWN, ~sideToMove), Square(to - (sideToMove * -2 + 1) * 8));
         }
         else if (std::abs(from - to) == 16) {
-            int8_t offset = sideToMove == White ? -8 : 8;
-            U64 epMask = PawnAttacks(Square(to + offset), sideToMove);
+            U64 epMask = PawnAttacks(Square(to - (sideToMove * -2 + 1) * 8), sideToMove);
             if (epMask & Pawns(~sideToMove)) {
-                enPassantSquare = Square(to + offset);
+                enPassantSquare = Square(to - (sideToMove * -2 + 1) * 8);
             }
         }
     }
@@ -848,6 +827,20 @@ void Board::makeMove(Move& move) {
     if (capture != None) {
         halfMoveClock = 0;
         removePiece(capture, to);
+        if (capture % 6 == ROOK) {
+            if (to == SQ_A1) {
+                castlingRights &= ~wq;
+            }
+            else if (to == SQ_H1) {
+                castlingRights &= ~wk;
+            }
+            else if (to == SQ_A8) {
+                castlingRights &= ~bq;
+            }
+            else if (to == SQ_H8) {
+                castlingRights &= ~bk;
+            }
+        }
     }
 
     if (move.promoted) {
@@ -895,28 +888,28 @@ void Board::unmakeMove(Move& move) {
         int8_t offset = sideToMove == White ? -8 : 8;
         placePiece(makePiece(PAWN, ~sideToMove), Square(enPassantSquare + offset));
     }
-
-    if (capture != None) {
+    else if (capture != None) {
         placePiece(capture, to);
     }
+    else {
+        if (move.piece == KING) {
+            if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
+                removePiece(WhiteRook, SQ_F1);
+                placePiece(WhiteRook, SQ_H1);
+            }
+            else if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
+                removePiece(WhiteRook, SQ_D1);
+                placePiece(WhiteRook, SQ_A1);
+            }
 
-    if (move.piece == KING) {
-        if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
-            removePiece(WhiteRook, SQ_F1);
-            placePiece(WhiteRook, SQ_H1);
-        }
-        if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
-            removePiece(WhiteRook, SQ_D1);
-            placePiece(WhiteRook, SQ_A1);
-        }
-
-        if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
-            removePiece(BlackRook, SQ_F8);
-            placePiece(BlackRook, SQ_H8);
-        }
-        if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
-            removePiece(BlackRook, SQ_D8);
-            placePiece(BlackRook, SQ_A8);
+            else if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
+                removePiece(BlackRook, SQ_F8);
+                placePiece(BlackRook, SQ_H8);
+            }
+            else if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
+                removePiece(BlackRook, SQ_D8);
+                placePiece(BlackRook, SQ_A8);
+            }
         }
     }
 }
