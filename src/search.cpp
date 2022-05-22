@@ -152,6 +152,11 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     if (ply >= 1 && board.isRepetition()) return 0;
     if (!RootNode){
         if (board.halfMoveClock >= 100) return 0;
+        int all = popcount(board.All());
+        if (all == 2) return 0;
+        if (all == 3 && (board.Bitboards[WhiteKnight] || board.Bitboards[BlackKnight])) return 0;
+        if (all == 3 && (board.Bitboards[WhiteBishop] || board.Bitboards[BlackBishop])) return 0;
+
         alpha = std::max(alpha, -VALUE_MATE + ply);
         beta = std::min(beta, VALUE_MATE - ply - 1);
         if (alpha >= beta) return alpha;
