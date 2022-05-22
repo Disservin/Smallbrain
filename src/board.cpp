@@ -504,8 +504,7 @@ bool Board::isSquareAttacked(Color c, Square sq) {
 }
 
 U64 Board::PawnPush(Color c, Square sq) {
-    if (c == White) return (1ULL << (sq + 8));
-    return (1ULL << (sq - 8));
+    return (1ULL << (sq + (c * -2 + 1) * 8));
 }
 
 U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
@@ -519,11 +518,10 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
         (square_rank(sq) == 6 ? (push >> 8) & ~occAll : 0ULL);
     // If we are pinned horizontally we can do no moves but if we are pinned vertically we can only do pawn pushs
     if (pinHV & (1ULL << sq)) return push & pinHV & checkMask;
-    int8_t offset = (c == White) ? -8 : 8;
     U64 attacks = PawnAttacks(sq, c);
     // If we are in check and  the en passant square lies on our attackmask and the en passant piece gives check
     // return the ep mask as a move square
-    if (checkMask != 18446744073709551615ULL && ep != NO_SQ && attacks & (1ULL << ep) && checkMask & (1ULL << (ep + offset))) return (attacks & (1ULL << ep));
+    if (checkMask != 18446744073709551615ULL && ep != NO_SQ && attacks & (1ULL << ep) && checkMask & (1ULL << (ep - (c * -2 + 1) * 8))) return (attacks & (1ULL << ep));
     // If we are in check we can do all moves that are on the checkmask
     if (checkMask != 18446744073709551615ULL) return ((attacks & enemy) | push) & checkMask;
 
@@ -537,12 +535,12 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
         Piece theirPawn = c == White ? BlackPawn : WhitePawn;
         Square kSQ = KingSQ(c);
         removePiece(ourPawn, sq);
-        removePiece(theirPawn, Square((int)ep + offset));
+        removePiece(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
         placePiece(ourPawn, ep);
         if (!((RookAttacks(kSQ, All()) & (Rooks(~c) | Queens(~c))))) moves |= (1ULL << ep);
         // if (!isSquareAttacked(~c, kSQ)) moves |= (1ULL << ep);
         placePiece(ourPawn, sq);
-        placePiece(theirPawn, Square((int)ep + offset));
+        placePiece(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
         removePiece(ourPawn, ep);
     }
     return moves;
@@ -816,14 +814,12 @@ void Board::makeMove(Move& move) {
     else if (move.piece == PAWN) {
         halfMoveClock = 0;
         if (ep) {
-            int8_t offset = sideToMove == White ? -8 : 8;
-            removePiece(makePiece(PAWN, ~sideToMove), Square(to + offset));
+            removePiece(makePiece(PAWN, ~sideToMove), Square(to - (sideToMove * -2 + 1) * 8));
         }
         else if (std::abs(from - to) == 16) {
-            int8_t offset = sideToMove == White ? -8 : 8;
-            U64 epMask = PawnAttacks(Square(to + offset), sideToMove);
+            U64 epMask = PawnAttacks(Square(to - (sideToMove * -2 + 1) * 8), sideToMove);
             if (epMask & Pawns(~sideToMove)) {
-                enPassantSquare = Square(to + offset);
+                enPassantSquare = Square(to - (sideToMove * -2 + 1) * 8);
             }
         }
     }
