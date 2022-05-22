@@ -27,6 +27,10 @@ int evaluation(Board& board) {
 	phase += wbishop + bbishop;
 	phase += (wrook + brook) * 2;
 	phase += (wqueen + bqueen) * 4;
+	if (phase == 0 && wpawns-bpawns == 0) return 0;
+	if (phase == 1 && (wknight || bknight)) return 0;
+	if (phase == 1 && (wbishop || bbishop)) return 0;
+	if (phase == 2 && wbishop == 1 && bbishop == 1 && get_square_color(bsf(wbishop)) != get_square_color(bsf(bbishop))) return 0;
 
 	eval_mg += (wpawns - bpawns)  * piece_values[MG][PAWN]
 		    + (wknight - bknight) * piece_values[MG][KNIGHT]

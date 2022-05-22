@@ -28,3 +28,5 @@ uint8_t diagonal_of(Square sq);
 uint8_t anti_diagonal_of(Square sq);
 
 uint8_t manhatten_distance(Square sq1, Square sq2);
+
+bool get_square_color(Square square);
