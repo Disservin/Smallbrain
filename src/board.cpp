@@ -831,7 +831,7 @@ void Board::makeMove(Move& move) {
     if (capture != None) {
         halfMoveClock = 0;
         removePiece(capture, to);
-        if (piece_type(capture) == ROOK) {
+        if (capture % 6 == ROOK) {
             if (to == SQ_A1) {
                 castlingRights &= ~wq;
             }
@@ -895,24 +895,25 @@ void Board::unmakeMove(Move& move) {
     else if (capture != None) {
         placePiece(capture, to);
     }
+    else {
+        if (move.piece == KING) {
+            if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
+                removePiece(WhiteRook, SQ_F1);
+                placePiece(WhiteRook, SQ_H1);
+            }
+            else if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
+                removePiece(WhiteRook, SQ_D1);
+                placePiece(WhiteRook, SQ_A1);
+            }
 
-    if (move.piece == KING) {
-        if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
-            removePiece(WhiteRook, SQ_F1);
-            placePiece(WhiteRook, SQ_H1);
-        }
-        else if (from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
-            removePiece(WhiteRook, SQ_D1);
-            placePiece(WhiteRook, SQ_A1);
-        }
-
-        else if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
-            removePiece(BlackRook, SQ_F8);
-            placePiece(BlackRook, SQ_H8);
-        }
-        else if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
-            removePiece(BlackRook, SQ_D8);
-            placePiece(BlackRook, SQ_A8);
+            else if (from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
+                removePiece(BlackRook, SQ_F8);
+                placePiece(BlackRook, SQ_H8);
+            }
+            else if (from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
+                removePiece(BlackRook, SQ_D8);
+                placePiece(BlackRook, SQ_A8);
+            }
         }
     }
 }
