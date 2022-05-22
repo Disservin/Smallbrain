@@ -30,8 +30,7 @@ int evaluation(Board& board) {
 	if (phase == 0 && wpawns == 0 && bpawns == 0) return 0;
 	if (phase == 1 && (wknight || bknight)) return 0;
 	if (phase == 1 && (wbishop || bbishop)) return 0;
-	if (phase == 2 && wbishop == 1 && bbishop == 1 && get_square_color(bsf(board.Bitboards[WhiteBishop])) == get_square_color(bsf(board.Bitboards[BlackBishop]))) return 0;
-
+	
 	eval_mg += (wpawns - bpawns)  * piece_values[MG][PAWN]
 		    + (wknight - bknight) * piece_values[MG][KNIGHT]
 		    + (wbishop - bbishop) * piece_values[MG][BISHOP]
