@@ -7,7 +7,7 @@
 #include "evaluation.h"
 
 #include <signal.h>
-
+#include <math.h> 
 
 std::atomic<bool> stopped;
 ThreadManager thread;
@@ -85,7 +85,9 @@ int main(int argc, char** argv) {
         std::cout << "Error: Could not allocate memory for TT\n";
         exit(1);
     }
-
+    for (int i = 0; i < 256; i++){
+        reductions[i] = log(i) + 1;
+    }
     while (true) {
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
