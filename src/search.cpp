@@ -313,8 +313,11 @@ int Search::aspiration_search(int player, int depth, int prev_eval) {
         result = absearch(depth, alpha, beta, player, ply, false);
     }
     // In case the result is outside the bounds we have to do a research
-    if (result <= alpha || result >= beta) {
-        return absearch(depth, -VALUE_INFINITE, VALUE_INFINITE, player, ply, false);
+    if (result <= alpha) {
+        return absearch(depth, -VALUE_INFINITE, beta, player, ply, false);
+    }
+    if (result >= beta) {
+        return absearch(depth, alpha, VALUE_INFINITE, player, ply, false);
     }
     return result;
 }
