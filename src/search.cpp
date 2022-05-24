@@ -552,17 +552,19 @@ std::string benchmarkfens[50] = {
 };
 
 int Search::start_bench() {
-    int result = 0;
-    Color color = board.sideToMove;
-    int player = color == White ? 1 : -1;
     U64 totalNodes = 0;
     auto t1 = std::chrono::high_resolution_clock::now();
     for (int positions = 0; positions < 50; positions++) {
         board.applyFen(benchmarkfens[positions]);
-        std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
-        stopped = false;
+        Color color = board.sideToMove;
+        int player = color == White ? 1 : -1;
         seldepth = 0;
         nodes = 0;
+        int result = 0;
+        stopped = false;
+
+        std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
+        
         t0 = std::chrono::high_resolution_clock::now();
         for (int depth = 1; depth <= 7; depth++) {
             searchDepth = depth;
