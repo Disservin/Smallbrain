@@ -22,7 +22,7 @@ public:
     uint8_t pv_length[MAX_PLY]{};
     Move pv_table[MAX_PLY][MAX_PLY]{};
     Move pv[MAX_PLY]{};
-    int history_table[2][64][64]{};
+    int history_table[2][6][64][64]{};
     Move killerMoves[2][MAX_PLY + 1]{};
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 

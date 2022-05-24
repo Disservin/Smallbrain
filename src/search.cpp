@@ -280,7 +280,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
                 // update History Table
                 if (!capture) {
-                    history_table[color][move.from][move.to] += depth;
+                    history_table[color][move.piece][move.from][move.to] += depth;
                 }
                 
                 if (score >= beta) {
@@ -401,8 +401,8 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     else if (killerMoves[1][ply] == move) {
         return killerscore2;
     }
-    else if (history_table[board.sideToMove][move.from][move.to]) {
-        return history_table[board.sideToMove][move.from][move.to];
+    else if (history_table[board.sideToMove][move.piece][move.from][move.to]) {
+        return history_table[board.sideToMove][move.piece][move.from][move.to];
     }
     else {
         return 0;
