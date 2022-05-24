@@ -44,7 +44,7 @@ public:
     bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
     void uci_output(int score, int depth, int time);
 };
-
 void sortMoves(Movelist& moves);
+void sortMoves(Movelist& moves, int sorted);
 
 inline bool operator==(Move& m, Move& m2);
