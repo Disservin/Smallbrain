@@ -462,6 +462,41 @@ void sortMoves(Movelist& moves, int sorted){
     std::swap(moves.list[index], moves.list[0 + sorted]);
 }
 
+bool Search::exit_early() {
+    if (stopped) return true;
+    if (nodes & 2047 && searchTime != 0) {
+        auto t1 = std::chrono::high_resolution_clock::now();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+        if (ms >= searchTime) {
+            stopped = true;
+            return true;
+        }
+    }
+    return false;
+}
+
+void Search::uci_output(int score, int depth, int time) {
+    std::cout << "info depth " << signed(depth)
+    << " seldepth " << signed(seldepth);
+    if (score >= VALUE_MATE_IN_PLY){
+        std::cout << " score cp " << "mate " << ((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1);  
+    }
+    else if (score <= VALUE_MATED_IN_PLY) {
+        std::cout << " score cp " << "mate " << -((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1);       
+    }
+    else{
+        std::cout << " score cp " << score;
+    }
+    std::cout << " nodes " << nodes << " nps "
+    << signed((nodes / (time + 1)) * 1000) << " time "
+    << time
+    << " pv " << get_pv() << std::endl; 
+}
+
+inline bool operator==(Move& m, Move& m2) {
+    return m.piece == m2.piece && m.from == m2.from && m.to == m2.to && m.promoted == m2.promoted;
+}
+
 //Benchmarks from Bitgenie
 std::string benchmarkfens[50] = {
     "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
@@ -520,61 +555,27 @@ int Search::start_bench() {
     int result = 0;
     Color color = board.sideToMove;
     int player = color == White ? 1 : -1;
-
+    U64 totalNodes = 0;
     auto t1 = std::chrono::high_resolution_clock::now();
     for (int positions = 0; positions < 50; positions++) {
         board.applyFen(benchmarkfens[positions]);
         std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
         stopped = false;
         seldepth = 0;
+        nodes = 0;
         t0 = std::chrono::high_resolution_clock::now();
         for (int depth = 1; depth <= 7; depth++) {
             searchDepth = depth;
             result = aspiration_search(player, depth, result);
-            if (exit_early()) break;
             auto s2 = std::chrono::high_resolution_clock::now();
             auto ms2 = std::chrono::duration_cast<std::chrono::milliseconds>(s2 - t0).count();
             uci_output(result, depth, ms2);
         }
+        totalNodes += nodes;
     }
 
     auto t2 = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    std::cout << "\n" << nodes << " nodes " << signed((nodes / (ms + 1)) * 1000) << " nps " << std::endl;
+    std::cout << "\n" << totalNodes << " nodes " << signed((totalNodes / (ms + 1)) * 1000) << " nps " << std::endl;
     return 0;
-}
-
-bool Search::exit_early() {
-    if (stopped) return true;
-    if (nodes & 2047 && searchTime != 0) {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-        if (ms >= searchTime) {
-            stopped = true;
-            return true;
-        }
-    }
-    return false;
-}
-
-void Search::uci_output(int score, int depth, int time) {
-    std::cout << "info depth " << signed(depth)
-    << " seldepth " << signed(seldepth);
-    if (score >= VALUE_MATE_IN_PLY){
-        std::cout << " score cp " << "mate " << ((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1);  
-    }
-    else if (score <= VALUE_MATED_IN_PLY) {
-        std::cout << " score cp " << "mate " << -((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1);       
-    }
-    else{
-        std::cout << " score cp " << score;
-    }
-    std::cout << " nodes " << nodes << " nps "
-    << signed((nodes / (time + 1)) * 1000) << " time "
-    << time
-    << " pv " << get_pv() << std::endl; 
-}
-
-inline bool operator==(Move& m, Move& m2) {
-    return m.piece == m2.piece && m.from == m2.from && m.to == m2.to && m.promoted == m2.promoted;
 }
