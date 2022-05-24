@@ -10,6 +10,10 @@ extern std::atomic<bool> stopped;
 extern TEntry* TTable;
 extern U64 TT_SIZE;
 
+struct Stack{
+    Move currentmove{};
+};
+
 class Search {
 public:
     uint64_t nodes{};
@@ -24,6 +28,7 @@ public:
     Move pv[MAX_PLY]{};
     int history_table[2][6][64][64]{};
     Move killerMoves[2][MAX_PLY + 1]{};
+    Stack ss[MAX_PLY+1]{};
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 
     Search(Board brd) {

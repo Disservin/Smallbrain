@@ -149,7 +149,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     int oldAlpha = alpha;
     bool RootNode = ply == 0;
 
-    if (ply >= 1 && board.isRepetition()) return 0;
+    if (ply >= 1 && board.isRepetition() && !(ss[ply-1].currentmove == nullmove)) return 0;
     if (!RootNode){
         if (board.halfMoveClock >= 100) return 0;
         int all = popcount(board.All());
@@ -198,10 +198,11 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     }
 
     // Null move pruning
-    if (board.nonPawnMat(color) && !null && depth >= 3 && !inCheck) {
-        int r = depth > 6 ? 3 : 2;
+    if (board.nonPawnMat(color) && !(ss[ply-1].currentmove == nullmove) && depth >= 3 && !inCheck) {
+        int r = depth > 6 ? 4 : 3;
         board.makeNullMove();
-        int score = -absearch(depth - 1 - r, -beta, -beta + 1, -player, ply + 1, true);
+        ss[ply].currentmove = nullmove;
+        int score = -absearch(depth - r, -beta, -beta + 1, -player, ply + 1, true);
         board.unmakeNullMove();
         if (score >= beta) return beta;
     }
@@ -232,6 +233,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         nodes++;
         madeMoves++;
         board.makeMove(move);
+        ss[ply].currentmove = move;
 
         // late move pruning/movecount pruning
         if (depth <= 3 && !PvNode
