@@ -117,7 +117,7 @@ int pieceSquareScore[2][6][64] = {
     -53, -34, -21, -11, -28, -14, -24, -43
 };
 
-int killerscore1 = 900000;
-int killerscore2 = 800000;
+int killerscore1 = 900'000;
+int killerscore2 = 800'000;
 
 int reductions[256];
