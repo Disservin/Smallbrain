@@ -166,10 +166,10 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     bool PvNode = beta - alpha > 1;
 
     // Check extension
-    if (inCheck && depth <= 0) depth++;
+    if (inCheck) depth++;
 
     // Enter qsearch
-    if (depth <= 0 && !inCheck) return qsearch(15, alpha, beta, player, ply);
+    if (depth <= 0) return qsearch(15, alpha, beta, player, ply);
 
     // Selective depth (heighest depth we have ever reached)
     if (ply > seldepth) seldepth = ply;
