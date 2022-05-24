@@ -199,7 +199,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
     // Null move pruning
     if (board.nonPawnMat(color) && !(ss[ply-1].currentmove == nullmove) && depth >= 3 && !inCheck) {
-        int r = depth > 6 ? 4 : 3;
+        int r = 4 + depth / 6;
         board.makeNullMove();
         ss[ply].currentmove = nullmove;
         int score = -absearch(depth - r, -beta, -beta + 1, -player, ply + 1, true);
