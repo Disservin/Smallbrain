@@ -100,12 +100,11 @@ int main(int argc, char** argv) {
         std::string input;
         std::getline(std::cin, input);
         if (input == "uci") {
-            std::cout << "id name Smallbrain Version 1.0\n" <<
-                "id author Disservin\n" <<
-                "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
-                "option name Threads type spin default 1 min 1 max 1\n" << //Threads
-                "uciok\n" << std::endl;
-
+            std::cout << "id name Smallbrain Version 1.1\n" <<
+                         "id author Disservin\n" <<
+                         "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
+                         "option name Threads type spin default 1 min 1 max 1\n" << //Threads
+                         "uciok\n" << std::endl;
         }
         if (input == "isready") {
             std::cout << "readyok\n" << std::endl;
