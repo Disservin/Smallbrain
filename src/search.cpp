@@ -219,7 +219,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     }
 
     // sort the moves
-    sortMoves(ml);
+    sortMoves(ml, 0);
 
     uint16_t madeMoves = 0;
     int score = 0;
@@ -293,6 +293,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
                 }
             }
         }
+        sortMoves(ml, i + 1);
     }
     // Store position in TT
     store_entry(index, depth, best, oldAlpha, beta, board.hashKey, ply);
@@ -449,6 +450,16 @@ void sortMoves(Movelist& moves){
         }
         moves.list[i+1] = temp;
     }
+}
+
+void sortMoves(Movelist& moves, int sorted){
+    int index = 0 + sorted;
+    for (int i = 1 + sorted; i < moves.size; i++) {
+        if (moves.list[i].value > moves.list[index].value) {
+            index = i;
+        }
+    }
+    std::swap(moves.list[index], moves.list[0 + sorted]);
 }
 
 //Benchmarks from Bitgenie
