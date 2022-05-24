@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <locale>
 
 #include "board.h"
 #include "helper.h"
@@ -104,53 +105,41 @@ void Board::applyFen(std::string fen) {
         full_move_counter = params[5];
     }
     sideToMove = (move_right == "w") ? White : Black;
-    size_t pos = 0;
-    int sq;
-    char letter;
-    std::map<char, int> piece_to_int =
+
+    std::map<char, Piece> piece_to_int =
     {
-    { 'P', 0 },
-    { 'N', 1 },
-    { 'B', 2 },
-    { 'R', 3 },
-    { 'Q', 4 },
-    { 'K', 5 },
-    { 'p', 6 },
-    { 'n', 7 },
-    { 'b', 8 },
-    { 'r', 9 },
-    { 'q', 10 },
-    { 'k', 11 },
+    { 'P', WhitePawn },
+    { 'N', WhiteKnight },
+    { 'B', WhiteBishop },
+    { 'R', WhiteRook },
+    { 'Q', WhiteQueen },
+    { 'K', WhiteKing },
+    { 'p', BlackPawn },
+    { 'n', BlackKnight },
+    { 'b', BlackBishop },
+    { 'r', BlackRook },
+    { 'q', BlackQueen },
+    { 'k', BlackKing },
     };
-    for (int rank = 7; rank >= 0; rank--) {
-        for (int file = 0; file < 8; file++) {
-            sq = rank * 8 + file;
-            letter = position[pos];
-            if (pos >= position.size()) {
-                break;
-            }
-            if (piece_to_int.count(letter)) {
-                int piece = piece_to_int[letter];
-                Bitboards[piece] |= (1ULL << sq);
-                pos++;
-            }
-            if (letter - '0' >= 2 && letter - '0' <= 7) {
-                file += letter - '0' - 1;
-                pos++;
-            }
-            if (letter == '1') {
-                pos++;
-            }
-            if (letter == '8') {
-                rank--;
-                file--;
-                pos++;
-            }
-            if (letter == '/') {
-                file--;
-                pos++;
-            }
+
+    psqt_mg = 0;
+    psqt_eg = 0;
+
+    Square square = Square(56);
+    for (int index = 0; index < (int)position.size(); index++) {
+        char curr = position[index];
+        if (piece_to_int.find(curr) != piece_to_int.end()) {
+            Piece piece = piece_to_int[curr];
+            placePiece(piece, square);
+            square = Square(square + 1);
         }
+        else if (curr == '/') square = Square(square - 16);
+        else if (isdigit(curr)){
+            for (int i = 0; i < (int)curr - '0'; i++) {
+                board[square + i] = None;
+            }
+            square = Square(square + (curr - '0'));
+        } 
     }
 
     castlingRights = 0;
@@ -176,7 +165,7 @@ void Board::applyFen(std::string fen) {
         enPassantSquare = NO_SQ;
     }
     else {
-        letter = en_passant[0];
+        char letter = en_passant[0];
         int file = letter - 96;
         int rank = en_passant[1] - 48;
         enPassantSquare = Square((rank - 1) * 8 + file - 1);
@@ -186,32 +175,6 @@ void Board::applyFen(std::string fen) {
 
     // full_move_counter actually half moves
     fullMoveNumber = std::stoi(full_move_counter) * 2;
-
-    for (int sq = 0; sq < 64; sq++) {
-        if (pieceAtBB(Square(sq)) != None) {
-            board[sq] = pieceAtBB(Square(sq));
-        }
-        else {
-            board[sq] = None;
-        }
-    }
-
-    U64 pieces_white = Us(White);
-    U64 pieces_black = Us(Black);
-    psqt_mg = 0;
-    psqt_eg = 0;
-    while (pieces_white) {
-        Square square = poplsb(pieces_white);
-        Piece piece = pieceAtB(square);
-        psqt_mg += pieceSquareScore[MG][piece%6][square^56];
-        psqt_eg += pieceSquareScore[EG][piece%6][square^56];
-    }
-    while (pieces_black) {
-        Square square = poplsb(pieces_black);
-        Piece piece = pieceAtB(square);
-        psqt_mg -= pieceSquareScore[MG][piece%6][square];
-        psqt_eg -= pieceSquareScore[EG][piece%6][square];
-    }
 
     prevStates.size = 0;
     hashKey = zobristHash();
