@@ -379,17 +379,20 @@ int Search::mmlva(Move& move) {
 }
 
 int Search::score_move(Move& move, int ply, bool ttMove) {
-    if (move == pv_table[0][ply]) {
+    if (move == pv[ply]) {
         return 2147483647;
     }
     else if (ttMove && move == TTable[board.hashKey % TT_SIZE].move) {
         return 2147483647 - 1;
     }
     else if (move.promoted) {
-        return 2147483647 - 2;
+        return 2147483647 - 3;
     }
     else if (board.pieceAtB(move.to) != None) {
         return mmlva(move) * 1000;
+    }
+    else if (move == pv_table[0][ply]) {
+        return 1000000;
     }
     else if (killerMoves[0][ply] == move) {
         return killerscore1;
@@ -408,6 +411,7 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
 std::string Search::get_pv() {
     std::string line = "";
     for (int i = 0; i < pv_length[0]; i++) {
+        pv[i] = pv_table[0][i];
         line += board.printMove(pv_table[0][i]);
         line += " ";
     }
