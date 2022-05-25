@@ -228,6 +228,11 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
     for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
+
+        if (RootNode && elapsed() > 3000 && !stopped) {
+            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+        }
+        
         bool capture = board.pieceAtB(move.to) != None;
 
         nodes++;
@@ -469,9 +474,7 @@ void sortMoves(Movelist& moves, int sorted){
 bool Search::exit_early() {
     if (stopped) return true;
     if (nodes & 2047 && searchTime != 0) {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-        if (ms >= searchTime) {
+        if (elapsed() >= searchTime) {
             stopped = true;
             return true;
         }
@@ -495,6 +498,11 @@ void Search::uci_output(int score, int depth, int time) {
     << signed((nodes / (time + 1)) * 1000) << " time "
     << time
     << " pv " << get_pv() << std::endl; 
+}
+
+long long Search::elapsed(){
+    auto t1 = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 }
 
 inline bool operator==(Move& m, Move& m2) {

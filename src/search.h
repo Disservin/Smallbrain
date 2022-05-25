@@ -49,6 +49,7 @@ public:
     std::string get_pv();
     bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
     void uci_output(int score, int depth, int time);
+    long long elapsed();
 };
 void sortMoves(Movelist& moves);
 void sortMoves(Movelist& moves, int sorted);
