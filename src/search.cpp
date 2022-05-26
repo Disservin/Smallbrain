@@ -305,7 +305,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
                         killerMoves[1][ply] = killerMoves[0][ply];
                         killerMoves[0][ply] = move;
                     }
-                    return score;
+                    break;
                 }
             }
         }
