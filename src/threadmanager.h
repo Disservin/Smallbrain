@@ -10,7 +10,7 @@ extern Search searcher_class;
 
 class ThreadManager {
 public:
-	void begin(int depth, bool bench = false, int64_t time = 0);
+	void begin(int depth, int64_t time = 0);
 	void stop();
 	bool is_searching();
 private:

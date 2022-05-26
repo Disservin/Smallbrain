@@ -13,8 +13,8 @@ ifeq ($(build), release)
 	CFLAGS = -static-libgcc -static-libstdc++ -static
 endif
 
-smallbrain: uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o
-	g++ uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o $(CFLAGS) -o smallbrain -lpthread 
+smallbrain: uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o benchmark.o
+	g++ uci.o search.o board.o threadmanager.o evaluation.o helper.o psqt.o benchmark.o $(CFLAGS) -o smallbrain -lpthread 
 
 uci.o: uci.cpp uci.h
 	g++ -c -flto -O3 $(TARGET) -std=c++20 -static -Wall uci.cpp 
@@ -36,5 +36,8 @@ helper.o: helper.cpp helper.h
 
 psqt.o: psqt.cpp psqt.h
 	g++ -c -flto -O3 $(TARGET) -std=c++20 -static -Wall psqt.cpp 
+
+benchmark.o: benchmark.cpp benchmark.h
+	g++ -c -flto -O3 $(TARGET) -std=c++20 -static -Wall benchmark.cpp
 clean:
 	rm *.o *.exe

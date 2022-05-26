@@ -5,6 +5,7 @@
 #include "uci.h"
 #include "tt.h"
 #include "evaluation.h"
+#include "benchmark.h"
 
 #include <signal.h>
 #include <math.h> 
@@ -31,9 +32,8 @@ int main(int argc, char** argv) {
     while (true) {
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
-                Search searcher = Search(board);
-                std::thread threads = std::thread(&Search::iterative_deepening, searcher, 5, true, 0);
-                threads.join();
+                std::thread t1 (start_bench);
+                t1.join();
                 return 0;
             }
         }
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
             if (searchTime >= timegiven) {
                 searchTime = std::clamp(searchTime, minimumTime, timegiven / 20);
             }
-            thread.begin(depth, false, searchTime);
+            thread.begin(depth, searchTime);
         }
         if (input.find("setoption") != std::string::npos) {
             std::vector<std::string> tokens = split_input(input);

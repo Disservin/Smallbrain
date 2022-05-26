@@ -40,8 +40,7 @@ public:
     int qsearch(int depth, int alpha, int beta, int player, int ply);
     int absearch(int depth, int alpha, int beta, int player, int ply, bool null);
     int aspiration_search(int player, int depth, int prev_eval);
-    int iterative_deepening(int depth, bool bench, long long time);
-    int start_bench();
+    int iterative_deepening(int depth, long long time);
     bool exit_early();
     int mmlva(Move& move);
     int score_move(Move& move, int ply, bool ttMove);
