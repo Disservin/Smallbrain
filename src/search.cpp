@@ -377,6 +377,9 @@ int Search::iterative_deepening(int search_depth, Time time) {
             return 0;
         }
 
+        if (rootSize == 1) {
+            searchTime = std::min(50LL, searchTime);
+        } 
         // Update the previous best move and print information
         prev_bestmove = pv_table[0][0];
         auto ms = elapsed();
