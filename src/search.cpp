@@ -298,10 +298,6 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
                 if (!capture) {
                     history_table[color][move.piece][move.from][move.to] += depth;
                 }
-                for (int j = i -1; j >= 0; j--) {
-                    if (board.pieceAtB(ml.list[j].to) == None) 
-                        history_table[color][ml.list[j].piece][ml.list[j].from][ml.list[j].to] -= depth;
-                }
                 
                 if (score >= beta) {
                     // update Killer Moves
@@ -313,6 +309,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
                 }
             }
         }
+
         sortMoves(ml, i + 1);
     }
     // Store position in TT
