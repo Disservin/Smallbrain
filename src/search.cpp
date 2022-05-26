@@ -296,7 +296,8 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
                 // update History Table
                 if (!capture) {
-                    history_table[color][move.piece][move.from][move.to] += depth;
+                    int bonus = std::clamp(depth * depth, 0, 400);
+                    history_table[color][move.piece][move.from][move.to] += 32 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 512;
                 }
                 
                 if (score >= beta) {
