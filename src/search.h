@@ -5,6 +5,7 @@
 
 #include "board.h"
 #include "tt.h"
+#include "timemanager.h"
 
 extern std::atomic<bool> stopped;
 extern TEntry* TTable;
@@ -21,6 +22,7 @@ public:
     Move bestMove{};
     uint16_t startAge{};
     int64_t searchTime{};
+    int64_t maxTime{};
     uint8_t seldepth{};
     uint8_t pv_length[MAX_PLY]{};
     Move pv_table[MAX_PLY][MAX_PLY]{};
@@ -28,6 +30,7 @@ public:
     int history_table[2][6][64][64]{};
     Move killerMoves[2][MAX_PLY + 1]{};
     Stack ss[MAX_PLY+1]{};
+    int rootSize{};
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 
     Search(Board brd) {
@@ -40,7 +43,7 @@ public:
     int qsearch(int depth, int alpha, int beta, int player, int ply);
     int absearch(int depth, int alpha, int beta, int player, int ply, bool null);
     int aspiration_search(int player, int depth, int prev_eval);
-    int iterative_deepening(int depth, long long time);
+    int iterative_deepening(int depth, Time time);
     bool exit_early();
     int mmlva(Move& move);
     int score_move(Move& move, int ply, bool ttMove);

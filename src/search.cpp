@@ -219,6 +219,8 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         ml.list[i].value = score_move(ml.list[i], ply, ttMove);
     }
 
+    if (RootNode) rootSize = ml.size;
+
     // sort the moves
     sortMoves(ml, 0);
 
@@ -345,14 +347,15 @@ int Search::aspiration_search(int player, int depth, int prev_eval) {
     return result;
 }
 
-int Search::iterative_deepening(int search_depth, long long time) {
+int Search::iterative_deepening(int search_depth, Time time) {
     int result = 0;
     int player = board.sideToMove == White ? 1 : -1;
     seldepth = 0;
     startAge = board.fullMoveNumber;
     Move prev_bestmove{};
-    searchTime = time;
-
+    searchTime = time.optimum;
+    maxTime = time.maximum;
+    
     // reuse previous pv information
    if (pv_length[0] > 0) {
         for (int i = 1; i < pv_length[0]; i++) {
@@ -360,11 +363,11 @@ int Search::iterative_deepening(int search_depth, long long time) {
         }
     }
 
+
     t0 = std::chrono::high_resolution_clock::now();
     
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(player, depth, result);
-
         // Can we exit the search?
         if (exit_early()) {
             std::string move = board.printMove(prev_bestmove);
@@ -373,6 +376,7 @@ int Search::iterative_deepening(int search_depth, long long time) {
             stopped = true;
             return 0;
         }
+
         // Update the previous best move and print information
         prev_bestmove = pv_table[0][0];
         auto ms = elapsed();
@@ -485,7 +489,8 @@ void sortMoves(Movelist& moves, int sorted){
 bool Search::exit_early() {
     if (stopped) return true;
     if (nodes & 2047 && searchTime != 0) {
-        if (elapsed() >= searchTime) {
+        auto ms = elapsed();
+        if (ms >= searchTime || ms >= maxTime) {
             stopped = true;
             return true;
         }
