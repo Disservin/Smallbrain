@@ -251,9 +251,18 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         }
 
         // late move reduction
-        if (depth >= 3 && !PvNode && !inCheck && madeMoves > 2 + 2 * RootNode) {
+        if (depth >= 3 && !inCheck && madeMoves > 2 + 2 * PvNode) {
             int rdepth = reductions[madeMoves];
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
+
+            // Decrease reduction for pvnodes
+            if (PvNode)
+                rdepth++;
+            
+            // Increase reduction for quiet moves
+            if (madeMoves > 15 && !capture)
+                rdepth--;
+
             score = -absearch(rdepth, -alpha - 1, -alpha, -player, ply + 1, false);
             doFullSearch = score > alpha;
         }
