@@ -54,5 +54,5 @@ int evaluation(Board& board) {
 
 	phase = 24 - phase;
 	phase = (phase * 256 + (24 / 2)) / 24;
-	return ((eval_mg * (256 - phase)) + (eval_eg * phase)) / 256;
+	return (((eval_mg * (256 - phase)) + (eval_eg * phase)) / 256) * (board.sideToMove * -2 + 1);
 }
