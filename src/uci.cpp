@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
                 mtg = std::stoi(tokens[index + 1]);
             }
 
-            Time t = optimumTime(timegiven, inc, mtg, searcher_class.board.fullMoveNumber);
+            Time t = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
             thread.begin(depth, t);
         }
         if (input.find("setoption") != std::string::npos) {
