@@ -6,6 +6,7 @@
 #include "search.h"
 
 extern std::atomic<bool> stopped;
+extern Search searcher_class;
 
 class ThreadManager {
 public:
