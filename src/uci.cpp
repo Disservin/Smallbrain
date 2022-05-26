@@ -6,6 +6,7 @@
 #include "tt.h"
 #include "evaluation.h"
 #include "benchmark.h"
+#include "timemanager.h"
 
 #include <signal.h>
 #include <math.h> 
@@ -124,13 +125,19 @@ int main(int argc, char** argv) {
             thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = std::stoi(tokens[2]);
-            thread.begin(depth);
+            Time t;
+            t.optimum = 0;
+            t.maximum = 0;
+            thread.begin(depth, t);
         }
         if (input.find("go infinite") != std::string::npos) {
             thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = 120;
-            thread.begin(depth);
+            Time t;
+            t.optimum = 0;
+            t.maximum = 0;
+            thread.begin(depth, t);
         }
         if (input.find("go wtime") != std::string::npos) {
             thread.stop();
@@ -152,19 +159,8 @@ int main(int argc, char** argv) {
                 mtg = std::stoi(tokens[index + 1]);
             }
 
-            int64_t minimumTime = 1; 
-            int64_t searchTime = timegiven / 20;
-            if (mtg > 0) {
-                searchTime = timegiven / mtg;
-            }
-            else {
-                searchTime = timegiven / 20;
-            }
-            searchTime += inc / 2;
-            if (searchTime >= timegiven) {
-                searchTime = std::clamp(searchTime, minimumTime, timegiven / 20);
-            }
-            thread.begin(depth, searchTime);
+            Time t = optimumTime(timegiven, inc, mtg, searcher_class.board.fullMoveNumber);
+            thread.begin(depth, t);
         }
         if (input.find("setoption") != std::string::npos) {
             std::vector<std::string> tokens = split_input(input);

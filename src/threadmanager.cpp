@@ -3,7 +3,7 @@
 #include "threadmanager.h"
 
 
-void ThreadManager::begin(int depth, int64_t time) {
+void ThreadManager::begin(int depth, Time time) {
 	if (is_searching()) {
 		stop();
 	}
