@@ -355,6 +355,7 @@ int Search::iterative_deepening(int search_depth, Time time) {
     Move prev_bestmove{};
     searchTime = time.optimum;
     maxTime = time.maximum;
+    
     // reuse previous pv information
    if (pv_length[0] > 0) {
         for (int i = 1; i < pv_length[0]; i++) {
@@ -362,17 +363,11 @@ int Search::iterative_deepening(int search_depth, Time time) {
         }
     }
 
-    int minscore = VALUE_INFINITE;
-    int maxscore = -VALUE_INFINITE;
 
     t0 = std::chrono::high_resolution_clock::now();
     
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(player, depth, result);
-        if (result > maxscore)
-            maxscore = result;
-        if (result < minscore)
-            minscore = result;
         // Can we exit the search?
         if (exit_early()) {
             std::string move = board.printMove(prev_bestmove);
@@ -382,13 +377,6 @@ int Search::iterative_deepening(int search_depth, Time time) {
             return 0;
         }
 
-        if (rootSize == 1) {
-            searchTime = std::min(50LL, searchTime);
-        }
-
-        if (std::abs(minscore-maxscore) > 250) {
-            searchTime = searchTime * 1.1f;
-        }
         // Update the previous best move and print information
         prev_bestmove = pv_table[0][0];
         auto ms = elapsed();
