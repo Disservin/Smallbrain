@@ -124,13 +124,13 @@ int main(int argc, char** argv) {
             thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = std::stoi(tokens[2]);
-            thread.begin(board, depth);
+            thread.begin(depth);
         }
         if (input.find("go infinite") != std::string::npos) {
             thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = 120;
-            thread.begin(board, depth);
+            thread.begin(depth);
         }
         if (input.find("go wtime") != std::string::npos) {
             thread.stop();
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
             if (searchTime >= timegiven) {
                 searchTime = std::clamp(searchTime, minimumTime, timegiven / 20);
             }
-            thread.begin(board, depth, false, searchTime);
+            thread.begin(depth, false, searchTime);
         }
         if (input.find("setoption") != std::string::npos) {
             std::vector<std::string> tokens = split_input(input);

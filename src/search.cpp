@@ -349,6 +349,7 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
     t0 = std::chrono::high_resolution_clock::now();
     Move prev_bestmove{};
     searchTime = time;
+
     if (bench) {
         start_bench();
         return 0;
@@ -358,8 +359,6 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
     seldepth = 0;
     startAge = board.fullMoveNumber;
     for (int depth = 1; depth <= search_depth; depth++) {
-        searchDepth = depth;
-
         result = aspiration_search(player, depth, result);
 
         // Can we exit the search?
@@ -587,7 +586,6 @@ int Search::start_bench() {
         
         t0 = std::chrono::high_resolution_clock::now();
         for (int depth = 1; depth <= 7; depth++) {
-            searchDepth = depth;
             result = aspiration_search(player, depth, result);
             auto s2 = std::chrono::high_resolution_clock::now();
             auto ms2 = std::chrono::duration_cast<std::chrono::milliseconds>(s2 - t0).count();

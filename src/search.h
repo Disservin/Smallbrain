@@ -20,7 +20,6 @@ public:
     Board board{};
     Move bestMove{};
     uint16_t startAge{};
-    uint8_t searchDepth{};
     int64_t searchTime{};
     uint8_t seldepth{};
     uint8_t pv_length[MAX_PLY]{};
