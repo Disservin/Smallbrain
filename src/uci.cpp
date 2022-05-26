@@ -13,71 +13,11 @@ std::atomic<bool> stopped;
 ThreadManager thread;
 U64 TT_SIZE = 131071;
 TEntry* TTable{};
-
-void signal_callback_handler(int signum) {
-    thread.stop();
-    free(TTable);
-    exit(signum);
-}
-
-Move convert_uci_to_Move(std::string input, Board& board) {
-    Move move;
-    if (input.length() == 4) {
-        std::string from = input.substr(0, 2);
-        std::string to = input.substr(2);
-        int from_index;
-        int to_index;
-        char letter;
-        letter = from[0];
-        int file = letter - 96;
-        int rank = from[1] - 48;
-        from_index = (rank - 1) * 8 + file - 1;
-        Square source = Square(from_index);
-        letter = to[0];
-        file = letter - 96;
-        rank = to[1] - 48;
-        to_index = (rank - 1) * 8 + file - 1;
-        Square target = Square(to_index);
-        PieceType piece = board.piece_type(board.pieceAtBB(source));
-        return Move(piece, source, target, false);
-    }
-    if (input.length() == 5) {
-        std::string from = input.substr(0, 2);
-        std::string to = input.substr(2, 2);
-        int from_index;
-        int to_index;
-        char letter;
-        letter = from[0];
-        int file = letter - 96;
-        int rank = from[1] - 48;
-        from_index = (rank - 1) * 8 + file - 1;
-
-        Square source = Square(from_index);
-        letter = to[0];
-        file = letter - 96;
-        rank = to[1] - 48;
-        to_index = (rank - 1) * 8 + file - 1;
-        Square target = Square(to_index);
-        std::map<char, int> piece_to_int =
-        {
-        { 'n', 1 },
-        { 'b', 2 },
-        { 'r', 3 },
-        { 'q', 4 }
-        };
-        char prom = input.at(4);
-        PieceType piece = PieceType(piece_to_int[prom]);
-        return Move(piece, source, target, true);
-    }
-    else {
-        std::cout << "FALSE INPUT" << std::endl;
-        return Move(NONETYPE, NO_SQ, NO_SQ, false);
-    }
-}
+Board board = Board();
+Search searcher_class = Search(board);
 
 int main(int argc, char** argv) {
-    Board board = Board();
-    board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     stopped = false;
     signal(SIGINT, signal_callback_handler);
     TEntry* oldbuffer;
@@ -91,8 +31,8 @@ int main(int argc, char** argv) {
     while (true) {
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
-                Search searcher_class = Search(board);
-                std::thread threads = std::thread(&Search::iterative_deepening, searcher_class, 5, true, 0);
+                Search searcher = Search(board);
+                std::thread threads = std::thread(&Search::iterative_deepening, searcher, 5, true, 0);
                 threads.join();
                 return 0;
             }
@@ -110,7 +50,7 @@ int main(int argc, char** argv) {
             std::cout << "readyok\n" << std::endl;
         }
         if (input == "ucinewgame") {
-            board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         }
         if (input == "quit") {
             thread.stop();
@@ -120,8 +60,8 @@ int main(int argc, char** argv) {
             thread.stop();
         }
         if (input == "print") {
-            board.print();
-            std::cout << board.getFen() << std::endl;
+            searcher_class.board.print();
+            std::cout << searcher_class.board.getFen() << std::endl;
         }
         if (input.find("setoption name Hash value") != std::string::npos) {
             std::size_t start_index = input.find("value");
@@ -137,47 +77,45 @@ int main(int argc, char** argv) {
             TT_SIZE = elements;
         }
         if (input == "moves") {
-            Movelist ml = board.legalmoves();
+            Movelist ml = searcher_class.board.legalmoves();
             for (int i = 0; i < ml.size; i++) {
-                std::cout << board.printMove(ml.list[i]) << std::endl;
+                std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
             }
         }
         if (input == "rep") {
-            std::cout << board.isRepetition(3) << std::endl;
+            std::cout << searcher_class.board.isRepetition(3) << std::endl;
         }
         if (input == "eval") {
-            std::cout << evaluation(board) << std::endl;
+            std::cout << evaluation(searcher_class.board) << std::endl;
         }
         if (input.find("position") != std::string::npos) {
             std::vector<std::string> tokens = split_input(input);
-            board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
             if (tokens[1] == "fen") {
                 std::size_t start_index = input.find("fen");
                 std::string fen = input.substr(start_index + 4);
-                board.applyFen(fen);
+                searcher_class.board.applyFen(fen);
             }
             if (input.find("moves") != std::string::npos) {
                 std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();
                 index++;
 
                 for (; index < tokens.size(); index++) {
-                    Move move = convert_uci_to_Move(tokens[index], board);
-                    board.makeMove(move);
-
+                    Move move = convert_uci_to_Move(tokens[index]);
+                    std::cout << searcher_class.board.printMove(move) << std::endl;
+                    searcher_class.board.makeMove(move);
                 }
             }
         }
         if (input.find("go perft") != std::string::npos) {
             std::vector<std::string> tokens = split_input(input);
             int depth = std::stoi(tokens[2]);
-            Search searcher_class = Search(board);
             std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
             threads.join();
             return 0;
         }
         if (input.find("perft") != std::string::npos) {
-            Search searcher_class = Search(board);
             std::thread threads = std::thread(&Search::testAllPos, searcher_class);
             threads.join();
             return 0;
@@ -199,11 +137,11 @@ int main(int argc, char** argv) {
             std::vector<std::string> tokens = split_input(input);
             int depth = 120;
             // go wtime 100 btime 100 winc 100 binc 100
-            int64_t timegiven = board.sideToMove == White ? std::stoi(tokens[2]) : std::stoi(tokens[4]);
+            int64_t timegiven = searcher_class.board.sideToMove == White ? std::stoi(tokens[2]) : std::stoi(tokens[4]);
             int64_t inc = 0;
             int64_t mtg = 0;
             if (input.find("winc") != std::string::npos && tokens.size() > 4) {
-                std::string inc_str = board.sideToMove == White ? "winc" : "binc";
+                std::string inc_str = searcher_class.board.sideToMove == White ? "winc" : "binc";
                 auto it = find(tokens.begin(), tokens.end(), inc_str);
                 int index = it - tokens.begin();
                 inc = std::stoi(tokens[index + 1]);
@@ -267,5 +205,66 @@ int main(int argc, char** argv) {
                 killerscore2 = std::stoi(tokens[4]);
             }
         }
+    }
+}
+
+void signal_callback_handler(int signum) {
+    thread.stop();
+    free(TTable);
+    exit(signum);
+}
+
+Move convert_uci_to_Move(std::string input) {
+    Move move;
+    if (input.length() == 4) {
+        std::string from = input.substr(0, 2);
+        std::string to = input.substr(2);
+        int from_index;
+        int to_index;
+        char letter;
+        letter = from[0];
+        int file = letter - 96;
+        int rank = from[1] - 48;
+        from_index = (rank - 1) * 8 + file - 1;
+        Square source = Square(from_index);
+        letter = to[0];
+        file = letter - 96;
+        rank = to[1] - 48;
+        to_index = (rank - 1) * 8 + file - 1;
+        Square target = Square(to_index);
+        PieceType piece = searcher_class.board.piece_type(searcher_class.board.pieceAtBB(source));
+        return Move(piece, source, target, false);
+    }
+    if (input.length() == 5) {
+        std::string from = input.substr(0, 2);
+        std::string to = input.substr(2, 2);
+        int from_index;
+        int to_index;
+        char letter;
+        letter = from[0];
+        int file = letter - 96;
+        int rank = from[1] - 48;
+        from_index = (rank - 1) * 8 + file - 1;
+
+        Square source = Square(from_index);
+        letter = to[0];
+        file = letter - 96;
+        rank = to[1] - 48;
+        to_index = (rank - 1) * 8 + file - 1;
+        Square target = Square(to_index);
+        std::map<char, int> piece_to_int =
+        {
+        { 'n', 1 },
+        { 'b', 2 },
+        { 'r', 3 },
+        { 'q', 4 }
+        };
+        char prom = input.at(4);
+        PieceType piece = PieceType(piece_to_int[prom]);
+        return Move(piece, source, target, true);
+    }
+    else {
+        std::cout << "FALSE INPUT" << std::endl;
+        return Move(NONETYPE, NO_SQ, NO_SQ, false);
     }
 }

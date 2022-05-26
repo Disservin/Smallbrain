@@ -817,6 +817,7 @@ void Board::makeMove(Move& move) {
     }
     sideToMove = ~sideToMove;
     hashKey = zobristHash();
+
 }
 
 void Board::unmakeMove(Move& move) {

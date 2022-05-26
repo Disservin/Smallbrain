@@ -346,7 +346,7 @@ int Search::aspiration_search(int player, int depth, int prev_eval) {
 int Search::iterative_deepening(int search_depth, bool bench, long long time) {
     int result = 0;
     Color color = board.sideToMove;
-    auto t1 = std::chrono::high_resolution_clock::now();
+    t0 = std::chrono::high_resolution_clock::now();
     Move prev_bestmove{};
     searchTime = time;
     if (bench) {
@@ -372,8 +372,7 @@ int Search::iterative_deepening(int search_depth, bool bench, long long time) {
         }
         // Update the previous best move and print information
         prev_bestmove = pv_table[0][0];
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        auto ms = elapsed();
         uci_output(result, depth, ms);
     }
     std::cout << "bestmove " << board.printMove(prev_bestmove) << std::endl;
