@@ -298,6 +298,10 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
                 if (!capture) {
                     history_table[color][move.piece][move.from][move.to] += depth;
                 }
+                for (int j = i -1; j >= 0; j--) {
+                    if (board.pieceAtB(ml.list[j].to) == None) 
+                        history_table[color][ml.list[j].piece][ml.list[j].from][ml.list[j].to] -= depth;
+                }
                 
                 if (score >= beta) {
                     // update Killer Moves
@@ -345,14 +349,21 @@ int Search::aspiration_search(int player, int depth, int prev_eval) {
 
 int Search::iterative_deepening(int search_depth, long long time) {
     int result = 0;
-    Color color = board.sideToMove;
-    t0 = std::chrono::high_resolution_clock::now();
+    int player = board.sideToMove == White ? 1 : -1;
+    seldepth = 0;
+    startAge = board.fullMoveNumber;
     Move prev_bestmove{};
     searchTime = time;
 
-    int player = color == White ? 1 : -1;
-    seldepth = 0;
-    startAge = board.fullMoveNumber;
+    // reuse previous pv information
+   if (pv_length[0] > 0) {
+        for (int i = 1; i < pv_length[0]; i++) {
+            pv[i-1] = pv[i];
+        }
+    }
+
+    t0 = std::chrono::high_resolution_clock::now();
+    
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(player, depth, result);
 
