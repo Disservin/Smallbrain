@@ -97,10 +97,10 @@ U64 Search::perft(int depth, int max) {
     return nodesIt;
 }
 
-int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
+int Search::qsearch(int depth, int alpha, int beta, int ply) {
     if (exit_early()) return 0;
-    int stand_pat = evaluation(board) * player;
-    Color color = player == 1 ? White : Black;
+    int stand_pat = evaluation(board);
+    Color color = board.sideToMove;
 
     if (ply > MAX_PLY - 1) return stand_pat;
 
@@ -129,7 +129,7 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
 
         nodes++;
         board.makeMove(move);
-        int score = -qsearch(depth - 1, -beta, -alpha, -player, ply + 1);
+        int score = -qsearch(depth - 1, -beta, -alpha, ply + 1);
         board.unmakeMove(move);
         if (score >= beta) return beta;
         if (score > alpha) {
@@ -139,16 +139,16 @@ int Search::qsearch(int depth, int alpha, int beta, int player, int ply) {
     return alpha;
 }
 
-int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool null) {
+int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
     if (exit_early()) return 0;
     if (ply > MAX_PLY - 1) return evaluation(board);
 
     int best = -VALUE_INFINITE;
-    Color color = player == 1 ? White : Black;
     pv_length[ply] = ply;
     int oldAlpha = alpha;
     bool RootNode = ply == 0;
-
+    Color color = board.sideToMove;
+    
     if (ply >= 1 && board.isRepetition() && !(ss[ply-1].currentmove == nullmove)) return 0;
     if (!RootNode){
         if (board.halfMoveClock >= 100) return 0;
@@ -169,7 +169,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     if (inCheck) depth++;
 
     // Enter qsearch
-    if (depth <= 0) return qsearch(15, alpha, beta, player, ply);
+    if (depth <= 0) return qsearch(15, alpha, beta, ply);
 
     // Selective depth (heighest depth we have ever reached)
     if (ply > seldepth) seldepth = ply;
@@ -193,7 +193,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
     // Razor-like pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
-        int staticEval = evaluation(board) * player;
+        int staticEval = evaluation(board);
         if (staticEval - 120 * depth >= beta) return beta;
     }
 
@@ -202,7 +202,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
         int r = 4 + depth / 6;
         board.makeNullMove();
         ss[ply].currentmove = nullmove;
-        int score = -absearch(depth - r, -beta, -beta + 1, -player, ply + 1, true);
+        int score = -absearch(depth - r, -beta, -beta + 1, ply + 1, true);
         board.unmakeNullMove();
         if (score >= beta) return beta;
     }
@@ -265,7 +265,7 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
             if (madeMoves > 15 && !capture)
                 rdepth--;
 
-            score = -absearch(rdepth, -alpha - 1, -alpha, -player, ply + 1, false);
+            score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, false);
             doFullSearch = score > alpha;
         }
         else
@@ -273,12 +273,12 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
 
         // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
-            score = -absearch(depth - 1, -alpha - 1, -alpha, -player, ply + 1, false);
+            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, false);
         }
 
         // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(depth - 1, -beta, -alpha, -player, ply + 1, false);
+            score = -absearch(depth - 1, -beta, -alpha, ply + 1, false);
         }
 
         board.unmakeMove(move);
@@ -320,36 +320,35 @@ int Search::absearch(int depth, int alpha, int beta, int player, int ply, bool n
     return best;
 }
 
-int Search::aspiration_search(int player, int depth, int prev_eval) {
+int Search::aspiration_search(int depth, int prev_eval) {
     int alpha = -VALUE_INFINITE;
     int beta = VALUE_INFINITE;
     int result = 0;
     int ply = 0;
     // Start search with full sized window
     if (depth == 1) {
-        result = absearch(1, -VALUE_INFINITE, VALUE_INFINITE, player, ply, false);
+        result = absearch(1, -VALUE_INFINITE, VALUE_INFINITE, ply, false);
     }
     else {
         // Use previous evaluation as a starting point and search with a smaller window
         alpha = prev_eval - 100;
         beta = prev_eval + 100;
-        result = absearch(depth, alpha, beta, player, ply, false);
+        result = absearch(depth, alpha, beta, ply, false);
     }
     // In case the result is outside the bounds we have to do a research
     while (result <= alpha) {
         alpha -= 50;
-        result = absearch(depth, alpha, beta, player, ply, false);
+        result = absearch(depth, alpha, beta, ply, false);
     }
     while (result >= beta) {
         beta += 50;
-        result = absearch(depth, alpha, beta, player, ply, false);
+        result = absearch(depth, alpha, beta, ply, false);
     }
     return result;
 }
 
 int Search::iterative_deepening(int search_depth, Time time) {
     int result = 0;
-    int player = board.sideToMove == White ? 1 : -1;
     seldepth = 0;
     startAge = board.fullMoveNumber;
     Move prev_bestmove{};
@@ -363,11 +362,10 @@ int Search::iterative_deepening(int search_depth, Time time) {
         }
     }
 
-
     t0 = std::chrono::high_resolution_clock::now();
     
     for (int depth = 1; depth <= search_depth; depth++) {
-        result = aspiration_search(player, depth, result);
+        result = aspiration_search(depth, result);
         // Can we exit the search?
         if (exit_early()) {
             std::string move = board.printMove(prev_bestmove);

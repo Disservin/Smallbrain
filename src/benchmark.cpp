@@ -63,7 +63,6 @@ int start_bench() {
     for (int positions = 0; positions < 50; positions++) {
         searcher.board.applyFen(benchmarkfens[positions]);
         
-        int player = searcher.board.sideToMove == White ? 1 : -1;
         int result = 0;
         searcher.nodes = 0;
 
@@ -71,7 +70,7 @@ int start_bench() {
         
         searcher.t0 = std::chrono::high_resolution_clock::now();
         for (int depth = 1; depth <= 7; depth++) {
-            result = searcher.aspiration_search(player, depth, result);
+            result = searcher.aspiration_search(depth, result);
             auto s2 = std::chrono::high_resolution_clock::now();
             auto ms2 = std::chrono::duration_cast<std::chrono::milliseconds>(s2 - searcher.t0).count();
             searcher.uci_output(result, depth, ms2);
