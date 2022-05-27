@@ -225,6 +225,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
     sortMoves(ml, 0);
 
     uint16_t madeMoves = 0;
+    uint16_t quietMoves = 0;
     int score = 0;
     bool doFullSearch = false;
 
@@ -237,16 +238,19 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         
         bool capture = board.pieceAtB(move.to) != None;
 
+        if (!capture) quietMoves++;
+
         nodes++;
         madeMoves++;
         board.makeMove(move);
+
         ss[ply].currentmove = move;
+        bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
 
         // late move pruning/movecount pruning
         if (depth <= 3 && !PvNode
-            && !inCheck && madeMoves > lmpM[depth]
-            && !(board.isSquareAttacked(color, board.KingSQ(~color)))
-            && !capture
+            && !capture && !inCheck && !givesCheck
+            && quietMoves > lmpM[depth]
             && !move.promoted) {
             board.unmakeMove(move);
             continue;
