@@ -3,7 +3,7 @@
 
 #include "board.h"
 #include "helper.h"
-#include "sliders2.hpp"
+#include "sliders.hpp"
 
 using namespace Chess_Lookup::Fancy;
 
