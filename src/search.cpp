@@ -177,6 +177,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
     U64 index = board.hashKey % TT_SIZE;
     bool ttMove = false;
 
+    int staticEval;
     // Look up in the TT
     if (TTable[index].key == board.hashKey && TTable[index].depth >= depth && !RootNode && !PvNode) {
         if (TTable[index].flag == EXACT) return TTable[index].score;
@@ -187,14 +188,17 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
             beta = std::min(beta, TTable[index].score);
         }
         if (alpha >= beta) return TTable[index].score;
+        staticEval = TTable[index].score;
         // use TT move
         ttMove = true;
     }
+    else {
+        staticEval = evaluation(board);
+    }
 
-    // Razor-like pruning
+    // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
-        int staticEval = evaluation(board);
-        if (staticEval - 120 * depth >= beta) return beta;
+        if (depth < 7 && staticEval - 150 * depth >= beta) return beta;
     }
 
     // Null move pruning
