@@ -139,12 +139,14 @@ int main(int argc, char** argv) {
             t.maximum = 0;
             thread.begin(depth, t);
         }
-        if (input.find("go wtime") != std::string::npos) {
+        if (input.find("wtime") != std::string::npos) {
             thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = 120;
             // go wtime 100 btime 100 winc 100 binc 100
-            int64_t timegiven = searcher_class.board.sideToMove == White ? std::stoi(tokens[2]) : std::stoi(tokens[4]);
+            std::string side = searcher_class.board.sideToMove == White ? "wtime" : "btime";
+            auto indexTime = find(tokens.begin(), tokens.end(), side) - tokens.begin();
+            int64_t timegiven = std::stoi(tokens[indexTime + 1]);
             int64_t inc = 0;
             int64_t mtg = 0;
             if (input.find("winc") != std::string::npos && tokens.size() > 4) {
