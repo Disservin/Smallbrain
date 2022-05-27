@@ -22,7 +22,7 @@ uci.o: uci.cpp uci.h
 search.o: search.cpp search.h
 	g++ -c -flto -O3 $(TARGET) -std=c++20 -static -Wall search.cpp
 
-board.o: board.cpp board.h sliders.hpp
+board.o: board.cpp board.h sliders2.hpp
 	g++ -c -flto -O3 $(TARGET) -std=c++20 -static -Wall board.cpp 
 
 threadmanager.o: threadmanager.cpp threadmanager.h
