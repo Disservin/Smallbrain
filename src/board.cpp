@@ -5,7 +5,7 @@
 #include "helper.h"
 #include "sliders.hpp"
 
-using namespace Chess_Lookup::HyperbolaQsc;
+using namespace Chess_Lookup::Fancy;
 
 void Board::initializeLookupTables() {
     //initialize squares between table
@@ -302,15 +302,15 @@ U64 Board::KnightAttacks(Square sq) {
 }
 
 U64 Board::BishopAttacks(Square sq, U64 occupied) {
-    return bishop_attack(sq, occupied);
+    return GetBishopAttacks(sq, occupied);
 }
 
 U64 Board::RookAttacks(Square sq, U64 occupied) {
-    return rook_attack(sq, occupied);
+    return GetRookAttacks(sq, occupied);
 }
 
 U64 Board::QueenAttacks(Square sq, U64 occupied) {
-    return queen_attack(sq, occupied);
+    return GetQueenAttacks(sq, occupied);
 }
 
 U64 Board::KingAttacks(Square sq) {
