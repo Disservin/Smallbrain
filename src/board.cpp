@@ -473,7 +473,7 @@ U64 Board::PawnPush(Color c, Square sq) {
 U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
     U64 enemy = Enemy(c);
     // If we are pinned diagonally we can only do captures which are on the pin_dg and on the checkmask
-    if (pinD & (1ULL << sq)) return PawnAttacks(sq, c) & pinD & checkMask & enemy;
+    if (pinD & (1ULL << sq)) return PawnAttacks(sq, c) & pinD & checkMask & (enemy | (1ULL << ep));
     // Calculate pawn pushs
     U64 push = PawnPush(c, sq) & ~occAll;
     push |= (c == White) ?
