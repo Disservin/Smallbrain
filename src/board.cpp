@@ -37,33 +37,21 @@ U64 Board::zobristHash() {
     // Piece hashes
     while (wPieces) {
         Square sq = poplsb(wPieces);
-        hash ^= RANDOM_ARRAY[64 * (piece_type(pieceAtB(sq)) * 2 + 1) + sq];
+        hash ^= updateKeyPiece(pieceAtB(sq), sq);
     }
     while (bPieces) {
         Square sq = poplsb(bPieces);
-        hash ^= RANDOM_ARRAY[64 * (piece_type(pieceAtB(sq)) * 2) + sq];
+        hash ^= updateKeyPiece(pieceAtB(sq), sq);
     }
     // Ep hash
     U64 ep_hash = 0ULL;
     if (enPassantSquare != NO_SQ) {
-        ep_hash = RANDOM_ARRAY[772 + square_file(enPassantSquare)];
+        ep_hash = updateKeyEnPassant(enPassantSquare);
     }
     // Turn hash
     U64 turn_hash = sideToMove == White ? RANDOM_ARRAY[780] : 0;
     // Castle hash
-    U64 cast_hash = 0ULL;
-    if (castlingRights & 1) {
-        cast_hash ^= RANDOM_ARRAY[768];
-    }
-    if (castlingRights & 2) {
-        cast_hash ^= RANDOM_ARRAY[768 + 1];
-    }
-    if (castlingRights & 4) {
-        cast_hash ^= RANDOM_ARRAY[768 + 2];
-    }
-    if (castlingRights & 8) {
-        cast_hash ^= RANDOM_ARRAY[768 + 3];
-    }
+    U64 cast_hash = updateKeyCastling();
 
     return hash ^ cast_hash ^ turn_hash ^ ep_hash;
 }
@@ -258,6 +246,7 @@ void Board::print() {
     std::cout << "Halfmoves: " << (int)halfMoveClock << std::endl;
     std::cout << "Fullmoves: " << (int)fullMoveNumber / 2 << std::endl;
     std::cout << "EP: " << (int)enPassantSquare << std::endl;
+    std::cout << "Hash: " << hashKey << std::endl;
 }
 
 Piece Board::makePiece(PieceType type, Color c) {
@@ -359,6 +348,22 @@ void Board::placePiece(Piece piece, Square sq) {
         psqt_mg += pieceSquareScore[MG][piece%6][sq^56];
         psqt_eg += pieceSquareScore[EG][piece%6][sq^56];
     }
+}
+
+U64 Board::updateKeyPiece(Piece piece, Square sq) {
+    return RANDOM_ARRAY[64 * (piece_type(piece) * 2 + ((piece/6) ^ 1)) + sq];
+}
+
+U64 Board::updateKeyEnPassant(Square sq) {
+    return RANDOM_ARRAY[772 + square_file(sq)];
+}
+
+U64 Board::updateKeyCastling() {
+    return castlingKey[castlingRights];
+}
+
+U64 Board::updateKeySideToMove() {
+    return RANDOM_ARRAY[780];
 }
 
 Square Board::KingSQ(Color c) {
@@ -739,28 +744,50 @@ void Board::makeMove(Move& move) {
     fullMoveNumber++;
 
     bool ep = to == enPassantSquare;
+
+    if (enPassantSquare != NO_SQ) hashKey ^= updateKeyEnPassant(enPassantSquare);
     enPassantSquare = NO_SQ;
 
     if (move.piece == KING) {
         if (sideToMove == White && from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
             removePiece(WhiteRook, SQ_H1);
             placePiece(WhiteRook, SQ_F1);
+
+            hashKey ^= updateKeyPiece(WhiteRook, SQ_H1);
+            hashKey ^= updateKeyPiece(WhiteRook, SQ_F1);
         }
         else if (sideToMove == White && from == SQ_E1 && to == SQ_C1 && castlingRights & wq) {
             removePiece(WhiteRook, SQ_A1);
             placePiece(WhiteRook, SQ_D1);
+
+            hashKey ^= updateKeyPiece(WhiteRook, SQ_A1);
+            hashKey ^= updateKeyPiece(WhiteRook, SQ_D1);
         }
         else if (sideToMove == Black && from == SQ_E8 && to == SQ_G8 && castlingRights & bk) {
             removePiece(BlackRook, SQ_H8);
             placePiece(BlackRook, SQ_F8);
+
+            hashKey ^= updateKeyPiece(BlackRook, SQ_H8);
+            hashKey ^= updateKeyPiece(BlackRook, SQ_F8);
         }
         else if (sideToMove == Black && from == SQ_E8 && to == SQ_C8 && castlingRights & bq) {
             removePiece(BlackRook, SQ_A8);
             placePiece(BlackRook, SQ_D8);
+
+            hashKey ^= updateKeyPiece(BlackRook, SQ_A8);
+            hashKey ^= updateKeyPiece(BlackRook, SQ_D8);
         }
-        castlingRights &= sideToMove == White ? ~(wk | wq) : ~(bq | bk);
+        hashKey ^= updateKeyCastling();
+        if (sideToMove == White) {
+            castlingRights &= ~(wk | wq);
+        }
+        else {
+            castlingRights &= ~(bk | bq);
+        }
+        hashKey ^= updateKeyCastling();
     }
     else if (move.piece == ROOK) {
+        hashKey ^= updateKeyCastling();
         if (sideToMove == White && from == SQ_A1 ) {
             castlingRights &= ~wq;
         }
@@ -773,16 +800,19 @@ void Board::makeMove(Move& move) {
         else if (sideToMove == Black && from == SQ_H8) {
             castlingRights &= ~bk;
         }
+        hashKey ^= updateKeyCastling();
     }
     else if (move.piece == PAWN) {
         halfMoveClock = 0;
         if (ep) {
             removePiece(makePiece(PAWN, ~sideToMove), Square(to - (sideToMove * -2 + 1) * 8));
+            hashKey ^= updateKeyPiece(makePiece(PAWN, ~sideToMove), Square(to - (sideToMove * -2 + 1) * 8));
         }
         else if (std::abs(from - to) == 16) {
             U64 epMask = PawnAttacks(Square(to - (sideToMove * -2 + 1) * 8), sideToMove);
             if (epMask & Pawns(~sideToMove)) {
                 enPassantSquare = Square(to - (sideToMove * -2 + 1) * 8);
+                hashKey ^= updateKeyEnPassant(enPassantSquare);
             }
         }
     }
@@ -790,7 +820,9 @@ void Board::makeMove(Move& move) {
     if (capture != None) {
         halfMoveClock = 0;
         removePiece(capture, to);
+        hashKey ^= updateKeyPiece(capture, to);
         if (capture % 6 == ROOK) {
+            hashKey ^= updateKeyCastling();
             if (to == SQ_A1) {
                 castlingRights &= ~wq;
             }
@@ -803,6 +835,7 @@ void Board::makeMove(Move& move) {
             else if (to == SQ_H8) {
                 castlingRights &= ~bk;
             }
+            hashKey ^= updateKeyCastling();
         }
     }
 
@@ -810,13 +843,19 @@ void Board::makeMove(Move& move) {
         halfMoveClock = 0;
         removePiece(makePiece(PAWN, sideToMove), from);
         placePiece(piece, to);
+
+        hashKey ^= updateKeyPiece(makePiece(PAWN, sideToMove), from);
+        hashKey ^= updateKeyPiece(piece, to);
     }
     else {
         removePiece(piece, from);
+        hashKey ^= updateKeyPiece(piece, from);
         placePiece(piece, to);
+        hashKey ^= updateKeyPiece(piece, to);
+
     }
     sideToMove = ~sideToMove;
-    hashKey = zobristHash();
+    hashKey ^= updateKeySideToMove();
 
 }
 
