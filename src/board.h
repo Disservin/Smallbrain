@@ -134,6 +134,12 @@ public:
 	void removePiece(Piece piece, Square sq);
 	void placePiece(Piece piece, Square sq);
 
+	U64 updateKeyPiece(Piece piece, Square sq);
+	U64 updateKeyCastling();
+	U64 updateKeyEnPassant(Square sq);
+	U64 updateKeySideToMove();
+
+
 	// returns the King Square of the specified color
 	Square KingSQ(Color c);
 
