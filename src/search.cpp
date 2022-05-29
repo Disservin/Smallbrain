@@ -420,7 +420,7 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
         return 2147483647 - 1;
     }
     else if (move.promoted) {
-        return 2147483647 - 3;
+        return 2147483647 - 10 + move.piece;
     }
     else if (board.pieceAtB(move.to) != None) {
         return mmlva(move) * 1000;
