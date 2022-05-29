@@ -83,6 +83,12 @@ int main(int argc, char** argv) {
                 std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
             }
         }
+        if (input == "captures") {
+            Movelist ml = searcher_class.board.capturemoves();
+            for (int i = 0; i < ml.size; i++) {
+                std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
+            }
+        }
         if (input == "rep") {
             std::cout << searcher_class.board.isRepetition(3) << std::endl;
         }
@@ -255,7 +261,11 @@ Move convert_uci_to_Move(std::string input) {
         { 'n', 1 },
         { 'b', 2 },
         { 'r', 3 },
-        { 'q', 4 }
+        { 'q', 4 },
+        { 'N', 1 },
+        { 'B', 2 },
+        { 'R', 3 },
+        { 'Q', 4 }
         };
         char prom = input.at(4);
         PieceType piece = PieceType(piece_to_int[prom]);
