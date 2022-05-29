@@ -172,6 +172,7 @@ public:
 
 	// returns a pawn push (only 1 square)
 	U64 PawnPush(Color c, Square sq);
+	U64 PawnPush2(Color c, Square sq, U64 push);
 
 	// all legal moves for each piece
 	U64 LegalPawnMoves(Color c, Square sq, Square ep);

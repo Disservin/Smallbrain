@@ -397,8 +397,8 @@ U64 Board::DoCheckmask(Color c, Square sq) {
     U64 checks = 0ULL;
     U64 pawn_mask = Pawns(~c) & PawnAttacks(sq, c);
     U64 knight_mask = Knights(~c) & KnightAttacks(sq);
-    U64 bishop_mask = (Bishops(~c) | Queens(~c)) & BishopAttacks(sq, Occ) & ~Us(c);
-    U64 rook_mask = (Rooks(~c) | Queens(~c)) & RookAttacks(sq, Occ) & ~Us(c);
+    U64 bishop_mask = (Bishops(~c) | Queens(~c)) & BishopAttacks(sq, Occ);
+    U64 rook_mask = (Rooks(~c) | Queens(~c)) & RookAttacks(sq, Occ);
     doubleCheck = 0;
     if (pawn_mask) {
         checks |= pawn_mask;
@@ -431,24 +431,21 @@ void Board::DoPinMask(Color c, Square sq) {
     U64 them = Enemy(c);
     U64 rook_mask = (Rooks(~c) | Queens(~c)) & RookAttacks(sq, them);
     U64 bishop_mask = (Bishops(~c) | Queens(~c)) & BishopAttacks(sq, them);
-    U64 rook_pin = 0ULL;
-    U64 bishop_pin = 0ULL;
+
     pinD = 0ULL;
     pinHV = 0ULL;
     while (rook_mask) {
         Square index = poplsb(rook_mask);
         U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (popcount(possible_pin & Us(c)) == 1)
-            rook_pin |= possible_pin;
+            pinHV |= possible_pin;
     }
     while (bishop_mask) {
         Square index = poplsb(bishop_mask);
         U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (popcount(possible_pin & Us(c)) == 1)
-            bishop_pin |= possible_pin;
+            pinD |= possible_pin;
     }
-    pinHV = rook_pin;
-    pinD = bishop_pin;
 }
 
 void Board::init(Color c, Square sq) {
@@ -474,6 +471,11 @@ bool Board::isSquareAttacked(Color c, Square sq) {
 U64 Board::PawnPush(Color c, Square sq) {
     return (1ULL << (sq + (c * -2 + 1) * 8));
 }
+U64 Board::PawnPush2(Color c, Square sq, U64 push) {
+    if (c == White && square_rank(sq) == 1) return (push << 8) & ~occAll;
+    if (c == Black && square_rank(sq) == 6) return (push >> 8) & ~occAll;
+    return 0ULL;
+}
 
 U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
     U64 enemy = Enemy(c);
@@ -481,9 +483,7 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
     if (pinD & (1ULL << sq)) return PawnAttacks(sq, c) & pinD & checkMask & (enemy | (1ULL << ep));
     // Calculate pawn pushs
     U64 push = PawnPush(c, sq) & ~occAll;
-    push |= (c == White) ?
-        (square_rank(sq) == 1 ? (push << 8) & ~occAll : 0ULL) :
-        (square_rank(sq) == 6 ? (push >> 8) & ~occAll : 0ULL);
+    push |= PawnPush2(c, sq, push);
     // If we are pinned horizontally we can do no moves but if we are pinned vertically we can only do pawn pushs
     if (pinHV & (1ULL << sq)) return push & pinHV & checkMask;
     U64 attacks = PawnAttacks(sq, c);
@@ -499,14 +499,13 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
     // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant 
     // remove both the pawn that made the push and our pawn that could take in theory and check if that would give check
     if (ep != NO_SQ && square_distance(sq, ep) == 1 && (1ULL << ep) & attacks) {
-        Piece ourPawn = c == White ? WhitePawn : BlackPawn;
-        Piece theirPawn = c == White ? BlackPawn : WhitePawn;
+        Piece ourPawn = makePiece(PAWN, c);
+        Piece theirPawn = makePiece(PAWN, ~c);
         Square kSQ = KingSQ(c);
         removePiece(ourPawn, sq);
         removePiece(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
         placePiece(ourPawn, ep);
         if (!((RookAttacks(kSQ, All()) & (Rooks(~c) | Queens(~c))))) moves |= (1ULL << ep);
-        // if (!isSquareAttacked(~c, kSQ)) moves |= (1ULL << ep);
         placePiece(ourPawn, sq);
         placePiece(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
         removePiece(ourPawn, ep);
@@ -538,7 +537,8 @@ U64 Board::LegalQueenMoves(Color c, Square sq) {
 U64 Board::LegalKingMoves(Color c, Square sq) {
     U64 moves = KingAttacks(sq) & enemyEmptyBB;
     U64 final_moves = 0ULL;
-    Piece k = c == White ? WhiteKing : BlackKing;
+    Piece k = makePiece(KING, c);
+
     removePiece(k, sq);
     while (moves) {
         Square index = poplsb(moves);
@@ -546,38 +546,32 @@ U64 Board::LegalKingMoves(Color c, Square sq) {
         final_moves |= (1ULL << index);
     }
     placePiece(k, sq);
-    U64 Occ = All();
+
     if (checkMask == 18446744073709551615ULL) {
         if (c == White) {
-            U64 WR = Bitboards[WhiteRook];
             if (castlingRights & wk
-                && (WR & (1ULL << SQ_H1))
-                && !(WK_CASTLE_MASK & Occ)
-                && !isSquareAttacked(Black, SQ_F1)
+                && !(WK_CASTLE_MASK & occAll)
+                && final_moves & (1ULL << SQ_F1) //!isSquareAttacked(Black, SQ_F1)
                 && !isSquareAttacked(Black, SQ_G1)) {
                 final_moves |= (1ULL << SQ_G1);
             }
             if (castlingRights & wq
-                && (WR & (1ULL << SQ_A1))
-                && !(WQ_CASTLE_MASK & Occ)
-                && !isSquareAttacked(Black, SQ_D1)
+                && !(WQ_CASTLE_MASK & occAll)
+                && final_moves & (1ULL << SQ_D1) //!isSquareAttacked(Black, SQ_D1)
                 && !isSquareAttacked(Black, SQ_C1)) {
                 final_moves |= (1ULL << SQ_C1);
             }
         }
         else {
-            U64 BR = Bitboards[BlackRook];
             if (castlingRights & bk
-                && (BR & (1ULL << SQ_H8))
-                && !(BK_CASTLE_MASK & Occ)
-                && !isSquareAttacked(White, SQ_F8)
+                && !(BK_CASTLE_MASK & occAll)
+                && final_moves & (1ULL << SQ_F8) //!isSquareAttacked(White, SQ_F8)
                 && !isSquareAttacked(White, SQ_G8)) {
                 final_moves |= (1ULL << SQ_G8);
             }
             if (castlingRights & bq
-                && (BR & (1ULL << SQ_A8))
-                && !(BQ_CASTLE_MASK & Occ)
-                && !isSquareAttacked(White, SQ_D8)
+                && !(BQ_CASTLE_MASK & occAll)
+                && final_moves & (1ULL << SQ_D8)  //!isSquareAttacked(White, SQ_D8)
                 && !isSquareAttacked(White, SQ_C8)) {
                 final_moves |= (1ULL << SQ_C8);
             }
