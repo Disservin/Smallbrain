@@ -1,6 +1,8 @@
 #include "search.h"
 #include "evaluation.h"
 
+#include <cstring>
+
 void Search::perf_Test(int depth, int max) {
     auto t1 = std::chrono::high_resolution_clock::now();
     perft(depth, max);
@@ -236,7 +238,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
     for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
 
-        if (RootNode && elapsed() > 3000 && !stopped) {
+        if (RootNode && elapsed() > 10000 && !stopped) {
             std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
         }
         
@@ -248,6 +250,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         madeMoves++;
         board.makeMove(move);
 
+        U64 nodeCount = nodes;
         ss[ply].currentmove = move;
         bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
 
@@ -291,6 +294,8 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 
         board.unmakeMove(move);
 
+        spentEffort[move.from][move.to] += nodes - nodeCount;
+
         if (score > best) {
             best = score;
 
@@ -320,7 +325,6 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
                 }
             }
         }
-
         sortMoves(ml, i + 1);
     }
     // Store position in TT
@@ -356,13 +360,6 @@ int Search::aspiration_search(int depth, int prev_eval) {
 }
 
 int Search::iterative_deepening(int search_depth, Time time) {
-    int result = 0;
-    seldepth = 0;
-    startAge = board.fullMoveNumber;
-    Move prev_bestmove{};
-    searchTime = time.optimum;
-    maxTime = time.maximum;
-    
     // reuse previous pv information
    if (pv_length[0] > 0) {
         for (int i = 1; i < pv_length[0]; i++) {
@@ -371,10 +368,23 @@ int Search::iterative_deepening(int search_depth, Time time) {
     }
 
     t0 = std::chrono::high_resolution_clock::now();
-    
+    seldepth = 0;
+    startAge = board.fullMoveNumber;
+    searchTime = time.optimum;
+    maxTime = time.maximum;
+
+    int result = 0;
+    Move prev_bestmove{};
+    int startNodes = nodes;
+    bool adjustedTime = false;
+    Move reduceTimeMove = nullmove;
+    int64_t startTime = searchTime;
+
+    memset(spentEffort, 0, sizeof(spentEffort[0][0]) * 64 * 64);
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(depth, result);
-        // Can we exit the search?
+        // Can we exit the search early
+        // if so use the previous best move
         if (exit_early()) {
             std::string move = board.printMove(prev_bestmove);
             if (depth == 1) std::cout << "bestmove " << board.printMove(pv_table[0][0]) << std::endl;
@@ -383,11 +393,28 @@ int Search::iterative_deepening(int search_depth, Time time) {
             return 0;
         }
 
+        // use a maximum of 50ms for a position with only one legal move
         if (rootSize == 1) {
             searchTime = std::min((int64_t)50, searchTime);
         } 
+
         // Update the previous best move and print information
         prev_bestmove = pv_table[0][0];
+
+        // reduce the time if we spent a lot of effort searching that move
+        // effort goes from 0 to 100
+        float effort = (spentEffort[prev_bestmove.from][prev_bestmove.to] * 100) / (nodes - startNodes);
+        if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
+            adjustedTime = true;
+            searchTime *= 0.3f;
+            reduceTimeMove = prev_bestmove;
+        }
+
+        // if the bestmove changed after reducing the time we want to spent some more time on that move
+        if (!(prev_bestmove == reduceTimeMove) && adjustedTime) {
+            searchTime = startTime * 1.05f;
+        }
+
         auto ms = elapsed();
         uci_output(result, depth, ms);
     }

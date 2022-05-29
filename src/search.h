@@ -30,6 +30,7 @@ public:
     int history_table[2][6][64][64]{};
     Move killerMoves[2][MAX_PLY + 1]{};
     Stack ss[MAX_PLY+1]{};
+    U64 spentEffort[64][64]{};
     int rootSize{};
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 
