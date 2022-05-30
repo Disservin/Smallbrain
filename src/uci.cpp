@@ -33,8 +33,7 @@ int main(int argc, char** argv) {
     while (true) {
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
-                std::thread t1 (start_bench);
-                t1.join();
+                start_bench();
                 return 0;
             }
         }
