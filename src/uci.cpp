@@ -148,6 +148,7 @@ int main(int argc, char** argv) {
             thread.stop();
             std::vector<std::string> tokens = split_input(input);
             int depth = 120;
+            searcher_class.nodes = 0;
             // go wtime 100 btime 100 winc 100 binc 100
             std::string side = searcher_class.board.sideToMove == White ? "wtime" : "btime";
             auto indexTime = find(tokens.begin(), tokens.end(), side) - tokens.begin();
