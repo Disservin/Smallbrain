@@ -1,6 +1,5 @@
 #include "search.h"
 #include "evaluation.h"
-
 #include <cstring>
 
 void Search::perf_Test(int depth, int max) {
@@ -150,7 +149,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
     int oldAlpha = alpha;
     bool RootNode = ply == 0;
     Color color = board.sideToMove;
-    
+
     if (ply >= 1 && board.isRepetition() && !(ss[ply-1].currentmove == nullmove)) return 0;
     if (!RootNode){
         if (board.halfMoveClock >= 100) return 0;
@@ -247,10 +246,10 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         if (RootNode && elapsed() > 10000 && !stopped) {
             std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
         }
-        
+
         board.makeMove(move);
 
-        U64 nodeCount = nodes;
+	    U64 nodeCount = nodes;
         ss[ply].currentmove = move;
         bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
 
@@ -271,7 +270,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
             // Decrease reduction for pvnodes
             if (PvNode)
                 rdepth++;
-            
+
             // Increase reduction for quiet moves
             if (madeMoves > 15 && !capture)
                 rdepth--;
@@ -293,8 +292,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         }
 
         board.unmakeMove(move);
-
-        spentEffort[move.from][move.to] += nodes - nodeCount;
+	spentEffort[move.from][move.to] += nodes - nodeCount;
 
         if (score > best) {
             best = score;
@@ -314,7 +312,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
                     int bonus = std::clamp(depth * depth, 0, 400);
                     history_table[color][move.piece][move.from][move.to] += 32 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 512;
                 }
-                
+
                 if (score >= beta) {
                     // update Killer Moves
                     if (!capture) {
@@ -325,6 +323,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
                 }
             }
         }
+
         sortMoves(ml, i + 1);
     }
     // Store position in TT
@@ -360,6 +359,14 @@ int Search::aspiration_search(int depth, int prev_eval) {
 }
 
 int Search::iterative_deepening(int search_depth, Time time) {
+    int result = 0;
+    seldepth = 0;
+    startAge = board.fullMoveNumber;
+    Move prev_bestmove{};
+    searchTime = time.optimum;
+    maxTime = time.maximum;
+    memset(spentEffort, 0, sizeof(unsigned long long) * 64 * 64);
+
     // reuse previous pv information
    if (pv_length[0] > 0) {
         for (int i = 1; i < pv_length[0]; i++) {
@@ -368,23 +375,15 @@ int Search::iterative_deepening(int search_depth, Time time) {
     }
 
     t0 = std::chrono::high_resolution_clock::now();
-    seldepth = 0;
-    startAge = board.fullMoveNumber;
-    searchTime = time.optimum;
-    maxTime = time.maximum;
 
-    int result = 0;
-    Move prev_bestmove{};
-    int startNodes = nodes;
+    U64 startNodes =  nodes;
     bool adjustedTime = false;
     Move reduceTimeMove = nullmove;
     int64_t startTime = searchTime;
 
-    memset(spentEffort, 0, sizeof(spentEffort[0][0]) * 64 * 64);
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(depth, result);
-        // Can we exit the search early
-        // if so use the previous best move
+        // Can we exit the search?
         if (exit_early()) {
             std::string move = board.printMove(prev_bestmove);
             if (depth == 1) std::cout << "bestmove " << board.printMove(pv_table[0][0]) << std::endl;
@@ -393,28 +392,30 @@ int Search::iterative_deepening(int search_depth, Time time) {
             return 0;
         }
 
-        // use a maximum of 50ms for a position with only one legal move
         if (rootSize == 1) {
             searchTime = std::min((int64_t)50, searchTime);
-        } 
+        }
 
-        // Update the previous best move and print information
-        prev_bestmove = pv_table[0][0];
 
-        // reduce the time if we spent a lot of effort searching that move
-        // effort goes from 0 to 100
-        float effort = (spentEffort[prev_bestmove.from][prev_bestmove.to] * 100) / (nodes - startNodes);
+        int effort = nodes - startNodes == 0 ? 0 : (spentEffort[prev_bestmove.from][prev_bestmove.to] * 100) / (nodes - startNodes);
+
         if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
             adjustedTime = true;
-            searchTime *= 0.3f;
+
+            searchTime = searchTime / 3 ;
+
             reduceTimeMove = prev_bestmove;
         }
+
+
 
         // if the bestmove changed after reducing the time we want to spent some more time on that move
         if (!(prev_bestmove == reduceTimeMove) && adjustedTime) {
             searchTime = startTime * 1.05f;
         }
 
+        // Update the previous best move and print information
+        prev_bestmove = pv_table[0][0];
         auto ms = elapsed();
         uci_output(result, depth, ms);
     }
@@ -538,10 +539,10 @@ void Search::uci_output(int score, int depth, int time) {
     std::cout << "info depth " << signed(depth)
     << " seldepth " << signed(seldepth);
     if (score >= VALUE_MATE_IN_PLY){
-        std::cout << " score cp " << "mate " << ((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1);  
+        std::cout << " score cp " << "mate " << ((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1);
     }
     else if (score <= VALUE_MATED_IN_PLY) {
-        std::cout << " score cp " << "mate " << -((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1);       
+        std::cout << " score cp " << "mate " << -((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1);
     }
     else{
         std::cout << " score cp " << score;
@@ -549,7 +550,7 @@ void Search::uci_output(int score, int depth, int time) {
     std::cout << " nodes " << nodes << " nps "
     << signed((nodes / (time + 1)) * 1000) << " time "
     << time
-    << " pv " << get_pv() << std::endl; 
+    << " pv " << get_pv() << std::endl;
 }
 
 long long Search::elapsed(){
