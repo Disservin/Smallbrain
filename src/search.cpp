@@ -237,17 +237,17 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 
     for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
-
-        if (RootNode && elapsed() > 10000 && !stopped) {
-            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
-        }
-        
         bool capture = board.pieceAtB(move.to) != None;
 
         if (!capture) quietMoves++;
 
         nodes++;
         madeMoves++;
+
+        if (RootNode && elapsed() > 10000 && !stopped) {
+            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+        }
+        
         board.makeMove(move);
 
         U64 nodeCount = nodes;
