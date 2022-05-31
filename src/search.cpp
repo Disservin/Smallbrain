@@ -244,7 +244,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         madeMoves++;
 
         if (RootNode && elapsed() > 10000 && !stopped) {
-            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << " score " << score << "\n";
+            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
         }
 
         board.makeMove(move);
@@ -297,7 +297,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         int bonus = std::clamp(depth * depth, 0, 400);
 
         if (!capture && score < best)
-            history_table[color][move.piece][move.from][move.to] -= 32 * bonus;
+            history_table[color][move.piece][move.from][move.to] = std::clamp(history_table[color][move.piece][move.from][move.to] - 32 * bonus, -100000, 16384);
 
         if (score > best) {
             best = score;
