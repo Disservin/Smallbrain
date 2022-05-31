@@ -244,7 +244,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         madeMoves++;
 
         if (RootNode && elapsed() > 10000 && !stopped) {
-            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << " score " << score << "\n";
         }
 
         board.makeMove(move);
@@ -292,7 +292,11 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         }
 
         board.unmakeMove(move);
-	spentEffort[move.from][move.to] += nodes - nodeCount;
+	    spentEffort[move.from][move.to] += nodes - nodeCount;
+
+        int bonus = std::clamp(depth * depth, 0, 400);
+        if (!capture)
+            history_table[color][move.piece][move.from][move.to] -= 16 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 1024;
 
         if (score > best) {
             best = score;
@@ -308,10 +312,8 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
                 alpha = score;
 
                 // update History Table
-                if (!capture) {
-                    int bonus = std::clamp(depth * depth, 0, 400);
-                    history_table[color][move.piece][move.from][move.to] += 32 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 512;
-                }
+                if (!capture)
+                    history_table[color][move.piece][move.from][move.to] += 2 * (32 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 512);
 
                 if (score >= beta) {
                     // update Killer Moves
