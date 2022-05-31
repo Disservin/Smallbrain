@@ -292,7 +292,12 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         }
 
         board.unmakeMove(move);
-	spentEffort[move.from][move.to] += nodes - nodeCount;
+	    spentEffort[move.from][move.to] += nodes - nodeCount;
+
+        int bonus = std::clamp(depth * depth, 0, 400);
+
+        if (!capture && score < best)
+            history_table[color][move.piece][move.from][move.to] = std::clamp(history_table[color][move.piece][move.from][move.to] - 32 * bonus, -100000, 16384);
 
         if (score > best) {
             best = score;
@@ -308,10 +313,8 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
                 alpha = score;
 
                 // update History Table
-                if (!capture) {
-                    int bonus = std::clamp(depth * depth, 0, 400);
-                    history_table[color][move.piece][move.from][move.to] += 32 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 512;
-                }
+                if (!capture)
+                    history_table[color][move.piece][move.from][move.to] += 2 * (32 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 512);
 
                 if (score >= beta) {
                     // update Killer Moves
