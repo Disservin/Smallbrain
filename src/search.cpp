@@ -295,8 +295,9 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 	    spentEffort[move.from][move.to] += nodes - nodeCount;
 
         int bonus = std::clamp(depth * depth, 0, 400);
-        if (!capture)
-            history_table[color][move.piece][move.from][move.to] -= 16 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 1024;
+
+        if (!capture && score < best)
+            history_table[color][move.piece][move.from][move.to] -= 32 * bonus;
 
         if (score > best) {
             best = score;
