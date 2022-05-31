@@ -337,28 +337,37 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 int Search::aspiration_search(int depth, int prev_eval) {
     int alpha = -VALUE_INFINITE;
     int beta = VALUE_INFINITE;
+    int delta = 30;
+
     int result = 0;
     int ply = 0;
-    // Start search with full sized window
+    int research = 0;
+
     if (depth == 1) {
-        result = absearch(1, -VALUE_INFINITE, VALUE_INFINITE, ply, false);
+        result = -absearch(1, alpha, beta, 0, false);
+        return result;
     }
-    else {
-        // Use previous evaluation as a starting point and search with a smaller window
-        alpha = prev_eval - 100;
-        beta = prev_eval + 100;
+    else if (depth >= 5) {
+        alpha = prev_eval - 50;
+        beta = prev_eval + 50;
+    }
+
+    while (true) {
+        if (alpha < -3500) alpha = -VALUE_INFINITE;
+        if (beta  >  3500) beta  =  VALUE_INFINITE;
         result = absearch(depth, alpha, beta, ply, false);
+        if (result <= alpha) {
+            research++;
+            alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
+        }
+        else if (result >= beta) {
+            research++;
+            beta = std::min(beta + research * research * delta, (int)VALUE_INFINITE);
+        }
+        else {
+            return result;
+        }
     }
-    // In case the result is outside the bounds we have to do a research
-    while (result <= alpha) {
-        alpha -= 50;
-        result = absearch(depth, alpha, beta, ply, false);
-    }
-    while (result >= beta) {
-        beta += 50;
-        result = absearch(depth, alpha, beta, ply, false);
-    }
-    return result;
 }
 
 int Search::iterative_deepening(int search_depth, Time time) {
