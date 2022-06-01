@@ -269,7 +269,7 @@ std::string Board::printMove(Move& move) {
 
 bool Board::isRepetition(int draw) {
     int8_t count = 0;
-    for (int i = sideToMove; i < fullMoveNumber && i + 2 < 1024; i += 2) {
+    for (int i = fullMoveNumber - 2; i >= 0 && i >= fullMoveNumber - halfMoveClock; i -= 2) {
         if (hashHistory[i] == hashKey) {
             count++;
         }
