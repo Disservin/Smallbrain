@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
                          "id author Disservin\n" <<
                          "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
                          "option name Threads type spin default 1 min 1 max 1\n" << //Threads
-                         "uciok\n" << std::endl;
+                         "uciok" << std::endl;
         }
         if (input == "isready") {
             std::cout << "readyok\n" << std::endl;
@@ -106,10 +106,8 @@ int main(int argc, char** argv) {
             if (input.find("moves") != std::string::npos) {
                 std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();
                 index++;
-
                 for (; index < tokens.size(); index++) {
                     Move move = convert_uci_to_Move(tokens[index]);
-                    std::cout << searcher_class.board.printMove(move) << std::endl;
                     searcher_class.board.makeMove(move);
                 }
             }
@@ -143,6 +141,16 @@ int main(int argc, char** argv) {
             t.optimum = 0;
             t.maximum = 0;
             thread.begin(depth, t);
+        }
+        if (input.find("movetime") != std::string::npos) {
+            thread.stop();
+            std::vector<std::string> tokens = split_input(input);
+            auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
+            int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
+            Time t;
+            t.maximum = timegiven;
+            t.optimum = timegiven;
+            thread.begin(MAX_PLY, t);
         }
         if (input.find("wtime") != std::string::npos) {
             thread.stop();

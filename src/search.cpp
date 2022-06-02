@@ -485,9 +485,9 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
 std::string Search::get_pv() {
     std::string line = "";
     for (int i = 0; i < pv_length[0]; i++) {
+        line += " ";
         pv[i] = pv_table[0][i];
         line += board.printMove(pv_table[0][i]);
-        line += " ";
     }
     return line;
 }
@@ -562,7 +562,7 @@ void Search::uci_output(int score, int depth, int time) {
     std::cout << " nodes " << nodes << " nps "
     << signed((nodes / (time + 1)) * 1000) << " time "
     << time
-    << " pv " << get_pv() << std::endl;
+    << " pv" << get_pv()<<"\n";
 }
 
 long long Search::elapsed(){
