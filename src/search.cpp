@@ -321,6 +321,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
                     if (!capture) {
                         killerMoves[1][ply] = killerMoves[0][ply];
                         killerMoves[0][ply] = move;
+                        counterMove[ss[ply-1].currentmove.from][ss[ply-1].currentmove.to] = move;
                     }
                     break;
                 }
@@ -470,6 +471,9 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     }
     else if (killerMoves[1][ply] == move) {
         return killerscore2;
+    }
+    else if (counterMove[ss[ply-1].currentmove.from][ss[ply-1].currentmove.to] == move) {
+        return 100'000;
     }
     else if (history_table[board.sideToMove][move.piece][move.from][move.to]) {
         return history_table[board.sideToMove][move.piece][move.from][move.to];
