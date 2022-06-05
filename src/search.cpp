@@ -264,7 +264,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
-            int rdepth = reductions[madeMoves];
+            int rdepth = reductions[madeMoves][depth];
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
 
             // Decrease reduction for pvnodes
