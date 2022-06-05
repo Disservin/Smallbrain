@@ -14,7 +14,7 @@
 std::atomic<bool> stopped;
 ThreadManager thread;
 
-U64 TT_SIZE = 131071;
+U64 TT_SIZE = 524287;
 TEntry* TTable{};
 
 Board board = Board();
