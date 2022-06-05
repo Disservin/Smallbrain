@@ -13,13 +13,14 @@
 
 std::atomic<bool> stopped;
 ThreadManager thread;
+
 U64 TT_SIZE = 131071;
 TEntry* TTable{};
+
 Board board = Board();
 Search searcher_class = Search(board);
 
 int main(int argc, char** argv) {
-    searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     stopped = false;
     signal(SIGINT, signal_callback_handler);
     TEntry* oldbuffer;
@@ -27,6 +28,8 @@ int main(int argc, char** argv) {
         std::cout << "Error: Could not allocate memory for TT\n";
         exit(1);
     }
+
+    searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     for (int i = 0; i < 256; i++){
         reductions[i] = log(i) + 1;
     }
@@ -39,6 +42,8 @@ int main(int argc, char** argv) {
         }
         std::string input;
         std::getline(std::cin, input);
+        std::vector<std::string> tokens = split_input(input);
+        // UCI COMMANDS
         if (input == "uci") {
             std::cout << "id name Smallbrain Version 2.0\n" <<
                          "id author Disservin\n" <<
@@ -59,10 +64,6 @@ int main(int argc, char** argv) {
         if (input == "stop") {
             thread.stop();
         }
-        if (input == "print") {
-            searcher_class.board.print();
-            std::cout << searcher_class.board.getFen() << std::endl;
-        }
         if (input.find("setoption name Hash value") != std::string::npos) {
             std::size_t start_index = input.find("value");
             std::string size_str = input.substr(start_index + 6);
@@ -76,26 +77,7 @@ int main(int argc, char** argv) {
             }
             TT_SIZE = elements;
         }
-        if (input == "moves") {
-            Movelist ml = searcher_class.board.legalmoves();
-            for (int i = 0; i < ml.size; i++) {
-                std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
-            }
-        }
-        if (input == "captures") {
-            Movelist ml = searcher_class.board.capturemoves();
-            for (int i = 0; i < ml.size; i++) {
-                std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
-            }
-        }
-        if (input == "rep") {
-            std::cout << searcher_class.board.isRepetition(3) << std::endl;
-        }
-        if (input == "eval") {
-            std::cout << evaluation(searcher_class.board) << std::endl;
-        }
         if (input.find("position") != std::string::npos) {
-            std::vector<std::string> tokens = split_input(input);
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
             if (tokens[1] == "fen") {
@@ -113,38 +95,24 @@ int main(int argc, char** argv) {
             }
         }
         if (input.find("go perft") != std::string::npos) {
-            std::vector<std::string> tokens = split_input(input);
             int depth = std::stoi(tokens[2]);
             std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
             threads.join();
             return 0;
         }
-        if (input.find("perft") != std::string::npos) {
-            std::thread threads = std::thread(&Search::testAllPos, searcher_class);
-            threads.join();
-            return 0;
-        }
         if (input.find("go depth") != std::string::npos) {
             thread.stop();
-            std::vector<std::string> tokens = split_input(input);
             int depth = std::stoi(tokens[2]);
             Time t;
-            t.optimum = 0;
-            t.maximum = 0;
             thread.begin(depth, t);
         }
         if (input.find("go infinite") != std::string::npos) {
             thread.stop();
-            std::vector<std::string> tokens = split_input(input);
-            int depth = 120;
             Time t;
-            t.optimum = 0;
-            t.maximum = 0;
-            thread.begin(depth, t);
+            thread.begin(MAX_PLY, t);
         }
         if (input.find("movetime") != std::string::npos) {
             thread.stop();
-            std::vector<std::string> tokens = split_input(input);
             auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
             int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
             Time t;
@@ -154,8 +122,6 @@ int main(int argc, char** argv) {
         }
         if (input.find("wtime") != std::string::npos) {
             thread.stop();
-            std::vector<std::string> tokens = split_input(input);
-            int depth = 120;
             searcher_class.nodes = 0;
             // go wtime 100 btime 100 winc 100 binc 100
             std::string side = searcher_class.board.sideToMove == White ? "wtime" : "btime";
@@ -176,10 +142,38 @@ int main(int argc, char** argv) {
             }
 
             Time t = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
-            thread.begin(depth, t);
+            thread.begin(MAX_PLY, t);
+        }
+        // ENGINE SPECIFIC
+        if (input == "print") {
+            searcher_class.board.print();
+            std::cout << searcher_class.board.getFen() << std::endl;
+        }
+
+        if (input == "moves") {
+            Movelist ml = searcher_class.board.legalmoves();
+            for (int i = 0; i < ml.size; i++) {
+                std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
+            }
+        }
+        if (input == "captures") {
+            Movelist ml = searcher_class.board.capturemoves();
+            for (int i = 0; i < ml.size; i++) {
+                std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
+            }
+        }
+        if (input == "rep") {
+            std::cout << searcher_class.board.isRepetition(3) << std::endl;
+        }
+        if (input == "eval") {
+            std::cout << evaluation(searcher_class.board) << std::endl;
+        }
+        if (input.find("perft") != std::string::npos) {
+            std::thread threads = std::thread(&Search::testAllPos, searcher_class);
+            threads.join();
+            return 0;
         }
         if (input.find("setoption") != std::string::npos) {
-            std::vector<std::string> tokens = split_input(input);
             if (tokens[2] == "PAWN_EVAL_MG") {
                 piece_values[0][PAWN] = std::stoi(tokens[4]);
             }
@@ -231,18 +225,17 @@ Move convert_uci_to_Move(std::string input) {
     if (input.length() == 4) {
         std::string from = input.substr(0, 2);
         std::string to = input.substr(2);
-        int from_index;
-        int to_index;
-        char letter;
-        letter = from[0];
+        char letter = from[0];
         int file = letter - 96;
         int rank = from[1] - 48;
-        from_index = (rank - 1) * 8 + file - 1;
+        int from_index = (rank - 1) * 8 + file - 1;
         Square source = Square(from_index);
+
         letter = to[0];
         file = letter - 96;
         rank = to[1] - 48;
-        to_index = (rank - 1) * 8 + file - 1;
+
+        int to_index = (rank - 1) * 8 + file - 1;
         Square target = Square(to_index);
         PieceType piece = searcher_class.board.piece_type(searcher_class.board.pieceAtBB(source));
         return Move(piece, source, target, false);
@@ -250,19 +243,17 @@ Move convert_uci_to_Move(std::string input) {
     if (input.length() == 5) {
         std::string from = input.substr(0, 2);
         std::string to = input.substr(2, 2);
-        int from_index;
-        int to_index;
-        char letter;
-        letter = from[0];
+        char letter = from[0];
         int file = letter - 96;
         int rank = from[1] - 48;
-        from_index = (rank - 1) * 8 + file - 1;
-
+        int from_index = (rank - 1) * 8 + file - 1;
         Square source = Square(from_index);
+
         letter = to[0];
         file = letter - 96;
         rank = to[1] - 48;
-        to_index = (rank - 1) * 8 + file - 1;
+        
+        int to_index = (rank - 1) * 8 + file - 1;
         Square target = Square(to_index);
         std::map<char, int> piece_to_int =
         {
