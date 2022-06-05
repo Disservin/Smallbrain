@@ -1,6 +1,6 @@
 #include "psqt.h"
 
-int piece_values[2][6] = { { 98, 781, 825, 1276, 2538, 0}, { 114, 854, 915, 1380,  2682, 0} };
+int piece_values[2][6] = { { 98, 337, 365, 477, 1025, 0}, { 114, 281, 297, 512,  936, 0} };
 
 // http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19
 int pieceSquareScore[2][6][64] = {
