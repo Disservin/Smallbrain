@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     for (int moves = 0; moves < 256; moves++){
         for (int depth = 0; depth < MAX_PLY; depth++){
-            reductions[moves][depth] = log(moves) * log(depth) + 1;
+            reductions[moves][depth] = 1 + log(moves) * log(depth)  / 1.75;
         }
     }
     while (true) {
