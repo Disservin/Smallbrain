@@ -86,6 +86,12 @@ int main(int argc, char** argv) {
             }
             TT_SIZE = elements;
         }
+        if (input.find("setoption name EvalFile value") != std::string::npos) {
+            std::size_t start_index = input.find("value");
+            std::string path_str = input.substr(start_index + 6);
+            std::cout << "Loading eval file: " << path_str << std::endl;
+            nnue.init(path_str.c_str());
+        }
         if (input.find("position") != std::string::npos) {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 

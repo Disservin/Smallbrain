@@ -15,7 +15,7 @@
 class NNUE {
     public:
     int relu(int x);
-    void init(std::string filename);
+    void init(const char* filename);
     void accumulate(Board& b);
     void activate(int inputNum);
     void deactivate(int inputNum);
