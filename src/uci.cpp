@@ -7,6 +7,7 @@
 #include "evaluation.h"
 #include "benchmark.h"
 #include "timemanager.h"
+#include "neuralnet.h"
 
 #include <signal.h>
 #include <math.h> 
@@ -19,6 +20,7 @@ TEntry* TTable{};
 
 Board board = Board();
 Search searcher_class = Search(board);
+NNUE nnue = NNUE();
 
 int main(int argc, char** argv) {
     stopped = false;
@@ -28,8 +30,13 @@ int main(int argc, char** argv) {
         std::cout << "Error: Could not allocate memory for TT\n";
         exit(1);
     }
-
+    
+    nnue.init("20.net");
+    
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // searcher_class.board.applyFen("8/8/8/8/8/3P4/8/8 w - - 0 1");
+    
+    // std::cout << nnue.output() << std::endl;
     for (int moves = 0; moves < 256; moves++){
         for (int depth = 0; depth < MAX_PLY; depth++){
             reductions[moves][depth] = 1 + log(moves) * log(depth)  / 1.75;
@@ -106,12 +113,18 @@ int main(int argc, char** argv) {
             thread.stop();
             int depth = std::stoi(tokens[2]);
             Time t;
-            thread.begin(depth, t);
+            thread.begin(depth, 0, t);
+        }
+        if (input.find("go nodes") != std::string::npos) {
+            thread.stop();
+            int nodes = std::stoi(tokens[2]);
+            Time t;
+            thread.begin(MAX_PLY, nodes, t);
         }
         if (input.find("go infinite") != std::string::npos) {
             thread.stop();
             Time t;
-            thread.begin(MAX_PLY, t);
+            thread.begin(MAX_PLY, 0, t);
         }
         if (input.find("movetime") != std::string::npos) {
             thread.stop();
@@ -120,7 +133,7 @@ int main(int argc, char** argv) {
             Time t;
             t.maximum = timegiven;
             t.optimum = timegiven;
-            thread.begin(MAX_PLY, t);
+            thread.begin(MAX_PLY, 0, t);
         }
         if (input.find("wtime") != std::string::npos) {
             thread.stop();
@@ -144,7 +157,7 @@ int main(int argc, char** argv) {
             }
 
             Time t = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
-            thread.begin(MAX_PLY, t);
+            thread.begin(MAX_PLY, 0, t);
         }
         // ENGINE SPECIFIC
         if (input == "print") {

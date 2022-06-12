@@ -18,6 +18,7 @@ struct Stack{
 class Search {
 public:
     uint64_t nodes{};
+    uint64_t maxNodes{};
     Board board{};
     Move bestMove{};
     uint16_t startAge{};
@@ -44,7 +45,7 @@ public:
     int qsearch(int depth, int alpha, int beta, int ply);
     int absearch(int depth, int alpha, int beta, int ply, bool null);
     int aspiration_search(int depth, int prev_eval);
-    int iterative_deepening(int depth, Time time);
+    int iterative_deepening(int search_depth, uint64_t maxN, Time time);
     bool exit_early();
     int mmlva(Move& move);
     int score_move(Move& move, int ply, bool ttMove);

@@ -11,7 +11,7 @@ extern Search searcher_class;
 
 class ThreadManager {
 public:
-	void begin(int depth, Time time);
+	void begin(int depth, uint64_t nodes, Time time);
 	void stop();
 	bool is_searching();
 private:

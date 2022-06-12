@@ -370,13 +370,14 @@ int Search::aspiration_search(int depth, int prev_eval) {
     }
 }
 
-int Search::iterative_deepening(int search_depth, Time time) {
+int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
     int result = 0;
     seldepth = 0;
     startAge = board.fullMoveNumber;
     Move prev_bestmove{};
     searchTime = time.optimum;
     maxTime = time.maximum;
+    maxNodes = maxN;
     memset(spentEffort, 0, sizeof(unsigned long long) * 64 * 64);
 
     // reuse previous pv information
@@ -534,6 +535,7 @@ void sortMoves(Movelist& moves, int sorted){
 
 bool Search::exit_early() {
     if (stopped) return true;
+    if (maxNodes != 0 && nodes >= maxNodes) return true;
     if (nodes & 2047 && searchTime != 0) {
         auto ms = elapsed();
         if (ms >= searchTime || ms >= maxTime) {
