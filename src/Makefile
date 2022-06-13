@@ -25,7 +25,7 @@ OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
 all: $(TARGET)
 $(TARGET): $(OBJS)
-	$(CC) -o $@ $^ $(CXFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(CXFLAGS)
 %.o: %.cpp
 	$(CC) -c $(CFLAGS) $(NATIVE) -DEVALFILE=\"$(EVALFILE)\" -flto -O3 -std=c++20 -Wall $< $(CXFLAGS)
 clean:
