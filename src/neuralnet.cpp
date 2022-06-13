@@ -15,7 +15,7 @@ void NNUE::init(const char* filename) {
 }
 
 void NNUE::accumulate(Board& b) {
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < 64 * 2; i++) {
         accumulator[i] = hiddenBias[i];
     }
     
@@ -29,7 +29,7 @@ void NNUE::accumulate(Board& b) {
 }
 
 void NNUE::activate(int inputNum) {
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < 64 * 2; i++) {
         accumulator[i] += inputWeights[inputNum * 64 + i];
     }
 }
@@ -49,9 +49,9 @@ int NNUE::relu(int x) {
 
 int32_t NNUE::output() {
     int32_t output = 0;
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < 64 * 2; i++) {
         output += relu(accumulator[i]) * hiddenWeights[i];
     }
     output += outputBias[0];
-    return output / (128 * 256);
+    return output / (64 * 256);
 }
