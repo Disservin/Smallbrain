@@ -15,7 +15,7 @@ ifeq ($(uname_S), Darwin)
 	NATIVE = -mcpu=apple-a14
 else
 	NATIVE = -march=native
-	CFLAGS = -static -static-libgcc -static-libstdc++ 
+	CFLAGS = -static -static-libgcc -static-libstdc++ -lstdc++
 endif
 
 # $(wildcard *.cpp /xxx/xxx/*.cpp): get all .cpp files from the current directory and dir "/xxx/xxx/"
