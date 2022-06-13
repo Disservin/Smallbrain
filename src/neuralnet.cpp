@@ -7,8 +7,8 @@ void NNUE::init(const char* filename) {
     FILE* f = fopen(filename, "rb");
 
     fread(inputWeights  , sizeof(int16_t), 768 * 64, f);
-    fread(hiddenBias    , sizeof(int16_t),       64, f);
-    fread(hiddenWeights , sizeof(int16_t),       64, f);
+    fread(hiddenBias    , sizeof(int16_t),   2 * 64, f);
+    fread(hiddenWeights , sizeof(int16_t),   2 * 64, f);
     fread(outputBias    , sizeof(int32_t),        1, f);
 
     fclose(f);

@@ -25,7 +25,7 @@ class NNUE {
     std::vector<int16_t> accumulator;
     uint8_t inputValues[768];
     int16_t inputWeights[768 * 64];
-    int16_t hiddenBias[64];
-    int16_t hiddenWeights[64];
+    int16_t hiddenBias[64 * 2];
+    int16_t hiddenWeights[64 * 2];
     int32_t outputBias[1];
 };
