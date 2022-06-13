@@ -6,16 +6,16 @@ TARGET := smallbrain
 
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
-	CXFLAGS = -pthread
+	CXFLAGS = -pthread -lstdc++
 else
-	CXFLAGS = -lpthread
+	CXFLAGS = -lpthread -lstdc++
 	uname_S := $(shell uname -s)
 endif
 ifeq ($(uname_S), Darwin)
 	NATIVE = -mcpu=apple-a14
 else
 	NATIVE = -march=native
-	CFLAGS = -static -static-libgcc -static-libstdc++ -lstdc++
+	CFLAGS = -static -static-libgcc -static-libstdc++
 endif
 
 # $(wildcard *.cpp /xxx/xxx/*.cpp): get all .cpp files from the current directory and dir "/xxx/xxx/"
