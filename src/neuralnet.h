@@ -12,6 +12,11 @@
 
 #include "board.h"
 
+#define INPUT_WEIGHTS 64 * 12
+#define HIDDEN_BIAS 64 * 2
+#define HIDDEN_WEIGHTS 64 * 2
+#define OUTPUT_BIAS 1
+
 extern bool NNUE_initialized;
 
 class NNUE {
@@ -25,9 +30,9 @@ class NNUE {
     void Clear();
     private:
     std::vector<int16_t> accumulator;
-    uint8_t inputValues[768];
-    int16_t inputWeights[768 * 64 * 2];
-    int16_t hiddenBias[64 * 2];
-    int16_t hiddenWeights[64 * 2];
-    int32_t outputBias[1];
+    uint8_t inputValues[INPUT_WEIGHTS];
+    int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
+    int16_t hiddenBias[HIDDEN_BIAS];
+    int16_t hiddenWeights[HIDDEN_WEIGHTS];
+    int32_t outputBias[OUTPUT_BIAS];
 };
