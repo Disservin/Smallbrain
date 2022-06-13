@@ -1,7 +1,7 @@
 #include "neuralnet.h"
 
 void NNUE::init(const char* filename) {
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < 64 * 2; i++) {
         accumulator.push_back(0);
     }
     FILE* f = fopen(filename, "rb");

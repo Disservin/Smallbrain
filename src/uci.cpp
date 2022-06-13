@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
     
-    nnue.init("20.net");
+    nnue.init("l2_12812x64_2x64_300.net");
     
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // searcher_class.board.applyFen("8/8/8/8/8/3P4/8/8 w - - 0 1");
