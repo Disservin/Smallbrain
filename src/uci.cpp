@@ -11,6 +11,7 @@
 
 #include <signal.h>
 #include <math.h> 
+#include <fstream>
 
 std::atomic<bool> stopped;
 ThreadManager thread;
@@ -21,22 +22,29 @@ TEntry* TTable{};
 Board board = Board();
 Search searcher_class = Search(board);
 NNUE nnue = NNUE();
+bool useNNUE = false;
 
 int main(int argc, char** argv) {
     stopped = false;
     signal(SIGINT, signal_callback_handler);
     TEntry* oldbuffer;
+
+    // Initialize TT
     if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
         std::cout << "Error: Could not allocate memory for TT\n";
         exit(1);
     }
     
-    nnue.init("l2_12812x64_2x64_300.net");
+    // load neural net
+    std::ifstream f("default.net");
+    if (f.good()) {
+        useNNUE = true;
+        nnue.init("default.net");
+    }
     
+    // load position
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    // searcher_class.board.applyFen("8/8/8/8/8/3P4/8/8 w - - 0 1");
     
-    // std::cout << nnue.output() << std::endl;
     for (int moves = 0; moves < 256; moves++){
         for (int depth = 0; depth < MAX_PLY; depth++){
             reductions[moves][depth] = 1 + log(moves) * log(depth)  / 1.75;
@@ -58,6 +66,8 @@ int main(int argc, char** argv) {
                          "id author Disservin\n" <<
                          "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
                          "option name Threads type spin default 1 min 1 max 1\n" << //Threads
+                         "option name EvalFile type string default default.net\n" << //NN file
+                         "option name Use NN type check default true\n" << //use NN
                          "uciok" << std::endl;
         }
         if (input == "isready") {
@@ -91,6 +101,7 @@ int main(int argc, char** argv) {
             std::string path_str = input.substr(start_index + 6);
             std::cout << "Loading eval file: " << path_str << std::endl;
             nnue.init(path_str.c_str());
+            useNNUE = true;
         }
         if (input.find("position") != std::string::npos) {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");

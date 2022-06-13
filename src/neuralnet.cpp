@@ -6,7 +6,13 @@ void NNUE::init(const char* filename) {
     }
     FILE* f = fopen(filename, "rb");
 
-    fread(inputWeights  , sizeof(int16_t), 768 * 64, f);
+    if (f == NULL) {
+        printf("Error opening file %s\n", filename);
+        fclose(f);
+        return;
+    }
+
+    fread(inputWeights  , sizeof(int16_t), 768 * 64 * 2, f);
     fread(hiddenBias    , sizeof(int16_t),   2 * 64, f);
     fread(hiddenWeights , sizeof(int16_t),   2 * 64, f);
     fread(outputBias    , sizeof(int32_t),        1, f);
@@ -15,7 +21,7 @@ void NNUE::init(const char* filename) {
 }
 
 void NNUE::accumulate(Board& b) {
-    for (int i = 0; i < 64 * 2; i++) {
+    for (int i = 0; i < 128; i++) {
         accumulator[i] = hiddenBias[i];
     }
     
@@ -29,14 +35,14 @@ void NNUE::accumulate(Board& b) {
 }
 
 void NNUE::activate(int inputNum) {
-    for (int i = 0; i < 64 * 2; i++) {
-        accumulator[i] += inputWeights[inputNum * 64 + i];
+    for (int i = 0; i < 128; i++) {
+        accumulator[i] += inputWeights[inputNum * 128 + i];
     }
 }
 
 void NNUE::deactivate(int inputNum) {
-    for (int i = 0; i < 64; i++) {
-        accumulator[i] -= inputWeights[inputNum * 64 + i];
+    for (int i = 0; i < 128; i++) {
+        accumulator[i] -= inputWeights[inputNum * 128 + i];
     }
 }
 
@@ -49,7 +55,7 @@ int NNUE::relu(int x) {
 
 int32_t NNUE::output() {
     int32_t output = 0;
-    for (int i = 0; i < 64 * 2; i++) {
+    for (int i = 0; i < 128; i++) {
         output += relu(accumulator[i]) * hiddenWeights[i];
     }
     output += outputBias[0];
