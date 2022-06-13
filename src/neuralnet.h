@@ -12,6 +12,8 @@
 
 #include "board.h"
 
+extern bool NNUE_initialized;
+
 class NNUE {
     public:
     int relu(int x);

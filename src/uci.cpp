@@ -22,7 +22,8 @@ TEntry* TTable{};
 Board board = Board();
 Search searcher_class = Search(board);
 NNUE nnue = NNUE();
-bool useNNUE = false;
+bool useNNUE = true;
+bool NNUE_initialized = false;
 
 int main(int argc, char** argv) {
     stopped = false;
@@ -34,14 +35,9 @@ int main(int argc, char** argv) {
         std::cout << "Error: Could not allocate memory for TT\n";
         exit(1);
     }
-    
-    // load neural net
-    std::ifstream f("default.net");
-    if (f.good()) {
-        useNNUE = true;
-        nnue.init("default.net");
-    }
-    
+
+    nnue.init("default.net");
+
     // load position
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
@@ -99,7 +95,8 @@ int main(int argc, char** argv) {
         if (input.find("setoption name EvalFile value") != std::string::npos) {
             std::size_t start_index = input.find("value");
             std::string path_str = input.substr(start_index + 6);
-            std::cout << "Loading eval file: " << path_str << std::endl;
+            std::cout << "Loading eval file: " << path_str << std::endl;            
+            NNUE_initialized = true;
             nnue.init(path_str.c_str());
             useNNUE = true;
         }

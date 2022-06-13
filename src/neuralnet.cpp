@@ -1,23 +1,35 @@
 #include "neuralnet.h"
 
+
+#define INCBIN_STYLE INCBIN_STYLE_CAMEL
+#include "incbin/incbin.h"
+
+INCBIN(Eval, EVALFILE);
+
 void NNUE::init(const char* filename) {
     for (int i = 0; i < 64 * 2; i++) {
         accumulator.push_back(0);
     }
     FILE* f = fopen(filename, "rb");
+    if (f != NULL) {    
+        fread(inputWeights  , sizeof(int16_t), 768 * 64 * 2, f);
+        fread(hiddenBias    , sizeof(int16_t),   2 * 64, f);
+        fread(hiddenWeights , sizeof(int16_t),   2 * 64, f);
+        fread(outputBias    , sizeof(int32_t),        1, f);
 
-    if (f == NULL) {
-        printf("Error opening file %s\n", filename);
         fclose(f);
-        return;
+    } else {
+        int memoryIndex = 0;
+        std::memcpy(inputWeights, &gEvalData[memoryIndex], 768 * 64 * 2 * sizeof(int16_t));
+        memoryIndex += 768 * 64 * 2 * sizeof(int16_t);
+        std::memcpy(hiddenBias, &gEvalData[memoryIndex], 2 * 64 * sizeof(int16_t));
+        memoryIndex += 2 * 64 * sizeof(int16_t);
+
+        std::memcpy(hiddenWeights, &gEvalData[memoryIndex], 2 * 64 * sizeof(int16_t));
+        memoryIndex += 2 * 64 * sizeof(int16_t);
+        std::memcpy(outputBias, &gEvalData[memoryIndex], 1 * sizeof(int32_t));
+        memoryIndex += 1 * sizeof(int32_t);   
     }
-
-    fread(inputWeights  , sizeof(int16_t), 768 * 64 * 2, f);
-    fread(hiddenBias    , sizeof(int16_t),   2 * 64, f);
-    fread(hiddenWeights , sizeof(int16_t),   2 * 64, f);
-    fread(outputBias    , sizeof(int32_t),        1, f);
-
-    fclose(f);
 }
 
 void NNUE::accumulate(Board& b) {
