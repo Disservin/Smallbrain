@@ -135,6 +135,9 @@ public:
 	U64 Queens(Color c);
 	U64 Kings(Color c);
 
+	void removePieceSimple(Piece piece, Square sq);
+
+	void placePieceSimple(Piece piece, Square sq);
 	// removes a piece from a square, also removes psqt values
 	void removePiece(Piece piece, Square sq);
 	void placePiece(Piece piece, Square sq);
