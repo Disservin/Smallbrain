@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
                          "uciok" << std::endl;
         }
         if (input == "isready") {
-            std::cout << "readyok\n" << std::endl;
+            std::cout << "readyok" << std::endl;
         }
         if (input == "ucinewgame") {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
