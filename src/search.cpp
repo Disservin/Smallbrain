@@ -378,7 +378,7 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
     searchTime = time.optimum;
     maxTime = time.maximum;
     maxNodes = maxN;
-    memset(spentEffort, 0, sizeof(unsigned long long) * 64 * 64);
+    memset(spentEffort, 0, sizeof(unsigned long long) * MAX_SQ * MAX_SQ);
 
     // reuse previous pv information
    if (pv_length[0] > 0) {

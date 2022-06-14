@@ -58,9 +58,9 @@ public:
 	uint16_t fullMoveNumber{};
 	Color sideToMove = White;
 
-	Piece board[64]{ None };
+	Piece board[MAX_SQ]{ None };
 	U64 Bitboards[12]{};
-	U64 SQUARES_BETWEEN_BB[64][64]{};
+	U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ]{};
 
 	// all bits set
 	U64 checkMask = 18446744073709551615ULL;

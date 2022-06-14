@@ -28,10 +28,10 @@ public:
     uint8_t pv_length[MAX_PLY]{};
     Move pv_table[MAX_PLY][MAX_PLY]{};
     Move pv[MAX_PLY]{};
-    int history_table[2][6][64][64]{};
+    int history_table[2][6][MAX_SQ][MAX_SQ]{};
     Move killerMoves[2][MAX_PLY + 1]{};
     Stack ss[MAX_PLY+1]{};
-    U64 spentEffort[64][64]{};
+    U64 spentEffort[MAX_SQ][MAX_SQ]{};
     int rootSize{};
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 

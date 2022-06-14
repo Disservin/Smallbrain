@@ -115,7 +115,7 @@ void Board::applyFen(std::string fen) {
     for (int i = 0; i < HIDDEN_BIAS; i++) {
         nnue.accumulator[i] = nnue.hiddenBias[i];
     }
-    
+
     Square square = Square(56);
     for (int index = 0; index < (int)position.size(); index++) {
         char curr = position[index];
@@ -222,7 +222,7 @@ std::string Board::getFen() {
 void Board::printBitboard(U64 bb) {
     std::bitset<64> b(bb);
     std::string str_bitset = b.to_string();
-    for (int i = 0; i < 64; i += 8)
+    for (int i = 0; i < MAX_SQ; i += 8)
     {
         std::string x = str_bitset.substr(i, 8);
         reverse(x.begin(), x.end());
@@ -258,7 +258,7 @@ void Board::accumulate() {
         nnue.accumulator[i] = nnue.hiddenBias[i];
     }
     
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < MAX_SQ; i++) {
         bool input = pieceAtB(Square(i)) != None;
         if (!input) continue;
         int j = Square(i) + (pieceAtB(Square(i))) * 64;
