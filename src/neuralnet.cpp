@@ -32,6 +32,8 @@ void NNUE::init(const char* filename) {
     }
 }
 
+// This is no longer used.
+// applyFen resets the accumulator and activates the input neurons
 // void NNUE::accumulate(Board& b) {
 //     for (int i = 0; i < HIDDEN_BIAS; i++) {
 //         accumulator[i] = hiddenBias[i];

@@ -10,14 +10,12 @@
 #include <cstring>
 #include <stdio.h>
 
-// #include "board.h"
+/// HIDDEN_BIAS/HIDDEN_WEIGHTS is basically the width of the hidden layer.
 
 #define INPUT_WEIGHTS 64 * 12
 #define HIDDEN_BIAS 64 * 2 * 2
 #define HIDDEN_WEIGHTS 64 * 2 * 2
 #define OUTPUT_BIAS 1
-
-extern bool NNUE_initialized;
 
 class NNUE {
     public:

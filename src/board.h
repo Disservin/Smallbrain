@@ -102,8 +102,6 @@ public:
 	// prints the board
 	void print();
 
-	void accumulate();
-
 	// makes a Piece from only the piece type and color
 	Piece makePiece(PieceType type, Color c);
 

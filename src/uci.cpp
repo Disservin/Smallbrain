@@ -14,41 +14,44 @@
 #include <fstream>
 
 std::atomic<bool> stopped;
-ThreadManager thread;
+bool useNNUE = true;
 
 U64 TT_SIZE = 524287;
-TEntry* TTable{};
+TEntry* TTable{}; //TEntry size is 32 bytes
 
+ThreadManager thread;
 Board board = Board();
 Search searcher_class = Search(board);
 NNUE nnue = NNUE();
-bool useNNUE = true;
-bool NNUE_initialized = false;
 
 int main(int argc, char** argv) {
     stopped = false;
     signal(SIGINT, signal_callback_handler);
     TEntry* oldbuffer;
-
+    
     // Initialize TT
     if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
         std::cout << "Error: Could not allocate memory for TT\n";
         exit(1);
     }
 
-    nnue.init("12x64_4x64_320.net");
-
-    // load position
+    std::string NNUEfile = "default.net";
+    // Load start position
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
-    for (int moves = 0; moves < 256; moves++){
-        for (int depth = 0; depth < MAX_PLY; depth++){
+    // Initialize reduction table
+    for (int moves = 0; moves < 256; moves++) {
+        for (int depth = 0; depth < MAX_PLY; depth++) {
             reductions[moves][depth] = 1 + log(moves) * log(depth)  / 1.75;
         }
     }
+
+    // Main UCI loop
     while (true) {
+        // ./smallbrain bench
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
+                nnue.init(NNUEfile.c_str());
                 start_bench();
                 return 0;
             }
@@ -60,10 +63,10 @@ int main(int argc, char** argv) {
         if (input == "uci") {
             std::cout << "id name Smallbrain Version 2.0\n" <<
                          "id author Disservin\n" <<
-                         "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
-                         "option name Threads type spin default 1 min 1 max 1\n" << //Threads
-                         "option name EvalFile type string default default.net\n" << //NN file
-                         "option name Use NN type check default true\n" << //use NN
+                         "\noption name Hash type spin default 400 min 1 max 100000\n" << // Hash in MB, max is some arbitrary number
+                         "option name Threads type spin default 1 min 1 max 1\n" << // Threads
+                         "option name EvalFile type string default default.net\n" << // NN file
+                         "option name Use NNUE type check default true\n" << //use NNUE
                          "uciok" << std::endl;
         }
         if (input == "isready") {
@@ -80,9 +83,8 @@ int main(int argc, char** argv) {
             thread.stop();
         }
         if (input.find("setoption name Hash value") != std::string::npos) {
-            std::size_t start_index = input.find("value");
-            std::string size_str = input.substr(start_index + 6);
-            U64 elements = (static_cast<unsigned long long>(std::stoi(size_str)) * 1000000) / sizeof(TEntry);
+            int size = std::stoi(findInput(input, "value"));
+            U64 elements = (static_cast<unsigned long long>(size) * 1000000) / sizeof(TEntry);
             oldbuffer = TTable;
             if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
             {
@@ -93,19 +95,18 @@ int main(int argc, char** argv) {
             TT_SIZE = elements;
         }
         if (input.find("setoption name EvalFile value") != std::string::npos) {
-            std::size_t start_index = input.find("value");
-            std::string path_str = input.substr(start_index + 6);
-            std::cout << "Loading eval file: " << path_str << std::endl;            
-            NNUE_initialized = true;
-            nnue.init(path_str.c_str());
+            std::string path_str = findInput(input, "value");
+            std::cout << "changed neural network file: " << path_str << std::endl;            
+            NNUEfile = path_str;
             useNNUE = true;
+        }
+        if (input.find("setoption name Use NNUE value") != std::string::npos) {
+            std::istringstream(findInput(input, "value")) >> std::boolalpha >> useNNUE;
         }
         if (input.find("position") != std::string::npos) {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
             if (tokens[1] == "fen") {
-                std::size_t start_index = input.find("fen");
-                std::string fen = input.substr(start_index + 4);
+                std::string fen = findInput(input, "fen");
                 searcher_class.board.applyFen(fen);
             }
             if (input.find("moves") != std::string::npos) {
@@ -117,62 +118,68 @@ int main(int argc, char** argv) {
                 }
             }
         }
-        if (input.find("go perft") != std::string::npos) {
-            int depth = std::stoi(tokens[2]);
-            std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
-            threads.join();
-            return 0;
-        }
-        if (input.find("go depth") != std::string::npos) {
-            thread.stop();
-            int depth = std::stoi(tokens[2]);
-            Time t;
-            thread.begin(depth, 0, t);
-        }
-        if (input.find("go nodes") != std::string::npos) {
-            thread.stop();
-            int nodes = std::stoi(tokens[2]);
-            Time t;
-            thread.begin(MAX_PLY, nodes, t);
-        }
-        if (input.find("go infinite") != std::string::npos) {
-            thread.stop();
-            Time t;
-            thread.begin(MAX_PLY, 0, t);
-        }
-        if (input.find("movetime") != std::string::npos) {
-            thread.stop();
-            auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
-            int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
-            Time t;
-            t.maximum = timegiven;
-            t.optimum = timegiven;
-            thread.begin(MAX_PLY, 0, t);
-        }
-        if (input.find("wtime") != std::string::npos) {
-            thread.stop();
-            searcher_class.nodes = 0;
-            // go wtime 100 btime 100 winc 100 binc 100
-            std::string side = searcher_class.board.sideToMove == White ? "wtime" : "btime";
-            auto indexTime = find(tokens.begin(), tokens.end(), side) - tokens.begin();
-            int64_t timegiven = std::stoi(tokens[indexTime + 1]);
-            int64_t inc = 0;
-            int64_t mtg = 0;
-            if (input.find("winc") != std::string::npos && tokens.size() > 4) {
-                std::string inc_str = searcher_class.board.sideToMove == White ? "winc" : "binc";
-                auto it = find(tokens.begin(), tokens.end(), inc_str);
-                int index = it - tokens.begin();
-                inc = std::stoi(tokens[index + 1]);
+        if (input.find("go") != std::string::npos) {
+            if (input.find("go perft") != std::string::npos) {
+                int depth = std::stoi(tokens[2]);
+                std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
+                threads.join();
+                return 0;
             }
-            if (input.find("movestogo") != std::string::npos) {
-                auto it = find(tokens.begin(), tokens.end(), "movestogo");
-                int index = it - tokens.begin();
-                mtg = std::stoi(tokens[index + 1]);
+            // Initialize NNUE
+            // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled with.
+            nnue.init(NNUEfile.c_str());
+            std::cout << "info string NNUE evaluation using " << NNUEfile << " enabled " << std::endl;
+            if (input.find("depth") != std::string::npos) {
+                thread.stop();
+                int depth = std::stoi(tokens[2]);
+                Time t;
+                thread.begin(depth, 0, t);
             }
+            if (input.find("nodes") != std::string::npos) {
+                thread.stop();
+                int nodes = std::stoi(tokens[2]);
+                Time t;
+                thread.begin(MAX_PLY, nodes, t);
+            }
+            if (input.find("infinite") != std::string::npos) {
+                thread.stop();
+                Time t;
+                thread.begin(MAX_PLY, 0, t);
+            }
+            if (input.find("movetime") != std::string::npos) {
+                thread.stop();
+                auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
+                int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
+                Time t;
+                t.maximum = timegiven;
+                t.optimum = timegiven;
+                thread.begin(MAX_PLY, 0, t);
+            }
+            if (input.find("wtime") != std::string::npos) {
+                thread.stop();
+                searcher_class.nodes = 0;
+                // go wtime 100 btime 100 winc 100 binc 100
+                std::string side = searcher_class.board.sideToMove == White ? "wtime" : "btime";
+                auto indexTime = find(tokens.begin(), tokens.end(), side) - tokens.begin();
+                int64_t timegiven = std::stoi(tokens[indexTime + 1]);
+                int64_t inc = 0;
+                int64_t mtg = 0;
+                if (input.find("winc") != std::string::npos && tokens.size() > 4) {
+                    std::string inc_str = searcher_class.board.sideToMove == White ? "winc" : "binc";
+                    auto it = find(tokens.begin(), tokens.end(), inc_str);
+                    int index = it - tokens.begin();
+                    inc = std::stoi(tokens[index + 1]);
+                }
+                if (input.find("movestogo") != std::string::npos) {
+                    auto it = find(tokens.begin(), tokens.end(), "movestogo");
+                    int index = it - tokens.begin();
+                    mtg = std::stoi(tokens[index + 1]);
+                }
+                Time t = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
+                thread.begin(MAX_PLY, 0, t);
+            }            
+        }
 
-            Time t = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
-            thread.begin(MAX_PLY, 0, t);
-        }
         // ENGINE SPECIFIC
         if (input == "print") {
             searcher_class.board.print();
@@ -201,44 +208,6 @@ int main(int argc, char** argv) {
             std::thread threads = std::thread(&Search::testAllPos, searcher_class);
             threads.join();
             return 0;
-        }
-        if (input.find("setoption") != std::string::npos) {
-            if (tokens[2] == "PAWN_EVAL_MG") {
-                piece_values[0][PAWN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "PAWN_EVAL_EG") {
-                piece_values[1][PAWN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "KNIGHT_EVAL_MG") {
-                piece_values[0][KNIGHT] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "KNIGHT_EVAL_EG") {
-                piece_values[1][KNIGHT] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "BISHOP_EVAL_MG") {
-                piece_values[0][BISHOP] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "BISHOP_EVAL_EG") {
-                piece_values[1][BISHOP] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "ROOK_EVAL_MG") {
-                piece_values[0][ROOK] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "ROOK_EVAL_EG") {
-                piece_values[1][ROOK] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "QUEEN_EVAL_MG") {
-                piece_values[0][QUEEN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "QUEEN_EVAL_EG") {
-                piece_values[1][QUEEN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "killer1") {
-                killerscore1 = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "killer2") {
-                killerscore2 = std::stoi(tokens[4]);
-            }
         }
     }
 }
@@ -303,4 +272,10 @@ Move convert_uci_to_Move(std::string input) {
         std::cout << "FALSE INPUT" << std::endl;
         return Move(NONETYPE, NO_SQ, NO_SQ, false);
     }
+}
+
+// finds the string behind the given token
+std::string findInput(std::string input, std::string token) {
+    auto it = input.find(token);
+    return input.substr(it + token.length());
 }

@@ -5,7 +5,6 @@
 
 int evaluation(Board& board) {
 	if (useNNUE) {
-		// board.accumulate();
 		return nnue.output() * (board.sideToMove * -2 + 1);
 	}
 	return HCE_Eval(board);

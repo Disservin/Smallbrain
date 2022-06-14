@@ -112,9 +112,18 @@ void Board::applyFen(std::string fen) {
 
     psqt_mg = 0;
     psqt_eg = 0;
-    for (int i = 0; i < HIDDEN_BIAS; i++) {
-        nnue.accumulator[i] = nnue.hiddenBias[i];
+
+    if (nnue.accumulator.size() == 0) {
+        for (int i = 0; i < HIDDEN_BIAS; i++) {
+            nnue.accumulator.push_back(nnue.hiddenBias[i]);
+        }
+    } 
+    else {
+        for (int i = 0; i < HIDDEN_BIAS; i++) {
+            nnue.accumulator[i] = nnue.hiddenBias[i];
+        }
     }
+
 
     Square square = Square(56);
     for (int index = 0; index < (int)position.size(); index++) {
@@ -169,7 +178,6 @@ void Board::applyFen(std::string fen) {
 
     prevStates.size = 0;
     hashKey = zobristHash();
-    // accumulate();
 }
 
 std::string Board::getFen() {
@@ -251,20 +259,6 @@ void Board::print() {
     std::cout << "Fullmoves: " << (int)fullMoveNumber / 2 << std::endl;
     std::cout << "EP: " << (int)enPassantSquare << std::endl;
     std::cout << "Hash: " << hashKey << std::endl;
-}
-
-void Board::accumulate() {
-    for (int i = 0; i < HIDDEN_BIAS; i++) {
-        nnue.accumulator[i] = nnue.hiddenBias[i];
-    }
-    
-    for (int i = 0; i < MAX_SQ; i++) {
-        bool input = pieceAtB(Square(i)) != None;
-        if (!input) continue;
-        int j = Square(i) + (pieceAtB(Square(i))) * 64;
-        nnue.inputValues[j] = 1;
-        nnue.activate(j);
-    }
 }
 
 Piece Board::makePiece(PieceType type, Color c) {
