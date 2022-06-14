@@ -347,28 +347,12 @@ void Board::placePieceSimple(Piece piece, Square sq) {
 void Board::removePiece(Piece piece, Square sq) {
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
-    if (piece > WhiteKing) {
-        psqt_mg += pieceSquareScore[MG][piece%6][sq];
-        psqt_eg += pieceSquareScore[EG][piece%6][sq];
-    }
-    else {
-        psqt_mg -= pieceSquareScore[MG][piece%6][sq^56];
-        psqt_eg -= pieceSquareScore[EG][piece%6][sq^56];
-    }
     nnue.deactivate(sq + piece * 64);
 }
 
 void Board::placePiece(Piece piece, Square sq) {
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
-    if (piece > WhiteKing) {
-        psqt_mg -= pieceSquareScore[MG][piece%6][sq];
-        psqt_eg -= pieceSquareScore[EG][piece%6][sq];
-    }
-    else {
-        psqt_mg += pieceSquareScore[MG][piece%6][sq^56];
-        psqt_eg += pieceSquareScore[EG][piece%6][sq^56];
-    }
     nnue.activate(sq + piece * 64);
 }
 

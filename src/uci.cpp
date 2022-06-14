@@ -14,7 +14,6 @@
 #include <fstream>
 
 std::atomic<bool> stopped;
-bool useNNUE = true;
 
 U64 TT_SIZE = 524287;
 TEntry* TTable{}; //TEntry size is 32 bytes
@@ -66,7 +65,6 @@ int main(int argc, char** argv) {
                          "\noption name Hash type spin default 400 min 1 max 100000\n" << // Hash in MB, max is some arbitrary number
                          "option name Threads type spin default 1 min 1 max 1\n" << // Threads
                          "option name EvalFile type string default default.net\n" << // NN file
-                         "option name Use NNUE type check default true\n" << //use NNUE
                          "uciok" << std::endl;
         }
         if (input == "isready") {
@@ -98,15 +96,12 @@ int main(int argc, char** argv) {
             std::string path_str = findInput(input, "value");
             std::cout << "changed neural network file: " << path_str << std::endl;            
             NNUEfile = path_str;
-            useNNUE = true;
-        }
-        if (input.find("setoption name Use NNUE value") != std::string::npos) {
-            std::istringstream(findInput(input, "value")) >> std::boolalpha >> useNNUE;
         }
         if (input.find("position") != std::string::npos) {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             if (tokens[1] == "fen") {
                 std::string fen = findInput(input, "fen");
+                std::cout << "fen: " << fen << std::endl;
                 searcher_class.board.applyFen(fen);
             }
             if (input.find("moves") != std::string::npos) {
@@ -277,5 +272,5 @@ Move convert_uci_to_Move(std::string input) {
 // finds the string behind the given token
 std::string findInput(std::string input, std::string token) {
     auto it = input.find(token);
-    return input.substr(it + token.length());
+    return input.substr(it + token.length() + 1);
 }
