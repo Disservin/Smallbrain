@@ -10,7 +10,7 @@
 #include <cstring>
 #include <stdio.h>
 
-#include "board.h"
+// #include "board.h"
 
 #define INPUT_WEIGHTS 64 * 12
 #define HIDDEN_BIAS 64 * 2
@@ -23,12 +23,11 @@ class NNUE {
     public:
     int relu(int x);
     void init(const char* filename);
-    void accumulate(Board& b);
+    // void accumulate(Board& b);
     void activate(int inputNum);
     void deactivate(int inputNum);
     int32_t output();
     void Clear();
-    private:
     std::vector<int16_t> accumulator;
     uint8_t inputValues[INPUT_WEIGHTS];
     int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];

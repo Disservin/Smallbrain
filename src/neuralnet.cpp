@@ -32,19 +32,19 @@ void NNUE::init(const char* filename) {
     }
 }
 
-void NNUE::accumulate(Board& b) {
-    for (int i = 0; i < HIDDEN_BIAS; i++) {
-        accumulator[i] = hiddenBias[i];
-    }
+// void NNUE::accumulate(Board& b) {
+//     for (int i = 0; i < HIDDEN_BIAS; i++) {
+//         accumulator[i] = hiddenBias[i];
+//     }
     
-    for (int i = 0; i < 64; i++) {
-        bool input = b.pieceAtB(Square(i)) != None;
-        if (!input) continue;
-        int j = Square(i) + (b.pieceAtB(Square(i))) * 64;
-        inputValues[j] = 1;
-        activate(j);
-    }
-}
+//     for (int i = 0; i < 64; i++) {
+//         bool input = b.pieceAtB(Square(i)) != None;
+//         if (!input) continue;
+//         int j = Square(i) + (b.pieceAtB(Square(i))) * 64;
+//         inputValues[j] = 1;
+//         activate(j);
+//     }
+// }
 
 void NNUE::activate(int inputNum) {
     for (int i = 0; i < HIDDEN_BIAS; i++) {
