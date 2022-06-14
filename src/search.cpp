@@ -244,7 +244,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         madeMoves++;
 
         if (RootNode && elapsed() > 10000 && !stopped) {
-            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+            std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
         }
 
         board.makeMove(move);
@@ -340,7 +340,6 @@ int Search::aspiration_search(int depth, int prev_eval) {
     int delta = 30;
 
     int result = 0;
-    int ply = 0;
     int research = 0;
 
     if (depth == 1) {
@@ -355,7 +354,7 @@ int Search::aspiration_search(int depth, int prev_eval) {
     while (true) {
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
-        result = absearch(depth, alpha, beta, ply, false);
+        result = absearch(depth, alpha, beta, 0, false);
         if (result <= alpha) {
             research++;
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
