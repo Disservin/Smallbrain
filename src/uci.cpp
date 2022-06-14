@@ -14,6 +14,7 @@
 #include <fstream>
 
 std::atomic<bool> stopped;
+bool NNUE_initialized = false;
 
 U64 TT_SIZE = 524287;
 TEntry* TTable{}; //TEntry size is 32 bytes
@@ -122,7 +123,9 @@ int main(int argc, char** argv) {
             }
             // Initialize NNUE
             // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled with.
-            nnue.init(NNUEfile.c_str());
+            if(!NNUE_initialized) nnue.init(NNUEfile.c_str());
+            NNUE_initialized = true;
+
             std::cout << "info string NNUE evaluation using " << NNUEfile << " enabled " << std::endl;
             if (input.find("depth") != std::string::npos) {
                 thread.stop();
