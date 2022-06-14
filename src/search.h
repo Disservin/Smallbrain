@@ -56,5 +56,6 @@ public:
 };
 void sortMoves(Movelist& moves);
 void sortMoves(Movelist& moves, int sorted);
+std::string output_score(int score);
 
 inline bool operator==(Move& m, Move& m2);

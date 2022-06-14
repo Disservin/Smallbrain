@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 
     // Initialize TT
     if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
-        std::cout << "Error: Could not allocate memory for TT\n";
+        std::cout << "Error: Could not allocate memory for TT" << std::endl;
         exit(1);
     }
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
             oldbuffer = TTable;
             if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
             {
-                std::cout << "Error: Could not allocate memory for TT\n";
+                std::cout << "Error: Could not allocate memory for TT" << std::endl;
                 free(oldbuffer);
                 exit(1);
             }

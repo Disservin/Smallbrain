@@ -547,24 +547,28 @@ bool Search::exit_early() {
 }
 
 void Search::uci_output(int score, int depth, int time) {
-    std::cout << "info depth " << signed(depth)
-    << " seldepth " << signed(seldepth);
-    if (score >= VALUE_MATE_IN_PLY){
-        std::cout << " score cp " << "mate " << ((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1);
-    }
-    else if (score <= VALUE_MATED_IN_PLY) {
-        std::cout << " score cp " << "mate " << -((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1);
-    }
-    else{
-        std::cout << " score cp " << score;
-    }
-    std::cout << " nodes " << nodes << " nps "
-    << signed((nodes / (time + 1)) * 1000) << " time "
-    << time
-    << " pv" << get_pv()<<"\n";
+    std::cout       << "info depth " << signed(depth)
+    << " seldepth " << signed(seldepth)
+    << " score "    << output_score(score)
+    << " nodes "    << nodes 
+    << " nps "      << signed((nodes / (time + 1)) * 1000) 
+    << " time "     << time
+    << " pv"        << get_pv() << std::endl;
 }
 
 long long Search::elapsed(){
     auto t1 = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+}
+
+std::string output_score(int score) {
+    if (score >= VALUE_MATE_IN_PLY) {
+        return "mate " + std::to_string((VALUE_MATE - score) / 2) + " " + std::to_string((VALUE_MATE - score) & 1);
+    }
+    else if (score <= VALUE_MATED_IN_PLY) {
+        return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+    }
+    else {
+        return "cp " + std::to_string(score);
+    }
 }
