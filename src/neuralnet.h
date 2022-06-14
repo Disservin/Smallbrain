@@ -13,8 +13,8 @@
 // #include "board.h"
 
 #define INPUT_WEIGHTS 64 * 12
-#define HIDDEN_BIAS 64 * 2
-#define HIDDEN_WEIGHTS 64 * 2
+#define HIDDEN_BIAS 64 * 2 * 2
+#define HIDDEN_WEIGHTS 64 * 2 * 2
 #define OUTPUT_BIAS 1
 
 extern bool NNUE_initialized;

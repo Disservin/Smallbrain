@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    nnue.init("default.net");
+    nnue.init("12x64_4x64_320.net");
 
     // load position
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
