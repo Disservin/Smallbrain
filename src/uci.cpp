@@ -17,13 +17,11 @@ std::atomic<bool> stopped;
 ThreadManager thread;
 
 U64 TT_SIZE = 524287;
-TEntry* TTable{};
+TEntry* TTable{};   //TEntry size is 32 bytes
 
 Board board = Board();
 Search searcher_class = Search(board);
 NNUE nnue = NNUE();
-bool useNNUE = true;
-bool NNUE_initialized = false;
 
 int main(int argc, char** argv) {
     stopped = false;
@@ -36,17 +34,21 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    nnue.init("12x64_4x64_320.net");
+    // Initialize NNUE
+    // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled with.
+    nnue.init("default.net");
 
     // load position
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
+     // Initialize reduction table
     for (int moves = 0; moves < 256; moves++){
         for (int depth = 0; depth < MAX_PLY; depth++){
             reductions[moves][depth] = 1 + log(moves) * log(depth)  / 1.75;
         }
     }
     while (true) {
+        // ./smallbrain bench
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
                 start_bench();
@@ -63,7 +65,6 @@ int main(int argc, char** argv) {
                          "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
                          "option name Threads type spin default 1 min 1 max 1\n" << //Threads
                          "option name EvalFile type string default default.net\n" << //NN file
-                         "option name Use NN type check default true\n" << //use NN
                          "uciok" << std::endl;
         }
         if (input == "isready") {
@@ -96,9 +97,7 @@ int main(int argc, char** argv) {
             std::size_t start_index = input.find("value");
             std::string path_str = input.substr(start_index + 6);
             std::cout << "Loading eval file: " << path_str << std::endl;            
-            NNUE_initialized = true;
             nnue.init(path_str.c_str());
-            useNNUE = true;
         }
         if (input.find("position") != std::string::npos) {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -201,44 +200,6 @@ int main(int argc, char** argv) {
             std::thread threads = std::thread(&Search::testAllPos, searcher_class);
             threads.join();
             return 0;
-        }
-        if (input.find("setoption") != std::string::npos) {
-            if (tokens[2] == "PAWN_EVAL_MG") {
-                piece_values[0][PAWN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "PAWN_EVAL_EG") {
-                piece_values[1][PAWN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "KNIGHT_EVAL_MG") {
-                piece_values[0][KNIGHT] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "KNIGHT_EVAL_EG") {
-                piece_values[1][KNIGHT] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "BISHOP_EVAL_MG") {
-                piece_values[0][BISHOP] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "BISHOP_EVAL_EG") {
-                piece_values[1][BISHOP] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "ROOK_EVAL_MG") {
-                piece_values[0][ROOK] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "ROOK_EVAL_EG") {
-                piece_values[1][ROOK] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "QUEEN_EVAL_MG") {
-                piece_values[0][QUEEN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "QUEEN_EVAL_EG") {
-                piece_values[1][QUEEN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "killer1") {
-                killerscore1 = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "killer2") {
-                killerscore2 = std::stoi(tokens[4]);
-            }
         }
     }
 }

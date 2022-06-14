@@ -110,8 +110,6 @@ void Board::applyFen(std::string fen) {
     { 'k', BlackKing },
     };
 
-    psqt_mg = 0;
-    psqt_eg = 0;
     for (int i = 0; i < HIDDEN_BIAS; i++) {
         nnue.accumulator[i] = nnue.hiddenBias[i];
     }
@@ -169,7 +167,6 @@ void Board::applyFen(std::string fen) {
 
     prevStates.size = 0;
     hashKey = zobristHash();
-    // accumulate();
 }
 
 std::string Board::getFen() {
@@ -251,20 +248,6 @@ void Board::print() {
     std::cout << "Fullmoves: " << (int)fullMoveNumber / 2 << std::endl;
     std::cout << "EP: " << (int)enPassantSquare << std::endl;
     std::cout << "Hash: " << hashKey << std::endl;
-}
-
-void Board::accumulate() {
-    for (int i = 0; i < HIDDEN_BIAS; i++) {
-        nnue.accumulator[i] = nnue.hiddenBias[i];
-    }
-    
-    for (int i = 0; i < MAX_SQ; i++) {
-        bool input = pieceAtB(Square(i)) != None;
-        if (!input) continue;
-        int j = Square(i) + (pieceAtB(Square(i))) * 64;
-        nnue.inputValues[j] = 1;
-        nnue.activate(j);
-    }
 }
 
 Piece Board::makePiece(PieceType type, Color c) {
@@ -353,28 +336,12 @@ void Board::placePieceSimple(Piece piece, Square sq) {
 void Board::removePiece(Piece piece, Square sq) {
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
-    if (piece > WhiteKing) {
-        psqt_mg += pieceSquareScore[MG][piece%6][sq];
-        psqt_eg += pieceSquareScore[EG][piece%6][sq];
-    }
-    else {
-        psqt_mg -= pieceSquareScore[MG][piece%6][sq^56];
-        psqt_eg -= pieceSquareScore[EG][piece%6][sq^56];
-    }
     nnue.deactivate(sq + piece * 64);
 }
 
 void Board::placePiece(Piece piece, Square sq) {
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
-    if (piece > WhiteKing) {
-        psqt_mg -= pieceSquareScore[MG][piece%6][sq];
-        psqt_eg -= pieceSquareScore[EG][piece%6][sq];
-    }
-    else {
-        psqt_mg += pieceSquareScore[MG][piece%6][sq^56];
-        psqt_eg += pieceSquareScore[EG][piece%6][sq^56];
-    }
     nnue.activate(sq + piece * 64);
 }
 

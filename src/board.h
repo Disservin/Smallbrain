@@ -74,9 +74,6 @@ public:
 	U64 occAll{};
 	U64 enemyEmptyBB{};
 
-	int psqt_mg{};
-	int psqt_eg{};
-
 	U64 hashHistory[1024]{};
 	States prevStates{};
 	Board();
@@ -101,8 +98,6 @@ public:
 
 	// prints the board
 	void print();
-
-	void accumulate();
 
 	// makes a Piece from only the piece type and color
 	Piece makePiece(PieceType type, Color c);
@@ -138,7 +133,8 @@ public:
 	void removePieceSimple(Piece piece, Square sq);
 
 	void placePieceSimple(Piece piece, Square sq);
-	// removes a piece from a square, also removes psqt values
+	
+	// updates accumulator
 	void removePiece(Piece piece, Square sq);
 	void placePiece(Piece piece, Square sq);
 

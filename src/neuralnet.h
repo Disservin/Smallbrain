@@ -17,7 +17,7 @@
 #define HIDDEN_WEIGHTS 64 * 2 * 2
 #define OUTPUT_BIAS 1
 
-extern bool NNUE_initialized;
+/// HIDDEN_BIAS/HIDDEN_WEIGHTS is basically the width of the hidden layer.
 
 class NNUE {
     public:
