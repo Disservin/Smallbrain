@@ -33,7 +33,7 @@
     <ClCompile Include="uci.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="psqt.cpp">
+    <ClCompile Include="scores.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="zobrist.cpp">
@@ -50,7 +50,7 @@
     <ClInclude Include="helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="psqt.h">
+    <ClInclude Include="scores.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="search.h">

@@ -1,7 +1,7 @@
 #include "board.h"
 #include "search.h"
 #include "threadmanager.h"
-#include "psqt.h"
+#include "scores.h"
 #include "uci.h"
 #include "tt.h"
 #include "evaluation.h"
@@ -38,15 +38,11 @@ int main(int argc, char** argv) {
     // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled with.
     nnue.init("default.net");
 
+    init_reductions();
+
     // load position
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
-     // Initialize reduction table
-    for (int moves = 0; moves < 256; moves++){
-        for (int depth = 0; depth < MAX_PLY; depth++){
-            reductions[moves][depth] = 1 + log(moves) * log(depth)  / 1.75;
-        }
-    }
+    
     while (true) {
         // ./smallbrain bench
         if (argc > 1) {

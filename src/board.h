@@ -6,7 +6,7 @@
 
 #include "types.h"
 #include "helper.h"
-#include "psqt.h"
+#include "scores.h"
 #include "zobrist.h"
 #include "neuralnet.h"
 
