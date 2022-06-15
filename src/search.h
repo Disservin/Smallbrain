@@ -18,6 +18,7 @@ struct Stack{
 class Search {
 public:
     uint64_t nodes{};
+    uint64_t maxNodes{};
     Board board{};
     Move bestMove{};
     uint16_t startAge{};
@@ -27,10 +28,10 @@ public:
     uint8_t pv_length[MAX_PLY]{};
     Move pv_table[MAX_PLY][MAX_PLY]{};
     Move pv[MAX_PLY]{};
-    int history_table[2][6][64][64]{};
+    int history_table[2][6][MAX_SQ][MAX_SQ]{};
     Move killerMoves[2][MAX_PLY + 1]{};
     Stack ss[MAX_PLY+1]{};
-    U64 spentEffort[64][64]{};
+    U64 spentEffort[MAX_SQ][MAX_SQ]{};
     int rootSize{};
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 
@@ -44,7 +45,7 @@ public:
     int qsearch(int depth, int alpha, int beta, int ply);
     int absearch(int depth, int alpha, int beta, int ply, bool null);
     int aspiration_search(int depth, int prev_eval);
-    int iterative_deepening(int depth, Time time);
+    int iterative_deepening(int search_depth, uint64_t maxN, Time time);
     bool exit_early();
     int mmlva(Move& move);
     int score_move(Move& move, int ply, bool ttMove);
@@ -55,5 +56,6 @@ public:
 };
 void sortMoves(Movelist& moves);
 void sortMoves(Movelist& moves, int sorted);
+std::string output_score(int score);
 
 inline bool operator==(Move& m, Move& m2);

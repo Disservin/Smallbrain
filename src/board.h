@@ -6,8 +6,11 @@
 
 #include "types.h"
 #include "helper.h"
-#include "psqt.h"
+#include "scores.h"
 #include "zobrist.h"
+#include "neuralnet.h"
+
+extern NNUE nnue;
 
 struct State {
 	Square enPassant{};
@@ -55,9 +58,9 @@ public:
 	uint16_t fullMoveNumber{};
 	Color sideToMove = White;
 
-	Piece board[64]{ None };
+	Piece board[MAX_SQ]{ None };
 	U64 Bitboards[12]{};
-	U64 SQUARES_BETWEEN_BB[64][64]{};
+	U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ]{};
 
 	// all bits set
 	U64 checkMask = 18446744073709551615ULL;
@@ -70,9 +73,6 @@ public:
 	U64 occBlack{};
 	U64 occAll{};
 	U64 enemyEmptyBB{};
-
-	int psqt_mg{};
-	int psqt_eg{};
 
 	U64 hashHistory[1024]{};
 	States prevStates{};
@@ -130,7 +130,11 @@ public:
 	U64 Queens(Color c);
 	U64 Kings(Color c);
 
-	// removes a piece from a square, also removes psqt values
+	void removePieceSimple(Piece piece, Square sq);
+
+	void placePieceSimple(Piece piece, Square sq);
+	
+	// updates accumulator
 	void removePiece(Piece piece, Square sq);
 	void placePiece(Piece piece, Square sq);
 

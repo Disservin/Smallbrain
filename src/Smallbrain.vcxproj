@@ -148,7 +148,7 @@
     <ClCompile Include="board.cpp" />
     <ClCompile Include="evaluation.cpp" />
     <ClCompile Include="helper.cpp" />
-    <ClCompile Include="psqt.cpp" />
+    <ClCompile Include="scores.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="threadmanager.cpp" />
     <ClCompile Include="uci.cpp" />
@@ -158,7 +158,7 @@
     <ClInclude Include="board.h" />
     <ClInclude Include="evaluation.h" />
     <ClInclude Include="helper.h" />
-    <ClInclude Include="psqt.h" />
+    <ClInclude Include="scores.h" />
     <ClInclude Include="search.h" />
     <ClInclude Include="sliders.hpp" />
     <ClInclude Include="threadmanager.h" />

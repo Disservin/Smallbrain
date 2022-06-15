@@ -1,60 +1,71 @@
 #include "board.h"
 #include "search.h"
 #include "threadmanager.h"
-#include "psqt.h"
+#include "scores.h"
 #include "uci.h"
 #include "tt.h"
 #include "evaluation.h"
 #include "benchmark.h"
 #include "timemanager.h"
+#include "neuralnet.h"
 
 #include <signal.h>
 #include <math.h> 
+#include <fstream>
 
 std::atomic<bool> stopped;
 ThreadManager thread;
 
 U64 TT_SIZE = 524287;
-TEntry* TTable{};
+TEntry* TTable{};   //TEntry size is 32 bytes
 
 Board board = Board();
 Search searcher_class = Search(board);
+NNUE nnue = NNUE();
 
 int main(int argc, char** argv) {
     stopped = false;
     signal(SIGINT, signal_callback_handler);
     TEntry* oldbuffer;
+
+    // Initialize TT
     if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
-        std::cout << "Error: Could not allocate memory for TT\n";
+        std::cout << "Error: Could not allocate memory for TT" << std::endl;
         exit(1);
     }
 
+    // Initialize NNUE
+    // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled with.
+    nnue.init("default.net");
+
+    init_reductions();
+
+    // load position
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    for (int moves = 0; moves < 256; moves++){
-        for (int depth = 0; depth < MAX_PLY; depth++){
-            reductions[moves][depth] = 1 + log(moves) * log(depth)  / 1.75;
-        }
-    }
+    
     while (true) {
+        // ./smallbrain bench
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
                 start_bench();
                 return 0;
             }
         }
+        Time t;
         std::string input;
         std::getline(std::cin, input);
         std::vector<std::string> tokens = split_input(input);
         // UCI COMMANDS
         if (input == "uci") {
-            std::cout << "id name Smallbrain Version 2.0\n" <<
+            std::cout << "id name Smallbrain Version 3.0\n" <<
                          "id author Disservin\n" <<
                          "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
                          "option name Threads type spin default 1 min 1 max 1\n" << //Threads
+                         "option name EvalFile type string default default.net\n" << //NN file
                          "uciok" << std::endl;
         }
         if (input == "isready") {
-            std::cout << "readyok\n" << std::endl;
+            std::cout << "readyok" << std::endl;
         }
         if (input == "ucinewgame") {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -73,11 +84,17 @@ int main(int argc, char** argv) {
             oldbuffer = TTable;
             if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
             {
-                std::cout << "Error: Could not allocate memory for TT\n";
+                std::cout << "Error: Could not allocate memory for TT" << std::endl;
                 free(oldbuffer);
                 exit(1);
             }
             TT_SIZE = elements;
+        }
+        if (input.find("setoption name EvalFile value") != std::string::npos) {
+            std::size_t start_index = input.find("value");
+            std::string path_str = input.substr(start_index + 6);
+            std::cout << "Loading eval file: " << path_str << std::endl;            
+            nnue.init(path_str.c_str());
         }
         if (input.find("position") != std::string::npos) {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -105,22 +122,24 @@ int main(int argc, char** argv) {
         if (input.find("go depth") != std::string::npos) {
             thread.stop();
             int depth = std::stoi(tokens[2]);
-            Time t;
-            thread.begin(depth, t);
+            thread.begin(depth, 0, t);
+        }
+        if (input.find("go nodes") != std::string::npos) {
+            thread.stop();
+            int nodes = std::stoi(tokens[2]);
+            thread.begin(MAX_PLY, nodes, t);
         }
         if (input.find("go infinite") != std::string::npos) {
             thread.stop();
-            Time t;
-            thread.begin(MAX_PLY, t);
+            thread.begin(MAX_PLY, 0, t);
         }
         if (input.find("movetime") != std::string::npos) {
             thread.stop();
             auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
             int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
-            Time t;
             t.maximum = timegiven;
             t.optimum = timegiven;
-            thread.begin(MAX_PLY, t);
+            thread.begin(MAX_PLY, 0, t);
         }
         if (input.find("wtime") != std::string::npos) {
             thread.stop();
@@ -144,7 +163,7 @@ int main(int argc, char** argv) {
             }
 
             Time t = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
-            thread.begin(MAX_PLY, t);
+            thread.begin(MAX_PLY, 0, t);
         }
         // ENGINE SPECIFIC
         if (input == "print") {
@@ -174,44 +193,6 @@ int main(int argc, char** argv) {
             std::thread threads = std::thread(&Search::testAllPos, searcher_class);
             threads.join();
             return 0;
-        }
-        if (input.find("setoption") != std::string::npos) {
-            if (tokens[2] == "PAWN_EVAL_MG") {
-                piece_values[0][PAWN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "PAWN_EVAL_EG") {
-                piece_values[1][PAWN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "KNIGHT_EVAL_MG") {
-                piece_values[0][KNIGHT] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "KNIGHT_EVAL_EG") {
-                piece_values[1][KNIGHT] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "BISHOP_EVAL_MG") {
-                piece_values[0][BISHOP] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "BISHOP_EVAL_EG") {
-                piece_values[1][BISHOP] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "ROOK_EVAL_MG") {
-                piece_values[0][ROOK] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "ROOK_EVAL_EG") {
-                piece_values[1][ROOK] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "QUEEN_EVAL_MG") {
-                piece_values[0][QUEEN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "QUEEN_EVAL_EG") {
-                piece_values[1][QUEEN] = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "killer1") {
-                killerscore1 = std::stoi(tokens[4]);
-            }
-            if (tokens[2] == "killer2") {
-                killerscore2 = std::stoi(tokens[4]);
-            }
         }
     }
 }

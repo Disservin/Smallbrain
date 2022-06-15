@@ -244,7 +244,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         madeMoves++;
 
         if (RootNode && elapsed() > 10000 && !stopped) {
-            std::cout << "info depth " << depth << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+            std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
         }
 
         board.makeMove(move);
@@ -340,7 +340,6 @@ int Search::aspiration_search(int depth, int prev_eval) {
     int delta = 30;
 
     int result = 0;
-    int ply = 0;
     int research = 0;
 
     if (depth == 1) {
@@ -355,7 +354,7 @@ int Search::aspiration_search(int depth, int prev_eval) {
     while (true) {
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
-        result = absearch(depth, alpha, beta, ply, false);
+        result = absearch(depth, alpha, beta, 0, false);
         if (result <= alpha) {
             research++;
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
@@ -370,14 +369,15 @@ int Search::aspiration_search(int depth, int prev_eval) {
     }
 }
 
-int Search::iterative_deepening(int search_depth, Time time) {
+int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
     int result = 0;
     seldepth = 0;
     startAge = board.fullMoveNumber;
     Move prev_bestmove{};
     searchTime = time.optimum;
     maxTime = time.maximum;
-    memset(spentEffort, 0, sizeof(unsigned long long) * 64 * 64);
+    maxNodes = maxN;
+    memset(spentEffort, 0, sizeof(unsigned long long) * MAX_SQ * MAX_SQ);
 
     // reuse previous pv information
    if (pv_length[0] > 0) {
@@ -534,6 +534,7 @@ void sortMoves(Movelist& moves, int sorted){
 
 bool Search::exit_early() {
     if (stopped) return true;
+    if (maxNodes != 0 && nodes >= maxNodes) return true;
     if (nodes & 2047 && searchTime != 0) {
         auto ms = elapsed();
         if (ms >= searchTime || ms >= maxTime) {
@@ -545,24 +546,28 @@ bool Search::exit_early() {
 }
 
 void Search::uci_output(int score, int depth, int time) {
-    std::cout << "info depth " << signed(depth)
-    << " seldepth " << signed(seldepth);
-    if (score >= VALUE_MATE_IN_PLY){
-        std::cout << " score cp " << "mate " << ((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1);
-    }
-    else if (score <= VALUE_MATED_IN_PLY) {
-        std::cout << " score cp " << "mate " << -((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1);
-    }
-    else{
-        std::cout << " score cp " << score;
-    }
-    std::cout << " nodes " << nodes << " nps "
-    << signed((nodes / (time + 1)) * 1000) << " time "
-    << time
-    << " pv" << get_pv()<<"\n";
+    std::cout       << "info depth " << signed(depth)
+    << " seldepth " << signed(seldepth)
+    << " score "    << output_score(score)
+    << " nodes "    << nodes 
+    << " nps "      << signed((nodes / (time + 1)) * 1000) 
+    << " time "     << time
+    << " pv"        << get_pv() << std::endl;
 }
 
 long long Search::elapsed(){
     auto t1 = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+}
+
+std::string output_score(int score) {
+    if (score >= VALUE_MATE_IN_PLY) {
+        return "mate " + std::to_string((VALUE_MATE - score) / 2) + " " + std::to_string((VALUE_MATE - score) & 1);
+    }
+    else if (score <= VALUE_MATED_IN_PLY) {
+        return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+    }
+    else {
+        return "cp " + std::to_string(score);
+    }
 }

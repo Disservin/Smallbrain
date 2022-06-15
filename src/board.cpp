@@ -110,8 +110,9 @@ void Board::applyFen(std::string fen) {
     { 'k', BlackKing },
     };
 
-    psqt_mg = 0;
-    psqt_eg = 0;
+    for (int i = 0; i < HIDDEN_BIAS; i++) {
+        nnue.accumulator[i] = nnue.hiddenBias[i];
+    }
 
     Square square = Square(56);
     for (int index = 0; index < (int)position.size(); index++) {
@@ -218,7 +219,7 @@ std::string Board::getFen() {
 void Board::printBitboard(U64 bb) {
     std::bitset<64> b(bb);
     std::string str_bitset = b.to_string();
-    for (int i = 0; i < 64; i += 8)
+    for (int i = 0; i < MAX_SQ; i += 8)
     {
         std::string x = str_bitset.substr(i, 8);
         reverse(x.begin(), x.end());
@@ -321,29 +322,27 @@ U64 Board::Kings(Color c) {
     return Bitboards[KING + c * 6];
 }
 
+void Board::removePieceSimple(Piece piece, Square sq) {
+    Bitboards[piece] &= ~(1ULL << sq);
+    board[sq] = None;
+}
+
+void Board::placePieceSimple(Piece piece, Square sq) {
+    Bitboards[piece] |= (1ULL << sq);
+    board[sq] = piece;
+}
+
+
 void Board::removePiece(Piece piece, Square sq) {
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
-    if (piece > WhiteKing) {
-        psqt_mg += pieceSquareScore[MG][piece%6][sq];
-        psqt_eg += pieceSquareScore[EG][piece%6][sq];
-    }
-    else {
-        psqt_mg -= pieceSquareScore[MG][piece%6][sq^56];
-        psqt_eg -= pieceSquareScore[EG][piece%6][sq^56];
-    }
+    nnue.deactivate(sq + piece * 64);
 }
+
 void Board::placePiece(Piece piece, Square sq) {
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
-    if (piece > WhiteKing) {
-        psqt_mg -= pieceSquareScore[MG][piece%6][sq];
-        psqt_eg -= pieceSquareScore[EG][piece%6][sq];
-    }
-    else {
-        psqt_mg += pieceSquareScore[MG][piece%6][sq^56];
-        psqt_eg += pieceSquareScore[EG][piece%6][sq^56];
-    }
+    nnue.activate(sq + piece * 64);
 }
 
 U64 Board::updateKeyPiece(Piece piece, Square sq) {
@@ -498,13 +497,13 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
         Piece ourPawn = makePiece(PAWN, c);
         Piece theirPawn = makePiece(PAWN, ~c);
         Square kSQ = KingSQ(c);
-        removePiece(ourPawn, sq);
-        removePiece(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
-        placePiece(ourPawn, ep);
+        removePieceSimple(ourPawn, sq);
+        removePieceSimple(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
+        placePieceSimple(ourPawn, ep);
         if (!((RookAttacks(kSQ, All()) & (Rooks(~c) | Queens(~c))))) moves |= (1ULL << ep);
-        placePiece(ourPawn, sq);
-        placePiece(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
-        removePiece(ourPawn, ep);
+        placePieceSimple(ourPawn, sq);
+        placePieceSimple(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
+        removePieceSimple(ourPawn, ep);
     }
     return moves;
 }
@@ -535,13 +534,13 @@ U64 Board::LegalKingMoves(Color c, Square sq) {
     U64 final_moves = 0ULL;
     Piece k = makePiece(KING, c);
 
-    removePiece(k, sq);
+    removePieceSimple(k, sq);
     while (moves) {
         Square index = poplsb(moves);
         if (isSquareAttacked(~c, index)) continue;
         final_moves |= (1ULL << index);
     }
-    placePiece(k, sq);
+    placePieceSimple(k, sq);
 
     if (checkMask == 18446744073709551615ULL) {
         if (c == White) {
