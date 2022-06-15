@@ -28,8 +28,7 @@ the same, unless I screwed up.
   * Razoring
   * Late-move reduction
 * Evaluation
-  * Material evaluation
-  * Piece square table
+  * NNUE 768 Input -> 256 hidden neurons -> 1 output
 
 19/05/2022 (DD/MM/YY) <br>
 SHA: cc5236ec07f36e1660d1030776a10340b99fcb43<br>
