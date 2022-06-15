@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
                 return 0;
             }
         }
+        Time t;
         std::string input;
         std::getline(std::cin, input);
         std::vector<std::string> tokens = split_input(input);
@@ -121,25 +122,21 @@ int main(int argc, char** argv) {
         if (input.find("go depth") != std::string::npos) {
             thread.stop();
             int depth = std::stoi(tokens[2]);
-            Time t;
             thread.begin(depth, 0, t);
         }
         if (input.find("go nodes") != std::string::npos) {
             thread.stop();
             int nodes = std::stoi(tokens[2]);
-            Time t;
             thread.begin(MAX_PLY, nodes, t);
         }
         if (input.find("go infinite") != std::string::npos) {
             thread.stop();
-            Time t;
             thread.begin(MAX_PLY, 0, t);
         }
         if (input.find("movetime") != std::string::npos) {
             thread.stop();
             auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
             int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
-            Time t;
             t.maximum = timegiven;
             t.optimum = timegiven;
             thread.begin(MAX_PLY, 0, t);
