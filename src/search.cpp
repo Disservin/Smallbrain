@@ -199,8 +199,10 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 
     if (!PvNode
         && depth < 2
-        && staticEval + 640 < alpha)
+        && staticEval + 640 < alpha
+        && !inCheck)
         return qsearch(15, alpha, beta, ply);
+
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
         if (depth < 7 && staticEval - 150 * depth >= beta) return beta;
