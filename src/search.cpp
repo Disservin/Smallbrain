@@ -189,15 +189,14 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *
             beta = std::min(beta, TTable[index].score);
         }
         if (alpha >= beta) return TTable[index].score;
-        staticEval = TTable[index].score;
         // use TT move
         ttMove = true;
     }
-    else {
-        staticEval = evaluation(board);
-    }
 
-    ss->eval = staticEval;
+    ss->eval = staticEval = (ss-1)->currentmove == nullmove ? -(ss-1)->eval 
+                                                   : ttMove ? TTable[index].score 
+                                                   : evaluation(board);
+                                                   
     // improving boolean, similar to stockfish
     bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
 
