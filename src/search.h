@@ -12,7 +12,8 @@ extern TEntry* TTable;
 extern U64 TT_SIZE;
 
 struct Stack{
-    Move currentmove{};
+    uint16_t currentmove;
+    uint16_t ply;
 };
 
 class Search {
@@ -30,7 +31,6 @@ public:
     Move pv[MAX_PLY]{};
     int history_table[2][6][MAX_SQ][MAX_SQ]{};
     Move killerMoves[2][MAX_PLY + 1]{};
-    Stack ss[MAX_PLY+1]{};
     U64 spentEffort[MAX_SQ][MAX_SQ]{};
     int rootSize{};
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
@@ -43,8 +43,8 @@ public:
     void testAllPos();
     U64 perft(int depth, int max);
     int qsearch(int depth, int alpha, int beta, int ply);
-    int absearch(int depth, int alpha, int beta, int ply, bool null);
-    int aspiration_search(int depth, int prev_eval);
+    int absearch(int depth, int alpha, int beta, int ply, bool null, Stack *ss);
+    int aspiration_search(int depth, int prev_eval, Stack *ss);
     int iterative_deepening(int search_depth, uint64_t maxN, Time time);
     bool exit_early();
     int mmlva(Move& move);
