@@ -140,7 +140,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
     return alpha;
 }
 
-int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *ss) {
+int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     if (exit_early()) return 0;
     if (ply > MAX_PLY - 1) return evaluation(board);
 
@@ -213,11 +213,13 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *
     }
 
     // Null move pruning
-    if (board.nonPawnMat(color) && !((ss-1)->currentmove == nullmove) && depth >= 3 && !inCheck) {
+    if (board.nonPawnMat(color) && !((ss-1)->currentmove == nullmove) 
+        && depth >= 3 && !inCheck
+        && staticEval >= beta) {
         int r = 3 + depth / 5;
         board.makeNullMove();
         (ss-1)->currentmove = nullmove;
-        int score = -absearch(depth - r, -beta, -beta + 1, ply + 1, true, ss+1);
+        int score = -absearch(depth - r, -beta, -beta + 1, ply + 1, ss+1);
         board.unmakeNullMove();
         if (score >= beta) return beta;
     }
@@ -285,7 +287,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *
             if (madeMoves > 15 && !capture)
                 rdepth--;
 
-            score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, false, ss+1);
+            score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, ss+1);
             doFullSearch = score > alpha;
         }
         else
@@ -293,12 +295,12 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *
 
         // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
-            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, false, ss+1);
+            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, ss+1);
         }
 
         // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(depth - 1, -beta, -alpha, ply + 1, false, ss+1);
+            score = -absearch(depth - 1, -beta, -alpha, ply + 1, ss+1);
         }
 
         board.unmakeMove(move);
@@ -353,7 +355,7 @@ int Search::aspiration_search(int depth, int prev_eval, Stack *ss) {
     int research = 0;
 
     if (depth == 1) {
-        result = -absearch(1, alpha, beta, 0, false, ss);
+        result = -absearch(1, alpha, beta, 0, ss);
         return result;
     }
     else if (depth >= 5) {
@@ -364,7 +366,7 @@ int Search::aspiration_search(int depth, int prev_eval, Stack *ss) {
     while (true) {
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
-        result = absearch(depth, alpha, beta, 0, false, ss);
+        result = absearch(depth, alpha, beta, 0, ss);
         if (result <= alpha) {
             research++;
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
