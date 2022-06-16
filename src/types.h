@@ -239,7 +239,7 @@ public:
         PieceType piece = NONETYPE,
         Square source  = NO_SQ,
         Square target  = NO_SQ,
-        uint16_t promoted = 0
+        bool promoted = false
 
     ) {
         move = (uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15;
@@ -265,16 +265,6 @@ public:
         return move;
     }
 };
-
-// struct Move {
-//     PieceType piece{ NONETYPE };
-//     Square from{ NO_SQ };
-//     Square to{ NO_SQ };
-//     bool promoted{};
-//     int value{};
-//     Move(PieceType p = NONETYPE, Square f = NO_SQ, Square t = NO_SQ, bool pr = false) :
-//         piece(p), from(f), to(t), promoted(pr) {}
-// };
 
 static Move nullmove = Move(NONETYPE, NO_SQ, NO_SQ, false);
 
