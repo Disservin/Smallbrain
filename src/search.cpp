@@ -140,7 +140,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
     return alpha;
 }
 
-int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
+int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *ss) {
     if (exit_early()) return 0;
     if (ply > MAX_PLY - 1) return evaluation(board);
 
@@ -150,7 +150,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
     bool RootNode = ply == 0;
     Color color = board.sideToMove;
 
-    if (ply >= 1 && board.isRepetition() && !(ss[ply-1].currentmove == nullmove)) return 0;
+    if (ply >= 1 && board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
     if (!RootNode){
         if (board.halfMoveClock >= 100) return 0;
         int all = popcount(board.All());
@@ -209,11 +209,11 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
     }
 
     // Null move pruning
-    if (board.nonPawnMat(color) && !(ss[ply-1].currentmove == nullmove) && depth >= 3 && !inCheck) {
+    if (board.nonPawnMat(color) && !((ss-1)->currentmove == nullmove) && depth >= 3 && !inCheck) {
         int r = 3 + depth / 5;
         board.makeNullMove();
-        ss[ply].currentmove = nullmove;
-        int score = -absearch(depth - r, -beta, -beta + 1, ply + 1, true);
+        (ss-1)->currentmove = nullmove;
+        int score = -absearch(depth - r, -beta, -beta + 1, ply + 1, true, ss+1);
         board.unmakeNullMove();
         if (score >= beta) return beta;
     }
@@ -256,7 +256,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         board.makeMove(move);
 
 	    U64 nodeCount = nodes;
-        ss[ply].currentmove = move;
+        ss->currentmove = move.get();
         bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
 
         // late move pruning/movecount pruning
@@ -281,7 +281,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
             if (madeMoves > 15 && !capture)
                 rdepth--;
 
-            score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, false);
+            score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, false, ss+1);
             doFullSearch = score > alpha;
         }
         else
@@ -289,12 +289,12 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 
         // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
-            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, false);
+            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, false, ss+1);
         }
 
         // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(depth - 1, -beta, -alpha, ply + 1, false);
+            score = -absearch(depth - 1, -beta, -alpha, ply + 1, false, ss+1);
         }
 
         board.unmakeMove(move);
@@ -340,7 +340,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
     return best;
 }
 
-int Search::aspiration_search(int depth, int prev_eval) {
+int Search::aspiration_search(int depth, int prev_eval, Stack *ss) {
     int alpha = -VALUE_INFINITE;
     int beta = VALUE_INFINITE;
     int delta = 30;
@@ -349,7 +349,7 @@ int Search::aspiration_search(int depth, int prev_eval) {
     int research = 0;
 
     if (depth == 1) {
-        result = -absearch(1, alpha, beta, 0, false);
+        result = -absearch(1, alpha, beta, 0, false, ss);
         return result;
     }
     else if (depth >= 5) {
@@ -360,7 +360,7 @@ int Search::aspiration_search(int depth, int prev_eval) {
     while (true) {
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
-        result = absearch(depth, alpha, beta, 0, false);
+        result = absearch(depth, alpha, beta, 0, false, ss);
         if (result <= alpha) {
             research++;
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
@@ -378,19 +378,23 @@ int Search::aspiration_search(int depth, int prev_eval) {
 int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
     t0 = std::chrono::high_resolution_clock::now();
 
+    searchTime = time.optimum;
+    maxTime = time.maximum;
+    startAge = board.fullMoveNumber;
+    maxNodes = maxN;
+
     int result = 0;
     Move prev_bestmove{};
     bool adjustedTime = false;
-    Move reduceTimeMove = nullmove;
+    Move reduceTimeMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
     int64_t startTime = searchTime;
+    Stack stack[MAX_PLY+4], *ss = stack+2;
 
     seldepth = 0;
-    startAge = board.fullMoveNumber;
-    searchTime = time.optimum;
-    maxTime = time.maximum;
-    maxNodes = maxN;
     nodes = 0;
+
     memset(spentEffort, 0, sizeof(unsigned long long) * MAX_SQ * MAX_SQ);
+    std::memset(ss-2, 0, 4 * sizeof(Stack));
 
     // reuse previous pv information
    if (pv_length[0] > 0) {
@@ -399,8 +403,11 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
         }
     }
 
+    for (int i = -2; i <= MAX_PLY + 2; ++i)
+        (ss+i)->ply = i;
+
     for (int depth = 1; depth <= search_depth; depth++) {
-        result = aspiration_search(depth, result);
+        result = aspiration_search(depth, result, ss);
         // Can we exit the search?
         if (exit_early()) {
             std::string move = board.printMove(prev_bestmove);
