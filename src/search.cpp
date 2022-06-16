@@ -124,9 +124,9 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
     for (int i = 0; i < (int)ml.size; i++) {
         Move move = ml.list[i];
 
-        Piece captured = board.pieceAtB(move.to);
+        Piece captured = board.pieceAtB(move.to());
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
-        if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted && board.nonPawnMat(color)) continue;
+        if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted() && board.nonPawnMat(color)) continue;
 
         nodes++;
         board.makeMove(move);
@@ -236,7 +236,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 
     for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
-        bool capture = board.pieceAtB(move.to) != None;
+        bool capture = board.pieceAtB(move.to()) != None;
 
         if (!capture) quietMoves++;
 
@@ -257,7 +257,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         if (depth <= 4 && !PvNode
             && !capture && !inCheck && !givesCheck
             && quietMoves > lmpM[depth]
-            && !move.promoted) {
+            && !move.promoted()) {
             board.unmakeMove(move);
             continue;
         }
@@ -292,12 +292,12 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
         }
 
         board.unmakeMove(move);
-	    spentEffort[move.from][move.to] += nodes - nodeCount;
+	    spentEffort[move.from()][move.to()] += nodes - nodeCount;
 
         int bonus = std::clamp(depth * depth, 0, 400);
 
         if (!capture && score < best)
-            history_table[color][move.piece][move.from][move.to] = std::clamp(history_table[color][move.piece][move.from][move.to] - 32 * bonus, -100000, 16384);
+            history_table[color][move.piece()][move.from()][move.to()] = std::clamp(history_table[color][move.piece()][move.from()][move.to()] - 32 * bonus, -100000, 16384);
 
         if (score > best) {
             best = score;
@@ -314,7 +314,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null) {
 
                 // update History Table
                 if (!capture)
-                    history_table[color][move.piece][move.from][move.to] += 2 * (32 * bonus - history_table[color][move.piece][move.from][move.to] * bonus / 512);
+                    history_table[color][move.piece()][move.from()][move.to()] += 2 * (32 * bonus - history_table[color][move.piece()][move.from()][move.to()] * bonus / 512);
 
                 if (score >= beta) {
                     // update Killer Moves
@@ -409,7 +409,7 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
         }
 
 
-        int effort = nodes - startNodes == 0 ? 0 : (spentEffort[prev_bestmove.from][prev_bestmove.to] * 100) / (nodes - startNodes);
+        int effort = nodes - startNodes == 0 ? 0 : (spentEffort[prev_bestmove.from()][prev_bestmove.to()] * 100) / (nodes - startNodes);
 
         if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
             adjustedTime = true;
@@ -444,8 +444,8 @@ int Search::mmlva(Move& move) {
     {0, 505, 504, 503, 502, 501, 500},
     {0, 605, 604, 603, 602, 601, 600},
     {0, 705, 704, 703, 702, 701, 700} };
-    int attacker = board.piece_type(board.pieceAtB(move.from)) + 1;
-    int victim = board.piece_type(board.pieceAtB(move.to)) + 1;
+    int attacker = board.piece_type(board.pieceAtB(move.from())) + 1;
+    int victim = board.piece_type(board.pieceAtB(move.to())) + 1;
     return mvvlva[victim][attacker];
 }
 
@@ -453,13 +453,13 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     if (move == pv[ply]) {
         return 2147483647;
     }
-    else if (ttMove && move == TTable[board.hashKey % TT_SIZE].move) {
+    else if (ttMove && move.get() == TTable[board.hashKey % TT_SIZE].move) {
         return 2147483647 - 1;
     }
-    else if (move.promoted) {
-        return 2147483647 - 20 + move.piece;
+    else if (move.promoted()) {
+        return 2147483647 - 20 + move.piece();
     }
-    else if (board.pieceAtB(move.to) != None) {
+    else if (board.pieceAtB(move.to()) != None) {
         return mmlva(move) * 10000;
     }
     else if (move == pv_table[0][ply]) {
@@ -471,8 +471,8 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     else if (killerMoves[1][ply] == move) {
         return killerscore2;
     }
-    else if (history_table[board.sideToMove][move.piece][move.from][move.to]) {
-        return history_table[board.sideToMove][move.piece][move.from][move.to];
+    else if (history_table[board.sideToMove][move.piece()][move.from()][move.to()]) {
+        return history_table[board.sideToMove][move.piece()][move.from()][move.to()];
     }
     else {
         return 0;
@@ -505,7 +505,7 @@ bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int
         TTable[index].score = bestvalue;
         TTable[index].age = startAge;
         TTable[index].key = key;
-        TTable[index].move = pv_table[0][ply];
+        TTable[index].move = pv_table[0][ply].get();
         return true;
     }
     return false;
