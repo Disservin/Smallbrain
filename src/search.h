@@ -44,7 +44,7 @@ public:
     void testAllPos();
     U64 perft(int depth, int max);
     int qsearch(int depth, int alpha, int beta, int ply);
-    int absearch(int depth, int alpha, int beta, int ply, bool null, Stack *ss);
+    int absearch(int depth, int alpha, int beta, int ply, Stack *ss);
     int aspiration_search(int depth, int prev_eval, Stack *ss);
     int iterative_deepening(int search_depth, uint64_t maxN, Time time);
     bool exit_early();
