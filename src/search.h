@@ -14,6 +14,7 @@ extern U64 TT_SIZE;
 struct Stack{
     uint16_t currentmove;
     uint16_t ply;
+    int eval;
 };
 
 class Search {

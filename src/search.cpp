@@ -197,6 +197,11 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *
         staticEval = evaluation(board);
     }
 
+    ss->eval = staticEval;
+    // improving boolean, similar to stockfish
+    bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
+
+    // Razoring
     if (!PvNode
         && depth < 2
         && staticEval + 640 < alpha
@@ -205,7 +210,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *
 
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
-        if (depth < 7 && staticEval - 150 * depth >= beta) return beta;
+        if (depth < 7 && staticEval - 150 * depth + 100 * improving >= beta) return beta;
     }
 
     // Null move pruning
@@ -262,7 +267,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, bool null, Stack *
         // late move pruning/movecount pruning
         if (depth <= 4 && !PvNode
             && !capture && !inCheck && !givesCheck
-            && quietMoves > lmpM[depth]
+            && quietMoves > (3 + 2 * depth * depth) / (2 - improving)
             && !move.promoted()) {
             board.unmakeMove(move);
             continue;
