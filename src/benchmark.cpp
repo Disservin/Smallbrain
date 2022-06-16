@@ -59,22 +59,18 @@ int start_bench() {
     U64 totalNodes = 0;
     Board board = Board();
     Search searcher = Search(board);
+    Time t;
+    t.maximum = 0;
+    t.optimum = 0;
     auto t1 = std::chrono::high_resolution_clock::now();
     for (int positions = 0; positions < 50; positions++) {
         searcher.board.applyFen(benchmarkfens[positions]);
-        
-        int result = 0;
         searcher.nodes = 0;
 
         std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
         
-        searcher.t0 = std::chrono::high_resolution_clock::now();
-        for (int depth = 1; depth <= 7; depth++) {
-            result = searcher.aspiration_search(depth, result);
-            auto s2 = std::chrono::high_resolution_clock::now();
-            auto ms2 = std::chrono::duration_cast<std::chrono::milliseconds>(s2 - searcher.t0).count();
-            searcher.uci_output(result, depth, ms2);
-        }
+        stopped = false;
+        searcher.iterative_deepening(7, 0, t);
         totalNodes += searcher.nodes;
     }
 
