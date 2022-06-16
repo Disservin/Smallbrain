@@ -262,9 +262,9 @@ PieceType Board::piece_type(Piece piece) {
 
 std::string Board::printMove(Move& move) {
     std::string m = "";
-    m += squareToString[move.from];
-    m += squareToString[move.to];
-    if (move.promoted) m += PieceToPromPiece[Piece(move.piece)];
+    m += squareToString[move.from()];
+    m += squareToString[move.to()];
+    if (move.promoted()) m += PieceToPromPiece[Piece(move.piece())];
     return m;
 }
 
@@ -720,9 +720,9 @@ Movelist Board::capturemoves() {
 
 
 void Board::makeMove(Move& move) {
-    Piece piece = makePiece(move.piece, sideToMove);
-    Square from = move.from;
-    Square to = move.to;
+    Piece piece = makePiece(move.piece(), sideToMove);
+    Square from = move.from();
+    Square to = move.to();
     Piece capture = board[to];
 
     hashHistory[fullMoveNumber] = hashKey;
@@ -737,7 +737,7 @@ void Board::makeMove(Move& move) {
     if (enPassantSquare != NO_SQ) hashKey ^= updateKeyEnPassant(enPassantSquare);
     enPassantSquare = NO_SQ;
 
-    if (move.piece == KING) {
+    if (move.piece() == KING) {
         if (sideToMove == White && from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
             removePiece(WhiteRook, SQ_H1);
             placePiece(WhiteRook, SQ_F1);
@@ -775,7 +775,7 @@ void Board::makeMove(Move& move) {
         }
         hashKey ^= updateKeyCastling();
     }
-    else if (move.piece == ROOK) {
+    else if (move.piece() == ROOK) {
         hashKey ^= updateKeyCastling();
         if (sideToMove == White && from == SQ_A1 ) {
             castlingRights &= ~wq;
@@ -791,7 +791,7 @@ void Board::makeMove(Move& move) {
         }
         hashKey ^= updateKeyCastling();
     }
-    else if (move.piece == PAWN) {
+    else if (move.piece() == PAWN) {
         halfMoveClock = 0;
         if (ep) {
             removePiece(makePiece(PAWN, ~sideToMove), Square(to - (sideToMove * -2 + 1) * 8));
@@ -828,7 +828,7 @@ void Board::makeMove(Move& move) {
         }
     }
 
-    if (move.promoted) {
+    if (move.promoted()) {
         halfMoveClock = 0;
         removePiece(makePiece(PAWN, sideToMove), from);
         placePiece(piece, to);
@@ -857,11 +857,11 @@ void Board::unmakeMove(Move& move) {
     hashKey = restore.h;
     fullMoveNumber--;
 
-    Square from = move.from;
-    Square to = move.to;
-    bool promotion = move.promoted;
+    Square from = move.from();
+    Square to = move.to();
+    bool promotion = move.promoted();
     sideToMove = ~sideToMove;
-    Piece piece = makePiece(move.piece, sideToMove);
+    Piece piece = makePiece(move.piece(), sideToMove);
 
     if (promotion) {
         removePiece(piece, to);
@@ -876,7 +876,7 @@ void Board::unmakeMove(Move& move) {
         placePiece(piece, from);
     }
 
-    if (to == enPassantSquare && move.piece == PAWN) {
+    if (to == enPassantSquare && move.piece() == PAWN) {
         int8_t offset = sideToMove == White ? -8 : 8;
         placePiece(makePiece(PAWN, ~sideToMove), Square(enPassantSquare + offset));
     }
@@ -884,7 +884,7 @@ void Board::unmakeMove(Move& move) {
         placePiece(capture, to);
     }
     else {
-        if (move.piece == KING) {
+        if (move.piece() == KING) {
             if (from == SQ_E1 && to == SQ_G1 && castlingRights & wk) {
                 removePiece(WhiteRook, SQ_F1);
                 placePiece(WhiteRook, SQ_H1);

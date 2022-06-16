@@ -227,15 +227,54 @@ static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
       }
 };
 
-struct Move {
-    PieceType piece{ NONETYPE };
-    Square from{ NO_SQ };
-    Square to{ NO_SQ };
-    bool promoted{};
-    int value{};
-    Move(PieceType p = NONETYPE, Square f = NO_SQ, Square t = NO_SQ, bool pr = false) :
-        piece(p), from(f), to(t), promoted(pr) {}
+class Move {
+public:
+    uint16_t move;
+
+    // move score
+    int value;
+
+    // constructor for encoding a move
+    inline Move(
+        PieceType piece = NONETYPE,
+        Square source  = NO_SQ,
+        Square target  = NO_SQ,
+        uint16_t promoted = 0
+
+    ) {
+        move = (uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15;
+    }
+
+    inline Square from() {
+        return Square(move & 0b111111);
+    }
+
+    inline Square to() {
+        return Square((move & 0b111111000000) >> 6);
+    }
+
+    inline PieceType piece() {
+        return PieceType((move & 0b111000000000000) >> 12);
+    }
+
+    inline bool promoted() {
+        return bool((move & 0b1000000000000000) >> 15);
+    }
+
+    inline uint16_t get() {
+        return move;
+    }
 };
+
+// struct Move {
+//     PieceType piece{ NONETYPE };
+//     Square from{ NO_SQ };
+//     Square to{ NO_SQ };
+//     bool promoted{};
+//     int value{};
+//     Move(PieceType p = NONETYPE, Square f = NO_SQ, Square t = NO_SQ, bool pr = false) :
+//         piece(p), from(f), to(t), promoted(pr) {}
+// };
 
 static Move nullmove = Move(NONETYPE, NO_SQ, NO_SQ, false);
 
@@ -246,5 +285,5 @@ static constexpr U64 BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
 static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);
 
 inline bool operator==(Move& m, Move& m2) {
-    return m.piece == m2.piece && m.from == m2.from && m.to == m2.to && m.promoted == m2.promoted;
+    return m.move == m2.move;
 }
