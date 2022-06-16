@@ -453,7 +453,7 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     if (move == pv[ply]) {
         return 2147483647;
     }
-    else if (ttMove && move == TTable[board.hashKey % TT_SIZE].move) {
+    else if (ttMove && move.get() == TTable[board.hashKey % TT_SIZE].move) {
         return 2147483647 - 1;
     }
     else if (move.promoted()) {
@@ -505,7 +505,7 @@ bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int
         TTable[index].score = bestvalue;
         TTable[index].age = startAge;
         TTable[index].key = key;
-        TTable[index].move = pv_table[0][ply];
+        TTable[index].move = pv_table[0][ply].get();
         return true;
     }
     return false;

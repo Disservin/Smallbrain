@@ -28,8 +28,6 @@ int main(int argc, char** argv) {
     signal(SIGINT, signal_callback_handler);
     TEntry* oldbuffer;
 
-    std::cout << sizeof(TEntry) << std::endl;
-    std::cout << sizeof(Move) << std::endl;
     // Initialize TT
     if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
         std::cout << "Error: Could not allocate memory for TT" << std::endl;
