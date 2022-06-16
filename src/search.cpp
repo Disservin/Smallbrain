@@ -376,13 +376,20 @@ int Search::aspiration_search(int depth, int prev_eval) {
 }
 
 int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
+    t0 = std::chrono::high_resolution_clock::now();
+
     int result = 0;
+    Move prev_bestmove{};
+    bool adjustedTime = false;
+    Move reduceTimeMove = nullmove;
+    int64_t startTime = searchTime;
+
     seldepth = 0;
     startAge = board.fullMoveNumber;
-    Move prev_bestmove{};
     searchTime = time.optimum;
     maxTime = time.maximum;
     maxNodes = maxN;
+    nodes = 0;
     memset(spentEffort, 0, sizeof(unsigned long long) * MAX_SQ * MAX_SQ);
 
     // reuse previous pv information
@@ -391,13 +398,6 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
             pv[i-1] = pv[i];
         }
     }
-
-    t0 = std::chrono::high_resolution_clock::now();
-
-    U64 startNodes =  nodes;
-    bool adjustedTime = false;
-    Move reduceTimeMove = nullmove;
-    int64_t startTime = searchTime;
 
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(depth, result);
@@ -415,7 +415,7 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
         }
 
 
-        int effort = nodes - startNodes == 0 ? 0 : (spentEffort[prev_bestmove.from()][prev_bestmove.to()] * 100) / (nodes - startNodes);
+        int effort = (spentEffort[prev_bestmove.from()][prev_bestmove.to()] * 100) / nodes;
 
         if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
             adjustedTime = true;
