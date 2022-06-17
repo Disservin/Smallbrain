@@ -280,9 +280,9 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
 
         // late move pruning/movecount pruning
-        if (depth <= 4 && !PvNode
+        if (!RootNode && !PvNode
             && !capture && !inCheck && !givesCheck
-            && quietMoves.size > lmpM[depth]
+            && quietMoves.size > (3 + depth * depth) / (2 - improving)
             && !move.promoted()) {
             board.unmakeMove(move);
             continue;
