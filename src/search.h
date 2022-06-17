@@ -43,6 +43,7 @@ public:
     void perf_Test(int depth, int max);
     void testAllPos();
     U64 perft(int depth, int max);
+    void UpdateHH(Move bestMove, int depth, Movelist quietMoves);
     int qsearch(int depth, int alpha, int beta, int ply);
     int absearch(int depth, int alpha, int beta, int ply, Stack *ss);
     int aspiration_search(int depth, int prev_eval, Stack *ss);
