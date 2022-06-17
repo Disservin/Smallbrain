@@ -266,16 +266,24 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
         if (!capture) quietMoves.Add(move);
 
-        // late move pruning/movecount pruning
-        if (!RootNode  
-            && !capture 
-            && !inCheck
-            && !PvNode
-            && !move.promoted()
-            && depth <= 4
-            && quietMoves.size > (4 + depth * depth)) {
-            continue;
+        if (!RootNode && board.nonPawnMat(color)) {
+            // late move pruning/movecount pruning
+            if (!capture 
+                && !inCheck
+                && !PvNode
+                && !move.promoted()
+                && depth <= 4
+                && quietMoves.size > (4 + depth * depth)) {
+                continue;
+            }
+
+            //SEE pruning
+            if (capture) {
+                if (!see(move, -200 * depth))
+                    continue;
+            }           
         }
+
 
         if (RootNode && elapsed() > 10000 && !stopped) {
             std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
