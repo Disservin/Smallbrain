@@ -165,13 +165,13 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     bool RootNode = ply == 0;
     Color color = board.sideToMove;
 
-    if (ply >= 1 && board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
     if (!RootNode){
         if (board.halfMoveClock >= 100) return 0;
         int all = popcount(board.All());
         if (all == 2) return 0;
         if (all == 3 && (board.Bitboards[WhiteKnight] || board.Bitboards[BlackKnight])) return 0;
         if (all == 3 && (board.Bitboards[WhiteBishop] || board.Bitboards[BlackBishop])) return 0;
+        if (board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
 
         alpha = std::max(alpha, -VALUE_MATE + ply);
         beta = std::min(beta, VALUE_MATE - ply - 1);
@@ -289,11 +289,20 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 	    U64 nodeCount = nodes;
         ss->currentmove = move.get();
         bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
+        int newdepth = depth - 1;
+        int extension = 0;
+
+        if (givesCheck
+            && depth > 9
+            && abs(staticEval) > 100)
+            extension = 1;
+
+        newdepth += extension;
 
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
             int rdepth = reductions[madeMoves][depth];
-            rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
+            rdepth = std::clamp(newdepth - 1 - rdepth, 1, newdepth - 2);
 
             // Decrease reduction for pvnodes
             if (PvNode)
@@ -311,12 +320,12 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
         // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
-            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, ss+1);
+            score = -absearch(newdepth, -alpha - 1, -alpha, ply + 1, ss+1);
         }
 
         // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(depth - 1, -beta, -alpha, ply + 1, ss+1);
+            score = -absearch(newdepth, -beta, -alpha, ply + 1, ss+1);
         }
 
         board.unmakeMove(move);
