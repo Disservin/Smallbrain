@@ -282,7 +282,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         // late move pruning/movecount pruning
         if (!RootNode && !PvNode
             && !capture && !inCheck && !givesCheck
-            && quietMoves.size > (4 + depth * depth) / 2
+            && quietMoves.size > (4 + depth * depth) / 1
             && !move.promoted()) {
             board.unmakeMove(move);
             continue;
