@@ -308,8 +308,10 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
         int bonus = std::clamp(depth * depth, 0, 400);
 
-        if (!capture && score < best)
-            history_table[color][move.piece()][move.from()][move.to()] = std::clamp(history_table[color][move.piece()][move.from()][move.to()] - 32 * bonus, -100000, 16384);
+        if (!capture && score < best) {
+            int HTE = history_table[color][move.piece()][move.from()][move.to()];
+            history_table[color][move.piece()][move.from()][move.to()] = 32 * -bonus - (HTE / 512) * bonus;
+        }
 
         if (score > best) {
             best = score;
@@ -325,8 +327,10 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
                 alpha = score;
 
                 // update History Table
-                if (!capture)
-                    history_table[color][move.piece()][move.from()][move.to()] += 2 * (32 * bonus - history_table[color][move.piece()][move.from()][move.to()] * bonus / 512);
+                if (!capture) {
+                    int HTE = history_table[color][move.piece()][move.from()][move.to()];
+                    history_table[color][move.piece()][move.from()][move.to()] = 32 * bonus - (HTE / 512) * bonus;
+                }
 
                 if (score >= beta) {
                     // update Killer Moves
