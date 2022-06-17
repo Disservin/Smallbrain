@@ -270,6 +270,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         if (!RootNode  
             && !capture 
             && !inCheck
+            && !PvNode
             && !move.promoted()
             && depth <= 4
             && quietMoves.size > (4 + depth * depth)) {
