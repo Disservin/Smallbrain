@@ -32,6 +32,7 @@ public:
     Move pv[MAX_PLY]{};
     int history_table[2][MAX_SQ][MAX_SQ]{};
     Move killerMoves[2][MAX_PLY + 1]{};
+    Move counterMove[64][64]{};
     U64 spentEffort[MAX_SQ][MAX_SQ]{};
     int rootSize{};
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
@@ -51,7 +52,7 @@ public:
     bool exit_early();
     bool see(Move& move, int threshold);
     int mmlva(Move& move);
-    int score_move(Move& move, int ply, bool ttMove);
+    int score_move(Move& move, int ply, bool ttMove, Stack *ss);
     std::string get_pv();
     bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
     void uci_output(int score, int depth, int time);

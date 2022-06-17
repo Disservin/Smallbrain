@@ -246,7 +246,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = score_move(ml.list[i], ply, ttMove);
+        ml.list[i].value = score_move(ml.list[i], ply, ttMove, ss);
     }
 
     if (RootNode) rootSize = ml.size;
@@ -341,6 +341,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
                     if (!capture) {
                         killerMoves[1][ply] = killerMoves[0][ply];
                         killerMoves[0][ply] = move;
+                        counterMove[from(ss->currentmove)][to(ss->currentmove)] = move;
                     }
                     break;
                 }
@@ -544,7 +545,7 @@ U64 attackersForSide(Board& b, Color attackerColor, Square sq, U64 occupiedBB) {
 } 
 
 
-int Search::score_move(Move& move, int ply, bool ttMove) {
+int Search::score_move(Move& move, int ply, bool ttMove, Stack *ss) {
     if (move == pv[ply]) {
         return 2147483647;
     }
@@ -565,6 +566,9 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     }
     else if (killerMoves[1][ply] == move) {
         return killerscore2;
+    }
+    else if (counterMove[from(ss->currentmove)][to(ss->currentmove)] == move) {
+        return 100'000;
     }
     else if (history_table[board.sideToMove][move.from()][move.to()]) {
         return history_table[board.sideToMove][move.from()][move.to()];

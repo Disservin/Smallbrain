@@ -6,11 +6,10 @@
 
 static constexpr int MAX_PLY = 120;
 
-static constexpr int lmpM[5] = { 0, 4, 8, 12, 24 };
-static constexpr U64 RANK_8 = 18374686479671623680ULL;
 static constexpr U64 RANK_1 = 255ULL;
 static constexpr U64 RANK_2 = 65280ULL;
 static constexpr U64 RANK_7 = 71776119061217280ULL;
+static constexpr U64 RANK_8 = 18374686479671623680ULL;
 
 enum Color : uint8_t {
     White, Black
@@ -265,6 +264,22 @@ public:
         return move;
     }
 };
+
+inline Square from(uint16_t m) {
+    return Square(m & 0b111111);
+}
+
+inline Square to(uint16_t m) {
+    return Square((m & 0b111111000000) >> 6);
+}
+
+inline PieceType piece(uint16_t m) {
+    return PieceType((m & 0b111000000000000) >> 12);
+}
+
+inline bool promoted(uint16_t m) {
+    return bool((m & 0b1000000000000000) >> 15);
+}
 
 static uint16_t nullmove = Move(NONETYPE, NO_SQ, NO_SQ, false).get();
 
