@@ -110,8 +110,9 @@ void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves) {
 int Search::qsearch(int depth, int alpha, int beta, int ply) {
     if (exit_early()) return 0;
     int stand_pat = evaluation(board);
+    int bestValue = stand_pat;
     Color color = board.sideToMove;
-
+    
     if (ply > MAX_PLY - 1) return stand_pat;
 
     if (stand_pat >= beta) return beta;
@@ -136,17 +137,22 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
         Piece captured = board.pieceAtB(move.to());
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
         if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted() && board.nonPawnMat(color)) continue;
+        if (bestValue > VALUE_MATED_IN_PLY && !see(move, -100)) continue;
 
         nodes++;
         board.makeMove(move);
         int score = -qsearch(depth - 1, -beta, -alpha, ply + 1);
         board.unmakeMove(move);
-        if (score >= beta) return beta;
-        if (score > alpha) {
-            alpha = score;
+        if (score > bestValue) {
+            bestValue = score;
+            if (score >= beta) return beta;
+            if (score > alpha) {
+                alpha = score;
+            }
         }
+
     }
-    return alpha;
+    return bestValue;
 }
 
 int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
@@ -429,18 +435,13 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
             searchTime = std::min((int64_t)50, searchTime);
         }
 
-
         int effort = (spentEffort[prev_bestmove.from()][prev_bestmove.to()] * 100) / nodes;
 
         if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
             adjustedTime = true;
-
             searchTime = searchTime / 3 ;
-
             reduceTimeMove = prev_bestmove;
         }
-
-
 
         // if the bestmove changed after reducing the time we want to spent some more time on that move
         if (!(prev_bestmove == reduceTimeMove) && adjustedTime) {
@@ -469,6 +470,77 @@ int Search::mmlva(Move& move) {
     int victim = board.piece_type(board.pieceAtB(move.to())) + 1;
     return mvvlva[victim][attacker];
 }
+
+// Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss)
+bool Search::see(Move& move, int threshold) {
+    Square from = move.from();
+    Square to = move.to();
+    PieceType attacker = board.piece_type(board.pieceAtB(from));
+    PieceType victim = board.piece_type(board.pieceAtB(to));
+    int swap = piece_values[MG][victim] - threshold;
+    if (swap < 0)
+        return false;
+    swap -= piece_values[MG][attacker];
+    if (swap >= 0)
+        return true;
+    U64 occ = (board.All() ^ (1ULL << from)) | (1ULL << to);
+    U64 attackers = allAttackers(board, to, occ) & occ;
+
+    U64 bishops = board.Bishops(board.sideToMove) | board.Queens(board.sideToMove) 
+                  | board.Bishops(~board.sideToMove) | board.Queens(~board.sideToMove);
+    U64 rooks = board.Rooks(board.sideToMove) | board.Queens(board.sideToMove) 
+                | board.Rooks(~board.sideToMove) | board.Queens(~board.sideToMove);;
+    Color sT = ~Color((board.pieceAtB(from) / 6));
+    
+    while (true) {
+        attackers &= occ;
+        U64 myAttackers = attackers & board.Us(sT);
+        if (!myAttackers) break;
+        
+        int pt;
+        for (pt = 0; pt <= 5; pt++) {
+            if (myAttackers & (board.Bitboards[pt] | board.Bitboards[pt+6])) break;
+        }
+        sT = ~sT;
+        if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0) {
+            if (pt == KING && (attackers & board.Us(sT))) sT = ~sT;
+            break;
+        }
+
+        occ ^= (1ULL << (bsf(myAttackers & (board.Bitboards[pt] | board.Bitboards[pt+6]))));
+
+        if (pt == PAWN || pt == BISHOP || pt == QUEEN)
+            attackers |= board.BishopAttacks(to, occ) & bishops;
+        if (pt == ROOK || pt == QUEEN)
+            attackers |= board.RookAttacks(to, occ) & rooks;
+    }
+    return sT != Color((board.pieceAtB(from) / 6));
+}
+
+U64 allAttackers(Board& b, Square sq, U64 occupiedBB) {
+    return attackersForSide(b, White, sq, occupiedBB) | 
+                attackersForSide(b, Black, sq, occupiedBB);
+}
+
+U64 attackersForSide(Board& b, Color attackerColor, Square sq, U64 occupiedBB) {
+    U64 attackingBishops = b.Bishops(attackerColor);
+    U64 attackingRooks   = b.Rooks(attackerColor);
+    U64 attackingQueens  = b.Queens(attackerColor);
+    U64 attackingKnights = b.Knights(attackerColor);
+    U64 attackingKing    = b.Kings(attackerColor);
+    U64 attackingPawns   = b.Pawns(attackerColor);
+
+    U64 interCardinalRays = b.BishopAttacks(sq, occupiedBB);
+    U64 cardinalRaysRays  = b.RookAttacks(sq, occupiedBB);
+
+    U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
+    attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
+	attackers |= b.KnightAttacks(sq) & attackingKnights;
+	attackers |= b.KingAttacks(sq) & attackingKing;
+	attackers |= b.PawnAttacks(sq, ~attackerColor) & attackingPawns;
+	return attackers;
+} 
+
 
 int Search::score_move(Move& move, int ply, bool ttMove) {
     if (move == pv[ply]) {
@@ -583,7 +655,7 @@ long long Search::elapsed(){
 
 std::string output_score(int score) {
     if (score >= VALUE_MATE_IN_PLY) {
-        return "mate " + std::to_string((VALUE_MATE - score) / 2) + " " + std::to_string((VALUE_MATE - score) & 1);
+        return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
     }
     else if (score <= VALUE_MATED_IN_PLY) {
         return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
