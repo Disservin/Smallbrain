@@ -98,6 +98,15 @@ U64 Search::perft(int depth, int max) {
     return nodesIt;
 }
 
+void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves) {
+    if (depth > 1) history_table[board.sideToMove][bestMove.from()][bestMove.to()] += depth * depth;
+    for (int i = 0; i < quietMoves.size; i++) {
+        Move move = quietMoves.list[i];
+        if (move == bestMove) continue;
+        history_table[board.sideToMove][move.from()][move.to()] -= depth * depth;
+    }
+}
+
 int Search::qsearch(int depth, int alpha, int beta, int ply) {
     if (exit_early()) return 0;
     int stand_pat = evaluation(board);
@@ -241,8 +250,9 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     // sort the moves
     sortMoves(ml, 0);
 
+    Move bestMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
+    Movelist quietMoves;
     uint16_t madeMoves = 0;
-    uint16_t quietMoves = 0;
     int score = 0;
     bool doFullSearch = false;
 
@@ -250,7 +260,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         Move move = ml.list[i];
         bool capture = board.pieceAtB(move.to()) != None;
 
-        if (!capture) quietMoves++;
+        if (!capture) quietMoves.Add(move);
 
         nodes++;
         madeMoves++;
@@ -268,7 +278,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         // late move pruning/movecount pruning
         if (depth <= 4 && !PvNode
             && !capture && !inCheck && !givesCheck
-            && quietMoves > lmpM[depth]
+            && quietMoves.size > lmpM[depth]
             && !move.promoted()) {
             board.unmakeMove(move);
             continue;
@@ -306,13 +316,9 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         board.unmakeMove(move);
 	    spentEffort[move.from()][move.to()] += nodes - nodeCount;
 
-        int bonus = std::clamp(depth * depth, 0, 400);
-
-        if (!capture && score < best)
-            history_table[color][move.piece()][move.from()][move.to()] = std::clamp(history_table[color][move.piece()][move.from()][move.to()] - 32 * bonus, -100000, 16384);
-
         if (score > best) {
             best = score;
+            bestMove = move;
 
             // update the PV
             pv_table[ply][ply] = move;
@@ -324,10 +330,6 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
             if (score > alpha) {
                 alpha = score;
 
-                // update History Table
-                if (!capture)
-                    history_table[color][move.piece()][move.from()][move.to()] += 2 * (32 * bonus - history_table[color][move.piece()][move.from()][move.to()] * bonus / 512);
-
                 if (score >= beta) {
                     // update Killer Moves
                     if (!capture) {
@@ -338,9 +340,11 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
                 }
             }
         }
-
         sortMoves(ml, i + 1);
     }
+    if (best >= beta && board.pieceAtB(bestMove.to()) == None)
+        UpdateHH(bestMove, depth, quietMoves);
+
     // Store position in TT
     store_entry(index, depth, best, oldAlpha, beta, board.hashKey, ply);
     return best;
@@ -490,8 +494,8 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     else if (killerMoves[1][ply] == move) {
         return killerscore2;
     }
-    else if (history_table[board.sideToMove][move.piece()][move.from()][move.to()]) {
-        return history_table[board.sideToMove][move.piece()][move.from()][move.to()];
+    else if (history_table[board.sideToMove][move.from()][move.to()]) {
+        return history_table[board.sideToMove][move.from()][move.to()];
     }
     else {
         return 0;
