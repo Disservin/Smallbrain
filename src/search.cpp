@@ -237,6 +237,10 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         if (score >= beta) return beta;
     }
 
+    // IID
+    if (!ttMove && depth > 3)
+        depth--;
+        
     Movelist ml = board.legalmoves();
 
     // if the move list is empty, we are in checkmate or stalemate
