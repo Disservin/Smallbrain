@@ -497,7 +497,7 @@ bool Search::see(Move& move, int threshold) {
         
         int pt;
         for (pt = 0; pt <= 5; pt++) {
-            if (myAttackers & board.Bitboards[pt]) break;
+            if (myAttackers & (board.Bitboards[pt] | board.Bitboards[pt+6])) break;
         }
         sT = ~sT;
         if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0) {
