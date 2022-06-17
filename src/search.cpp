@@ -488,7 +488,7 @@ bool Search::see(Move& move, int threshold) {
 
     U64 bishops = board.Bishops(board.sideToMove) | board.Queens(board.sideToMove);
     U64 rooks = board.Rooks(board.sideToMove) | board.Queens(board.sideToMove);
-    Color sT = board.sideToMove;
+    Color sT = Color(!(board.pieceAtB(from) / 6));
     
     while (true) {
         attackers &= occ;
@@ -512,7 +512,7 @@ bool Search::see(Move& move, int threshold) {
         if (pt == ROOK || pt == QUEEN)
             attackers |= board.RookAttacks(to, occ) & rooks;
     }
-    return sT != board.pieceAtB(from) >> 3;
+    return sT != Color(!(board.pieceAtB(from) / 6));
 }
 
 U64 allAttackers(Board& b, Square sq, U64 occupiedBB) {
