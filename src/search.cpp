@@ -307,10 +307,12 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 	    spentEffort[move.from()][move.to()] += nodes - nodeCount;
 
         int bonus = std::clamp(depth * depth, 0, 400);
+        
+        int HTE = history_table[color][move.piece()][move.from()][move.to()];
+        int HH_reduced = 32 * -bonus - (HTE / 512) * bonus;
 
         if (!capture && score < best) {
-            int HTE = history_table[color][move.piece()][move.from()][move.to()];
-            history_table[color][move.piece()][move.from()][move.to()] = 32 * -bonus - (HTE / 512) * bonus;
+            history_table[color][move.piece()][move.from()][move.to()] = HH_reduced;
         }
 
         if (score > best) {
@@ -328,8 +330,8 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
                 // update History Table
                 if (!capture) {
-                    int HTE = history_table[color][move.piece()][move.from()][move.to()];
-                    history_table[color][move.piece()][move.from()][move.to()] = 32 * bonus - (HTE / 512) * bonus;
+                    int HTE_2 = history_table[color][move.piece()][move.from()][move.to()];
+                    history_table[color][move.piece()][move.from()][move.to()] = 32 * (bonus + HH_reduced) - (HTE_2 / 512) * bonus;
                 }
 
                 if (score >= beta) {
