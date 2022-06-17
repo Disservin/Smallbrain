@@ -49,6 +49,7 @@ public:
     int aspiration_search(int depth, int prev_eval, Stack *ss);
     int iterative_deepening(int search_depth, uint64_t maxN, Time time);
     bool exit_early();
+    bool see(Move& move, int threshold);
     int mmlva(Move& move);
     int score_move(Move& move, int ply, bool ttMove);
     std::string get_pv();
@@ -56,6 +57,10 @@ public:
     void uci_output(int score, int depth, int time);
     long long elapsed();
 };
+
+U64 allAttackers(Board& b, Square sq, U64 occupiedBB);
+U64 attackersForSide(Board& b, Color attackerColor, Square sq, U64 occupiedBB);
+
 void sortMoves(Movelist& moves);
 void sortMoves(Movelist& moves, int sorted);
 std::string output_score(int score);
