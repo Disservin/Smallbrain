@@ -202,9 +202,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         ttMove = true;
     }
 
-    ss->eval = staticEval = (ss-1)->currentmove == nullmove ? -(ss-1)->eval 
-                                                   : ttMove ? TTable[index].score 
-                                                   : evaluation(board);
+    ss->eval = staticEval = ttMove ? TTable[index].score : evaluation(board);
                                                    
     // improving boolean, similar to stockfish
     bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
