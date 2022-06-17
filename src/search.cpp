@@ -99,11 +99,11 @@ U64 Search::perft(int depth, int max) {
 }
 
 void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves) {
-    if (depth > 1) history_table[board.sideToMove][bestMove.piece()][bestMove.from()][bestMove.to()] += depth * depth;
+    if (depth > 1) history_table[board.sideToMove][bestMove.from()][bestMove.to()] += depth * depth;
     for (int i = 0; i < quietMoves.size; i++) {
         Move move = quietMoves.list[i];
         if (move == bestMove) continue;
-        history_table[board.sideToMove][move.piece()][move.from()][move.to()] -= depth * depth;
+        history_table[board.sideToMove][move.from()][move.to()] -= depth * depth;
     }
 }
 
@@ -494,8 +494,8 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     else if (killerMoves[1][ply] == move) {
         return killerscore2;
     }
-    else if (history_table[board.sideToMove][move.piece()][move.from()][move.to()]) {
-        return history_table[board.sideToMove][move.piece()][move.from()][move.to()];
+    else if (history_table[board.sideToMove][move.from()][move.to()]) {
+        return history_table[board.sideToMove][move.from()][move.to()];
     }
     else {
         return 0;

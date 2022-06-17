@@ -30,7 +30,7 @@ public:
     uint8_t pv_length[MAX_PLY]{};
     Move pv_table[MAX_PLY][MAX_PLY]{};
     Move pv[MAX_PLY]{};
-    int history_table[2][6][MAX_SQ][MAX_SQ]{};
+    int history_table[2][MAX_SQ][MAX_SQ]{};
     Move killerMoves[2][MAX_PLY + 1]{};
     U64 spentEffort[MAX_SQ][MAX_SQ]{};
     int rootSize{};
