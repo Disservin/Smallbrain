@@ -471,7 +471,7 @@ int Search::mmlva(Move& move) {
     return mvvlva[victim][attacker];
 }
 
-// Static Exchange Evaluation
+// Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss)
 bool Search::see(Move& move, int threshold) {
     Square from = move.from();
     Square to = move.to();
@@ -655,7 +655,7 @@ long long Search::elapsed(){
 
 std::string output_score(int score) {
     if (score >= VALUE_MATE_IN_PLY) {
-        return "mate " + std::to_string((VALUE_MATE - score) / 2) + " " + std::to_string((VALUE_MATE - score) & 1);
+        return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
     }
     else if (score <= VALUE_MATED_IN_PLY) {
         return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
