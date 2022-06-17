@@ -99,7 +99,7 @@ U64 Search::perft(int depth, int max) {
 }
 
 void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves) {
-    history_table[board.sideToMove][bestMove.piece()][bestMove.from()][bestMove.to()] += depth * depth;
+    if (depth > 1) history_table[board.sideToMove][bestMove.piece()][bestMove.from()][bestMove.to()] += depth * depth;
     for (int i = 0; i < quietMoves.size; i++) {
         Move move = quietMoves.list[i];
         if (move == bestMove) continue;
