@@ -266,8 +266,14 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
         if (!capture) quietMoves.Add(move);
 
-        nodes++;
-        madeMoves++;
+        // late move pruning/movecount pruning
+        if (!RootNode  
+            && !capture 
+            && !move.promoted()
+            && move.value < 1000
+            && quietMoves.size > (4 + depth * depth)) {
+            continue;
+        }
 
         if (RootNode && elapsed() > 10000 && !stopped) {
             std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
@@ -275,18 +281,12 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
         board.makeMove(move);
 
+        nodes++;
+        madeMoves++;
+
 	    U64 nodeCount = nodes;
         ss->currentmove = move.get();
         bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
-
-        // late move pruning/movecount pruning
-        if (!RootNode  
-            && !capture 
-            && !move.promoted()
-            && quietMoves.size > (4 + depth * depth)) {
-            board.unmakeMove(move);
-            continue;
-        }
 
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
