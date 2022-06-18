@@ -273,8 +273,9 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
             && !PvNode
             && !move.promoted()
             && depth <= 4
+            && move.value < 800'000
             && quietMoves.size > (4 + depth * depth)) {
-            continue;
+            break;
         }
 
         if (RootNode && elapsed() > 10000 && !stopped) {
