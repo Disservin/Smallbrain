@@ -291,7 +291,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
 
         // late move reduction
-        if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
+        if (depth >= 2 && !RootNode && !inCheck && madeMoves > 2 + PvNode) {
             int rdepth = reductions[madeMoves][depth];
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
 
