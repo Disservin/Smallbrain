@@ -369,8 +369,8 @@ int Search::aspiration_search(int depth, int prev_eval, Stack *ss) {
         return result;
     }
     else if (depth >= 5) {
-        alpha = prev_eval - 50;
-        beta = prev_eval + 50;
+        alpha = prev_eval - delta;
+        beta = prev_eval + delta;
     }
 
     while (true) {
@@ -380,6 +380,7 @@ int Search::aspiration_search(int depth, int prev_eval, Stack *ss) {
         if (result <= alpha) {
             research++;
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
+            beta = (beta + alpha) / 2;
         }
         else if (result >= beta) {
             research++;
