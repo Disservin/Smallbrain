@@ -277,7 +277,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
             continue;
         }
 
-        if (depth < 7 && !see(move, -50 * depth)) continue;
+        if (depth < 7 && !see(move, -100 * depth)) continue;
 
         if (RootNode && elapsed() > 10000 && !stopped) {
             std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
