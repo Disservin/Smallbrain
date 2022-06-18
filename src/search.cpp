@@ -216,7 +216,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     // Razoring
     if (!PvNode
         && depth < 2
-        && staticEval + 640 < alpha
+        && staticEval + 640 - 50 * improving < alpha
         && !inCheck)
         return qsearch(15, alpha, beta, ply);
 
