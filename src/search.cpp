@@ -369,8 +369,8 @@ int Search::aspiration_search(int depth, int prev_eval, Stack *ss) {
         return result;
     }
     else if (depth >= 5) {
-        alpha = prev_eval - delta;
-        beta = prev_eval + delta;
+        alpha = prev_eval - 50;
+        beta = prev_eval + 50;
     }
 
     while (true) {
