@@ -128,7 +128,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
     }
 
     // sort the moves
-    sortMoves(ml);
+    sortMoves(ml, 0);
 
     // search the moves
     for (int i = 0; i < (int)ml.size; i++) {
@@ -150,7 +150,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
                 alpha = score;
             }
         }
-
+        sortMoves(ml, i + 1);
     }
     return bestValue;
 }
