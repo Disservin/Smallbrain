@@ -521,10 +521,7 @@ bool Search::see(Move& move, int threshold) {
 }
 
 int Search::score_move(Move& move, int ply, bool ttMove) {
-    if (move == pv[ply]) {
-        return 2147483647;
-    }
-    else if (ttMove && move.get() == TTable[board.hashKey % TT_SIZE].move) {
+    if (ttMove && move.get() == TTable[board.hashKey % TT_SIZE].move) {
         return 2147483647 - 1;
     }
     else if (move.promoted()) {
