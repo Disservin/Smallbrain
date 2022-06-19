@@ -58,9 +58,6 @@ public:
     long long elapsed();
 };
 
-U64 allAttackers(Board& b, Square sq, U64 occupiedBB);
-U64 attackersForSide(Board& b, Color attackerColor, Square sq, U64 occupiedBB);
-
 void sortMoves(Movelist& moves);
 void sortMoves(Movelist& moves, int sorted);
 std::string output_score(int score);

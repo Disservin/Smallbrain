@@ -463,6 +463,30 @@ bool Board::isSquareAttacked(Color c, Square sq) {
     return false;
 }
 
+U64 Board::allAttackers(Square sq, U64 occupiedBB) {
+    return attackersForSide(White, sq, occupiedBB) | 
+                attackersForSide(Black, sq, occupiedBB);
+}
+
+U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) {
+    U64 attackingBishops = Bishops(attackerColor);
+    U64 attackingRooks   = Rooks(attackerColor);
+    U64 attackingQueens  = Queens(attackerColor);
+    U64 attackingKnights = Knights(attackerColor);
+    U64 attackingKing    = Kings(attackerColor);
+    U64 attackingPawns   = Pawns(attackerColor);
+
+    U64 interCardinalRays = BishopAttacks(sq, occupiedBB);
+    U64 cardinalRaysRays  = RookAttacks(sq, occupiedBB);
+
+    U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
+    attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
+	attackers |= KnightAttacks(sq) & attackingKnights;
+	attackers |= KingAttacks(sq) & attackingKing;
+	attackers |= PawnAttacks(sq, ~attackerColor) & attackingPawns;
+	return attackers;
+} 
+
 U64 Board::PawnPush(Color c, Square sq) {
     return (1ULL << (sq + (c * -2 + 1) * 8));
 }

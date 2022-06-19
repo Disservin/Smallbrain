@@ -143,7 +143,6 @@ public:
 	U64 updateKeyEnPassant(Square sq);
 	U64 updateKeySideToMove();
 
-
 	// returns the King Square of the specified color
 	Square KingSQ(Color c);
 
@@ -173,6 +172,8 @@ public:
 
 	// Is square attacked by color c
 	bool isSquareAttacked(Color c, Square sq);
+	U64 allAttackers(Square sq, U64 occupiedBB);
+	U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
 
 	// returns a pawn push (only 1 square)
 	U64 PawnPush(Color c, Square sq);

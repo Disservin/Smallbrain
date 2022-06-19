@@ -486,7 +486,7 @@ bool Search::see(Move& move, int threshold) {
     if (swap >= 0)
         return true;
     U64 occ = (board.All() ^ (1ULL << from)) | (1ULL << to);
-    U64 attackers = allAttackers(board, to, occ) & occ;
+    U64 attackers = board.allAttackers(to, occ) & occ;
 
     U64 bishops = board.Bishops(board.sideToMove) | board.Queens(board.sideToMove) 
                   | board.Bishops(~board.sideToMove) | board.Queens(~board.sideToMove);
@@ -518,31 +518,6 @@ bool Search::see(Move& move, int threshold) {
     }
     return sT != Color((board.pieceAtB(from) / 6));
 }
-
-U64 allAttackers(Board& b, Square sq, U64 occupiedBB) {
-    return attackersForSide(b, White, sq, occupiedBB) | 
-                attackersForSide(b, Black, sq, occupiedBB);
-}
-
-U64 attackersForSide(Board& b, Color attackerColor, Square sq, U64 occupiedBB) {
-    U64 attackingBishops = b.Bishops(attackerColor);
-    U64 attackingRooks   = b.Rooks(attackerColor);
-    U64 attackingQueens  = b.Queens(attackerColor);
-    U64 attackingKnights = b.Knights(attackerColor);
-    U64 attackingKing    = b.Kings(attackerColor);
-    U64 attackingPawns   = b.Pawns(attackerColor);
-
-    U64 interCardinalRays = b.BishopAttacks(sq, occupiedBB);
-    U64 cardinalRaysRays  = b.RookAttacks(sq, occupiedBB);
-
-    U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
-    attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
-	attackers |= b.KnightAttacks(sq) & attackingKnights;
-	attackers |= b.KingAttacks(sq) & attackingKing;
-	attackers |= b.PawnAttacks(sq, ~attackerColor) & attackingPawns;
-	return attackers;
-} 
-
 
 int Search::score_move(Move& move, int ply, bool ttMove) {
     if (move == pv[ply]) {
