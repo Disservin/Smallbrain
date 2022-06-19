@@ -124,7 +124,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = mmlva(ml.list[i]);
+        ml.list[i].value = score_move(ml.list[i], ply, false);
     }
 
     // sort the moves
