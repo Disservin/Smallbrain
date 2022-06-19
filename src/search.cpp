@@ -527,11 +527,11 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     else if (move.promoted()) {
         return 2147483647 - 20 + move.piece();
     }
+    else if (move == pv_table[0][ply]) {
+        return 100'000'000;
+    }
     else if (board.pieceAtB(move.to()) != None) {
         return see(move, -100) ? mmlva(move) * 10000 : mmlva(move);
-    }
-    else if (move == pv_table[0][ply]) {
-        return 1'000'000;
     }
     else if (killerMoves[0][ply] == move) {
         return killerscore1;
