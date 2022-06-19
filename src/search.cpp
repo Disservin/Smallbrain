@@ -190,25 +190,26 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     // Selective depth (heighest depth we have ever reached)
     if (ply > seldepth) seldepth = ply;
 
-    U64 index = board.hashKey % TT_SIZE;
-    bool ttMove = false;
-
     int staticEval;
     // Look up in the TT
-    if (TTable[index].key == board.hashKey && TTable[index].depth >= depth && !RootNode && !PvNode) {
-        if (TTable[index].flag == EXACT) return TTable[index].score;
-        else if (TTable[index].flag == LOWERBOUND) {
-            alpha = std::max(alpha, TTable[index].score);
+    U64 index = board.hashKey % TT_SIZE;
+    TEntry tte = TTable[index];
+    bool ttMove = false;
+
+    if (tte.key == board.hashKey && tte.depth >= depth && !RootNode && !PvNode) {
+        if (tte.flag == EXACT) return tte.score;
+        else if (tte.flag == LOWERBOUND) {
+            alpha = std::max(alpha, tte.score);
         }
-        else if (TTable[index].flag == UPPERBOUND) {
-            beta = std::min(beta, TTable[index].score);
+        else if (tte.flag == UPPERBOUND) {
+            beta = std::min(beta, tte.score);
         }
-        if (alpha >= beta) return TTable[index].score;
+        if (alpha >= beta) return tte.score;
         // use TT move
         ttMove = true;
     }
 
-    ss->eval = staticEval = ttMove ? TTable[index].score : evaluation(board);
+    ss->eval = staticEval = ttMove ? tte.score : evaluation(board);
                                                    
     // improving boolean, similar to stockfish
     bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
@@ -560,22 +561,24 @@ std::string Search::get_pv() {
 }
 
 bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply) {
+    TEntry tte = TTable[index];
     if (!exit_early() && !(bestvalue >= 19000) && !(bestvalue <= -19000) &&
-        (TTable[index].depth < depth || TTable[index].age + 3 <= startAge)) {
-        TTable[index].flag = EXACT;
+        (tte.depth < depth || tte.age + 3 <= startAge)) {
+        tte.flag = EXACT;
         // Upperbound
         if (bestvalue <= old_alpha) {
-            TTable[index].flag = UPPERBOUND;
+            tte.flag = UPPERBOUND;
         }
         // Lowerbound
         else if (bestvalue >= beta) {
-            TTable[index].flag = LOWERBOUND;
+            tte.flag = LOWERBOUND;
         }
-        TTable[index].depth = depth;
-        TTable[index].score = bestvalue;
-        TTable[index].age = startAge;
-        TTable[index].key = key;
-        TTable[index].move = pv_table[0][ply].get();
+        tte.depth = depth;
+        tte.score = bestvalue;
+        tte.age = startAge;
+        tte.key = key;
+        tte.move = pv_table[0][ply].get();
+        TTable[index] = tte;
         return true;
     }
     return false;

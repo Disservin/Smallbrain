@@ -17,7 +17,7 @@ std::atomic<bool> stopped;
 ThreadManager thread;
 
 U64 TT_SIZE = 524287;
-TEntry* TTable{};   //TEntry size is 32 bytes
+TEntry* TTable{};   //TEntry size is 24 bytes
 
 Board board = Board();
 Search searcher_class = Search(board);
