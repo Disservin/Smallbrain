@@ -555,7 +555,7 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
         return 2147483647 - 20 + move.piece();
     }
     else if (board.pieceAtB(move.to()) != None) {
-        return see(move, -100) ? mmlva(move) * 10000 : - 1 / mmlva(move);
+        return see(move, -100) ? mmlva(move) * 10000 : mmlva(move);
     }
     else if (move == pv_table[0][ply]) {
         return 1'000'000;
