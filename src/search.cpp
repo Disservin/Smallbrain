@@ -137,7 +137,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
         Piece captured = board.pieceAtB(move.to());
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
         if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted() && board.nonPawnMat(color)) continue;
-        if (bestValue > VALUE_MATED_IN_PLY && !see(move, -100)) continue;
+        if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, -100)) continue;
 
         nodes++;
         board.makeMove(move);
