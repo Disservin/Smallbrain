@@ -242,7 +242,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {
-        return inCheck ?-VALUE_MATE + ply : 0;
+        return inCheck ? -VALUE_MATE + ply : 0;
     }
 
     // assign a value to each move
@@ -267,21 +267,27 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
         if (!capture) quietMoves.Add(move);
 
-        // late move pruning/movecount pruning
-        if (!RootNode  
-            && !capture 
-            && !inCheck
-            && !PvNode
-            && !move.promoted()
-            && depth <= 4
-            && quietMoves.size > (4 + depth * depth)) {
-            continue;
+        // Pruning
+        if (!RootNode
+            && best > -VALUE_INFINITE) {
+            // late move pruning/movecount pruning
+            if (!capture 
+                && !inCheck
+                && !PvNode
+                && !move.promoted()
+                && depth <= 4
+                && quietMoves.size > (4 + depth * depth)) {
+                continue;
+            }
+
+            // See pruning
+            if (depth < 6 
+                && !see(move, -(depth * 100)))
+                continue;
         }
 
-        // See pruning
-        if (depth < 6 
-            && !see(move, -(depth * 100)))
-            continue;
+        nodes++;
+        madeMoves++;
 
         if (RootNode && elapsed() > 10000 && !stopped) {
             std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
@@ -289,8 +295,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
         board.makeMove(move);
 
-        nodes++;
-        madeMoves++;
+
 
 	    U64 nodeCount = nodes;
         ss->currentmove = move.get();
