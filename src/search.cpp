@@ -278,6 +278,11 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
             continue;
         }
 
+        // See pruning
+        if (depth < 6 
+            && !see(move, -(depth * 100)))
+            continue;
+
         if (RootNode && elapsed() > 10000 && !stopped) {
             std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
         }
