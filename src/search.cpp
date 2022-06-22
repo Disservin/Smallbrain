@@ -229,7 +229,8 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     // Null move pruning
     if (board.nonPawnMat(color) && !((ss-1)->currentmove == nullmove) 
         && depth >= 3 && !inCheck
-        && staticEval >= beta) {
+        && staticEval >= beta
+        && !RootNode) {
         int r = 3 + depth / 5;
         board.makeNullMove();
         (ss-1)->currentmove = nullmove;
