@@ -430,8 +430,12 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
         }
     }
 
-    for (int i = -2; i <= MAX_PLY + 2; ++i)
+    for (int i = -2; i <= MAX_PLY + 2; ++i) {
         (ss+i)->ply = i;
+        (ss+i)->currentmove = noMove;
+        (ss+i)->eval = VALUE_NONE;
+    }
+        
 
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(depth, result, ss);
