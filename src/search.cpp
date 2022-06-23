@@ -241,6 +241,10 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         if (score >= beta) return beta;
     }
 
+    // Internal iterative reduction based on Rebel's idea
+    if (!ttMove && depth >= 4)
+        depth --;
+
     Movelist ml = board.legalmoves();
 
     // if the move list is empty, we are in checkmate or stalemate
