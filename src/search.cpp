@@ -124,7 +124,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = mmlva(ml.list[i]);
+        ml.list[i].value = score_move(ml.list[i], ply, false);
     }
 
     // sort the moves
@@ -138,6 +138,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
         if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted() && board.nonPawnMat(color)) continue;
         if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, -100)) continue;
+        if (move.value < 0) break;
 
         nodes++;
         board.makeMove(move);
@@ -540,7 +541,7 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
         return 2147483647 - 20 + move.piece();
     }
     else if (board.pieceAtB(move.to()) != None) {
-        return see(move, -100) ? mmlva(move) * 10000 : mmlva(move);
+        return see(move, -100) ? mmlva(move) * 10000 : -mmlva(move);
     }
     else if (move == pv_table[0][ply]) {
         return 1'000'000;
