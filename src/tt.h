@@ -8,4 +8,4 @@ struct TEntry {
 	uint16_t move;
 	int score;
 	uint16_t age;
-};
+}__attribute__ ((__packed__));
