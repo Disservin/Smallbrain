@@ -242,7 +242,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     }
 
     // Internal iterative reduction based on Rebel's idea
-    if (!ttMove && depth >= 6)
+    if (!ttMove && depth >= 10)
         depth --;
 
     Movelist ml = board.legalmoves();
