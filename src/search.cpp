@@ -124,7 +124,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = mmlva(ml.list[i]);
+        ml.list[i].value = score_qmove(ml.list[i]);
     }
 
     // sort the moves
@@ -296,8 +296,6 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         }
 
         board.makeMove(move);
-
-
 
 	    U64 nodeCount = nodes;
         ss->currentmove = move.get();
@@ -553,6 +551,18 @@ int Search::score_move(Move& move, int ply, bool ttMove) {
     }
     else if (history_table[board.sideToMove][move.from()][move.to()]) {
         return history_table[board.sideToMove][move.from()][move.to()];
+    }
+    else {
+        return 0;
+    }
+}
+
+int Search::score_qmove(Move& move) {
+    if (move.promoted()) {
+        return 2147483647 - 20 + move.piece();
+    }
+    else if (board.pieceAtB(move.to()) != None) {
+        return see(move, -100) ? mmlva(move) * 10000 : mmlva(move);
     }
     else {
         return 0;
