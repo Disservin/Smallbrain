@@ -179,6 +179,10 @@ public:
 	U64 PawnPush(Color c, Square sq);
 	U64 PawnPush2(Color c, Square sq, U64 push);
 
+	// legal captures + promotions
+	U64 LegalPawnNoisy(Color c, Square sq, Square ep);
+	U64 LegalKingCaptures(Color c, Square sq);
+
 	// all legal moves for each piece
 	U64 LegalPawnMoves(Color c, Square sq, Square ep);
 	U64 LegalKnightMoves(Color c, Square sq);

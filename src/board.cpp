@@ -496,6 +496,36 @@ U64 Board::PawnPush2(Color c, Square sq, U64 push) {
     return 0ULL;
 }
 
+U64 Board::LegalPawnNoisy(Color c, Square sq, Square ep) {
+    U64 enemy = Enemy(c);
+    // If we are pinned diagonally we can only do captures which are on the pin_dg and on the checkmask
+    if (pinD & (1ULL << sq)) return PawnAttacks(sq, c) & pinD & checkMask & (enemy | (1ULL << ep));
+    // If we are pinned horizontally/vertically we can do no captures
+    if (pinHV & (1ULL << sq)) return 0ULL;
+    U64 attacks = PawnAttacks(sq, c);
+    U64 pawnPromote = 0ULL;
+    if ((square_rank(sq) == 1 && c == Black) || (square_rank(sq) == 6 && c == White)) {
+        pawnPromote = PawnPush(c, sq) & ~occAll;
+        pawnPromote |= PawnPush2(c, sq, pawnPromote);
+    }
+    return ((attacks & enemy) | pawnPromote) & checkMask;
+}
+
+U64 Board::LegalKingCaptures(Color c, Square sq) {
+    U64 moves = KingAttacks(sq) & Enemy(c);
+    U64 final_moves = 0ULL;
+    Piece k = makePiece(KING, c);
+
+    removePieceSimple(k, sq);
+    while (moves) {
+        Square index = poplsb(moves);
+        if (isSquareAttacked(~c, index)) continue;
+        final_moves |= (1ULL << index);
+    }
+    placePieceSimple(k, sq);
+    return final_moves;
+}
+
 U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
     U64 enemy = Enemy(c);
     // If we are pinned diagonally we can only do captures which are on the pin_dg and on the checkmask
@@ -685,7 +715,8 @@ Movelist Board::capturemoves() {
         U64 enemy = Enemy(sideToMove);
         while (pawns_mask) {
             Square from = poplsb(pawns_mask);
-            U64 moves = LegalPawnMoves(sideToMove, from, enPassantSquare) & (enemy | RANK_1 | RANK_8);
+            // U64 moves = LegalPawnMoves(sideToMove, from, enPassantSquare) & (enemy | RANK_1 | RANK_8);
+            U64 moves = LegalPawnNoisy(sideToMove, from, enPassantSquare);
             while (moves) {
                 Square to = poplsb(moves);
                 if (square_rank(to) == 7 || square_rank(to) == 0) {
@@ -734,7 +765,7 @@ Movelist Board::capturemoves() {
 
     }
     Square from = KingSQ(sideToMove);
-    U64 moves = LegalKingMoves(sideToMove, from) & Enemy(sideToMove);
+    U64 moves = LegalKingCaptures(sideToMove, from);
     while (moves) {
         Square to = poplsb(moves);
         movelist.Add(Move(KING, from, to, false));
