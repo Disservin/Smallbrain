@@ -51,6 +51,17 @@ struct Movelist {
 
 class Board
 {
+private:
+	// all bits set
+	U64 checkMask = 18446744073709551615ULL;
+	U64 pinHV{};
+	U64 pinD{};
+	uint8_t doubleCheck{};
+	U64 occWhite{};
+	U64 occBlack{};
+	U64 occAll{};
+	U64 enemyEmptyBB{};
+	U64 attackedSquares;
 public:
 	uint8_t castlingRights{};
 	Square enPassantSquare{};
@@ -62,17 +73,7 @@ public:
 	U64 Bitboards[12]{};
 	U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ]{};
 
-	// all bits set
-	U64 checkMask = 18446744073709551615ULL;
-
-	U64 pinHV{};
-	U64 pinD{};
-	uint8_t doubleCheck{};
 	U64 hashKey{};
-	U64 occWhite{};
-	U64 occBlack{};
-	U64 occAll{};
-	U64 enemyEmptyBB{};
 
 	U64 hashHistory[1024]{};
 	States prevStates{};
@@ -122,6 +123,7 @@ public:
 	U64 QueenAttacks(Square sq, U64 occupied);
 	U64 KingAttacks(Square sq);
 
+	U64 attacksPiece(PieceType type, Square sq, U64 occupied, Color c);
 	// Gets the piece of the specified color
 	U64 Pawns(Color c);
 	U64 Knights(Color c);

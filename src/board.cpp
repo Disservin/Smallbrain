@@ -303,6 +303,18 @@ U64 Board::KingAttacks(Square sq) {
     return KING_ATTACKS_TABLE[sq];
 }
 
+U64 Board::attacksPiece(PieceType type, Square sq, U64 occupied, Color c) {
+    switch (type) {
+        case PAWN: return PawnAttacks(sq, ~sideToMove);
+        case KNIGHT: return KnightAttacks(sq);
+        case BISHOP: return BishopAttacks(sq, occupied);
+        case ROOK: return RookAttacks(sq, occupied);
+        case QUEEN: return QueenAttacks(sq, occupied);
+        case KING: return KingAttacks(sq);
+        default: return 0;
+    }
+}
+
 U64 Board::Pawns(Color c) {
     return Bitboards[PAWN + c * 6];
 }
@@ -451,7 +463,17 @@ void Board::init(Color c, Square sq) {
     U64 newMask = DoCheckmask(c, sq);
     checkMask = newMask ? newMask : 18446744073709551615ULL;
     DoPinMask(c, sq);
-
+    
+    U64 enemyBB = Enemy(c);
+    attackedSquares = 0ULL;
+    // remove king
+    occAll &= ~(1ULL << sq);
+    while (enemyBB) {
+        Square index = poplsb(enemyBB);
+        attackedSquares |= attacksPiece(piece_type(board[index]), index, occAll, ~c);
+    }
+    // place king back
+    occAll |= (1ULL << sq);
 }
 
 bool Board::isSquareAttacked(Color c, Square sq) {
@@ -584,30 +606,30 @@ U64 Board::LegalQueenMoves(Color c, Square sq) {
 }
 
 U64 Board::LegalKingMoves(Color c, Square sq) {
-    U64 moves = KingAttacks(sq) & enemyEmptyBB;
-    U64 final_moves = 0ULL;
-    Piece k = makePiece(KING, c);
+    U64 moves = KingAttacks(sq) & enemyEmptyBB & ~attackedSquares;
+    U64 final_moves = KingAttacks(sq) & enemyEmptyBB & ~attackedSquares;
+    // Piece k = makePiece(KING, c);
 
-    removePieceSimple(k, sq);
-    while (moves) {
-        Square index = poplsb(moves);
-        if (isSquareAttacked(~c, index)) continue;
-        final_moves |= (1ULL << index);
-    }
-    placePieceSimple(k, sq);
+    // removePieceSimple(k, sq);
+    // while (moves) {
+    //     Square index = poplsb(moves);
+    //     if (isSquareAttacked(~c, index)) continue;
+    //     final_moves |= (1ULL << index);
+    // }
+    // placePieceSimple(k, sq);
 
     if (checkMask == 18446744073709551615ULL) {
         if (c == White) {
             if (castlingRights & wk
                 && !(WK_CASTLE_MASK & occAll)
                 && final_moves & (1ULL << SQ_F1) //!isSquareAttacked(Black, SQ_F1)
-                && !isSquareAttacked(Black, SQ_G1)) {
+                && !(attackedSquares & (1ULL << SQ_G1))) {
                 final_moves |= (1ULL << SQ_G1);
             }
             if (castlingRights & wq
                 && !(WQ_CASTLE_MASK & occAll)
                 && final_moves & (1ULL << SQ_D1) //!isSquareAttacked(Black, SQ_D1)
-                && !isSquareAttacked(Black, SQ_C1)) {
+                && !(attackedSquares & (1ULL << SQ_C1))) {
                 final_moves |= (1ULL << SQ_C1);
             }
         }
@@ -615,13 +637,13 @@ U64 Board::LegalKingMoves(Color c, Square sq) {
             if (castlingRights & bk
                 && !(BK_CASTLE_MASK & occAll)
                 && final_moves & (1ULL << SQ_F8) //!isSquareAttacked(White, SQ_F8)
-                && !isSquareAttacked(White, SQ_G8)) {
+                && !(attackedSquares & (1ULL << SQ_G8))) {
                 final_moves |= (1ULL << SQ_G8);
             }
             if (castlingRights & bq
                 && !(BQ_CASTLE_MASK & occAll)
                 && final_moves & (1ULL << SQ_D8)  //!isSquareAttacked(White, SQ_D8)
-                && !isSquareAttacked(White, SQ_C8)) {
+                && !(attackedSquares & (1ULL << SQ_C8))) {
                 final_moves |= (1ULL << SQ_C8);
             }
         }
