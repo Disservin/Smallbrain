@@ -14,12 +14,15 @@ the same.
 CCRL 40/15
 
 ```
-Smallbrain 2.0 64-bit	2268	+30	−30
-Smallbrain 1.1 64-bit	2223	+29	−30
+  Name                  Elo      +       -
+  Smallbrain 2.0 64-bit	2268	+30	−30
+  Smallbrain 1.1 64-bit	2223	+29	−30
 ```
  CCRL Blitz 2'+1"
 ```
-Smallbrain 1.1 64-bit	2174	+21	−21
+  Name                  Elo      +       -
+  Smallbrain 3.0 64-bit	2925	+25	−25
+  Smallbrain 1.1 64-bit	2174	+21	−21
 ```
 
 I estimate version 4.0 to be above 3000 elo.
