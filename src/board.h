@@ -124,6 +124,7 @@ public:
 	U64 KingAttacks(Square sq);
 
 	U64 attacksPiece(PieceType type, Square sq, U64 occupied, Color c);
+	U64 legalMovesPiece(PieceType type, Square sq);
 	// Gets the piece of the specified color
 	U64 Pawns(Color c);
 	U64 Knights(Color c);
@@ -187,11 +188,11 @@ public:
 
 	// all legal moves for each piece
 	U64 LegalPawnMoves(Color c, Square sq, Square ep);
-	U64 LegalKnightMoves(Color c, Square sq);
-	U64 LegalBishopMoves(Color c, Square sq);
-	U64 LegalRookMoves(Color c, Square sq);
-	U64 LegalQueenMoves(Color c, Square sq);
-	U64 LegalKingMoves(Color c, Square sq);
+	inline U64 LegalKnightMoves(Color c, Square sq);
+	inline U64 LegalBishopMoves(Color c, Square sq);
+	inline U64 LegalRookMoves(Color c, Square sq);
+	inline U64 LegalQueenMoves(Color c, Square sq);
+	inline U64 LegalKingMoves(Color c, Square sq);
 
 	// all legal moves for a position
 	Movelist legalmoves();
