@@ -403,12 +403,14 @@ int Search::aspiration_search(int depth, int prev_eval, Stack *ss) {
 }
 
 int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
+    // Limits
     t0 = std::chrono::high_resolution_clock::now();
-
     searchTime = time.optimum;
     maxTime = time.maximum;
-    startAge = board.fullMoveNumber;
     maxNodes = maxN;
+
+    // TT starting age of this searches entries
+    startAge = board.fullMoveNumber;
 
     int result = 0;
     Move prev_bestmove{};
@@ -444,10 +446,12 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
             return 0;
         }
 
+        // In case theres only 1 legal moves play it earlier
         if (rootSize == 1) {
             searchTime = std::min((int64_t)50, searchTime);
         }
 
+        // Node count effort calculation, idea from Koivisto
         int effort = (spentEffort[prev_bestmove.from()][prev_bestmove.to()] * 100) / nodes;
 
         if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
@@ -461,8 +465,10 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
             searchTime = startTime * 1.05f;
         }
 
-        // Update the previous best move and print information
+        // Update the previous best move
         prev_bestmove = pv_table[0][0];
+        
+        // print new search info
         auto ms = elapsed();
         uci_output(result, depth, seldepth, nodes, ms, get_pv());
     }
