@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
                 time = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
             }
             else {
-                std::cout << "Error: Invalid limit" << std::endl;
+                std::cout << "Error: Invalid limit" << std::endl; // Silent Error
                 return 0;
             }
             thread.begin(depth, nodes, time);
@@ -183,7 +183,7 @@ int main(int argc, char** argv) {
                 std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
             }
         }
-        
+
         if (input == "captures") {
             Movelist ml = searcher_class.board.capturemoves();
             for (int i = 0; i < ml.size; i++) {
