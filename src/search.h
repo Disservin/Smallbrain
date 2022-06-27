@@ -53,14 +53,13 @@ public:
     // move ordering and time usage
     int history_table[2][MAX_SQ][MAX_SQ]{};
     Move killerMoves[2][MAX_PLY + 1]{};
-    U64 spentEffort[MAX_SQ][MAX_SQ]{};
-    int rootSize{};
-    TimePoint::time_point t0 = TimePoint::now();
+    U64 spentEffort[MAX_SQ][MAX_SQ];
+    int rootSize;
+    TimePoint::time_point t0;
 
     // constructor
     Search(Board brd) {
         board = brd;
-        t0 = TimePoint::now();
     }
 
     // testing
