@@ -40,6 +40,8 @@ int main(int argc, char** argv) {
 
     init_reductions();
 
+    int defaultThreads = 2;
+
     // load position
     searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
@@ -96,6 +98,11 @@ int main(int argc, char** argv) {
             std::cout << "Loading eval file: " << path_str << std::endl;            
             nnue.init(path_str.c_str());
         }
+        if (input.find("setoption name Threads value") != std::string::npos) {
+            std::size_t start_index = input.find("value");
+            std::string size = input.substr(start_index + 6);
+            defaultThreads = std::stoi(size);           
+        }
         if (input.find("position") != std::string::npos) {
             searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
@@ -122,16 +129,17 @@ int main(int argc, char** argv) {
         if (input.find("go depth") != std::string::npos) {
             thread.stop();
             int depth = std::stoi(tokens[2]);
-            thread.begin(depth, 0, t);
+            thread.begin(depth, 0, t, defaultThreads);
         }
         if (input.find("go nodes") != std::string::npos) {
             thread.stop();
             int nodes = std::stoi(tokens[2]);
-            thread.begin(MAX_PLY, nodes, t);
+            thread.begin(MAX_PLY, nodes, t, defaultThreads);
         }
         if (input.find("go infinite") != std::string::npos) {
             thread.stop();
-            thread.begin(MAX_PLY, 0, t);
+            start_thinking(searcher_class, defaultThreads, MAX_PLY, 0, t);
+            // thread.begin(MAX_PLY, 0, t, defaultThreads);
         }
         if (input.find("movetime") != std::string::npos) {
             thread.stop();
@@ -139,7 +147,7 @@ int main(int argc, char** argv) {
             int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
             t.maximum = timegiven;
             t.optimum = timegiven;
-            thread.begin(MAX_PLY, 0, t);
+            thread.begin(MAX_PLY, 0, t, defaultThreads);
         }
         if (input.find("wtime") != std::string::npos) {
             thread.stop();
@@ -163,7 +171,8 @@ int main(int argc, char** argv) {
             }
 
             Time t = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
-            thread.begin(MAX_PLY, 0, t);
+            start_thinking(searcher_class, defaultThreads, MAX_PLY, 0, t);
+            // thread.begin(MAX_PLY, 0, t, defaultThreads);
         }
         // ENGINE SPECIFIC
         if (input == "print") {

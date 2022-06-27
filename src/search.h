@@ -2,6 +2,7 @@
 #include <atomic>
 #include <chrono>
 #include <algorithm>
+#include <thread>
 
 #include "board.h"
 #include "tt.h"
@@ -10,6 +11,7 @@
 extern std::atomic<bool> stopped;
 extern TEntry* TTable;
 extern U64 TT_SIZE;
+
 
 struct Stack{
     uint16_t currentmove;
@@ -34,11 +36,16 @@ public:
     Move killerMoves[2][MAX_PLY + 1]{};
     U64 spentEffort[MAX_SQ][MAX_SQ]{};
     int rootSize{};
+    int ThreadId;
     std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
 
     Search(Board brd) {
         board = brd;
         t0 = std::chrono::high_resolution_clock::now();
+    }
+    Search(const Search& s1) {
+        board = s1.board;
+        t0 = s1.t0;
     }
     void perf_Test(int depth, int max);
     void testAllPos();
@@ -57,10 +64,13 @@ public:
     bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
     void uci_output(int score, int depth, int time);
     long long elapsed();
+    void sortMoves(Movelist& moves);
+    void sortMoves(Movelist& moves, int sorted);
+    std::string output_score(int score);
 };
 
-void sortMoves(Movelist& moves);
-void sortMoves(Movelist& moves, int sorted);
-std::string output_score(int score);
+void start_thinking(Search searchClass, int noThreads, int search_depth, uint64_t maxN, Time time);
+
+
 
 inline bool operator==(Move& m, Move& m2);

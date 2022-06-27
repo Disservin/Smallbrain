@@ -2,6 +2,8 @@
 #include "evaluation.h"
 #include <cstring>
 
+std::vector<std::thread> threads;
+std::vector<Search> searches;
 void Search::perf_Test(int depth, int max) {
     auto t1 = std::chrono::high_resolution_clock::now();
     perft(depth, max);
@@ -150,7 +152,6 @@ int Search::qsearch(int depth, int alpha, int beta, int ply) {
                 alpha = score;
             }
         }
-
     }
     return bestValue;
 }
@@ -196,18 +197,18 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     TEntry tte = TTable[index];
     bool ttMove = false;
 
-    if (tte.key == board.hashKey && tte.depth >= depth && !RootNode && !PvNode) {
-        if (tte.flag == EXACT) return tte.score;
-        else if (tte.flag == LOWERBOUND) {
-            alpha = std::max(alpha, tte.score);
-        }
-        else if (tte.flag == UPPERBOUND) {
-            beta = std::min(beta, tte.score);
-        }
-        if (alpha >= beta) return tte.score;
-        // use TT move
-        ttMove = true;
-    }
+    // if (tte.key == board.hashKey && tte.depth >= depth && !RootNode && !PvNode) {
+    //     if (tte.flag == EXACT) return tte.score;
+    //     else if (tte.flag == LOWERBOUND) {
+    //         alpha = std::max(alpha, tte.score);
+    //     }
+    //     else if (tte.flag == UPPERBOUND) {
+    //         beta = std::min(beta, tte.score);
+    //     }
+    //     if (alpha >= beta) return tte.score;
+    //     // use TT move
+    //     ttMove = true;
+    // }
 
     ss->eval = staticEval = ttMove ? tte.score : evaluation(board);
                                                    
@@ -435,39 +436,51 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
 
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(depth, result, ss);
-        // Can we exit the search?
-        if (exit_early()) {
-            std::string move = board.printMove(prev_bestmove);
-            if (depth == 1) std::cout << "bestmove " << board.printMove(pv_table[0][0]) << std::endl;
-            else std::cout << "bestmove " << move << std::endl;
-            stopped = true;
-            return 0;
+        if (ThreadId == 0) {
+            // Can we exit the search?
+            if (exit_early()) {
+                stopped = true;
+                std::string move = board.printMove(prev_bestmove);
+                if (depth == 1) std::cout << "bestmove " << board.printMove(pv_table[0][0]) << std::endl;
+                else std::cout << "bestmove " << move << std::endl;
+                
+                for (int thId = 1; thId < threads.size(); thId++) {
+                    threads[thId].detach();
+                }
+
+                return 0;
+            }
+
+            if (rootSize == 1) {
+                searchTime = std::min((int64_t)50, searchTime);
+            }
+
+            int effort = (spentEffort[prev_bestmove.from()][prev_bestmove.to()] * 100) / nodes;
+
+            if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
+                adjustedTime = true;
+                searchTime = searchTime / 3 ;
+                reduceTimeMove = prev_bestmove;
+            }
+
+            // if the bestmove changed after reducing the time we want to spent some more time on that move
+            if (!(prev_bestmove == reduceTimeMove) && adjustedTime) {
+                searchTime = startTime * 1.05f;
+            }
+
+            // Update the previous best move and print information
+            prev_bestmove = pv_table[0][0];
+            auto ms = elapsed();
+            uci_output(result, depth, ms);
+        }else {
+            prev_bestmove = pv_table[0][0];
         }
 
-        if (rootSize == 1) {
-            searchTime = std::min((int64_t)50, searchTime);
-        }
-
-        int effort = (spentEffort[prev_bestmove.from()][prev_bestmove.to()] * 100) / nodes;
-
-        if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
-            adjustedTime = true;
-            searchTime = searchTime / 3 ;
-            reduceTimeMove = prev_bestmove;
-        }
-
-        // if the bestmove changed after reducing the time we want to spent some more time on that move
-        if (!(prev_bestmove == reduceTimeMove) && adjustedTime) {
-            searchTime = startTime * 1.05f;
-        }
-
-        // Update the previous best move and print information
-        prev_bestmove = pv_table[0][0];
-        auto ms = elapsed();
-        uci_output(result, depth, ms);
     }
-    std::cout << "bestmove " << board.printMove(prev_bestmove) << std::endl;
-    stopped = true;
+    if (ThreadId == 0) {
+        std::cout << "bestmove " << board.printMove(prev_bestmove) << std::endl;
+        stopped = true;
+    } 
     return 0;
 }
 
@@ -603,7 +616,7 @@ bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int
     return false;
 }
 
-void sortMoves(Movelist& moves){
+void Search::sortMoves(Movelist& moves){
     int i = moves.size;
     for (int cmove = 1; cmove < moves.size; cmove++){
         Move temp = moves.list[cmove];
@@ -614,7 +627,7 @@ void sortMoves(Movelist& moves){
     }
 }
 
-void sortMoves(Movelist& moves, int sorted){
+void Search::sortMoves(Movelist& moves, int sorted){
     int index = 0 + sorted;
     for (int i = 1 + sorted; i < moves.size; i++) {
         if (moves.list[i].value > moves.list[index].value) {
@@ -626,14 +639,17 @@ void sortMoves(Movelist& moves, int sorted){
 
 bool Search::exit_early() {
     if (stopped) return true;
-    if (maxNodes != 0 && nodes >= maxNodes) return true;
-    if (nodes & 2047 && searchTime != 0) {
-        auto ms = elapsed();
-        if (ms >= searchTime || ms >= maxTime) {
-            stopped = true;
-            return true;
-        }
+    if (ThreadId == 0) {
+        if (maxNodes != 0 && nodes >= maxNodes) return true;
+        if (nodes & 2047 && searchTime != 0) {
+            auto ms = elapsed();
+            if (ms >= searchTime || ms >= maxTime) {
+                stopped = true;
+                return true;
+            }
+        }        
     }
+
     return false;
 }
 
@@ -652,7 +668,7 @@ long long Search::elapsed(){
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 }
 
-std::string output_score(int score) {
+std::string Search::output_score(int score) {
     if (score >= VALUE_MATE_IN_PLY) {
         return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
     }
@@ -661,5 +677,18 @@ std::string output_score(int score) {
     }
     else {
         return "cp " + std::to_string(score);
+    }
+}
+
+void start_thinking(Search searchClass, int noThreads, int search_depth, uint64_t maxN, Time time) {
+    stopped = false;
+    threads.clear();
+    for (int i = 0; i < noThreads; i++) {
+        searchClass.ThreadId = i;
+        searches.push_back(searchClass);
+    }
+    for (int i = 0; i < noThreads; i++) {
+        std::cout << searches[i].ThreadId << std::endl;
+        threads.emplace_back(std::thread(&Search::iterative_deepening, searches[i], search_depth, maxN, time));
     }
 }
