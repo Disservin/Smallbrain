@@ -363,7 +363,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         UpdateHH(bestMove, depth, quietMoves);
 
     // Store position in TT
-    store_entry(index, depth, best, oldAlpha, beta, board.hashKey, ply);
+    if (!exit_early()) store_entry(index, depth, best, oldAlpha, beta, board.hashKey, startAge, bestMove.get());
     return best;
 }
 
@@ -603,30 +603,6 @@ bool Search::exit_early() {
             stopped = true;
             return true;
         }
-    }
-    return false;
-}
-
-bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply) {
-    TEntry tte = TTable[index];
-    if (!exit_early() && !(bestvalue >= 19000) && !(bestvalue <= -19000) &&
-        (tte.depth < depth || tte.age + 3 <= startAge)) {
-        tte.flag = EXACT;
-        // Upperbound
-        if (bestvalue <= old_alpha) {
-            tte.flag = UPPERBOUND;
-        }
-        // Lowerbound
-        else if (bestvalue >= beta) {
-            tte.flag = LOWERBOUND;
-        }
-        tte.depth = depth;
-        tte.score = bestvalue;
-        tte.age = startAge;
-        tte.key = key;
-        tte.move = pv_table[0][ply].get();
-        TTable[index] = tte;
-        return true;
     }
     return false;
 }
