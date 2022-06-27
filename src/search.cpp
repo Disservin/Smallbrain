@@ -191,12 +191,16 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
     if (ply > seldepth) seldepth = ply;
 
     int staticEval;
-    // Look up in the TT
-    U64 index = board.hashKey % TT_SIZE;
-    TEntry tte = TTable[index];
-    bool ttMove = false;
 
-    if (tte.key == board.hashKey && tte.depth >= depth && !RootNode && !PvNode) {
+
+    // Look up in the TT
+    TEntry tte;
+    bool ttHit = false;
+    bool ttMove = false;
+    probe_tt(tte, ttHit, board.hashKey, depth);
+
+    if (ttHit && !RootNode && !PvNode)
+    {
         if (tte.flag == EXACT) return tte.score;
         else if (tte.flag == LOWERBOUND) {
             alpha = std::max(alpha, tte.score);
@@ -205,7 +209,6 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
             beta = std::min(beta, tte.score);
         }
         if (alpha >= beta) return tte.score;
-        // use TT move
         ttMove = true;
     }
 
@@ -363,7 +366,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         UpdateHH(bestMove, depth, quietMoves);
 
     // Store position in TT
-    if (!exit_early()) store_entry(index, depth, best, oldAlpha, beta, board.hashKey, startAge, bestMove.get());
+    if (!exit_early()) store_entry(depth, best, oldAlpha, beta, board.hashKey, startAge, bestMove.get());
     return best;
 }
 
