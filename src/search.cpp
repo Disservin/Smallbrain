@@ -431,7 +431,7 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
             pv[i-1] = pv[i];
     }
 
-    for (int i = -2; i <= MAX_PLY + 2; ++i)
+    for (int i = -2; i <= MAX_PLY + 1; ++i)
         (ss+i)->ply = i;
 
     // start iterative deepening
