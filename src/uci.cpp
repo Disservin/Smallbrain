@@ -77,32 +77,38 @@ int main(int argc, char** argv) {
         if (input == "stop") {
             thread.stop();
         }
-        if (input.find("setoption name Hash value") != std::string::npos) {
-            std::size_t start_index = input.find("value");
-            std::string size_str = input.substr(start_index + 6);
-            U64 elements = (static_cast<unsigned long long>(std::stoi(size_str)) * 1000000) / sizeof(TEntry);
-            oldbuffer = TTable;
-            if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
+        if (input.find("setoption name") != std::string::npos)
+        {
+            std::string option = tokens[2];
+            std::string value = tokens[4];
+            if (option == "Hash")
             {
-                std::cout << "Error: Could not allocate memory for TT" << std::endl;
-                free(oldbuffer);
-                exit(1);
+                U64 elements = (static_cast<unsigned long long>(std::stoi(value)) * 1000000) / sizeof(TEntry);
+                oldbuffer = TTable;
+                if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
+                {
+                    std::cout << "Error: Could not allocate memory for TT" << std::endl;
+                    free(oldbuffer);
+                    exit(1);
+                }
+                TT_SIZE = elements;  
             }
-            TT_SIZE = elements;
-        }
-        if (input.find("setoption name EvalFile value") != std::string::npos) {
-            std::size_t start_index = input.find("value");
-            std::string path_str = input.substr(start_index + 6);
-            std::cout << "Loading eval file: " << path_str << std::endl;            
-            nnue.init(path_str.c_str());
+            else if (option == "EvalFile")
+            {
+                std::cout << "Loading eval file: " << value << std::endl;            
+                nnue.init(value.c_str());    
+            }
         }
         if (input.find("position") != std::string::npos) {
-            searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
-            if (tokens[1] == "fen") {
+            if (tokens[1] == "fen") 
+            {
                 std::size_t start_index = input.find("fen");
                 std::string fen = input.substr(start_index + 4);
                 searcher_class.board.applyFen(fen);
+            }
+            else
+            {
+                searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             }
             if (input.find("moves") != std::string::npos) {
                 std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();
