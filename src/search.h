@@ -19,48 +19,72 @@ struct Stack{
 
 class Search {
 public:
-    uint64_t nodes{};
+    // limits
     uint64_t maxNodes{};
-    Board board{};
-    Move bestMove{};
-    uint16_t startAge{};
     int64_t searchTime{};
     int64_t maxTime{};
-    uint8_t seldepth{};
+
+    // nodes
+    uint64_t nodes{};
+    
+    // pv collection
     uint8_t pv_length[MAX_PLY]{};
     Move pv_table[MAX_PLY][MAX_PLY]{};
     Move pv[MAX_PLY]{};
+
+    // current board
+    Board board{};
+
+    // bestmove
+    Move bestMove{};
+
+    // startAge and seldepth
+    uint16_t startAge{};
+    uint8_t seldepth{};
+
+    // move ordering and time usage
     int history_table[2][MAX_SQ][MAX_SQ]{};
     Move killerMoves[2][MAX_PLY + 1]{};
     U64 spentEffort[MAX_SQ][MAX_SQ]{};
     int rootSize{};
-    std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
+    TimePoint::time_point t0 = TimePoint::now();
 
+    // constructor
     Search(Board brd) {
         board = brd;
-        t0 = std::chrono::high_resolution_clock::now();
+        t0 = TimePoint::now();
     }
+
+    // testing
+    U64 perft(int depth, int max);
     void perf_Test(int depth, int max);
     void testAllPos();
-    U64 perft(int depth, int max);
+    
+    // move ordering
     void UpdateHH(Move bestMove, int depth, Movelist quietMoves);
+
+    // main search functions
     int qsearch(int depth, int alpha, int beta, int ply);
     int absearch(int depth, int alpha, int beta, int ply, Stack *ss);
     int aspiration_search(int depth, int prev_eval, Stack *ss);
     int iterative_deepening(int search_depth, uint64_t maxN, Time time);
-    bool exit_early();
+    
+    // capture functions
     bool see(Move& move, int threshold);
     int mmlva(Move& move);
+
+    // scoring functions
     int score_move(Move& move, int ply, bool ttMove);
     int score_qmove(Move& move);
+    
+    // utility functions
     std::string get_pv();
-    bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
     void uci_output(int score, int depth, int time);
     long long elapsed();
+    bool exit_early();
+
+    bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
+    void sortMoves(Movelist& moves);
+    void sortMoves(Movelist& moves, int sorted);
+    std::string output_score(int score);
 };
-
-void sortMoves(Movelist& moves);
-void sortMoves(Movelist& moves, int sorted);
-std::string output_score(int score);
-
-inline bool operator==(Move& m, Move& m2);

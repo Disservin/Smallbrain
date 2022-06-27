@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unordered_map>
 #define U64 unsigned long long
+#define TimePoint std::chrono::high_resolution_clock
 #define MAX_SQ 64
 
 static constexpr int MAX_PLY = 120;

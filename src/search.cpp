@@ -579,6 +579,34 @@ std::string Search::get_pv() {
     return line;
 }
 
+void Search::uci_output(int score, int depth, int time) {
+    std::cout       << "info depth " << signed(depth)
+    << " seldepth " << signed(seldepth)
+    << " score "    << output_score(score)
+    << " nodes "    << nodes 
+    << " nps "      << signed((nodes / (time + 1)) * 1000) 
+    << " time "     << time
+    << " pv"        << get_pv() << std::endl;
+}
+
+long long Search::elapsed(){
+    auto t1 = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+}
+
+bool Search::exit_early() {
+    if (stopped) return true;
+    if (maxNodes != 0 && nodes >= maxNodes) return true;
+    if (nodes & 2047 && searchTime != 0) {
+        auto ms = elapsed();
+        if (ms >= searchTime || ms >= maxTime) {
+            stopped = true;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply) {
     TEntry tte = TTable[index];
     if (!exit_early() && !(bestvalue >= 19000) && !(bestvalue <= -19000) &&
@@ -603,7 +631,7 @@ bool Search::store_entry(U64 index, int depth, int bestvalue, int old_alpha, int
     return false;
 }
 
-void sortMoves(Movelist& moves){
+void Search::sortMoves(Movelist& moves){
     int i = moves.size;
     for (int cmove = 1; cmove < moves.size; cmove++){
         Move temp = moves.list[cmove];
@@ -614,7 +642,7 @@ void sortMoves(Movelist& moves){
     }
 }
 
-void sortMoves(Movelist& moves, int sorted){
+void Search::sortMoves(Movelist& moves, int sorted){
     int index = 0 + sorted;
     for (int i = 1 + sorted; i < moves.size; i++) {
         if (moves.list[i].value > moves.list[index].value) {
@@ -624,35 +652,7 @@ void sortMoves(Movelist& moves, int sorted){
     std::swap(moves.list[index], moves.list[0 + sorted]);
 }
 
-bool Search::exit_early() {
-    if (stopped) return true;
-    if (maxNodes != 0 && nodes >= maxNodes) return true;
-    if (nodes & 2047 && searchTime != 0) {
-        auto ms = elapsed();
-        if (ms >= searchTime || ms >= maxTime) {
-            stopped = true;
-            return true;
-        }
-    }
-    return false;
-}
-
-void Search::uci_output(int score, int depth, int time) {
-    std::cout       << "info depth " << signed(depth)
-    << " seldepth " << signed(seldepth)
-    << " score "    << output_score(score)
-    << " nodes "    << nodes 
-    << " nps "      << signed((nodes / (time + 1)) * 1000) 
-    << " time "     << time
-    << " pv"        << get_pv() << std::endl;
-}
-
-long long Search::elapsed(){
-    auto t1 = std::chrono::high_resolution_clock::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-}
-
-std::string output_score(int score) {
+std::string Search::output_score(int score) {
     if (score >= VALUE_MATE_IN_PLY) {
         return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
     }
