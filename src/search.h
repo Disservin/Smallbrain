@@ -83,7 +83,6 @@ public:
     long long elapsed();
     bool exit_early();
 
-    bool store_entry(U64 index, int depth, int bestvalue, int old_alpha, int beta, U64 key, uint8_t ply);
     void sortMoves(Movelist& moves);
     void sortMoves(Movelist& moves, int sorted);
     std::string output_score(int score);
