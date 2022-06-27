@@ -17,6 +17,14 @@ struct Stack{
     int eval;
 };
 
+static constexpr int mvvlva[7][7] = { {0, 0, 0, 0, 0, 0, 0},
+                                    {0, 205, 204, 203, 202, 201, 200},
+                                    {0, 305, 304, 303, 302, 301, 300},
+                                    {0, 405, 404, 403, 402, 401, 400},
+                                    {0, 505, 504, 503, 502, 501, 500},
+                                    {0, 605, 604, 603, 602, 601, 600},
+                                    {0, 705, 704, 703, 702, 701, 700} };
+
 class Search {
 public:
     // limits
@@ -79,11 +87,12 @@ public:
     
     // utility functions
     std::string get_pv();
-    void uci_output(int score, int depth, int time);
     long long elapsed();
     bool exit_early();
 
     void sortMoves(Movelist& moves);
     void sortMoves(Movelist& moves, int sorted);
-    std::string output_score(int score);
 };
+
+std::string output_score(int score);
+void uci_output(int score, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv);

@@ -299,7 +299,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
 
 	    U64 nodeCount = nodes;
         ss->currentmove = move.get();
-        bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
+        // bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
 
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
@@ -420,19 +420,19 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
     seldepth = 0;
     nodes = 0;
 
-    memset(spentEffort, 0, sizeof(unsigned long long) * MAX_SQ * MAX_SQ);
+    std::memset(spentEffort, 0, sizeof(unsigned long long) * MAX_SQ * MAX_SQ);
     std::memset(ss-2, 0, 4 * sizeof(Stack));
 
     // reuse previous pv information
    if (pv_length[0] > 0) {
-        for (int i = 1; i < pv_length[0]; i++) {
+        for (int i = 1; i < pv_length[0]; i++)
             pv[i-1] = pv[i];
-        }
     }
 
     for (int i = -2; i <= MAX_PLY + 2; ++i)
         (ss+i)->ply = i;
 
+    // start iterative deepening
     for (int depth = 1; depth <= search_depth; depth++) {
         result = aspiration_search(depth, result, ss);
         // Can we exit the search?
@@ -464,7 +464,7 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
         // Update the previous best move and print information
         prev_bestmove = pv_table[0][0];
         auto ms = elapsed();
-        uci_output(result, depth, ms);
+        uci_output(result, depth, seldepth, nodes, ms, get_pv());
     }
     std::cout << "bestmove " << board.printMove(prev_bestmove) << std::endl;
     stopped = true;
@@ -472,13 +472,6 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
 }
 
 int Search::mmlva(Move& move) {
-    static constexpr int mvvlva[7][7] = { {0, 0, 0, 0, 0, 0, 0},
-    {0, 205, 204, 203, 202, 201, 200},
-    {0, 305, 304, 303, 302, 301, 300},
-    {0, 405, 404, 403, 402, 401, 400},
-    {0, 505, 504, 503, 502, 501, 500},
-    {0, 605, 604, 603, 602, 601, 600},
-    {0, 705, 704, 703, 702, 701, 700} };
     int attacker = board.piece_type(board.pieceAtB(move.from())) + 1;
     int victim = board.piece_type(board.pieceAtB(move.to())) + 1;
     return mvvlva[victim][attacker];
@@ -579,16 +572,6 @@ std::string Search::get_pv() {
     return line;
 }
 
-void Search::uci_output(int score, int depth, int time) {
-    std::cout       << "info depth " << signed(depth)
-    << " seldepth " << signed(seldepth)
-    << " score "    << output_score(score)
-    << " nodes "    << nodes 
-    << " nps "      << signed((nodes / (time + 1)) * 1000) 
-    << " time "     << time
-    << " pv"        << get_pv() << std::endl;
-}
-
 long long Search::elapsed(){
     auto t1 = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
@@ -628,7 +611,7 @@ void Search::sortMoves(Movelist& moves, int sorted){
     std::swap(moves.list[index], moves.list[0 + sorted]);
 }
 
-std::string Search::output_score(int score) {
+std::string output_score(int score) {
     if (score >= VALUE_MATE_IN_PLY) {
         return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
     }
@@ -638,4 +621,14 @@ std::string Search::output_score(int score) {
     else {
         return "cp " + std::to_string(score);
     }
+}
+
+void uci_output(int score, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv) {
+    std::cout       << "info depth " << signed(depth)
+    << " seldepth " << signed(seldepth)
+    << " score "    << output_score(score)
+    << " nodes "    << nodes 
+    << " nps "      << signed((nodes / (time + 1)) * 1000) 
+    << " time "     << time
+    << " pv"        << pv << std::endl;
 }
