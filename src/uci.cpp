@@ -113,57 +113,63 @@ int main(int argc, char** argv) {
                 }
             }
         }
-        if (input.find("go perft") != std::string::npos) {
-            int depth = std::stoi(tokens[2]);
-            std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
-            threads.join();
-            return 0;
-        }
-        if (input.find("go depth") != std::string::npos) {
+        if (input.find("go") != std::string::npos) 
+        {
             thread.stop();
-            int depth = std::stoi(tokens[2]);
-            thread.begin(depth, 0, t);
-        }
-        if (input.find("go nodes") != std::string::npos) {
-            thread.stop();
-            int nodes = std::stoi(tokens[2]);
-            thread.begin(MAX_PLY, nodes, t);
-        }
-        if (input.find("go infinite") != std::string::npos) {
-            thread.stop();
-            thread.begin(MAX_PLY, 0, t);
-        }
-        if (input.find("movetime") != std::string::npos) {
-            thread.stop();
-            auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
-            int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
-            t.maximum = timegiven;
-            t.optimum = timegiven;
-            thread.begin(MAX_PLY, 0, t);
-        }
-        if (input.find("wtime") != std::string::npos) {
-            thread.stop();
-            searcher_class.nodes = 0;
-            // go wtime 100 btime 100 winc 100 binc 100
-            std::string side = searcher_class.board.sideToMove == White ? "wtime" : "btime";
-            auto indexTime = find(tokens.begin(), tokens.end(), side) - tokens.begin();
-            int64_t timegiven = std::stoi(tokens[indexTime + 1]);
-            int64_t inc = 0;
-            int64_t mtg = 0;
-            if (input.find("winc") != std::string::npos && tokens.size() > 4) {
-                std::string inc_str = searcher_class.board.sideToMove == White ? "winc" : "binc";
-                auto it = find(tokens.begin(), tokens.end(), inc_str);
-                int index = it - tokens.begin();
-                inc = std::stoi(tokens[index + 1]);
-            }
-            if (input.find("movestogo") != std::string::npos) {
-                auto it = find(tokens.begin(), tokens.end(), "movestogo");
-                int index = it - tokens.begin();
-                mtg = std::stoi(tokens[index + 1]);
-            }
 
-            Time t = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
-            thread.begin(MAX_PLY, 0, t);
+            std::string limit = tokens[1];
+            int depth = MAX_PLY;
+            int nodes = 0;
+            Time time = t;
+            if (limit == "depth") {
+                depth = std::stoi(tokens[2]);
+            }
+            else if (limit == "perft") {
+                depth = std::stoi(tokens[2]);
+                std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
+                threads.join();
+                return 0;    
+            }
+            else if (limit == "nodes") {
+                nodes = std::stoi(tokens[2]);
+            }
+            else if (limit == "infinite" || input == "go") {
+                depth = MAX_PLY;
+            }
+            else if (limit == "movetime") {
+                auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
+                int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
+                time.maximum = timegiven;
+                time.optimum = timegiven;
+            }
+            else if (input.find("wtime") != std::string::npos) {
+                // go wtime 100 btime 100 winc 100 binc 100
+                std::string side = searcher_class.board.sideToMove == White ? "wtime" : "btime";
+                auto indexTime = find(tokens.begin(), tokens.end(), side) - tokens.begin();
+                int64_t timegiven = std::stoi(tokens[indexTime + 1]);
+                int64_t inc = 0;
+                int64_t mtg = 0;
+                // Increment 
+                if (input.find("winc") != std::string::npos && tokens.size() > 4) {
+                    std::string inc_str = searcher_class.board.sideToMove == White ? "winc" : "binc";
+                    auto it = find(tokens.begin(), tokens.end(), inc_str);
+                    int index = it - tokens.begin();
+                    inc = std::stoi(tokens[index + 1]);
+                }
+                // Moves to next time control
+                if (input.find("movestogo") != std::string::npos) {
+                    auto it = find(tokens.begin(), tokens.end(), "movestogo");
+                    int index = it - tokens.begin();
+                    mtg = std::stoi(tokens[index + 1]);
+                }
+                // Calculate search time
+                time = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
+            }
+            else {
+                std::cout << "Error: Invalid limit" << std::endl; // Silent Error
+                return 0;
+            }
+            thread.begin(depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {
@@ -177,18 +183,22 @@ int main(int argc, char** argv) {
                 std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
             }
         }
+
         if (input == "captures") {
             Movelist ml = searcher_class.board.capturemoves();
             for (int i = 0; i < ml.size; i++) {
                 std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
             }
         }
+
         if (input == "rep") {
             std::cout << searcher_class.board.isRepetition(3) << std::endl;
         }
+
         if (input == "eval") {
             std::cout << evaluation(searcher_class.board) << std::endl;
         }
+
         if (input.find("perft") != std::string::npos) {
             std::thread threads = std::thread(&Search::testAllPos, searcher_class);
             threads.join();
