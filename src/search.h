@@ -58,7 +58,7 @@ public:
     int64_t searchTime{};
     int64_t maxTime{};
 
-    // U64 spentEffort[MAX_SQ][MAX_SQ];
+    U64 spentEffort[MAX_SQ][MAX_SQ];
     int rootSize;
     TimePoint::time_point t0;
 

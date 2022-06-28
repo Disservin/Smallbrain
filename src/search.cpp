@@ -322,9 +322,9 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     td->seldepth = 0;
     td->startAge = td->board.fullMoveNumber;
 
-    Move reducedTimeMove;
+    Move reducedTimeMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
     Move previousBestmove;
-    // bool adjustedTime;
+    bool adjustedTime;
 
     int result = -VALUE_INFINITE;
 
@@ -347,6 +347,21 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
                 stopped = true;
                 return;
             }
+            if (rootSize == 1)
+                searchTime = std::min((int64_t)50, searchTime);
+            
+            int effort = (spentEffort[previousBestmove.from()][previousBestmove.to()] * 100) / td->nodes;
+
+            if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
+                adjustedTime = true;
+                searchTime = searchTime / 3 ;
+                reducedTimeMove = previousBestmove;
+            }
+
+            if (!(previousBestmove == reducedTimeMove) && adjustedTime) {
+                searchTime = startTime * 1.05f;
+            }
+
             previousBestmove = td->pv_table[0][0];
             auto ms = elapsed();
             uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
