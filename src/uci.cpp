@@ -71,6 +71,12 @@ int main(int argc, char** argv) {
         }
         if (input == "ucinewgame") {
             board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            for (std::thread& th: searcher_class.threads) {
+                if (th.joinable())
+		            th.join();
+            }
+            searcher_class.threads.clear();
+            searcher_class.tds.clear();
         }
         if (input == "quit") {
             thread.stop();

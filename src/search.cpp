@@ -377,12 +377,13 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
 }
 
 void Search::start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time) {
+    stopped = true;
     for (std::thread& th: threads) {
         if (th.joinable())
             th.join();
     }
     threads.clear();
-    
+    stopped = false;
     // If we dont have previosu data create default data
     if (tds.size() == 0) {
         for (int i = 0; i < workers; i++) {
@@ -392,15 +393,12 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
             this->tds.push_back(td);
         }
     }
-    
+
     this->tds[0].board = board;
     this->tds[0].id = 0;
     this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, 0);
     for (int i = 1; i < workers; i++) {
-        ThreadData td;
-        td.board = board;
-        td.id = i;
-        this->tds[i] = td;
+        this->tds[i].board = board;
         this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, i);
     }
 }
