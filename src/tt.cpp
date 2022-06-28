@@ -5,8 +5,8 @@ bool store_entry(int depth, int bestvalue,
                  uint16_t startAge, uint16_t move) {
     U64 index = key % TT_SIZE;                
     TEntry tte = TTable[index];
-    if (!(bestvalue >= 19000) && !(bestvalue <= -19000) &&
-        (tte.depth < depth || tte.age + 3 <= startAge)) {
+    if (bestvalue < 19000 && bestvalue > -19000 
+        && (tte.depth < depth || tte.age + depth <= startAge)) {
         tte.flag = EXACT;
         // Upperbound
         if (bestvalue <= old_alpha) {
