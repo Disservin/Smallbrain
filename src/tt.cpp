@@ -6,7 +6,7 @@ bool store_entry(int depth, int bestvalue,
     U64 index = key % TT_SIZE;                
     TEntry tte = TTable[index];
     if (bestvalue < 19000 && bestvalue > -19000 
-        && (tte.depth < depth || tte.age + depth <= startAge)) {
+        && (tte.depth < depth || startAge - tte.age >= (tte.depth - depth) / 2 )) {
         tte.flag = EXACT;
         // Upperbound
         if (bestvalue <= old_alpha) {
