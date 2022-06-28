@@ -73,6 +73,11 @@ int main(int argc, char** argv) {
         }
         if (input == "quit") {
             thread.stop();
+            stopped = true;
+            for (std::thread& th: searcher_class.threads) {
+                if (th.joinable())
+		            th.join();
+            }
             free(TTable);
             return 0;
         }

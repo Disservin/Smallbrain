@@ -10,7 +10,12 @@
 #include "zobrist.h"
 #include "neuralnet.h"
 
-extern NNUE nnue;
+// extern NNUE nnue;
+extern uint8_t inputValues[INPUT_WEIGHTS];
+extern int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
+extern int16_t hiddenBias[HIDDEN_BIAS];
+extern int16_t hiddenWeights[HIDDEN_WEIGHTS];
+extern int32_t outputBias[OUTPUT_BIAS];
 
 struct State {
 	Square enPassant{};
@@ -76,9 +81,15 @@ public:
 
 	U64 hashHistory[1024]{};
 	States prevStates{};
+
+	int16_t accumulator[HIDDEN_BIAS];
+	void activate(int inputNum);
+	void deactivate(int inputNum);
+
 	Board();
 	U64 zobristHash();
 
+	
 	void initializeLookupTables();
 	
 	// Finds what piece are on the square using the bitboards

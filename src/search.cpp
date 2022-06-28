@@ -1,5 +1,62 @@
 #include "search.h"
 
+void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData *td) {
+    if (depth > 1) td->history_table[td->board.sideToMove][bestMove.from()][bestMove.to()] += depth * depth;
+    for (int i = 0; i < quietMoves.size; i++) {
+        Move move = quietMoves.list[i];
+        if (move == bestMove) continue;
+        td->history_table[td->board.sideToMove][move.from()][move.to()] -= depth * depth;
+    }
+}
+
+int Search::qsearch(int depth, int alpha, int beta, int ply, ThreadData *td) {
+    if (exit_early(td->nodes, td->id)) return 0;
+    int stand_pat = evaluation(td->board);
+    int bestValue = stand_pat;
+    Color color = td->board.sideToMove;
+    
+    if (ply > MAX_PLY - 1) return stand_pat;
+
+    if (stand_pat >= beta) return beta;
+    if (stand_pat > alpha) alpha = stand_pat;
+
+    if (depth == 0) return alpha;
+
+    Movelist ml = td->board.capturemoves();
+
+    // assign a value to each move
+    // for (int i = 0; i < ml.size; i++) {
+    //     ml.list[i].value = score_qmove(ml.list[i]);
+    // }
+
+    // sort the moves
+    // sortMoves(ml);
+
+    // search the moves
+    for (int i = 0; i < (int)ml.size; i++) {
+        Move move = ml.list[i];
+
+        Piece captured = td->board.pieceAtB(move.to());
+        // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
+        if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted() && td->board.nonPawnMat(color)) continue;
+        // if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, -100)) continue;
+
+        td->nodes++;
+        td->board.makeMove(move);
+        int score = -qsearch(depth - 1, -beta, -alpha, ply + 1, td);
+        td->board.unmakeMove(move);
+        if (score > bestValue) {
+            bestValue = score;
+            if (score >= beta) return beta;
+            if (score > alpha) {
+                alpha = score;
+            }
+        }
+
+    }
+    return bestValue;
+}
+
 int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
     if (ply > MAX_PLY - 1) return evaluation(td->board);
@@ -9,29 +66,28 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     // int oldAlpha = alpha;
     bool RootNode = ply == 0;
     Color color = td->board.sideToMove;
-    Board board = td->board;
 
-    if (ply >= 1 && board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
+    if (ply >= 1 && td->board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
     if (!RootNode){
-        if (board.halfMoveClock >= 100) return 0;
-        int all = popcount(board.All());
+        if (td->board.halfMoveClock >= 100) return 0;
+        int all = popcount(td->board.All());
         if (all == 2) return 0;
-        if (all == 3 && (board.Bitboards[WhiteKnight] || board.Bitboards[BlackKnight])) return 0;
-        if (all == 3 && (board.Bitboards[WhiteBishop] || board.Bitboards[BlackBishop])) return 0;
+        if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight])) return 0;
+        if (all == 3 && (td->board.Bitboards[WhiteBishop] || td->board.Bitboards[BlackBishop])) return 0;
 
         alpha = std::max(alpha, -VALUE_MATE + ply);
         beta = std::min(beta, VALUE_MATE - ply - 1);
         if (alpha >= beta) return alpha;
     }
 
-    bool inCheck = td->board.isSquareAttacked(~color, board.KingSQ(color));
+    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
 
     // Check extension
     if (inCheck) depth++;
 
     // Enter qsearch
-    if (depth <= 0) return evaluation(td->board);//qsearch(15, alpha, beta, ply);
+    if (depth <= 0) return qsearch(15, alpha, beta, ply, td);
 
     // Selective depth (heighest depth we have ever reached)
     if (ply > td->seldepth) td->seldepth = ply;
@@ -58,17 +114,17 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
         ttMove = true;
     }
 
-    ss->eval = staticEval = ttMove ? tte.score : evaluation(board);
+    ss->eval = staticEval = ttMove ? tte.score : evaluation(td->board);
                                                    
     // improving boolean, similar to stockfish
     bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
 
     // Razoring
-    // if (!PvNode
-    //     && depth < 2
-    //     && staticEval + 640 < alpha
-    //     && !inCheck)
-    //     return qsearch(15, alpha, beta, ply);
+    if (!PvNode
+        && depth < 2
+        && staticEval + 640 < alpha
+        && !inCheck)
+        return qsearch(15, alpha, beta, ply, td);
 
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
@@ -76,20 +132,20 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     }
 
     // Null move pruning
-    if (board.nonPawnMat(color) 
+    if (td->board.nonPawnMat(color) 
         && (ss-1)->currentmove != nullmove
         && depth >= 3 && !inCheck
         && staticEval >= beta) 
     {
         int r = 3 + depth / 5;
-        board.makeNullMove();
+        td->board.makeNullMove();
         (ss)->currentmove = nullmove;
         int score = -absearch(depth - r, -beta, -beta + 1, ply + 1, ss+1, td);
-        board.unmakeNullMove();
+        td->board.unmakeNullMove();
         if (score >= beta) return beta;
     }
 
-    Movelist ml = board.legalmoves();
+    Movelist ml = td->board.legalmoves();
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {
@@ -114,7 +170,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
 
     for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
-        bool capture = board.pieceAtB(move.to()) != None;
+        bool capture = td->board.pieceAtB(move.to()) != None;
 
         if (!capture) quietMoves.Add(move);
 
@@ -141,14 +197,14 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
         madeMoves++;
 
         if (td->id == 0 && RootNode && elapsed() > 10000 && !stopped) {
-            std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+            std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move) << " currmovenumber " << madeMoves << "\n";
         }
 
-        board.makeMove(move);
+        td->board.makeMove(move);
 
 	    // U64 nodeCount = td->nodes;
         ss->currentmove = move.get();
-        // bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
+        // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
 
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
@@ -179,7 +235,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
             score = -absearch(depth - 1, -beta, -alpha, ply + 1, ss+1, td);
         }
 
-        board.unmakeMove(move);
+        td->board.unmakeMove(move);
 	    // spentEffort[move.from()][move.to()] += nodes - nodeCount;
 
         if (score > best) {
@@ -208,12 +264,47 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
         }
         // sortMoves(ml, i + 1);
     }
-    // if (best >= beta && board.pieceAtB(bestMove.to()) == None)
-    //     UpdateHH(bestMove, depth, quietMoves);
+    if (best >= beta && td->board.pieceAtB(bestMove.to()) == None)
+        UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    // if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, board.hashKey, td->startAge, bestMove.get());
+    // if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, td->startAge, bestMove.get());
     return best;
+}
+
+int Search::aspiration_search(int depth, int prev_eval, Stack *ss, ThreadData *td) {
+    int alpha = -VALUE_INFINITE;
+    int beta = VALUE_INFINITE;
+    int delta = 30;
+
+    int result = 0;
+    int research = 0;
+
+    if (depth == 1) {
+        result = absearch(depth, alpha, beta, 0, ss, td);
+        return result;
+    }
+    else if (depth >= 5) {
+        alpha = prev_eval - 50;
+        beta = prev_eval + 50;
+    }
+
+    while (true) {
+        if (alpha < -3500) alpha = -VALUE_INFINITE;
+        if (beta  >  3500) beta  =  VALUE_INFINITE;
+        result = absearch(depth, alpha, beta, 0, ss, td);
+        if (result <= alpha) {
+            research++;
+            alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
+        }
+        else if (result >= beta) {
+            research++;
+            beta = std::min(beta + research * research * delta, (int)VALUE_INFINITE);
+        }
+        else {
+            return result;
+        }
+    }
 }
 
 void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId) {
@@ -245,7 +336,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     
     for (int depth = 1; depth <= search_depth; depth++)
     {
-        result = this->absearch(depth, -VALUE_INFINITE, VALUE_INFINITE, 0, ss, td);
+        result = aspiration_search(depth, result, ss, td);
         if (threadId == 0)
         {
             if (exit_early(td->nodes, 0))
@@ -281,6 +372,7 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
         }
     }
     this->tds[0].board = board;
+    this->tds[0].id = 0;
     this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, 0);
     for (int i = 1; i < workers; i++) {
         ThreadData td;
