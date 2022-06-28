@@ -8,7 +8,8 @@ void ThreadManager::begin(Board board, int workers, int depth, uint64_t nodes, T
 		stop();
 	}
 	stopped = false;
-	threads = std::thread(&Search::start_thinking, searcher_class, board, workers, depth, nodes, time);
+	// threads = std::thread(&Search::start_thinking, searcher_class, board, workers, depth, nodes, time);
+	searcher_class.start_thinking(board, workers, depth, nodes, time);
 }
 void ThreadManager::stop() {
 	stopped = true;

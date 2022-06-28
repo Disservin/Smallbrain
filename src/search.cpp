@@ -1,5 +1,346 @@
 #include "search.h"
 
-void Search::start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time) {
+int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadData *td) {
+    if (exit_early(td->nodes, td->id)) return 0;
+    if (ply > MAX_PLY - 1) return evaluation(td->board);
 
+    int best = -VALUE_INFINITE;
+    td->pv_length[ply] = ply;
+    // int oldAlpha = alpha;
+    bool RootNode = ply == 0;
+    Color color = td->board.sideToMove;
+    Board board = td->board;
+
+    if (ply >= 1 && board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
+    if (!RootNode){
+        if (board.halfMoveClock >= 100) return 0;
+        int all = popcount(board.All());
+        if (all == 2) return 0;
+        if (all == 3 && (board.Bitboards[WhiteKnight] || board.Bitboards[BlackKnight])) return 0;
+        if (all == 3 && (board.Bitboards[WhiteBishop] || board.Bitboards[BlackBishop])) return 0;
+
+        alpha = std::max(alpha, -VALUE_MATE + ply);
+        beta = std::min(beta, VALUE_MATE - ply - 1);
+        if (alpha >= beta) return alpha;
+    }
+
+    bool inCheck = td->board.isSquareAttacked(~color, board.KingSQ(color));
+    bool PvNode = beta - alpha > 1;
+
+    // Check extension
+    if (inCheck) depth++;
+
+    // Enter qsearch
+    if (depth <= 0) return evaluation(td->board);//qsearch(15, alpha, beta, ply);
+
+    // Selective depth (heighest depth we have ever reached)
+    if (ply > td->seldepth) td->seldepth = ply;
+
+    int staticEval;
+
+
+    // Look up in the TT
+    TEntry tte;
+    bool ttHit = false;
+    bool ttMove = false;
+    // probe_tt(tte, ttHit, td->board.hashKey, depth);
+
+    if (ttHit && !RootNode && !PvNode)
+    {
+        if (tte.flag == EXACT) return tte.score;
+        else if (tte.flag == LOWERBOUND) {
+            alpha = std::max(alpha, tte.score);
+        }
+        else if (tte.flag == UPPERBOUND) {
+            beta = std::min(beta, tte.score);
+        }
+        if (alpha >= beta) return tte.score;
+        ttMove = true;
+    }
+
+    ss->eval = staticEval = ttMove ? tte.score : evaluation(board);
+                                                   
+    // improving boolean, similar to stockfish
+    bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
+
+    // Razoring
+    // if (!PvNode
+    //     && depth < 2
+    //     && staticEval + 640 < alpha
+    //     && !inCheck)
+    //     return qsearch(15, alpha, beta, ply);
+
+    // Reverse futility pruning
+    if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
+        if (depth < 7 && staticEval - 150 * depth + 100 * improving >= beta) return beta;
+    }
+
+    // Null move pruning
+    if (board.nonPawnMat(color) 
+        && (ss-1)->currentmove != nullmove
+        && depth >= 3 && !inCheck
+        && staticEval >= beta) 
+    {
+        int r = 3 + depth / 5;
+        board.makeNullMove();
+        (ss)->currentmove = nullmove;
+        int score = -absearch(depth - r, -beta, -beta + 1, ply + 1, ss+1, td);
+        board.unmakeNullMove();
+        if (score >= beta) return beta;
+    }
+
+    Movelist ml = board.legalmoves();
+
+    // if the move list is empty, we are in checkmate or stalemate
+    if (ml.size == 0) {
+        return inCheck ? -VALUE_MATE + ply : 0;
+    }
+
+    // assign a value to each move
+    // for (int i = 0; i < ml.size; i++) {
+    //     ml.list[i].value = score_move(ml.list[i], ply, ttMove);
+    // }
+
+    if (RootNode && td->id == 0) rootSize = ml.size;
+
+    // sort the moves
+    // sortMoves(ml, 0);
+
+    Move bestMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
+    Movelist quietMoves;
+    uint16_t madeMoves = 0;
+    int score = 0;
+    bool doFullSearch = false;
+
+    for (int i = 0; i < ml.size; i++) {
+        Move move = ml.list[i];
+        bool capture = board.pieceAtB(move.to()) != None;
+
+        if (!capture) quietMoves.Add(move);
+
+        // Pruning
+        if (!RootNode
+            && best > -VALUE_INFINITE) {
+            // late move pruning/movecount pruning
+            if (!capture 
+                && !inCheck
+                && !PvNode
+                && !move.promoted()
+                && depth <= 4
+                && quietMoves.size > (4 + depth * depth)) {
+                continue;
+            }
+
+            // See pruning
+            // if (depth < 6 
+            //     && !see(move, -(depth * 100)))
+            //     continue;
+        }
+
+        td->nodes++;
+        madeMoves++;
+
+        if (td->id == 0 && RootNode && elapsed() > 10000 && !stopped) {
+            std::cout << "info depth " << depth - inCheck << " currmove " << board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+        }
+
+        board.makeMove(move);
+
+	    // U64 nodeCount = td->nodes;
+        ss->currentmove = move.get();
+        // bool givesCheck = board.isSquareAttacked(color, board.KingSQ(~color));
+
+        // late move reduction
+        if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
+            int rdepth = reductions[madeMoves][depth];
+            rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
+
+            // Decrease reduction for pvnodes
+            if (PvNode)
+                rdepth++;
+
+            // Increase reduction for quiet moves
+            if (madeMoves > 15 && !capture)
+                rdepth--;
+
+            score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, ss+1, td);
+            doFullSearch = score > alpha;
+        }
+        else
+            doFullSearch = !PvNode || madeMoves > 1;
+
+        // do a full research if lmr failed or lmr was skipped
+        if (doFullSearch) {
+            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, ss+1, td);
+        }
+
+        // PVS search
+        if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
+            score = -absearch(depth - 1, -beta, -alpha, ply + 1, ss+1, td);
+        }
+
+        board.unmakeMove(move);
+	    // spentEffort[move.from()][move.to()] += nodes - nodeCount;
+
+        if (score > best) {
+            best = score;
+            bestMove = move;
+
+            // update the PV
+            td->pv_table[ply][ply] = move;
+            for (int next_ply = ply + 1; next_ply < td->pv_length[ply + 1]; next_ply++) {
+                td->pv_table[ply][next_ply] = td->pv_table[ply + 1][next_ply];
+            }
+            td->pv_length[ply] = td->pv_length[ply + 1];
+
+            if (score > alpha) {
+                alpha = score;
+
+                if (score >= beta) {
+                    // update Killer Moves
+                    // if (!capture) {
+                    //     killerMoves[1][ply] = killerMoves[0][ply];
+                    //     killerMoves[0][ply] = move;
+                    // }
+                    break;
+                }
+            }
+        }
+        // sortMoves(ml, i + 1);
+    }
+    // if (best >= beta && board.pieceAtB(bestMove.to()) == None)
+    //     UpdateHH(bestMove, depth, quietMoves);
+
+    // Store position in TT
+    // if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, board.hashKey, td->startAge, bestMove.get());
+    return best;
+}
+
+void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId) {
+    // Limits
+    int64_t startTime = 0;
+    if (threadId == 0)
+    {
+        t0 = TimePoint::now();
+        searchTime = startTime = time.optimum;
+        maxTime = time.maximum;
+        maxNodes = maxN;
+    }
+    ThreadData* td = &this->tds[threadId];
+    td->nodes = 0;
+    td->seldepth = 0;
+    td->startAge = td->board.fullMoveNumber;
+
+    Move reducedTimeMove;
+    Move previousBestmove;
+    // bool adjustedTime;
+
+    int result = -VALUE_INFINITE;
+
+    Stack stack[MAX_PLY+4], *ss = stack+2;
+    std::memset(ss-2, 0, 4 * sizeof(Stack));
+
+    for (int i = -2; i <= MAX_PLY + 1; ++i)
+        (ss+i)->ply = i;
+    
+    for (int depth = 1; depth <= search_depth; depth++)
+    {
+        result = this->absearch(depth, -VALUE_INFINITE, VALUE_INFINITE, 0, ss, td);
+        if (threadId == 0)
+        {
+            if (exit_early(td->nodes, 0))
+            {
+                if (depth == 1)
+                    std::cout << "bestmove " << td->board.printMove(td->pv_table[0][0]) << std::endl;
+                else std::cout << "bestmove " << td->board.printMove(previousBestmove) << std::endl;
+                stopped = true;
+                return;
+            }
+            previousBestmove = td->pv_table[0][0];
+            auto ms = elapsed();
+            uci_output(result, depth, td->seldepth, td->nodes, ms, get_pv());
+        }
+    }
+    if (threadId == 0)
+    {
+        std::cout << "bestmove " << td->board.printMove(previousBestmove) << std::endl;
+        stopped = true;
+        return;
+    }
+}
+
+void Search::start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time) {
+    threads.clear();
+    // If we dont have previosu data create default data
+    if (tds.size() == 0) {
+        for (int i = 0; i < workers; i++) {
+            ThreadData td;
+            td.board = board;
+            td.id = i;
+            this->tds.push_back(td);
+        }
+    }
+    this->tds[0].board = board;
+    this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, 0);
+    for (int i = 1; i < workers; i++) {
+        ThreadData td;
+        td.board = board;
+        td.id = i;
+        this->tds[i] = td;
+        this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, i);
+    }
+}
+
+long long Search::elapsed(){
+    auto t1 = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+}
+
+bool Search::exit_early(uint64_t nodes, int ThreadId) {
+    if (stopped) return true;
+    if (ThreadId != 0) return false;
+    if (maxNodes != 0 && nodes >= maxNodes) {
+        stopped = true;
+        return true;
+    }
+    if (nodes & 2047 && searchTime != 0) {
+        auto ms = elapsed();
+        if (ms >= searchTime || ms >= maxTime) {
+            stopped = true;
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string Search::get_pv() {
+    std::string line = "";
+    for (int i = 0; i < tds[0].pv_length[0]; i++) {
+        line += " ";
+        tds[0].pv[i] = tds[0].pv_table[0][i];
+        line += tds[0].board.printMove(tds[0].pv_table[0][i]);
+    }
+    return line;
+}
+
+std::string output_score(int score) {
+    if (score >= VALUE_MATE_IN_PLY) {
+        return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
+    }
+    else if (score <= VALUE_MATED_IN_PLY) {
+        return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+    }
+    else {
+        return "cp " + std::to_string(score);
+    }
+}
+
+void uci_output(int score, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv) {
+    std::cout       << "info depth " << signed(depth)
+    << " seldepth " << signed(seldepth)
+    << " score "    << output_score(score)
+    << " nodes "    << nodes 
+    << " nps "      << signed((nodes / (time + 1)) * 1000) 
+    << " time "     << time
+    << " pv"        << pv << std::endl;
 }

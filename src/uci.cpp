@@ -42,7 +42,8 @@ int main(int argc, char** argv) {
 
     // load position
     board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    
+    searcher_class.threads.clear();
+    searcher_class.tds.clear();
     while (true) {
         // ./smallbrain bench
         if (argc > 1) {
@@ -76,7 +77,11 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (input == "stop") {
-            thread.stop();
+            stopped = true;
+            for (std::thread& th: searcher_class.threads) {
+                if (th.joinable())
+		            th.join();
+            }
         }
         if (input.find("setoption name") != std::string::npos)
         {
@@ -123,11 +128,15 @@ int main(int argc, char** argv) {
         if (input.find("go") != std::string::npos) 
         {
             thread.stop();
-
-            std::string limit = tokens[1];
+            
             int depth = MAX_PLY;
             int nodes = 0;
             Time time = t;
+            std::string limit;
+            if (tokens.size() == 1) 
+                limit = "";
+            else 
+                limit = tokens[1];
             if (limit == "depth") {
                 depth = std::stoi(tokens[2]);
             }
@@ -177,7 +186,7 @@ int main(int argc, char** argv) {
                 std::cout << "Error: Invalid limit" << std::endl; // Silent Error
                 return 0;
             }
-            thread.begin(board, 1, depth, nodes, time);
+            thread.begin(board, 2, depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {
