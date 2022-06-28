@@ -87,11 +87,10 @@ public:
     std::string get_pv();
     long long elapsed();
     bool exit_early(uint64_t nodes, int ThreadId);
+    uint64_t get_nodes();
 
     void sortMoves(Movelist& moves);
     void sortMoves(Movelist& moves, int sorted);
-
-    
 };
 
 std::string output_score(int score);

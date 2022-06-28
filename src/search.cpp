@@ -349,7 +349,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
             }
             previousBestmove = td->pv_table[0][0];
             auto ms = elapsed();
-            uci_output(result, depth, td->seldepth, td->nodes, ms, get_pv());
+            uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
         }
     }
     if (threadId == 0)
@@ -504,6 +504,14 @@ bool Search::exit_early(uint64_t nodes, int ThreadId) {
         }
     }
     return false;
+}
+
+uint64_t Search::get_nodes() {
+    uint64_t nodes = 0;
+    for (size_t i = 0; i < tds.size(); i++) {
+        nodes += tds[i].nodes;
+    }
+    return nodes;
 }
 
 void Search::sortMoves(Movelist& moves){

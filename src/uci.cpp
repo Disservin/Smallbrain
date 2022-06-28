@@ -25,6 +25,7 @@ NNUE nnue = NNUE();
 
 int main(int argc, char** argv) {
     stopped = false;
+    int workers = 1;
     signal(SIGINT, signal_callback_handler);
     TEntry* oldbuffer;
 
@@ -61,7 +62,7 @@ int main(int argc, char** argv) {
             std::cout << "id name Smallbrain Version 4.0\n" <<
                          "id author Disservin\n" <<
                          "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
-                         "option name Threads type spin default 1 min 1 max 1\n" << //Threads
+                         "option name Threads type spin default 1 min 1 max 12\n" << //Threads
                          "option name EvalFile type string default default.net\n" << //NN file
                          "uciok" << std::endl;
         }
@@ -108,6 +109,10 @@ int main(int argc, char** argv) {
             {
                 std::cout << "Loading eval file: " << value << std::endl;            
                 nnue.init(value.c_str());    
+            }
+            else if (option == "Threads")
+            {
+                workers = std::stoi(value); 
             }
         }
         if (input.find("position") != std::string::npos) {
@@ -191,7 +196,7 @@ int main(int argc, char** argv) {
                 std::cout << "Error: Invalid limit" << std::endl; // Silent Error
                 return 0;
             }
-            thread.begin(board, 1, depth, nodes, time);
+            thread.begin(board, workers, depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {
