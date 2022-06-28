@@ -25,6 +25,8 @@ NNUE nnue = NNUE();
 
 int main(int argc, char** argv) {
     stopped = false;
+    int defaultThreads = 2;
+
     signal(SIGINT, signal_callback_handler);
     TEntry* oldbuffer;
 
@@ -175,7 +177,8 @@ int main(int argc, char** argv) {
                 std::cout << "Error: Invalid limit" << std::endl; // Silent Error
                 return 0;
             }
-            thread.begin(depth, nodes, time);
+            start_thinking(searcher_class, defaultThreads, depth, nodes, time);
+            // thread.begin(depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {

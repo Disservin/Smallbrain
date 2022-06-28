@@ -136,3 +136,25 @@ bool get_square_color(Square square) {
         return true;
     }
 }
+
+std::string output_score(int score) {
+    if (score >= VALUE_MATE_IN_PLY) {
+        return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
+    }
+    else if (score <= VALUE_MATED_IN_PLY) {
+        return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+    }
+    else {
+        return "cp " + std::to_string(score);
+    }
+}
+
+void uci_output(int score, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv) {
+    std::cout       << "info depth " << signed(depth)
+    << " seldepth " << signed(seldepth)
+    << " score "    << output_score(score)
+    << " nodes "    << nodes 
+    << " nps "      << signed((nodes / (time + 1)) * 1000) 
+    << " time "     << time
+    << " pv"        << pv << std::endl;
+}

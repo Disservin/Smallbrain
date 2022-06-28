@@ -2,6 +2,9 @@
 #include <atomic>
 #include <chrono>
 #include <algorithm>
+#include <cstring>
+#include <thread>
+#include <vector>
 
 #include "board.h"
 #include "tt.h"
@@ -27,6 +30,8 @@ static constexpr int mvvlva[7][7] = { {0, 0, 0, 0, 0, 0, 0},
 
 class Search {
 public:
+    // Thread
+    int thread_id;
     // limits
     uint64_t maxNodes{};
     int64_t searchTime{};
@@ -93,5 +98,4 @@ public:
     void sortMoves(Movelist& moves, int sorted);
 };
 
-std::string output_score(int score);
-void uci_output(int score, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv);
+void start_thinking(Search search, int workers, int depth, uint64_t nodes, Time time);
