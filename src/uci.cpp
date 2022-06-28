@@ -72,6 +72,7 @@ int main(int argc, char** argv) {
         }
         if (input == "quit") {
             thread.stop();
+            free(TTable);
             return 0;
         }
         if (input == "stop") {
