@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
                 std::cout << "Error: Invalid limit" << std::endl; // Silent Error
                 return 0;
             }
-            thread.begin(board, 2, depth, nodes, time);
+            thread.begin(board, 1, depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {

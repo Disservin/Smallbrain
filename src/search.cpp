@@ -25,12 +25,12 @@ int Search::qsearch(int depth, int alpha, int beta, int ply, ThreadData *td) {
     Movelist ml = td->board.capturemoves();
 
     // assign a value to each move
-    // for (int i = 0; i < ml.size; i++) {
-    //     ml.list[i].value = score_qmove(ml.list[i]);
-    // }
+    for (int i = 0; i < ml.size; i++) {
+        ml.list[i].value = score_qmove(ml.list[i], td->board);
+    }
 
     // sort the moves
-    // sortMoves(ml);
+    sortMoves(ml);
 
     // search the moves
     for (int i = 0; i < (int)ml.size; i++) {
@@ -39,7 +39,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply, ThreadData *td) {
         Piece captured = td->board.pieceAtB(move.to());
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
         if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted() && td->board.nonPawnMat(color)) continue;
-        // if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, -100)) continue;
+        if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, -100, td->board)) continue;
 
         td->nodes++;
         td->board.makeMove(move);
@@ -63,7 +63,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
 
     int best = -VALUE_INFINITE;
     td->pv_length[ply] = ply;
-    // int oldAlpha = alpha;
+    int oldAlpha = alpha;
     bool RootNode = ply == 0;
     Color color = td->board.sideToMove;
 
@@ -99,7 +99,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     TEntry tte;
     bool ttHit = false;
     bool ttMove = false;
-    // probe_tt(tte, ttHit, td->board.hashKey, depth);
+    probe_tt(tte, ttHit, td->board.hashKey, depth);
 
     if (ttHit && !RootNode && !PvNode)
     {
@@ -153,14 +153,14 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     }
 
     // assign a value to each move
-    // for (int i = 0; i < ml.size; i++) {
-    //     ml.list[i].value = score_move(ml.list[i], ply, ttMove);
-    // }
+    for (int i = 0; i < ml.size; i++) {
+        ml.list[i].value = score_move(ml.list[i], ply, ttMove, td);
+    }
 
     if (RootNode && td->id == 0) rootSize = ml.size;
 
     // sort the moves
-    // sortMoves(ml, 0);
+    sortMoves(ml, 0);
 
     Move bestMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
     Movelist quietMoves;
@@ -188,9 +188,9 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
             }
 
             // See pruning
-            // if (depth < 6 
-            //     && !see(move, -(depth * 100)))
-            //     continue;
+            if (depth < 6 
+                && !see(move, -(depth * 100), td->board))
+                continue;
         }
 
         td->nodes++;
@@ -254,21 +254,21 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
 
                 if (score >= beta) {
                     // update Killer Moves
-                    // if (!capture) {
-                    //     killerMoves[1][ply] = killerMoves[0][ply];
-                    //     killerMoves[0][ply] = move;
-                    // }
+                    if (!capture) {
+                        td->killerMoves[1][ply] = td->killerMoves[0][ply];
+                        td->killerMoves[0][ply] = move;
+                    }
                     break;
                 }
             }
         }
-        // sortMoves(ml, i + 1);
+        sortMoves(ml, i + 1);
     }
     if (best >= beta && td->board.pieceAtB(bestMove.to()) == None)
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    // if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, td->startAge, bestMove.get());
+    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, td->startAge, bestMove.get());
     return best;
 }
 
@@ -383,6 +383,107 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
     }
 }
 
+// Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss)
+bool Search::see(Move& move, int threshold, Board& board) {
+    Square from = move.from();
+    Square to = move.to();
+    PieceType attacker = board.piece_type(board.pieceAtB(from));
+    PieceType victim = board.piece_type(board.pieceAtB(to));
+    int swap = piece_values[MG][victim] - threshold;
+    if (swap < 0)
+        return false;
+    swap -= piece_values[MG][attacker];
+    if (swap >= 0)
+        return true;
+    U64 occ = (board.All() ^ (1ULL << from)) | (1ULL << to);
+    U64 attackers = board.allAttackers(to, occ) & occ;
+
+    U64 bishops = board.Bishops(board.sideToMove) | board.Queens(board.sideToMove) 
+                  | board.Bishops(~board.sideToMove) | board.Queens(~board.sideToMove);
+    U64 rooks = board.Rooks(board.sideToMove) | board.Queens(board.sideToMove) 
+                | board.Rooks(~board.sideToMove) | board.Queens(~board.sideToMove);;
+    Color sT = ~Color((board.pieceAtB(from) / 6));
+    
+    while (true) {
+        attackers &= occ;
+        U64 myAttackers = attackers & board.Us(sT);
+        if (!myAttackers) break;
+        
+        int pt;
+        for (pt = 0; pt <= 5; pt++) {
+            if (myAttackers & (board.Bitboards[pt] | board.Bitboards[pt+6])) break;
+        }
+        sT = ~sT;
+        if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0) {
+            if (pt == KING && (attackers & board.Us(sT))) sT = ~sT;
+            break;
+        }
+
+        occ ^= (1ULL << (bsf(myAttackers & (board.Bitboards[pt] | board.Bitboards[pt+6]))));
+
+        if (pt == PAWN || pt == BISHOP || pt == QUEEN)
+            attackers |= board.BishopAttacks(to, occ) & bishops;
+        if (pt == ROOK || pt == QUEEN)
+            attackers |= board.RookAttacks(to, occ) & rooks;
+    }
+    return sT != Color((board.pieceAtB(from) / 6));
+}
+
+int Search::mmlva(Move& move, Board& board) {
+    int attacker = board.piece_type(board.pieceAtB(move.from())) + 1;
+    int victim = board.piece_type(board.pieceAtB(move.to())) + 1;
+    return mvvlva[victim][attacker];
+}
+
+int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
+    if (ttMove && move.get() == TTable[td->board.hashKey % TT_SIZE].move) {
+        return 2147483647 - 1;
+    }
+    else if (move.promoted()) {
+        return 2147483647 - 20 + move.piece();
+    }
+    else if (td->board.pieceAtB(move.to()) != None) {
+        return see(move, -100, td->board) ? mmlva(move, td->board) * 10000 : mmlva(move, td->board);
+    }
+    else if (move == td->pv_table[0][ply]) {
+        return 1'000'000;
+    }
+    else if (td->killerMoves[0][ply] == move) {
+        return killerscore1;
+    }
+    else if (td->killerMoves[1][ply] == move) {
+        return killerscore2;
+    }
+    else if (td->history_table[td->board.sideToMove][move.from()][move.to()]) {
+        return td->history_table[td->board.sideToMove][move.from()][move.to()];
+    }
+    else {
+        return 0;
+    }
+}
+
+int Search::score_qmove(Move& move, Board& board) {
+    if (move.promoted()) {
+        return 2147483647 - 20 + move.piece();
+    }
+    else if (board.pieceAtB(move.to()) != None) {
+        return see(move, -100, board) ? mmlva(move, board) * 10000 : mmlva(move, board);
+    }
+    else {
+        return 0;
+    }
+}
+
+std::string Search::get_pv() {
+    std::string line = "";
+    for (int i = 0; i < tds[0].pv_length[0]; i++) {
+        line += " ";
+        tds[0].pv[i] = tds[0].pv_table[0][i];
+        line += tds[0].board.printMove(tds[0].pv_table[0][i]);
+    }
+    return line;
+}
+
 long long Search::elapsed(){
     auto t1 = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
@@ -405,14 +506,25 @@ bool Search::exit_early(uint64_t nodes, int ThreadId) {
     return false;
 }
 
-std::string Search::get_pv() {
-    std::string line = "";
-    for (int i = 0; i < tds[0].pv_length[0]; i++) {
-        line += " ";
-        tds[0].pv[i] = tds[0].pv_table[0][i];
-        line += tds[0].board.printMove(tds[0].pv_table[0][i]);
+void Search::sortMoves(Movelist& moves){
+    int i = moves.size;
+    for (int cmove = 1; cmove < moves.size; cmove++){
+        Move temp = moves.list[cmove];
+        for (i=cmove-1; i>=0 && (moves.list[i].value < temp.value ); i--){
+            moves.list[i+1] = moves.list[i];
+        }
+        moves.list[i+1] = temp;
     }
-    return line;
+}
+
+void Search::sortMoves(Movelist& moves, int sorted){
+    int index = 0 + sorted;
+    for (int i = 1 + sorted; i < moves.size; i++) {
+        if (moves.list[i].value > moves.list[index].value) {
+            index = i;
+        }
+    }
+    std::swap(moves.list[index], moves.list[0 + sorted]);
 }
 
 std::string output_score(int score) {

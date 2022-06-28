@@ -76,20 +76,20 @@ public:
     void start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
 
     // capture functions
-    // bool see(Move& move, int threshold, ThreadData *td);
-    // int mmlva(Move& move, ThreadData *td);
+    bool see(Move& move, int threshold, Board& board);
+    int mmlva(Move& move, Board& board);
 
     // scoring functions
-    // int score_move(Move& move, int ply, bool ttMove, ThreadData *td);
-    // int score_qmove(Move& move, ThreadData *td);
+    int score_move(Move& move, int ply, bool ttMove, ThreadData *td);
+    int score_qmove(Move& move, Board& board);
     
     // utility functions
     std::string get_pv();
     long long elapsed();
     bool exit_early(uint64_t nodes, int ThreadId);
 
-    // void sortMoves(Movelist& moves);
-    // void sortMoves(Movelist& moves, int sorted);
+    void sortMoves(Movelist& moves);
+    void sortMoves(Movelist& moves, int sorted);
 
     
 };
