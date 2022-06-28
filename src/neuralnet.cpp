@@ -6,10 +6,13 @@
 
 INCBIN(Eval, EVALFILE);
 
+uint8_t inputValues[INPUT_WEIGHTS];
+int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
+int16_t hiddenBias[HIDDEN_BIAS];
+int16_t hiddenWeights[HIDDEN_WEIGHTS];
+int32_t outputBias[OUTPUT_BIAS];
+
 void NNUE::init(const char* filename) {
-    for (int i = 0; i < HIDDEN_BIAS; i++) {
-        accumulator.push_back(0);
-    }
     FILE* f = fopen(filename, "rb");
     if (f != NULL) {    
         fread(inputWeights  , sizeof(int16_t), INPUT_WEIGHTS * HIDDEN_WEIGHTS, f);
@@ -48,17 +51,17 @@ void NNUE::init(const char* filename) {
 //     }
 // }
 
-void NNUE::activate(int inputNum) {
-    for (int i = 0; i < HIDDEN_BIAS; i++) {
-        accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
-    }
-}
+// void NNUE::activate(int inputNum) {
+//     for (int i = 0; i < HIDDEN_BIAS; i++) {
+//         accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
+//     }
+// }
 
-void NNUE::deactivate(int inputNum) {
-    for (int i = 0; i < HIDDEN_BIAS; i++) {
-        accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
-    }
-}
+// void NNUE::deactivate(int inputNum) {
+//     for (int i = 0; i < HIDDEN_BIAS; i++) {
+//         accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
+//     }
+// }
 
 int NNUE::relu(int x) {
     if (x < 0) {
@@ -67,7 +70,7 @@ int NNUE::relu(int x) {
     return x;
 }
 
-int32_t NNUE::output() {
+int32_t NNUE::output(int16_t accumulator[HIDDEN_BIAS]) {
     int32_t output = 0;
     for (int i = 0; i < HIDDEN_BIAS; i++) {
         output += relu(accumulator[i]) * hiddenWeights[i];

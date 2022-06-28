@@ -2,19 +2,42 @@
 #include <atomic>
 #include <chrono>
 #include <algorithm>
+#include <thread>
+#include <vector>
 
 #include "board.h"
 #include "tt.h"
 #include "timemanager.h"
+#include "evaluation.h"
 
 extern std::atomic<bool> stopped;
 extern TEntry* TTable;
 extern U64 TT_SIZE;
 
-struct Stack{
+struct Stack {
     uint16_t currentmove;
     uint16_t ply;
     int eval;
+};
+
+struct ThreadData {
+    Board board;
+
+    int id;
+    // move ordering
+    int history_table[2][MAX_SQ][MAX_SQ] {};
+    Move killerMoves[2][MAX_PLY + 1] {};
+
+    // pv collection
+    uint8_t pv_length[MAX_PLY] {};
+    Move pv_table[MAX_PLY][MAX_PLY] {};
+    Move pv[MAX_PLY] {};
+
+    // selective depth
+    uint8_t seldepth {};
+
+    // nodes searched
+    uint64_t nodes{};
 };
 
 static constexpr int mvvlva[7][7] = { {0, 0, 0, 0, 0, 0, 0},
@@ -27,66 +50,41 @@ static constexpr int mvvlva[7][7] = { {0, 0, 0, 0, 0, 0, 0},
 
 class Search {
 public:
-    // limits
+    // Mainthread limits
     uint64_t maxNodes{};
     int64_t searchTime{};
     int64_t maxTime{};
 
-    // nodes
-    uint64_t nodes{};
-    
-    // pv collection
-    uint8_t pv_length[MAX_PLY]{};
-    Move pv_table[MAX_PLY][MAX_PLY]{};
-    Move pv[MAX_PLY]{};
-
-    // current board
-    Board board{};
-
-    // bestmove
-    Move bestMove{};
-
-    //seldepth
-    uint8_t seldepth{};
-
-    // move ordering and time usage
-    int history_table[2][MAX_SQ][MAX_SQ]{};
-    Move killerMoves[2][MAX_PLY + 1]{};
     U64 spentEffort[MAX_SQ][MAX_SQ];
     int rootSize;
     TimePoint::time_point t0;
 
-    // constructor
-    Search(Board brd) {
-        board = brd;
-    }
-
-    // testing
-    U64 perft(int depth, int max);
-    void perf_Test(int depth, int max);
-    void testAllPos();
+    std::vector<ThreadData> tds;
+    std::vector<std::thread> threads;
     
     // move ordering
-    void UpdateHH(Move bestMove, int depth, Movelist quietMoves);
+    void UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData *td);
 
     // main search functions
-    int qsearch(int depth, int alpha, int beta, int ply);
-    int absearch(int depth, int alpha, int beta, int ply, Stack *ss);
-    int aspiration_search(int depth, int prev_eval, Stack *ss);
-    int iterative_deepening(int search_depth, uint64_t maxN, Time time);
-    
+    int qsearch(int depth, int alpha, int beta, int ply, ThreadData *td);
+    int absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadData *td);
+    int aspiration_search(int depth, int prev_eval, Stack *ss, ThreadData *td);
+    void iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId);
+    void start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
+
     // capture functions
-    bool see(Move& move, int threshold);
-    int mmlva(Move& move);
+    bool see(Move& move, int threshold, Board& board);
+    int mmlva(Move& move, Board& board);
 
     // scoring functions
-    int score_move(Move& move, int ply, bool ttMove);
-    int score_qmove(Move& move);
+    int score_move(Move& move, int ply, bool ttMove, ThreadData *td);
+    int score_qmove(Move& move, Board& board);
     
     // utility functions
     std::string get_pv();
     long long elapsed();
-    bool exit_early();
+    bool exit_early(uint64_t nodes, int ThreadId);
+    uint64_t get_nodes();
 
     void sortMoves(Movelist& moves);
     void sortMoves(Movelist& moves, int sorted);

@@ -150,7 +150,6 @@
     <ClCompile Include="helper.cpp" />
     <ClCompile Include="scores.cpp" />
     <ClCompile Include="search.cpp" />
-    <ClCompile Include="threadmanager.cpp" />
     <ClCompile Include="uci.cpp" />
     <ClCompile Include="zobrist.cpp" />
   </ItemGroup>
@@ -161,7 +160,6 @@
     <ClInclude Include="scores.h" />
     <ClInclude Include="search.h" />
     <ClInclude Include="sliders.hpp" />
-    <ClInclude Include="threadmanager.h" />
     <ClInclude Include="tt.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="uci.h" />
