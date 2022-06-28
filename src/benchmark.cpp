@@ -57,21 +57,21 @@ std::string benchmarkfens[50] = {
 
 int start_bench() {
     U64 totalNodes = 0;
+    Search searcher = Search();
     Board board = Board();
-    Search searcher = Search(board);
     Time t;
-    t.maximum = 0;
-    t.optimum = 0;
+    
     auto t1 = std::chrono::high_resolution_clock::now();
     for (int positions = 0; positions < 50; positions++) {
-        searcher.board.applyFen(benchmarkfens[positions]);
-        searcher.nodes = 0;
-
-        std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
-        
         stopped = false;
-        searcher.iterative_deepening(7, 0, t);
-        totalNodes += searcher.nodes;
+        std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
+        ThreadData td;
+        td.board = board;
+        td.board.applyFen(benchmarkfens[positions]);
+        searcher.tds.clear();
+        searcher.tds.push_back(td);
+        searcher.iterative_deepening(7, 0, t, 0);
+        totalNodes += searcher.tds[0].nodes;
     }
 
     auto t2 = std::chrono::high_resolution_clock::now();

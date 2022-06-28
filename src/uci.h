@@ -8,6 +8,7 @@
 
 #include "board.h"
 #include "search.h"
+#include "perft.h"
 
 int main(int argc, char** argv);
 
