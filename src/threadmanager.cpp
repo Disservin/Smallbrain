@@ -3,12 +3,12 @@
 #include "threadmanager.h"
 
 
-void ThreadManager::begin(int depth, uint64_t nodes, Time time) {
+void ThreadManager::begin(Board board, int workers, int depth, uint64_t nodes, Time time) {
 	if (is_searching()) {
 		stop();
 	}
 	stopped = false;
-	threads = std::thread(&Search::iterative_deepening, searcher_class, depth, nodes, time);
+	threads = std::thread(&Search::start_thinking, searcher_class, board, workers, depth, nodes, time);
 }
 void ThreadManager::stop() {
 	stopped = true;
