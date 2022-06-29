@@ -366,7 +366,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss) {
         UpdateHH(bestMove, depth, quietMoves);
 
     // Store position in TT
-    if (!exit_early()) store_entry(depth, best, oldAlpha, beta, board.hashKey, startAge, bestMove.get());
+    if (!exit_early()) store_entry(depth, best, oldAlpha, beta, board.hashKey, bestMove.get());
     return best;
 }
 
@@ -413,7 +413,6 @@ int Search::iterative_deepening(int search_depth, uint64_t maxN, Time time) {
     maxNodes = maxN;
 
     // TT starting age of this searches entries
-    startAge = board.fullMoveNumber;
 
     int result = 0;
     Move prev_bestmove{};
