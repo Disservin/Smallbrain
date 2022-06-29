@@ -33,9 +33,6 @@ struct ThreadData {
     Move pv_table[MAX_PLY][MAX_PLY] {};
     Move pv[MAX_PLY] {};
 
-    // tt startage
-    uint16_t startAge {};
-
     // selective depth
     uint8_t seldepth {};
 

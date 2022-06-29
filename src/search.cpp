@@ -268,7 +268,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, td->startAge, bestMove.get());
+    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove.get());
     return best;
 }
 
@@ -320,7 +320,6 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     ThreadData* td = &this->tds[threadId];
     td->nodes = 0;
     td->seldepth = 0;
-    td->startAge = td->board.fullMoveNumber;
 
     Move reducedTimeMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
     Move previousBestmove;
