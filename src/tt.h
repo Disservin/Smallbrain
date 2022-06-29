@@ -3,7 +3,7 @@
 
 struct TEntry {
 	U64 key;
-	int16_t score;
+	Score score;
 	uint16_t move;
 	uint8_t depth;
 	Flag flag;
@@ -13,7 +13,7 @@ extern TEntry* TTable;
 extern U64 TT_SIZE;
 
 void store_entry(int depth, Score bestvalue,
-                 int old_alpha, int beta, U64 key,
+                 Score old_alpha, Score beta, U64 key,
                  uint16_t move);
 
 void probe_tt(TEntry &tte, bool &ttHit, U64 key, int depth);
