@@ -17,6 +17,7 @@ void store_entry(int depth, int bestvalue,
         tte.age = startAge;
         tte.key = key;
         tte.move = move;
+        tte.flag = b;
         TTable[index] = tte;
     }
 }
