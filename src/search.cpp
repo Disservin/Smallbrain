@@ -101,7 +101,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     bool ttMove = false;
     probe_tt(tte, ttHit, td->board.hashKey, depth);
 
-    if (ttHit && !RootNode && !PvNode)
+    if (ttHit && !RootNode)
     {
         if (tte.flag == EXACT) return tte.score;
         else if (tte.flag == LOWERBOUND) {
