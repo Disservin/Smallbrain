@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     nnue.init("default.net");
 
     // Initialize reductions used in search
-    init_reductions();
+    init_reductions(threads);
 
     // load default position
     board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -114,6 +114,7 @@ int main(int argc, char** argv) {
             else if (option == "Threads")
             {
                 threads = std::stoi(value); 
+                init_reductions(threads);
             }
         }
         if (input.find("position") != std::string::npos) {

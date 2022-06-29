@@ -7,4 +7,4 @@ extern int killerscore2;
 
 extern int reductions[256][120];
 
-void init_reductions();
+void init_reductions(int threads);
