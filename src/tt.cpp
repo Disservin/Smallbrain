@@ -1,30 +1,24 @@
 #include "tt.h"
 
-bool store_entry(int depth, int bestvalue,
+void store_entry(int depth, int bestvalue,
                  int old_alpha, int beta, U64 key,
-                 uint16_t startAge, uint16_t move) {
-    U64 index = key % TT_SIZE;                
+                 uint16_t startAge, uint16_t move) 
+{
+    U64  index = key % TT_SIZE;                
     TEntry tte = TTable[index];
+
+    Flag b = bestvalue <= old_alpha ? UPPERBOUND : bestvalue >= beta ? LOWERBOUND : EXACT;
+
     if (!(bestvalue >= 19000) && !(bestvalue <= -19000) &&
-        (tte.depth < depth || tte.age + 3 <= startAge)) {
-        tte.flag = EXACT;
-        // Upperbound
-        if (bestvalue <= old_alpha) {
-            tte.flag = UPPERBOUND;
-        }
-        // Lowerbound
-        else if (bestvalue >= beta) {
-            tte.flag = LOWERBOUND;
-        }
+        (tte.key != key || b == EXACT || depth - 7 + 1 > tte.depth - 4)) 
+    {
         tte.depth = depth;
         tte.score = bestvalue;
         tte.age = startAge;
         tte.key = key;
         tte.move = move;
         TTable[index] = tte;
-        return true;
     }
-    return false;
 }
 
 void probe_tt(TEntry &tte, bool &ttHit, U64 key, int depth)

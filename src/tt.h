@@ -13,7 +13,7 @@ struct TEntry {
 extern TEntry* TTable;
 extern U64 TT_SIZE;
 
-bool store_entry(int depth, int bestvalue,
+void store_entry(int depth, int bestvalue,
                  int old_alpha, int beta, U64 key,
                  uint16_t startAge, uint16_t move);
 
