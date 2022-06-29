@@ -25,7 +25,7 @@ void probe_tt(TEntry &tte, bool &ttHit, U64 key, int depth)
 {
     U64 index = key % TT_SIZE;
     tte = TTable[index];
-    if (tte.key == key && tte.depth >= depth) {
+    if (tte.key == key) {
         // use TT move
         ttHit = true;
     }

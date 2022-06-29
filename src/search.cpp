@@ -98,10 +98,11 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     // Look up in the TT
     TEntry tte;
     bool ttHit = false;
-    bool ttMove = false;
     probe_tt(tte, ttHit, td->board.hashKey, depth);
 
-    if (ttHit && !RootNode && !PvNode)
+    if (!RootNode && !PvNode 
+        && ttHit && tte.depth >= depth
+        && (ss-1)->currentmove != nullmove)
     {
         if (tte.flag == EXACT) return tte.score;
         else if (tte.flag == LOWERBOUND) {
@@ -111,10 +112,9 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
             beta = std::min(beta, tte.score);
         }
         if (alpha >= beta) return tte.score;
-        ttMove = true;
     }
 
-    ss->eval = staticEval = ttMove ? tte.score : evaluation(td->board);
+    ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
                                                    
     // improving boolean, similar to stockfish
     bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
@@ -154,7 +154,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = score_move(ml.list[i], ply, ttMove, td);
+        ml.list[i].value = score_move(ml.list[i], ply, ttHit, td);
     }
 
     if (RootNode && td->id == 0) rootSize = ml.size;
@@ -209,6 +209,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
             int rdepth = reductions[madeMoves][depth];
+            rdepth -= td->id % 2;
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
 
             // Decrease reduction for pvnodes
