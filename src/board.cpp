@@ -977,7 +977,8 @@ void Board::makeNullMove() {
     State store = State(enPassantSquare, castlingRights, halfMoveClock, None, hashKey);
     prevStates.Add(store);
     sideToMove = ~sideToMove;
-    hashKey = zobristHash();
+    hashKey ^= updateKeySideToMove();
+    if (enPassantSquare != NO_SQ) hashKey ^= updateKeyEnPassant(enPassantSquare);
     enPassantSquare = NO_SQ;
     fullMoveNumber++;
 }
@@ -990,5 +991,4 @@ void Board::unmakeNullMove() {
     hashKey = restore.h;
     fullMoveNumber--;
     sideToMove = ~sideToMove;
-
 }

@@ -9,10 +9,10 @@ void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData 
     }
 }
 
-int Search::qsearch(int depth, int alpha, int beta, int ply, ThreadData *td) {
+Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
-    int stand_pat = evaluation(td->board);
-    int bestValue = stand_pat;
+    Score stand_pat = evaluation(td->board);
+    Score bestValue = stand_pat;
     Color color = td->board.sideToMove;
     
     if (ply > MAX_PLY - 1) return stand_pat;
@@ -43,7 +43,7 @@ int Search::qsearch(int depth, int alpha, int beta, int ply, ThreadData *td) {
 
         td->nodes++;
         td->board.makeMove(move);
-        int score = -qsearch(depth - 1, -beta, -alpha, ply + 1, td);
+        Score score = -qsearch(depth - 1, -beta, -alpha, ply + 1, td);
         td->board.unmakeMove(move);
         if (score > bestValue) {
             bestValue = score;
@@ -57,26 +57,26 @@ int Search::qsearch(int depth, int alpha, int beta, int ply, ThreadData *td) {
     return bestValue;
 }
 
-int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadData *td) {
+Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
     if (ply > MAX_PLY - 1) return evaluation(td->board);
 
-    int best = -VALUE_INFINITE;
+    Score best = -VALUE_INFINITE;
     td->pv_length[ply] = ply;
-    int oldAlpha = alpha;
+    Score oldAlpha = alpha;
     bool RootNode = ply == 0;
     Color color = td->board.sideToMove;
 
     if (ply >= 1 && td->board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
-    if (!RootNode){
+    if (!RootNode) {
         if (td->board.halfMoveClock >= 100) return 0;
         int all = popcount(td->board.All());
         if (all == 2) return 0;
         if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight])) return 0;
         if (all == 3 && (td->board.Bitboards[WhiteBishop] || td->board.Bitboards[BlackBishop])) return 0;
 
-        alpha = std::max(alpha, -VALUE_MATE + ply);
-        beta = std::min(beta, VALUE_MATE - ply - 1);
+        alpha = std::max(alpha, (int16_t)(-VALUE_MATE + ply));
+        beta = std::min(beta, (int16_t)(VALUE_MATE - ply - 1));
         if (alpha >= beta) return alpha;
     }
 
@@ -92,8 +92,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     // Selective depth (heighest depth we have ever reached)
     if (ply > td->seldepth) td->seldepth = ply;
 
-    int staticEval;
-
+    Score staticEval;
 
     // Look up in the TT
     TEntry tte;
@@ -140,7 +139,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
         int r = 3 + depth / 5;
         td->board.makeNullMove();
         (ss)->currentmove = nullmove;
-        int score = -absearch(depth - r, -beta, -beta + 1, ply + 1, ss+1, td);
+        Score score = -absearch(depth - r, -beta, -beta + 1, ply + 1, ss+1, td);
         td->board.unmakeNullMove();
         if (score >= beta) return beta;
     }
@@ -165,7 +164,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     Move bestMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
     Movelist quietMoves;
     uint16_t madeMoves = 0;
-    int score = 0;
+    Score score = 0;
     bool doFullSearch = false;
 
     for (int i = 0; i < ml.size; i++) {
@@ -273,12 +272,12 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
     return best;
 }
 
-int Search::aspiration_search(int depth, int prev_eval, Stack *ss, ThreadData *td) {
-    int alpha = -VALUE_INFINITE;
-    int beta = VALUE_INFINITE;
+Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td) {
+    Score alpha = -VALUE_INFINITE;
+    Score beta = VALUE_INFINITE;
     int delta = 30;
 
-    int result = 0;
+    Score result = 0;
     int research = 0;
 
     if (depth == 1) {

@@ -66,9 +66,9 @@ public:
     void UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData *td);
 
     // main search functions
-    int qsearch(int depth, int alpha, int beta, int ply, ThreadData *td);
-    int absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadData *td);
-    int aspiration_search(int depth, int prev_eval, Stack *ss, ThreadData *td);
+    Score qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *td);
+    Score absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, ThreadData *td);
+    Score aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td);
     void iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId);
     void start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
 
