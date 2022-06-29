@@ -17,3 +17,5 @@ void signal_callback_handler(int signum);
 std::vector<std::string> split_input(std::string fen);
 
 Move convert_uci_to_Move(std::string input);
+
+void stop_threads();

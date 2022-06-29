@@ -202,7 +202,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
 
         td->board.makeMove(move);
 
-	    // U64 nodeCount = td->nodes;
+	    U64 nodeCount = td->nodes;
         ss->currentmove = move.get();
         // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
 
@@ -236,7 +236,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
         }
 
         td->board.unmakeMove(move);
-	    // spentEffort[move.from()][move.to()] += nodes - nodeCount;
+	    spentEffort[move.from()][move.to()] += td->nodes - nodeCount;
 
         if (score > best) {
             best = score;
@@ -290,6 +290,7 @@ int Search::aspiration_search(int depth, int prev_eval, Stack *ss, ThreadData *t
     }
 
     while (true) {
+        if (stopped) return 0;
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
         result = absearch(depth, alpha, beta, 0, ss, td);

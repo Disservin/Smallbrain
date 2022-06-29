@@ -1,6 +1,5 @@
 #include "board.h"
 #include "search.h"
-#include "threadmanager.h"
 #include "scores.h"
 #include "uci.h"
 #include "tt.h"
@@ -14,23 +13,24 @@
 #include <fstream>
 
 std::atomic<bool> stopped;
-ThreadManager thread;
 
 U64 TT_SIZE = 524287;
-TEntry* TTable{};   //TEntry size is 18 bytes
+TEntry* TTable;   //TEntry size is 18 bytes
 
 Board board = Board();
 Search searcher_class = Search();
 NNUE nnue = NNUE();
 
+int threads = 1;
+
 int main(int argc, char** argv) {
     stopped = false;
-    int workers = 1;
     signal(SIGINT, signal_callback_handler);
-    TEntry* oldbuffer;
-
+    
     // Initialize TT
-    if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
+    TEntry* oldbuffer;
+    if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) 
+    {
         std::cout << "Error: Could not allocate memory for TT" << std::endl;
         exit(1);
     }
@@ -39,10 +39,13 @@ int main(int argc, char** argv) {
     // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled with.
     nnue.init("default.net");
 
+    // Initialize reductions used in search
     init_reductions();
 
-    // load position
+    // load default position
     board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+    // making sure threads and tds are really clear
     searcher_class.threads.clear();
     searcher_class.tds.clear();
     while (true) {
@@ -54,6 +57,8 @@ int main(int argc, char** argv) {
             }
         }
         Time t;
+
+        // catching inputs
         std::string input;
         std::getline(std::cin, input);
         std::vector<std::string> tokens = split_input(input);
@@ -61,8 +66,8 @@ int main(int argc, char** argv) {
         if (input == "uci") {
             std::cout << "id name Smallbrain Version 4.0\n" <<
                          "id author Disservin\n" <<
-                         "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
-                         "option name Threads type spin default 1 min 1 max 12\n" << //Threads
+                         "\noption name Hash type spin default 400 min 1 max 200000\n" << //Hash in mb
+                         "option name Threads type spin default 1 min 1 max 256\n" << //Threads
                          "option name EvalFile type string default default.net\n" << //NN file
                          "uciok" << std::endl;
         }
@@ -71,29 +76,19 @@ int main(int argc, char** argv) {
         }
         if (input == "ucinewgame") {
             board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            for (std::thread& th: searcher_class.threads) {
-                if (th.joinable())
-		            th.join();
-            }
-            searcher_class.threads.clear();
+            stopped = true;
+            stop_threads();
             searcher_class.tds.clear();
         }
         if (input == "quit") {
-            thread.stop();
             stopped = true;
-            for (std::thread& th: searcher_class.threads) {
-                if (th.joinable())
-		            th.join();
-            }
+            stop_threads();
             free(TTable);
             return 0;
         }
         if (input == "stop") {
             stopped = true;
-            for (std::thread& th: searcher_class.threads) {
-                if (th.joinable())
-		            th.join();
-            }
+            stop_threads();
         }
         if (input.find("setoption name") != std::string::npos)
         {
@@ -118,7 +113,7 @@ int main(int argc, char** argv) {
             }
             else if (option == "Threads")
             {
-                workers = std::stoi(value); 
+                threads = std::stoi(value); 
             }
         }
         if (input.find("position") != std::string::npos) {
@@ -143,8 +138,9 @@ int main(int argc, char** argv) {
         }
         if (input.find("go") != std::string::npos) 
         {
-            thread.stop();
-            
+            stopped = true;
+            stop_threads();
+
             int depth = MAX_PLY;
             int nodes = 0;
             Time time = t;
@@ -202,7 +198,9 @@ int main(int argc, char** argv) {
                 std::cout << "Error: Invalid limit" << std::endl; // Silent Error
                 return 0;
             }
-            thread.begin(board, workers, depth, nodes, time);
+            stopped = false;
+            // start search
+            searcher_class.start_thinking(board, threads, depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {
@@ -242,7 +240,8 @@ int main(int argc, char** argv) {
 }
 
 void signal_callback_handler(int signum) {
-    thread.stop();
+    stopped = true;
+    stop_threads();
     free(TTable);
     exit(signum);
 }
@@ -301,4 +300,13 @@ Move convert_uci_to_Move(std::string input) {
         std::cout << "FALSE INPUT" << std::endl;
         return Move(NONETYPE, NO_SQ, NO_SQ, false);
     }
+}
+
+void stop_threads()
+{
+    for (std::thread& th: searcher_class.threads) {
+        if (th.joinable())
+            th.join();
+    }
+    searcher_class.threads.clear();    
 }
