@@ -9,8 +9,7 @@ void store_entry(int depth, int bestvalue,
 
     Flag b = bestvalue <= old_alpha ? UPPERBOUND : bestvalue >= beta ? LOWERBOUND : EXACT;
 
-    if (bestvalue < 19000 && bestvalue > -19000
-        && (tte.key != key || b == EXACT || depth > (tte.depth * 2) / 3)) 
+    if (bestvalue < 19000 && bestvalue > -19000) 
     {
         tte.depth = depth;
         tte.score = bestvalue;
