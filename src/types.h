@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unordered_map>
 #define U64 unsigned long long
+#define Score int16_t
 #define TimePoint std::chrono::high_resolution_clock
 #define MAX_SQ 64
 
@@ -44,7 +45,7 @@ enum Square : uint8_t {
     NO_SQ
 };
 
-enum Value : int {
+enum Value : int16_t {
     VALUE_MATE = 32000,
     VALUE_INFINITE = 32001,
     VALUE_NONE = 32002,

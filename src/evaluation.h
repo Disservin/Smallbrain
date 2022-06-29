@@ -6,4 +6,4 @@
 
 extern NNUE nnue;
 
-int evaluation(Board& board);
+Score evaluation(Board& board);

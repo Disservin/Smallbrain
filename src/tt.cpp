@@ -1,6 +1,6 @@
 #include "tt.h"
 
-void store_entry(int depth, int bestvalue,
+void store_entry(int depth, Score bestvalue,
                  int old_alpha, int beta, U64 key,
                  uint16_t move) 
 {
