@@ -46,8 +46,7 @@ public:
     // bestmove
     Move bestMove{};
 
-    // startAge and seldepth
-    uint16_t startAge{};
+    //seldepth
     uint8_t seldepth{};
 
     // move ordering and time usage
