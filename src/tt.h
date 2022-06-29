@@ -7,10 +7,12 @@ struct TEntry {
 	uint16_t move;
 	uint8_t depth;
 	Flag flag;
+	uint8_t age;
 }__attribute__((packed));
 
 extern TEntry* TTable;
 extern U64 TT_SIZE;
+extern uint8_t ttAge;
 
 void store_entry(int depth, int bestvalue,
                  int old_alpha, int beta, U64 key,

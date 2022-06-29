@@ -10,13 +10,14 @@ void store_entry(int depth, int bestvalue,
     Flag b = bestvalue <= old_alpha ? UPPERBOUND : bestvalue >= beta ? LOWERBOUND : EXACT;
 
     if (bestvalue < 19000 && bestvalue > -19000
-        && (tte.key != key || b == EXACT || depth > (tte.depth * 2) / 3)) 
+        && (b == EXACT || tte.key != key || depth > tte.depth || tte.age + 1 < ttAge)) 
     {
         tte.depth = depth;
         tte.score = bestvalue;
         tte.key = key;
         tte.move = move;
         tte.flag = b;
+        tte.age = ttAge;
         TTable[index] = tte;
     }
 }
@@ -28,5 +29,6 @@ void probe_tt(TEntry &tte, bool &ttHit, U64 key, int depth)
     if (tte.key == key && tte.depth >= depth) {
         // use TT move
         ttHit = true;
+        tte.age = ttAge;
     }
 }

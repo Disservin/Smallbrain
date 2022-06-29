@@ -14,6 +14,7 @@
 
 std::atomic<bool> stopped;
 
+uint8_t ttAge = 0;
 U64 TT_SIZE = 524287;
 TEntry* TTable;   //TEntry size is 18 bytes
 
@@ -199,6 +200,8 @@ int main(int argc, char** argv) {
                 return 0;
             }
             stopped = false;
+            // increment age
+            ttAge++;
             // start search
             searcher_class.start_thinking(board, threads, depth, nodes, time);
         }
