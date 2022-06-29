@@ -7,6 +7,7 @@ struct TEntry {
 	uint16_t move;
 	uint8_t depth;
 	Flag flag;
+	uint8_t age;
 }__attribute__((packed));
 
 extern TEntry* TTable;
@@ -14,6 +15,6 @@ extern U64 TT_SIZE;
 
 void store_entry(int depth, int bestvalue,
                  int old_alpha, int beta, U64 key,
-                 uint16_t move);
+                 uint8_t age, uint16_t move);
 
 void probe_tt(TEntry &tte, bool &ttHit, U64 key, int depth);

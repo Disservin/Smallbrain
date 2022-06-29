@@ -269,7 +269,7 @@ int Search::absearch(int depth, int alpha, int beta, int ply, Stack *ss, ThreadD
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove.get());
+    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, td->board.halfMoveClock, bestMove.get());
     return best;
 }
 

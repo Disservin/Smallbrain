@@ -2,7 +2,7 @@
 
 void store_entry(int depth, int bestvalue,
                  int old_alpha, int beta, U64 key,
-                 uint16_t move) 
+                 uint8_t age, uint16_t move) 
 {
     U64  index = key % TT_SIZE;                
     TEntry tte = TTable[index];
@@ -10,9 +10,9 @@ void store_entry(int depth, int bestvalue,
     Flag b = bestvalue <= old_alpha ? UPPERBOUND : bestvalue >= beta ? LOWERBOUND : EXACT;
 
     if (bestvalue < 19000 && bestvalue > -19000
-        && (tte.key != key || b == EXACT || depth + 7 > tte.depth - 4) )
+        && (tte.key != key || b == EXACT || depth > tte.depth || tte.age + 3 < age) )
     {
-        tte.depth = depth + 7;
+        tte.depth = depth;
         tte.score = bestvalue;
         tte.key = key;
         tte.move = move;
