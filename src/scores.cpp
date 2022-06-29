@@ -14,7 +14,7 @@ int reductions[256][120];
 void init_reductions(int threads) {
     for (int moves = 1; moves < 257; moves++){
         for (int depth = 1; depth < MAX_PLY + 1; depth++) {
-            reductions[moves-1][depth-1] = 1 + log(moves * (1 + threads % 3))  * log(depth) / 1.75;
+            reductions[moves-1][depth-1] = 1 + log(moves * (std::max(threads % 3, 1)))  * log(depth) / 1.75;
         }
     }
 }
