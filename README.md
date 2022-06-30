@@ -46,5 +46,7 @@ I estimate version 4.0 to be above 3000 elo.
   * Razoring
   * Late-move reduction
   * See Algorithm
+  * Lazy SMP
+  * IID
 * Evaluation
   * NNUE 768 Input -> 256 hidden neurons -> 1 output

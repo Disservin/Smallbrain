@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
         std::vector<std::string> tokens = split_input(input);
         // UCI COMMANDS
         if (input == "uci") {
-            std::cout << "id name Smallbrain Version 4.0\n" <<
+            std::cout << "id name Smallbrain Version 4.1\n" <<
                          "id author Disservin\n" <<
                          "\noption name Hash type spin default 400 min 1 max 200000\n" << //Hash in mb
                          "option name Threads type spin default 1 min 1 max 256\n" << //Threads

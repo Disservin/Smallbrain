@@ -6,7 +6,7 @@ TARGET    := smallbrain
 
 # name and version
 NAME      := smallbrain
-MINOR     := 0
+MINOR     := 1
 MAJOR     := 4
 
 ifeq ($(OS), Windows_NT)
