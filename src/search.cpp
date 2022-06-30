@@ -144,6 +144,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
         if (score >= beta) return beta;
     }
 
+    if (depth >= 4 && !ttHit)
+        depth--;
+
     Movelist ml = td->board.legalmoves();
 
     // if the move list is empty, we are in checkmate or stalemate
@@ -280,11 +283,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
     Score result = 0;
     int research = 0;
 
-    if (depth == 1) {
-        result = absearch(depth, alpha, beta, 0, ss, td);
-        return result;
-    }
-    else if (depth >= 5) {
+    if (depth >= 5) {
         alpha = prev_eval - 50;
         beta = prev_eval + 50;
     }
