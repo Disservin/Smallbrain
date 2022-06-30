@@ -1,6 +1,5 @@
 #include "board.h"
 #include "search.h"
-#include "threadmanager.h"
 #include "scores.h"
 #include "uci.h"
 #include "tt.h"
@@ -14,22 +13,24 @@
 #include <fstream>
 
 std::atomic<bool> stopped;
-ThreadManager thread;
 
 U64 TT_SIZE = 524287;
-TEntry* TTable{};   //TEntry size is 18 bytes
+TEntry* TTable;   //TEntry size is 18 bytes
 
 Board board = Board();
-Search searcher_class = Search(board);
+Search searcher_class = Search();
 NNUE nnue = NNUE();
+
+int threads = 1;
 
 int main(int argc, char** argv) {
     stopped = false;
     signal(SIGINT, signal_callback_handler);
-    TEntry* oldbuffer;
-
+    
     // Initialize TT
-    if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) {
+    TEntry* oldbuffer;
+    if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) 
+    {
         std::cout << "Error: Could not allocate memory for TT" << std::endl;
         exit(1);
     }
@@ -38,11 +39,15 @@ int main(int argc, char** argv) {
     // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled with.
     nnue.init("default.net");
 
+    // Initialize reductions used in search
     init_reductions();
 
-    // load position
-    searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    
+    // load default position
+    board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+    // making sure threads and tds are really clear
+    searcher_class.threads.clear();
+    searcher_class.tds.clear();
     while (true) {
         // ./smallbrain bench
         if (argc > 1) {
@@ -52,6 +57,8 @@ int main(int argc, char** argv) {
             }
         }
         Time t;
+
+        // catching inputs
         std::string input;
         std::getline(std::cin, input);
         std::vector<std::string> tokens = split_input(input);
@@ -59,8 +66,8 @@ int main(int argc, char** argv) {
         if (input == "uci") {
             std::cout << "id name Smallbrain Version 4.0\n" <<
                          "id author Disservin\n" <<
-                         "\noption name Hash type spin default 400 min 1 max 100000\n" << //Hash in mb
-                         "option name Threads type spin default 1 min 1 max 1\n" << //Threads
+                         "\noption name Hash type spin default 400 min 1 max 200000\n" << //Hash in mb
+                         "option name Threads type spin default 1 min 1 max 256\n" << //Threads
                          "option name EvalFile type string default default.net\n" << //NN file
                          "uciok" << std::endl;
         }
@@ -68,15 +75,20 @@ int main(int argc, char** argv) {
             std::cout << "readyok" << std::endl;
         }
         if (input == "ucinewgame") {
-            searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            stopped = true;
+            stop_threads();
+            searcher_class.tds.clear();
         }
         if (input == "quit") {
-            thread.stop();
+            stopped = true;
+            stop_threads();
             free(TTable);
             return 0;
         }
         if (input == "stop") {
-            thread.stop();
+            stopped = true;
+            stop_threads();
         }
         if (input.find("setoption name") != std::string::npos)
         {
@@ -99,42 +111,52 @@ int main(int argc, char** argv) {
                 std::cout << "Loading eval file: " << value << std::endl;            
                 nnue.init(value.c_str());    
             }
+            else if (option == "Threads")
+            {
+                threads = std::stoi(value); 
+            }
         }
         if (input.find("position") != std::string::npos) {
             if (tokens[1] == "fen") 
             {
                 std::size_t start_index = input.find("fen");
                 std::string fen = input.substr(start_index + 4);
-                searcher_class.board.applyFen(fen);
+                board.applyFen(fen);
             }
             else
             {
-                searcher_class.board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+                board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             }
             if (input.find("moves") != std::string::npos) {
                 std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();
                 index++;
                 for (; index < tokens.size(); index++) {
                     Move move = convert_uci_to_Move(tokens[index]);
-                    searcher_class.board.makeMove(move);
+                    board.makeMove(move);
                 }
             }
         }
         if (input.find("go") != std::string::npos) 
         {
-            thread.stop();
+            stopped = true;
+            stop_threads();
 
-            std::string limit = tokens[1];
             int depth = MAX_PLY;
             int nodes = 0;
             Time time = t;
+            std::string limit;
+            if (tokens.size() == 1) 
+                limit = "";
+            else 
+                limit = tokens[1];
             if (limit == "depth") {
                 depth = std::stoi(tokens[2]);
             }
             else if (limit == "perft") {
                 depth = std::stoi(tokens[2]);
-                std::thread threads = std::thread(&Search::perf_Test, searcher_class, depth, depth);
-                threads.join();
+                Perft perft = Perft();
+                perft.board = board;
+                perft.perf_Test(depth, depth);
                 return 0;    
             }
             else if (limit == "nodes") {
@@ -151,14 +173,14 @@ int main(int argc, char** argv) {
             }
             else if (input.find("wtime") != std::string::npos) {
                 // go wtime 100 btime 100 winc 100 binc 100
-                std::string side = searcher_class.board.sideToMove == White ? "wtime" : "btime";
+                std::string side = board.sideToMove == White ? "wtime" : "btime";
                 auto indexTime = find(tokens.begin(), tokens.end(), side) - tokens.begin();
                 int64_t timegiven = std::stoi(tokens[indexTime + 1]);
                 int64_t inc = 0;
                 int64_t mtg = 0;
                 // Increment 
                 if (input.find("winc") != std::string::npos && tokens.size() > 4) {
-                    std::string inc_str = searcher_class.board.sideToMove == White ? "winc" : "binc";
+                    std::string inc_str = board.sideToMove == White ? "winc" : "binc";
                     auto it = find(tokens.begin(), tokens.end(), inc_str);
                     int index = it - tokens.begin();
                     inc = std::stoi(tokens[index + 1]);
@@ -170,52 +192,56 @@ int main(int argc, char** argv) {
                     mtg = std::stoi(tokens[index + 1]);
                 }
                 // Calculate search time
-                time = optimumTime(timegiven, inc, searcher_class.board.fullMoveNumber, mtg);
+                time = optimumTime(timegiven, inc, board.fullMoveNumber, mtg);
             }
             else {
                 std::cout << "Error: Invalid limit" << std::endl; // Silent Error
                 return 0;
             }
-            thread.begin(depth, nodes, time);
+            stopped = false;
+            // start search
+            searcher_class.start_thinking(board, threads, depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {
-            searcher_class.board.print();
-            std::cout << searcher_class.board.getFen() << std::endl;
+            board.print();
+            std::cout << board.getFen() << std::endl;
         }
 
         if (input == "moves") {
-            Movelist ml = searcher_class.board.legalmoves();
+            Movelist ml = board.legalmoves();
             for (int i = 0; i < ml.size; i++) {
-                std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
+                std::cout << board.printMove(ml.list[i]) << std::endl;
             }
         }
 
         if (input == "captures") {
-            Movelist ml = searcher_class.board.capturemoves();
+            Movelist ml = board.capturemoves();
             for (int i = 0; i < ml.size; i++) {
-                std::cout << searcher_class.board.printMove(ml.list[i]) << std::endl;
+                std::cout << board.printMove(ml.list[i]) << std::endl;
             }
         }
 
         if (input == "rep") {
-            std::cout << searcher_class.board.isRepetition(3) << std::endl;
+            std::cout << board.isRepetition(3) << std::endl;
         }
 
         if (input == "eval") {
-            std::cout << evaluation(searcher_class.board) << std::endl;
+            std::cout << evaluation(board) << std::endl;
         }
 
         if (input.find("perft") != std::string::npos) {
-            std::thread threads = std::thread(&Search::testAllPos, searcher_class);
-            threads.join();
+            Perft perft = Perft();
+            perft.board = board;
+            perft.testAllPos();
             return 0;
         }
     }
 }
 
 void signal_callback_handler(int signum) {
-    thread.stop();
+    stopped = true;
+    stop_threads();
     free(TTable);
     exit(signum);
 }
@@ -237,7 +263,7 @@ Move convert_uci_to_Move(std::string input) {
 
         int to_index = (rank - 1) * 8 + file - 1;
         Square target = Square(to_index);
-        PieceType piece = searcher_class.board.piece_type(searcher_class.board.pieceAtBB(source));
+        PieceType piece = board.piece_type(board.pieceAtBB(source));
         return Move(piece, source, target, false);
     }
     if (input.length() == 5) {
@@ -274,4 +300,13 @@ Move convert_uci_to_Move(std::string input) {
         std::cout << "FALSE INPUT" << std::endl;
         return Move(NONETYPE, NO_SQ, NO_SQ, false);
     }
+}
+
+void stop_threads()
+{
+    for (std::thread& th: searcher_class.threads) {
+        if (th.joinable())
+            th.join();
+    }
+    searcher_class.threads.clear();    
 }

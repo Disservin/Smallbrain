@@ -1,7 +1,7 @@
 #include "tt.h"
 
-void store_entry(int depth, int bestvalue,
-                 int old_alpha, int beta, U64 key,
+void store_entry(int depth, Score bestvalue,
+                 Score old_alpha, Score beta, U64 key,
                  uint16_t move) 
 {
     U64  index = key % TT_SIZE;                
@@ -25,7 +25,7 @@ void probe_tt(TEntry &tte, bool &ttHit, U64 key, int depth)
 {
     U64 index = key % TT_SIZE;
     tte = TTable[index];
-    if (tte.key == key && tte.depth >= depth) {
+    if (tte.key == key) {
         // use TT move
         ttHit = true;
     }

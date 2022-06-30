@@ -18,5 +18,9 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg) {
     if (time.maximum >= avaiableTime) {
         time.maximum = time.optimum;
     }
+    if (time.maximum == 0|| time.optimum == 0)
+    {
+        time.maximum = time.optimum = 1;
+    }
     return time;
 }

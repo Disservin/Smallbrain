@@ -26,6 +26,18 @@ void Board::initializeLookupTables() {
     }
 }
 
+void Board::activate(int inputNum) {
+    for (int i = 0; i < HIDDEN_BIAS; i++) {
+        accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
+    }
+}
+
+void Board::deactivate(int inputNum) {
+    for (int i = 0; i < HIDDEN_BIAS; i++) {
+        accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
+    }
+}
+
 Board::Board() {
     initializeLookupTables();
 }
@@ -111,7 +123,7 @@ void Board::applyFen(std::string fen) {
     };
 
     for (int i = 0; i < HIDDEN_BIAS; i++) {
-        nnue.accumulator[i] = nnue.hiddenBias[i];
+        accumulator[i] = hiddenBias[i];
     }
 
     Square square = Square(56);
@@ -336,13 +348,13 @@ void Board::placePieceSimple(Piece piece, Square sq) {
 void Board::removePiece(Piece piece, Square sq) {
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
-    nnue.deactivate(sq + piece * 64);
+    deactivate(sq + piece * 64);
 }
 
 void Board::placePiece(Piece piece, Square sq) {
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
-    nnue.activate(sq + piece * 64);
+    activate(sq + piece * 64);
 }
 
 U64 Board::updateKeyPiece(Piece piece, Square sq) {
@@ -965,7 +977,8 @@ void Board::makeNullMove() {
     State store = State(enPassantSquare, castlingRights, halfMoveClock, None, hashKey);
     prevStates.Add(store);
     sideToMove = ~sideToMove;
-    hashKey = zobristHash();
+    hashKey ^= updateKeySideToMove();
+    if (enPassantSquare != NO_SQ) hashKey ^= updateKeyEnPassant(enPassantSquare);
     enPassantSquare = NO_SQ;
     fullMoveNumber++;
 }
@@ -978,5 +991,4 @@ void Board::unmakeNullMove() {
     hashKey = restore.h;
     fullMoveNumber--;
     sideToMove = ~sideToMove;
-
 }

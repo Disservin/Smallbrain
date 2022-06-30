@@ -18,20 +18,20 @@
 #define OUTPUT_BIAS 1
 
 /// HIDDEN_BIAS/HIDDEN_WEIGHTS is basically the width of the hidden layer.
+extern uint8_t inputValues[INPUT_WEIGHTS];
+extern int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
+extern int16_t hiddenBias[HIDDEN_BIAS];
+extern int16_t hiddenWeights[HIDDEN_WEIGHTS];
+extern int32_t outputBias[OUTPUT_BIAS];
 
 class NNUE {
     public:
     int relu(int x);
     void init(const char* filename);
     // void accumulate(Board& b);
-    void activate(int inputNum);
-    void deactivate(int inputNum);
-    int32_t output();
-    void Clear();
-    std::vector<int16_t> accumulator;
-    uint8_t inputValues[INPUT_WEIGHTS];
-    int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
-    int16_t hiddenBias[HIDDEN_BIAS];
-    int16_t hiddenWeights[HIDDEN_WEIGHTS];
-    int32_t outputBias[OUTPUT_BIAS];
+    // void activate(int inputNum);
+    // void deactivate(int inputNum);
+    int32_t output(int16_t accumulator[HIDDEN_BIAS]);
+    // std::vector<int16_t> accumulator;
+
 };
