@@ -209,18 +209,20 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
         // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
 
         // late move reduction
-        if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
+        if (depth >= 3 && !inCheck && madeMoves > 2 + PvNode + ttHit) {
             int rdepth = reductions[madeMoves][depth];
             rdepth -= td->id % 2;
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
 
             // Decrease reduction for pvnodes
-            if (PvNode)
-                rdepth++;
+            rdepth -= PvNode;
+            
+            // decrease when improving
+            rdepth -= improving;
 
             // Increase reduction for quiet moves
             if (madeMoves > 15 && !capture)
-                rdepth--;
+                rdepth++;
 
             score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, ss+1, td);
             doFullSearch = score > alpha;
