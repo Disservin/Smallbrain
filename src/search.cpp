@@ -66,6 +66,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
     Score oldAlpha = alpha;
     bool RootNode = ply == 0;
     Color color = td->board.sideToMove;
+    (ss+1)->excluded = nomove;
 
     if (ply >= 1 && td->board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
     if (!RootNode) {
@@ -97,7 +98,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
     // Look up in the TT
     TEntry tte;
     bool ttHit = false;
-    probe_tt(tte, ttHit, td->board.hashKey, depth);
+    probe_tt(tte, ttHit,td->board.hashKey, depth);
 
     if (!RootNode && !PvNode 
         && ttHit && tte.depth >= depth
@@ -134,7 +135,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
     if (td->board.nonPawnMat(color) 
         && (ss-1)->currentmove != nullmove
         && depth >= 3 && !inCheck
-        && staticEval >= beta) 
+        && staticEval >= beta
+        && ss->excluded == nomove)
     {
         int r = 3 + depth / 5;
         td->board.makeNullMove();
@@ -151,7 +153,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {
-        return inCheck ? -VALUE_MATE + ply : 0;
+        return ss->excluded != nomove ? alpha : inCheck ? -VALUE_MATE + ply : 0;
     }
 
     // assign a value to each move
@@ -172,6 +174,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
 
     for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
+
+        if (move.get() == ss->excluded) continue;
+
+        int extension = 0;
+        int newDepth = depth - 1;
         bool capture = td->board.pieceAtB(move.to()) != None;
 
         if (!capture) quietMoves.Add(move);
@@ -194,6 +201,29 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
                 && !see(move, -(depth * 100), td->board))
                 continue;
         }
+        
+        // Singular extension
+        if (!RootNode
+            && depth > 8
+            && move.get() == tte.move
+            && ss->excluded == nomove
+            && tte.depth >= depth - 3
+            && tte.flag == LOWERBOUND
+            && tte.score < 19000)
+        {
+            Score singularBeta = tte.score - 2 * depth;
+            int singularDepth = (depth - 1) / 2;
+
+            ss->excluded = move.get();
+            Score value = -absearch(singularDepth, singularBeta - 1, singularBeta, ply + 1, ss, td);
+            ss->excluded = nomove;
+            
+            if (value < singularBeta) {
+                extension = 1;
+            }
+        }
+
+        newDepth += extension;
 
         td->nodes++;
         madeMoves++;
@@ -212,7 +242,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
             int rdepth = reductions[madeMoves][depth];
             rdepth -= td->id % 2;
-            rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
+            rdepth = std::clamp(newDepth - rdepth, 1, depth - 2);
 
             // Decrease reduction for pvnodes
             if (PvNode)
@@ -230,12 +260,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
 
         // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
-            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, ss+1, td);
+            score = -absearch(newDepth, -alpha - 1, -alpha, ply + 1, ss+1, td);
         }
 
         // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(depth - 1, -beta, -alpha, ply + 1, ss+1, td);
+            score = -absearch(newDepth, -beta, -alpha, ply + 1, ss+1, td);
         }
 
         td->board.unmakeMove(move);
@@ -271,7 +301,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove.get());
+    if (ss->excluded == nomove && !exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove.get());
     return best;
 }
 

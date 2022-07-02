@@ -15,9 +15,10 @@ extern TEntry* TTable;
 extern U64 TT_SIZE;
 
 struct Stack {
+    int eval;
     uint16_t currentmove;
     uint16_t ply;
-    int eval;
+    uint16_t excluded;
 };
 
 struct ThreadData {
