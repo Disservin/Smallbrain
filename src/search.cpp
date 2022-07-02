@@ -190,7 +190,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
             }
 
             // history pruning
-            if (td->history_table[td->board.sideToMove][move.from()][move.to()] < - 1024 * depth
+            if (td->history_table[td->board.sideToMove][move.from()][move.to()] < - 2056 * depth
                 && !capture
                 && !move.promoted()) {
                 continue;
