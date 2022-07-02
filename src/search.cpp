@@ -216,11 +216,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
 
             // Decrease reduction for pvnodes
             if (PvNode)
-                rdepth++;
+                rdepth--;
 
             // Increase reduction for quiet moves
             if (madeMoves > 15 && !capture)
-                rdepth--;
+                rdepth++;
 
             score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, ss+1, td);
             doFullSearch = score > alpha;
