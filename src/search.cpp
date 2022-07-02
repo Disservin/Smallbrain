@@ -213,15 +213,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
             int rdepth = reductions[madeMoves][depth];
             rdepth -= td->id % 2;
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
-
-            // Decrease reduction for pvnodes
-            if (PvNode)
-                rdepth--;
-
-            // Increase reduction for quiet moves
-            if (madeMoves > 15 && !capture)
-                rdepth++;
-
             score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, ss+1, td);
             doFullSearch = score > alpha;
         }
