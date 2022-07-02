@@ -284,8 +284,8 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
     int research = 0;
 
     if (depth >= 5) {
-        alpha = prev_eval - 50;
-        beta = prev_eval + 50;
+        alpha = prev_eval - 50 - depth * 2;
+        beta = prev_eval + 50 + depth * 2;
     }
 
     while (true) {
@@ -364,6 +364,9 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
             previousBestmove = td->pv_table[0][0];
             auto ms = elapsed();
             uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
+        }
+        else {
+            if (exit_early(td->nodes, td->id)) return;
         }
     }
     if (threadId == 0)
