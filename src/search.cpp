@@ -196,6 +196,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
             // See pruning
             if (depth < 6 
+                && capture
                 && !see(move, -(depth * 100), td->board))
                 continue;
         }
