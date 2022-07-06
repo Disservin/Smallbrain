@@ -346,10 +346,10 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
             if (depth >= 8 && effort >= 95 && searchTime != 0  && !adjustedTime) {
                 adjustedTime = true;
                 searchTime = searchTime / 3 ;
-                reducedTimeMove = previousBestmove;
+                reducedTimeMove = td->pv_table[0][0];
             }
 
-            if (previousBestmove != reducedTimeMove && adjustedTime) {
+            if (adjustedTime && td->pv_table[0][0] != reducedTimeMove) {
                 searchTime = startTime * 1.05f;
             }
         }
@@ -377,7 +377,7 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
     }
     threads.clear();
     stopped = false;
-    // If we dont have previosu data create default data
+    // If we dont have previous data create default data
     for (int i = tds.size(); i < workers; i++) {
         ThreadData td;
         td.board = board;
@@ -412,7 +412,7 @@ bool Search::see(Move& move, int threshold, Board& board) {
     U64 bishops = board.Bishops(board.sideToMove) | board.Queens(board.sideToMove) 
                   | board.Bishops(~board.sideToMove) | board.Queens(~board.sideToMove);
     U64 rooks = board.Rooks(board.sideToMove) | board.Queens(board.sideToMove) 
-                | board.Rooks(~board.sideToMove) | board.Queens(~board.sideToMove);;
+                | board.Rooks(~board.sideToMove) | board.Queens(~board.sideToMove);
     Color sT = ~Color((board.pieceAtB(from) / 6));
     
     while (true) {

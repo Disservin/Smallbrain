@@ -18,7 +18,7 @@ U64 TT_SIZE = 524287;
 TEntry* TTable;   //TEntry size is 18 bytes
 
 Board board = Board();
-Search searcher_class = Search();
+Search searcher = Search();
 NNUE nnue = NNUE();
 
 int threads = 1;
@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
     board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     // making sure threads and tds are really clear
-    searcher_class.threads.clear();
-    searcher_class.tds.clear();
+    searcher.threads.clear();
+    searcher.tds.clear();
     while (true) {
         // ./smallbrain bench
         if (argc > 1) {
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
             board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             stopped = true;
             stop_threads();
-            searcher_class.tds.clear();
+            searcher.tds.clear();
         }
         if (input == "quit") {
             stopped = true;
@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
             }
             stopped = false;
             // start search
-            searcher_class.start_thinking(board, threads, depth, nodes, time);
+            searcher.start_thinking(board, threads, depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {
@@ -304,9 +304,9 @@ Move convert_uci_to_Move(std::string input) {
 
 void stop_threads()
 {
-    for (std::thread& th: searcher_class.threads) {
+    for (std::thread& th: searcher.threads) {
         if (th.joinable())
             th.join();
     }
-    searcher_class.threads.clear();    
+    searcher.threads.clear();    
 }
