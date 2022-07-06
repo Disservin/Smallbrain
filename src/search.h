@@ -31,7 +31,6 @@ struct ThreadData {
     // pv collection
     uint8_t pv_length[MAX_PLY] {};
     Move pv_table[MAX_PLY][MAX_PLY] {};
-    Move pv[MAX_PLY] {};
 
     // selective depth
     uint8_t seldepth {};
