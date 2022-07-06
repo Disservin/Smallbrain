@@ -66,7 +66,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
     Score oldAlpha = alpha;
     bool RootNode = ply == 0;
     Color color = td->board.sideToMove;
-    (ss+1)->excluded = nomove;
+    ss->excluded = nomove;
 
     if (ply >= 1 && td->board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
     if (!RootNode) {
@@ -209,7 +209,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
             && move.get() == tte.move
             && ss->excluded == nomove
             && tte.depth >= depth - 3
-            && tte.flag == LOWERBOUND
+            && (tte.flag == LOWERBOUND || tte.flag == EXACT)
             && tte.score < 19000)
         {
             Score singularBeta = tte.score - 3 * depth;
