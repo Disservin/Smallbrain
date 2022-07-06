@@ -68,6 +68,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     td->pv_length[ss->ply] = ss->ply;
 
+    // Draw detection and mate pruning
     if (!RootNode) {
         if (td->board.halfMoveClock >= 100) return 0;
         if (td->board.isRepetition() && (ss-1)->currentmove != nullmove) return - 3 + (td->nodes & 7);
@@ -100,6 +101,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     bool ttHit = false;
     probe_tt(tte, ttHit, td->board.hashKey, depth);
 
+    // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode 
         && ttHit && tte.depth >= depth
         && (ss-1)->currentmove != nullmove)
@@ -114,6 +116,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (alpha >= beta) return tte.score;
     }
 
+    // use tt eval for a better staticEval
     ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
                                                    
     // improving boolean, similar to stockfish
@@ -145,6 +148,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (score >= beta) return beta;
     }
 
+    // IID 
     if (depth >= 4 && !ttHit)
         depth--;
 
@@ -179,16 +183,16 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
         // Pruning
         if (!RootNode
-            && best > -VALUE_INFINITE) {
+            && best > -VALUE_INFINITE) 
+        {
             // late move pruning/movecount pruning
             if (!capture 
                 && !inCheck
                 && !PvNode
                 && !move.promoted()
                 && depth <= 4
-                && quietMoves.size > (4 + depth * depth)) {
+                && quietMoves.size > (4 + depth * depth))
                 continue;
-            }
 
             // See pruning
             if (depth < 6 
@@ -199,9 +203,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         td->nodes++;
         madeMoves++;
 
-        if (td->id == 0 && RootNode && elapsed() > 10000 && !stopped) {
+        if (td->id == 0 && RootNode && !stopped && elapsed() > 10000 ) 
             std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move) << " currmovenumber " << madeMoves << "\n";
-        }
 
         td->board.makeMove(move);
 
@@ -214,14 +217,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             int rdepth = reductions[madeMoves][depth];
             rdepth -= td->id % 2;
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
-
-            // Decrease reduction for pvnodes
-            if (PvNode)
-                rdepth++;
-
-            // Increase reduction for quiet moves
-            if (madeMoves > 15 && !capture)
-                rdepth--;
 
             score = -absearch(rdepth, -alpha - 1, -alpha, ss+1, td);
             doFullSearch = score > alpha;
@@ -327,6 +322,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     bool adjustedTime;
 
     int result = -VALUE_INFINITE;
+    int depth = 1;
 
     Stack stack[MAX_PLY+4], *ss = stack+2;
     std::memset(ss-2, 0, 4 * sizeof(Stack));
@@ -334,44 +330,41 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     for (int i = -2; i <= MAX_PLY + 1; ++i)
         (ss+i)->ply = i;
     
-    for (int depth = 1; depth <= search_depth; depth++)
+    for (depth = 1; depth <= search_depth; depth++)
     {
         result = aspiration_search(depth, result, ss, td);
-        if (threadId == 0)
+        if (exit_early(td->nodes, td->id)) break;
+        if (threadId != 0) continue;
+
+        if (searchTime != 0)
         {
-            if (exit_early(td->nodes, 0))
-            {
-                if (depth == 1)
-                    std::cout << "bestmove " << td->board.printMove(td->pv_table[0][0]) << std::endl;
-                else std::cout << "bestmove " << td->board.printMove(previousBestmove) << std::endl;
-                stopped = true;
-                return;
-            }
             if (rootSize == 1)
                 searchTime = std::min((int64_t)50, searchTime);
             
             int effort = (spentEffort[previousBestmove.from()][previousBestmove.to()] * 100) / td->nodes;
 
-            if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime) {
+            if (depth >= 8 && effort >= 95 && searchTime != 0  && !adjustedTime) {
                 adjustedTime = true;
                 searchTime = searchTime / 3 ;
                 reducedTimeMove = previousBestmove;
             }
 
-            if (!(previousBestmove == reducedTimeMove) && adjustedTime) {
+            if (previousBestmove != reducedTimeMove && adjustedTime) {
                 searchTime = startTime * 1.05f;
             }
-
-            previousBestmove = td->pv_table[0][0];
-            auto ms = elapsed();
-            uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
         }
+
+        previousBestmove = td->pv_table[0][0];
+        auto ms = elapsed();
+        uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
     }
     if (threadId == 0)
     {
-        std::cout << "bestmove " << td->board.printMove(previousBestmove) << std::endl;
+        if (depth == 1)
+            std::cout << "bestmove " << td->board.printMove(td->pv_table[0][0]) << std::endl;
+        else 
+            std::cout << "bestmove " << td->board.printMove(previousBestmove) << std::endl;
         stopped = true;
-        return;
     }
     return;
 }
@@ -385,13 +378,11 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
     threads.clear();
     stopped = false;
     // If we dont have previosu data create default data
-    if (tds.size() == 0) {
-        for (int i = 0; i < workers; i++) {
-            ThreadData td;
-            td.board = board;
-            td.id = i;
-            this->tds.push_back(td);
-        }
+    for (int i = tds.size(); i < workers; i++) {
+        ThreadData td;
+        td.board = board;
+        td.id = i;
+        this->tds.push_back(td);
     }
 
     this->tds[0].board = board;
@@ -464,9 +455,6 @@ int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
     }
     else if (td->board.pieceAtB(move.to()) != None) {
         return see(move, -100, td->board) ? mmlva(move, td->board) * 10000 : mmlva(move, td->board);
-    }
-    else if (move == td->pv_table[0][ply]) {
-        return 1'000'000;
     }
     else if (td->killerMoves[0][ply] == move) {
         return killerscore1;
