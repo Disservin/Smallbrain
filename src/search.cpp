@@ -198,6 +198,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             if (depth < 6 
                 && !see(move, -(depth * 100), td->board))
                 continue;
+                
+            // Futility pruning
+            if (!inCheck 
+                && depth < 6
+                && staticEval + depth * 300 <= alpha)
+                continue;
         }
 
         td->nodes++;
