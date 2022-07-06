@@ -57,17 +57,17 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
     return bestValue;
 }
 
-Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, ThreadData *td) {
+Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
-    if (ply > MAX_PLY - 1) return evaluation(td->board);
+    if (ss->ply > MAX_PLY - 1) return evaluation(td->board);
 
     Score best = -VALUE_INFINITE;
-    td->pv_length[ply] = ply;
+    td->pv_length[ss->ply] = ss->ply;
     Score oldAlpha = alpha;
-    bool RootNode = ply == 0;
+    bool RootNode = ss->ply == 0;
     Color color = td->board.sideToMove;
 
-    if (ply >= 1 && td->board.isRepetition() && !((ss-1)->currentmove == nullmove)) return 0;
+    if (ss->ply >= 1 && td->board.isRepetition() && (ss-1)->currentmove != nullmove) return 0;
     if (!RootNode) {
         if (td->board.halfMoveClock >= 100) return 0;
         int all = popcount(td->board.All());
@@ -75,8 +75,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
         if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight])) return 0;
         if (all == 3 && (td->board.Bitboards[WhiteBishop] || td->board.Bitboards[BlackBishop])) return 0;
 
-        alpha = std::max(alpha, (int16_t)(-VALUE_MATE + ply));
-        beta = std::min(beta, (int16_t)(VALUE_MATE - ply - 1));
+        alpha = std::max(alpha, (int16_t)(-VALUE_MATE + ss->ply));
+        beta = std::min(beta, (int16_t)(VALUE_MATE - ss->ply - 1));
         if (alpha >= beta) return alpha;
     }
 
@@ -87,10 +87,10 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
     if (inCheck) depth++;
 
     // Enter qsearch
-    if (depth <= 0) return qsearch(15, alpha, beta, ply, td);
+    if (depth <= 0) return qsearch(15, alpha, beta, ss->ply, td);
 
     // Selective depth (heighest depth we have ever reached)
-    if (ply > td->seldepth) td->seldepth = ply;
+    if (ss->ply > td->seldepth) td->seldepth = ss->ply;
 
     Score staticEval;
 
@@ -123,7 +123,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
         && depth < 2
         && staticEval + 640 < alpha
         && !inCheck)
-        return qsearch(15, alpha, beta, ply, td);
+        return qsearch(15, alpha, beta, ss->ply, td);
 
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
@@ -139,7 +139,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
         int r = 3 + depth / 5;
         td->board.makeNullMove();
         (ss)->currentmove = nullmove;
-        Score score = -absearch(depth - r, -beta, -beta + 1, ply + 1, ss+1, td);
+        Score score = -absearch(depth - r, -beta, -beta + 1, ss+1, td);
         td->board.unmakeNullMove();
         if (score >= beta) return beta;
     }
@@ -151,12 +151,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {
-        return inCheck ? -VALUE_MATE + ply : 0;
+        return inCheck ? -VALUE_MATE + ss->ply : 0;
     }
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = score_move(ml.list[i], ply, ttHit, td);
+        ml.list[i].value = score_move(ml.list[i], ss->ply, ttHit, td);
     }
 
     if (RootNode && td->id == 0) rootSize = ml.size;
@@ -222,7 +222,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
             if (madeMoves > 15 && !capture)
                 rdepth--;
 
-            score = -absearch(rdepth, -alpha - 1, -alpha, ply + 1, ss+1, td);
+            score = -absearch(rdepth, -alpha - 1, -alpha, ss+1, td);
             doFullSearch = score > alpha;
         }
         else
@@ -230,12 +230,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
 
         // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
-            score = -absearch(depth - 1, -alpha - 1, -alpha, ply + 1, ss+1, td);
+            score = -absearch(depth - 1, -alpha - 1, -alpha, ss+1, td);
         }
 
         // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(depth - 1, -beta, -alpha, ply + 1, ss+1, td);
+            score = -absearch(depth - 1, -beta, -alpha, ss+1, td);
         }
 
         td->board.unmakeMove(move);
@@ -246,11 +246,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
             bestMove = move;
 
             // update the PV
-            td->pv_table[ply][ply] = move;
-            for (int next_ply = ply + 1; next_ply < td->pv_length[ply + 1]; next_ply++) {
-                td->pv_table[ply][next_ply] = td->pv_table[ply + 1][next_ply];
+            td->pv_table[ss->ply][ss->ply] = move;
+            for (int next_ply = ss->ply + 1; next_ply < td->pv_length[ss->ply + 1]; next_ply++) {
+                td->pv_table[ss->ply][next_ply] = td->pv_table[ss->ply + 1][next_ply];
             }
-            td->pv_length[ply] = td->pv_length[ply + 1];
+            td->pv_length[ss->ply] = td->pv_length[ss->ply + 1];
 
             if (score > alpha) {
                 alpha = score;
@@ -258,8 +258,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
                 if (score >= beta) {
                     // update Killer Moves
                     if (!capture) {
-                        td->killerMoves[1][ply] = td->killerMoves[0][ply];
-                        td->killerMoves[0][ply] = move;
+                        td->killerMoves[1][ss->ply] = td->killerMoves[0][ss->ply];
+                        td->killerMoves[0][ss->ply] = move;
                     }
                     break;
                 }
@@ -292,7 +292,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         if (stopped) return 0;
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
-        result = absearch(depth, alpha, beta, 0, ss, td);
+        result = absearch(depth, alpha, beta, ss, td);
         if (result <= alpha) {
             research++;
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
