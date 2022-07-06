@@ -62,14 +62,15 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (ss->ply > MAX_PLY - 1) return evaluation(td->board);
 
     Score best = -VALUE_INFINITE;
-    td->pv_length[ss->ply] = ss->ply;
     Score oldAlpha = alpha;
     bool RootNode = ss->ply == 0;
     Color color = td->board.sideToMove;
 
-    if (ss->ply >= 1 && td->board.isRepetition() && (ss-1)->currentmove != nullmove) return 0;
+    td->pv_length[ss->ply] = ss->ply;
+
     if (!RootNode) {
         if (td->board.halfMoveClock >= 100) return 0;
+        if (td->board.isRepetition() && (ss-1)->currentmove != nullmove) return - 3 + (td->nodes & 7);
         int all = popcount(td->board.All());
         if (all == 2) return 0;
         if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight])) return 0;
@@ -402,7 +403,7 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
     }
 }
 
-// Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss)
+// Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
 bool Search::see(Move& move, int threshold, Board& board) {
     Square from = move.from();
     Square to = move.to();
