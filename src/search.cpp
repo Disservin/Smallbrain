@@ -204,18 +204,19 @@ Score Search::absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, T
         
         // Singular extension
         if (!RootNode
-            && depth > 8
+            && depth >= 8
+            && madeMoves == 0
             && move.get() == tte.move
             && ss->excluded == nomove
             && tte.depth >= depth - 3
             && tte.flag == LOWERBOUND
             && tte.score < 19000)
         {
-            Score singularBeta = tte.score - 2 * depth;
+            Score singularBeta = tte.score - 3 * depth;
             int singularDepth = (depth - 1) / 2;
 
             ss->excluded = move.get();
-            Score value = -absearch(singularDepth, singularBeta - 1, singularBeta, ply + 1, ss, td);
+            Score value = -absearch(singularDepth, singularBeta - 1, singularBeta, ply, ss, td);
             ss->excluded = nomove;
             
             if (value < singularBeta) {
