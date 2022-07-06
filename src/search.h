@@ -67,7 +67,7 @@ public:
 
     // main search functions
     Score qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *td);
-    Score absearch(int depth, Score alpha, Score beta, int ply, Stack *ss, ThreadData *td);
+    Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td);
     void iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId);
     void start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
