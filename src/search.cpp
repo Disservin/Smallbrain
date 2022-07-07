@@ -492,8 +492,9 @@ std::string Search::get_pv() {
     return line;
 }
 
-long long Search::elapsed(){
-    auto t1 = std::chrono::high_resolution_clock::now();
+long long Search::elapsed()
+{
+    auto t1 = TimePoint::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 }
 

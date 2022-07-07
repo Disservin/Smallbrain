@@ -61,7 +61,7 @@ int start_bench() {
     Time t;
     int depth = 12;
     
-    auto t1 = std::chrono::high_resolution_clock::now();
+    auto t1 = TimePoint::now();
     for (int positions = 0; positions < 50; positions++) {
         stopped = false;
         std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
@@ -73,7 +73,7 @@ int start_bench() {
         totalNodes += searcher.tds[0].nodes;
     }
 
-    auto t2 = std::chrono::high_resolution_clock::now();
+    auto t2 = TimePoint::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     std::cout << "\n" << totalNodes << " nodes " << signed((totalNodes / (ms + 1)) * 1000) << " nps " << std::endl;
     return 0;
