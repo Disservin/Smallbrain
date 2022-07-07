@@ -117,7 +117,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     }
 
     // use tt eval for a better staticEval
-    ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
+    ss->eval = staticEval = inCheck ? VALUE_NONE : ttHit ? tte.score : evaluation(td->board);
                                                    
     // improving boolean, similar to stockfish
     bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
@@ -218,6 +218,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             int rdepth = reductions[madeMoves][depth];
             rdepth -= td->id % 2;
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
+
+            // reduce less for pv nodes
+            rdepth -= PvNode;
 
             score = -absearch(rdepth, -alpha - 1, -alpha, ss+1, td);
             doFullSearch = score > alpha;
