@@ -65,7 +65,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     Score oldAlpha = alpha;
     bool RootNode = ss->ply == 0;
     Color color = td->board.sideToMove;
-    bool improving;
+    bool improving, ttHit;
+    TEntry tte;
 
     td->pv_length[ss->ply] = ss->ply;
 
@@ -97,9 +98,16 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     Score staticEval;
 
+    if (inCheck)
+    {
+        ss->eval = staticEval = VALUE_NONE;
+        improving = 0;
+        ttHit = false;
+        goto moves;
+    }
+
     // Look up in the TT
-    TEntry tte;
-    bool ttHit = false;
+    ttHit = false;
     probe_tt(tte, ttHit, td->board.hashKey, depth);
 
     // Adjust alpha and beta for non PV nodes
@@ -115,13 +123,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             beta = std::min(beta, tte.score);
         }
         if (alpha >= beta) return tte.score;
-    }
-
-    if (inCheck)
-    {
-        ss->eval = staticEval = VALUE_NONE;
-        improving = 0;
-        goto moves;
     }
 
     // use tt eval for a better staticEval
