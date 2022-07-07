@@ -53,6 +53,7 @@ public:
     uint64_t maxNodes{};
     int64_t searchTime{};
     int64_t maxTime{};
+    int checkTime;
 
     U64 spentEffort[MAX_SQ][MAX_SQ];
     int rootSize;
