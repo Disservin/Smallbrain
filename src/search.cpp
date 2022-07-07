@@ -210,12 +210,17 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
 	    U64 nodeCount = td->nodes;
         ss->currentmove = move.get();
-        // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
+        bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
 
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
             int rdepth = reductions[madeMoves][depth];
             rdepth -= td->id % 2;
+
+            rdepth += PvNode;
+
+            rdepth += givesCheck && depth > 7;
+
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
 
             score = -absearch(rdepth, -alpha - 1, -alpha, ss+1, td);
