@@ -219,7 +219,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
             rdepth += PvNode;
 
-            rdepth += givesCheck && depth > 7;
+            rdepth -= givesCheck && depth > 7;
 
             rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
 
