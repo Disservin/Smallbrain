@@ -515,8 +515,6 @@ bool Search::exit_early(uint64_t nodes, int ThreadId) {
             stopped = true;
             return true;
         }
-        // if (nodes & 54343284932)
-        //     std::cout << "info nodes " << nodes << " nps " << signed((nodes * 1000) / (ms + 1)) << " time " << ms << std::endl;
     }
     return false;
 }
