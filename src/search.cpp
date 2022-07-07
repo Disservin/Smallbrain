@@ -280,8 +280,8 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
     int research = 0;
 
     if (depth >= 5) {
-        alpha = prev_eval - 50;
-        beta = prev_eval + 50;
+        alpha = prev_eval - delta;
+        beta = prev_eval + delta;
     }
 
     while (true) {
