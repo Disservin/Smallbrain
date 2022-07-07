@@ -181,6 +181,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
         if (!capture) quietMoves.Add(move);
 
+        int newDepth = depth - 1;
         // Pruning
         if (!RootNode
             && best > -VALUE_INFINITE) 
@@ -216,7 +217,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
             int rdepth = reductions[madeMoves][depth];
             rdepth -= td->id % 2;
-            rdepth = std::clamp(depth - 1 - rdepth, 1, depth - 2);
+            rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
             score = -absearch(rdepth, -alpha - 1, -alpha, ss+1, td);
             doFullSearch = score > alpha;
@@ -226,12 +227,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
         // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
-            score = -absearch(depth - 1, -alpha - 1, -alpha, ss+1, td);
+            score = -absearch(newDepth, -alpha - 1, -alpha, ss+1, td);
         }
 
         // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(depth - 1, -beta, -alpha, ss+1, td);
+            score = -absearch(newDepth, -beta, -alpha, ss+1, td);
         }
 
         td->board.unmakeMove(move);
