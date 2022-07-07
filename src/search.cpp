@@ -518,6 +518,7 @@ bool Search::exit_early(uint64_t nodes, int ThreadId) {
             return true;
         }
         checkTimeNodes++;
+
         if (checkTimeNodes > 2047 * 10)
         {
             std::cout << "info nodes " << get_nodes() << " nps " << signed((get_nodes()  * 1000) / (ms + 1)) << " time " << ms << std::endl;
@@ -529,9 +530,6 @@ bool Search::exit_early(uint64_t nodes, int ThreadId) {
 
 uint64_t Search::get_nodes() {
     uint64_t nodes = 0;
-    // for (size_t i = 0; i < tds.size(); i++) {
-    //     nodes += tds[i].nodes;
-    // }
     for (ThreadData td : tds) {
         nodes += td.nodes;
     }
