@@ -314,6 +314,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         maxTime = time.maximum;
         maxNodes = maxN;
         checkTime = 0;
+        checkTimeNodes = 0;
     }
     ThreadData* td = &this->tds[threadId];
     td->nodes = 0;
@@ -507,6 +508,7 @@ bool Search::exit_early(uint64_t nodes, int ThreadId) {
         return true;
     }
     if (--checkTime > 0) return false;
+
     checkTime = 2047;
 
     if (searchTime != 0) {
@@ -515,16 +517,23 @@ bool Search::exit_early(uint64_t nodes, int ThreadId) {
             stopped = true;
             return true;
         }
-        // if (nodes & 54343284932)
-        //     std::cout << "info nodes " << nodes << " nps " << signed((nodes * 1000) / (ms + 1)) << " time " << ms << std::endl;
+        checkTimeNodes++;
+        if (checkTimeNodes > 2047 * 10)
+        {
+            std::cout << "info nodes " << get_nodes() << " nps " << signed((get_nodes()  * 1000) / (ms + 1)) << " time " << ms << std::endl;
+            checkTimeNodes = 0;
+        }
     }
     return false;
 }
 
 uint64_t Search::get_nodes() {
     uint64_t nodes = 0;
-    for (size_t i = 0; i < tds.size(); i++) {
-        nodes += tds[i].nodes;
+    // for (size_t i = 0; i < tds.size(); i++) {
+    //     nodes += tds[i].nodes;
+    // }
+    for (ThreadData td : tds) {
+        nodes += td.nodes;
     }
     return nodes;
 }

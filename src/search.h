@@ -54,6 +54,7 @@ public:
     int64_t searchTime{};
     int64_t maxTime{};
     int checkTime;
+    int checkTimeNodes;
 
     U64 spentEffort[MAX_SQ][MAX_SQ];
     int rootSize;
