@@ -69,18 +69,19 @@ U64 Board::zobristHash() {
 }
 
 Piece Board::pieceAtBB(Square sq) {
-    if (Bitboards[WhitePawn] & (1ULL << sq)) return WhitePawn;
-    if (Bitboards[WhiteKnight] & (1ULL << sq)) return WhiteKnight;
-    if (Bitboards[WhiteBishop] & (1ULL << sq)) return WhiteBishop;
-    if (Bitboards[WhiteRook] & (1ULL << sq)) return WhiteRook;
-    if (Bitboards[WhiteQueen] & (1ULL << sq)) return WhiteQueen;
-    if (Bitboards[WhiteKing] & (1ULL << sq)) return WhiteKing;
-    if (Bitboards[BlackPawn] & (1ULL << sq)) return BlackPawn;
-    if (Bitboards[BlackKnight] & (1ULL << sq)) return BlackKnight;
-    if (Bitboards[BlackBishop] & (1ULL << sq)) return BlackBishop;
-    if (Bitboards[BlackRook] & (1ULL << sq)) return BlackRook;
-    if (Bitboards[BlackQueen] & (1ULL << sq)) return BlackQueen;
-    if (Bitboards[BlackKing] & (1ULL << sq)) return BlackKing;
+    int q = (1ULL << sq);
+    if (Bitboards[WhitePawn] & q) return WhitePawn;
+    if (Bitboards[WhiteKnight] & q) return WhiteKnight;
+    if (Bitboards[WhiteBishop] & q) return WhiteBishop;
+    if (Bitboards[WhiteRook] & q) return WhiteRook;
+    if (Bitboards[WhiteQueen] & q) return WhiteQueen;
+    if (Bitboards[WhiteKing] & q) return WhiteKing;
+    if (Bitboards[BlackPawn] & q) return BlackPawn;
+    if (Bitboards[BlackKnight] & q) return BlackKnight;
+    if (Bitboards[BlackBishop] & q) return BlackBishop;
+    if (Bitboards[BlackRook] & q) return BlackRook;
+    if (Bitboards[BlackQueen] & q) return BlackQueen;
+    if (Bitboards[BlackKing] & q) return BlackKing;
     return None;
 }
 
@@ -563,12 +564,13 @@ U64 Board::LegalPawnMoves(Color c, Square sq, Square ep) {
         Piece ourPawn = makePiece(PAWN, c);
         Piece theirPawn = makePiece(PAWN, ~c);
         Square kSQ = KingSQ(c);
+        Square epPawn = Square((int)ep - (c * -2 + 1) * 8);
         removePieceSimple(ourPawn, sq);
-        removePieceSimple(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
+        removePieceSimple(theirPawn, epPawn);
         placePieceSimple(ourPawn, ep);
         if (!((RookAttacks(kSQ, All()) & (Rooks(~c) | Queens(~c))))) moves |= (1ULL << ep);
         placePieceSimple(ourPawn, sq);
-        placePieceSimple(theirPawn, Square((int)ep - (c * -2 + 1) * 8));
+        placePieceSimple(theirPawn, epPawn);
         removePieceSimple(ourPawn, ep);
     }
     return moves;
@@ -653,12 +655,14 @@ Movelist Board::legalmoves() {
         U64 bishops_mask = Bishops(sideToMove);
         U64 rooks_mask = Rooks(sideToMove);
         U64 queens_mask = Queens(sideToMove);
+
         while (pawns_mask) {
             Square from = poplsb(pawns_mask);
             U64 moves = LegalPawnMoves(sideToMove, from, enPassantSquare);
             while (moves) {
                 Square to = poplsb(moves);
-                if (square_rank(to) == 7 || square_rank(to) == 0) {
+                U64 moves_to = 1ULL << to;
+                if ((MASK_RANK[7] & moves_to) || (MASK_RANK[0] & moves_to)) {    
                     movelist.Add(Move(QUEEN, from, to, true));
                     movelist.Add(Move(ROOK, from, to, true));
                     movelist.Add(Move(KNIGHT, from, to, true));
