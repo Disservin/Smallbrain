@@ -11,9 +11,11 @@ void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData 
 
 Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
-    Score stand_pat = evaluation(td->board);
-    Score bestValue = stand_pat;
+
     Color color = td->board.sideToMove;
+    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
+    Score stand_pat = inCheck ? VALUE_NONE : evaluation(td->board);
+    Score bestValue = stand_pat;
     
     if (ply > MAX_PLY - 1) return stand_pat;
 
@@ -22,11 +24,11 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
 
     if (depth == 0) return alpha;
 
-    Movelist ml = td->board.capturemoves();
+    Movelist ml = inCheck ? td->board.legalmoves() : td->board.capturemoves();
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = score_qmove(ml.list[i], td->board);
+        ml.list[i].value = inCheck ? score_move(ml.list[i], 0, false, td) : score_qmove(ml.list[i], td->board);
     }
 
     // sort the moves
@@ -65,6 +67,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     Score oldAlpha = alpha;
     bool RootNode = ss->ply == 0;
     Color color = td->board.sideToMove;
+    bool improving;
 
     td->pv_length[ss->ply] = ss->ply;
 
@@ -117,10 +120,16 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     }
 
     // use tt eval for a better staticEval
-    ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
+    ss->eval = inCheck ? VALUE_NONE : staticEval = ttHit ? tte.score : evaluation(td->board);
                                                    
+    if (inCheck) 
+    {
+        improving = 0;
+        goto movesloop;
+    }
+
     // improving boolean, similar to stockfish
-    bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
+    improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
 
     // Razoring
     if (!PvNode
@@ -152,6 +161,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (depth >= 4 && !ttHit)
         depth--;
 
+    movesloop:
     Movelist ml = td->board.legalmoves();
 
     // if the move list is empty, we are in checkmate or stalemate
