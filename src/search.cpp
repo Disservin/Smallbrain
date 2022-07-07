@@ -65,6 +65,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     Score oldAlpha = alpha;
     bool RootNode = ss->ply == 0;
     Color color = td->board.sideToMove;
+    bool improving;
 
     td->pv_length[ss->ply] = ss->ply;
 
@@ -116,11 +117,18 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (alpha >= beta) return tte.score;
     }
 
+    if (inCheck)
+    {
+        ss->eval = staticEval = VALUE_NONE;
+        improving = 0;
+        goto moves;
+    }
+
     // use tt eval for a better staticEval
     ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
-                                                   
+
     // improving boolean, similar to stockfish
-    bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
+    improving = ss->ply >= 2 && staticEval > (ss-2)->eval;
 
     // Razoring
     if (!PvNode
@@ -151,6 +159,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // IID 
     if (depth >= 4 && !ttHit)
         depth--;
+
+    moves:
 
     Movelist ml = td->board.legalmoves();
 
