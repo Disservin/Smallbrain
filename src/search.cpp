@@ -354,7 +354,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
             else if (adjustedTime && td->pv_table[0][0] != reducedTimeMove) {
                 searchTime = startTime * 1.05f;
             }
-            else if (result - 100 > avg) {
+            else if (result - 200 > avg) {
                 searchTime = searchTime * 1.05f;
             }
         }
