@@ -323,6 +323,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     Move previousBestmove;
     bool adjustedTime;
 
+    int avg = 0;
     int result = -VALUE_INFINITE;
     int depth = 1;
 
@@ -350,11 +351,16 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
                 searchTime = searchTime / 3 ;
                 reducedTimeMove = td->pv_table[0][0];
             }
-
-            if (adjustedTime && td->pv_table[0][0] != reducedTimeMove) {
+            else if (adjustedTime && td->pv_table[0][0] != reducedTimeMove) {
                 searchTime = startTime * 1.05f;
             }
+            else if (result - 100 > avg) {
+                searchTime = searchTime * 1.05f;
+            }
         }
+
+        avg += result;
+        avg /= depth;
 
         previousBestmove = td->pv_table[0][0];
         auto ms = elapsed();
