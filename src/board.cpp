@@ -106,22 +106,6 @@ void Board::applyFen(std::string fen) {
     }
     sideToMove = (move_right == "w") ? White : Black;
 
-    std::map<char, Piece> piece_to_int =
-    {
-    { 'P', WhitePawn },
-    { 'N', WhiteKnight },
-    { 'B', WhiteBishop },
-    { 'R', WhiteRook },
-    { 'Q', WhiteQueen },
-    { 'K', WhiteKing },
-    { 'p', BlackPawn },
-    { 'n', BlackKnight },
-    { 'b', BlackBishop },
-    { 'r', BlackRook },
-    { 'q', BlackQueen },
-    { 'k', BlackKing },
-    };
-
     for (int i = 0; i < HIDDEN_BIAS; i++) {
         accumulator[i] = hiddenBias[i];
     }
@@ -129,8 +113,8 @@ void Board::applyFen(std::string fen) {
     Square square = Square(56);
     for (int index = 0; index < (int)position.size(); index++) {
         char curr = position[index];
-        if (piece_to_int.find(curr) != piece_to_int.end()) {
-            Piece piece = piece_to_int[curr];
+        if (charToPiece.find(curr) != charToPiece.end()) {
+            Piece piece = charToPiece[curr];
             placePiece(piece, square);
             square = Square(square + 1);
         }
@@ -276,7 +260,7 @@ std::string Board::printMove(Move& move) {
     std::string m = "";
     m += squareToString[move.from()];
     m += squareToString[move.to()];
-    if (move.promoted()) m += PieceToPromPiece[Piece(move.piece())];
+    if (move.promoted()) m += PieceTypeToPromPiece[move.piece()];
     return m;
 }
 
@@ -518,7 +502,6 @@ U64 Board::LegalPawnNoisy(Color c, Square sq, Square ep) {
     U64 pawnPromote = 0ULL;
     if ((square_rank(sq) == 1 && c == Black) || (square_rank(sq) == 6 && c == White)) {
         pawnPromote = PawnPush(c, sq) & ~occAll;
-        pawnPromote |= PawnPush2(c, sq, pawnPromote);
     }
     return ((attacks & enemy) | pawnPromote) & checkMask;
 }
@@ -727,7 +710,6 @@ Movelist Board::capturemoves() {
         U64 enemy = Enemy(sideToMove);
         while (pawns_mask) {
             Square from = poplsb(pawns_mask);
-            // U64 moves = LegalPawnMoves(sideToMove, from, enPassantSquare) & (enemy | RANK_1 | RANK_8);
             U64 moves = LegalPawnNoisy(sideToMove, from, enPassantSquare);
             while (moves) {
                 Square to = poplsb(moves);

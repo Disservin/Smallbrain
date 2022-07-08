@@ -281,19 +281,9 @@ Move convert_uci_to_Move(std::string input) {
         
         int to_index = (rank - 1) * 8 + file - 1;
         Square target = Square(to_index);
-        std::map<char, int> piece_to_int =
-        {
-        { 'n', 1 },
-        { 'b', 2 },
-        { 'r', 3 },
-        { 'q', 4 },
-        { 'N', 1 },
-        { 'B', 2 },
-        { 'R', 3 },
-        { 'Q', 4 }
-        };
+ 
         char prom = input.at(4);
-        PieceType piece = PieceType(piece_to_int[prom]);
+        PieceType piece = piece_to_int[prom];
         return Move(piece, source, target, true);
     }
     else {
