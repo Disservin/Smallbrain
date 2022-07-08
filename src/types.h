@@ -279,3 +279,7 @@ static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL 
 inline bool operator==(Move& m, Move& m2) {
     return m.move == m2.move;
 }
+
+inline bool operator!=(Move& m, Move& m2) {
+    return m.move == m2.move;
+}
