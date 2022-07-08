@@ -313,6 +313,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         searchTime = startTime = time.optimum;
         maxTime = time.maximum;
         maxNodes = maxN;
+        checkTime = 0;
     }
     ThreadData* td = &this->tds[threadId];
     td->nodes = 0;
@@ -505,7 +506,11 @@ bool Search::exit_early(uint64_t nodes, int ThreadId) {
         stopped = true;
         return true;
     }
-    if (nodes & 2047 && searchTime != 0) {
+
+    if (--checkTime > 0) return false;
+    checkTime = 2047; 
+       
+    if (searchTime != 0) {
         auto ms = elapsed();
         if (ms >= searchTime || ms >= maxTime) {
             stopped = true;
