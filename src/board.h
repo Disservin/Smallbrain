@@ -45,7 +45,7 @@ struct States {
 };
 
 struct Movelist {
-	Move list[256]{};
+	Move list[MAX_MOVES]{};
 	uint8_t size{};
 
 	void Add(Move move) {

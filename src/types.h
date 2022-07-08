@@ -7,12 +7,7 @@
 #define MAX_SQ 64
 
 static constexpr int MAX_PLY = 120;
-
-static constexpr int lmpM[5] = { 0, 4, 8, 12, 24 };
-static constexpr U64 RANK_8 = 18374686479671623680ULL;
-static constexpr U64 RANK_1 = 255ULL;
-static constexpr U64 RANK_2 = 65280ULL;
-static constexpr U64 RANK_7 = 71776119061217280ULL;
+static constexpr int MAX_MOVES = 256;
 
 enum Color : uint8_t {
     White, Black
@@ -96,15 +91,22 @@ static std::unordered_map<char, Piece> charToPiece({
     { '.', None }
     });
 
-static std::unordered_map<Piece, char> PieceToPromPiece({
-    { WhiteKnight, 'n' },
-    { WhiteBishop, 'b' },
-    { WhiteRook, 'r' },
-    { WhiteQueen, 'q' },
-    { BlackKnight, 'n' },
-    { BlackBishop, 'b' },
-    { BlackRook, 'r' },
-    { BlackQueen, 'q' }
+static std::unordered_map<PieceType, char> PieceTypeToPromPiece({
+    { KNIGHT, 'n' },
+    { BISHOP, 'b' },
+    { ROOK, 'r' },
+    { QUEEN, 'q' }
+    });
+
+static std::unordered_map<char, PieceType> piece_to_int({
+    { 'n', KNIGHT },
+    { 'b', BISHOP },
+    { 'r', ROOK },
+    { 'q', QUEEN },
+    { 'N', KNIGHT },
+    { 'B', BISHOP },
+    { 'R', ROOK },
+    { 'Q', QUEEN }
     });
 
 const std::string squareToString[64] = {

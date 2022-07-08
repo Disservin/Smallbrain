@@ -360,14 +360,14 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         auto ms = elapsed();
         uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
     }
+
     if (threadId == 0)
     {
-        if (depth == 1)
-            std::cout << "bestmove " << td->board.printMove(td->pv_table[0][0]) << std::endl;
-        else 
-            std::cout << "bestmove " << td->board.printMove(previousBestmove) << std::endl;
+        Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
+        std::cout << "bestmove " << td->board.printMove(bestmove) << std::endl;
         stopped = true;
     }
+    
     return;
 }
 
