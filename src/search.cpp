@@ -355,7 +355,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
                 searchTime = startTime * 1.05f;
             }
 
-            if (elapsed() > searchTime * 0.8) break;
+            if (elapsed() > searchTime * 0.9) break;
         }
 
         previousBestmove = td->pv_table[0][0];
