@@ -85,7 +85,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
 
-    (ss+1)->excludedmove = NO_MOVE;
+    (ss+1)->excludedmove = ss->excludedmove;
     // Check extension
     if (inCheck) depth++;
 
