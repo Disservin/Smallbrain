@@ -345,7 +345,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
             
             int effort = (spentEffort[previousBestmove.from()][previousBestmove.to()] * 100) / td->nodes;
 
-            if (depth >= 8 && effort >= 95 && searchTime != 0  && !adjustedTime) {
+            if (depth >= 8 && effort >= 95 && !adjustedTime) {
                 adjustedTime = true;
                 searchTime = searchTime / 3 ;
                 reducedTimeMove = td->pv_table[0][0];
@@ -354,6 +354,12 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
             if (adjustedTime && td->pv_table[0][0] != reducedTimeMove) {
                 searchTime = startTime * 1.05f;
             }
+
+            auto ms = elapsed();
+            if (ms >= searchTime || ms >= maxTime) {
+                stopped = true;
+                break;
+            }            
         }
 
         previousBestmove = td->pv_table[0][0];
