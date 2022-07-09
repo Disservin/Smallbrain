@@ -19,6 +19,7 @@ struct Stack {
     uint16_t excludedmove;
     uint16_t ply;
     int eval;
+    bool excluded;
 };
 
 struct ThreadData {

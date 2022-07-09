@@ -85,7 +85,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
 
-    (ss+1)->excludedmove = NO_MOVE;
+    (ss+1)->excluded = ss->excluded;
     // Check extension
     if (inCheck) depth++;
 
@@ -210,6 +210,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         // Singular extension
         if (!RootNode
             && ss->excludedmove == NO_MOVE
+            && !ss->excluded
             && depth >= 8
             && tte.depth >= depth - 3
             && tte.move == move.get()
@@ -219,9 +220,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             Score singCut = tte.score - 2 * depth;
             int singDepth = depth / 2;
 
+            ss->excluded = true;
             ss->excludedmove = move.get();
             Score singScore = absearch(singDepth, singCut - 1, singCut, ss, td);
             ss->excludedmove = NO_MOVE;
+            ss->excluded = false;
 
             if (singScore < singCut)
                 extension = 1;
