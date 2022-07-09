@@ -71,7 +71,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Draw detection and mate pruning
     if (!RootNode) {
         if (td->board.halfMoveClock >= 100) return 0;
-        if (td->board.isRepetition() && (ss-1)->currentmove != nullmove) return - 3 + (td->nodes & 7);
+        if (td->board.isRepetition() && (ss-1)->currentmove != NULLMOVE) return - 3 + (td->nodes & 7);
         int all = popcount(td->board.All());
         if (all == 2) return 0;
         if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight])) return 0;
@@ -104,7 +104,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode 
         && ttHit && tte.depth >= depth
-        && (ss-1)->currentmove != nullmove)
+        && (ss-1)->currentmove != NULLMOVE)
     {
         if (tte.flag == EXACT) return tte.score;
         else if (tte.flag == LOWERBOUND) {
@@ -136,13 +136,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // Null move pruning
     if (td->board.nonPawnMat(color) 
-        && (ss-1)->currentmove != nullmove
+        && (ss-1)->currentmove != NULLMOVE
         && depth >= 3 && !inCheck
         && staticEval >= beta) 
     {
         int r = 3 + depth / 5;
         td->board.makeNullMove();
-        (ss)->currentmove = nullmove;
+        (ss)->currentmove = NULLMOVE;
         Score score = -absearch(depth - r, -beta, -beta + 1, ss+1, td);
         td->board.unmakeNullMove();
         if (score >= beta) return beta;

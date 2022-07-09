@@ -270,7 +270,8 @@ public:
     }
 };
 
-static uint16_t nullmove = Move(NONETYPE, NO_SQ, NO_SQ, false).get();
+static uint16_t NULLMOVE = Move(NONETYPE, NO_SQ, NO_SQ, false).get();
+static uint16_t NO_MOVE = Move(PAWN, SQ_A1, SQ_A1, false).get();
 
 static constexpr U64 WK_CASTLE_MASK = (1ULL << SQ_F1) | (1ULL << SQ_G1);
 static constexpr U64 WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL << SQ_B1);

@@ -8,6 +8,6 @@ extern int piece_values[2][6];
 extern int killerscore1;
 extern int killerscore2;
 
-extern int reductions[MAX_MOVES][120];
+extern int reductions[MAX_MOVES][MAX_PLY];
 
 void init_reductions();
