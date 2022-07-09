@@ -338,6 +338,10 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         if (exit_early(td->nodes, td->id)) break;
         if (threadId != 0) continue;
 
+        previousBestmove = td->pv_table[0][0];
+        auto ms = elapsed();
+        uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
+
         if (searchTime != 0)
         {
             if (rootSize == 1)
@@ -355,16 +359,11 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
                 searchTime = startTime * 1.05f;
             }
 
-            auto ms = elapsed();
             if (ms >= searchTime || ms >= maxTime) {
                 stopped = true;
                 break;
             }            
         }
-
-        previousBestmove = td->pv_table[0][0];
-        auto ms = elapsed();
-        uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
     }
 
     if (threadId == 0)
