@@ -85,6 +85,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
 
+    (ss+1)->excludedmove = NO_MOVE;
     // Check extension
     if (inCheck) depth++;
 
@@ -138,6 +139,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (td->board.nonPawnMat(color) 
         && (ss-1)->currentmove != NULLMOVE
         && depth >= 3 && !inCheck
+        && ss->excludedmove == NO_MOVE
         && staticEval >= beta) 
     {
         int r = 3 + depth / 5;
@@ -177,6 +179,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
+
+        if (move.get() == ss->excludedmove) continue;
+
         bool capture = td->board.pieceAtB(move.to()) != None;
 
         if (!capture) quietMoves.Add(move);
@@ -200,6 +205,31 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
                 && !see(move, -(depth * 100), td->board))
                 continue;
         }
+
+        int extension = 0;
+        // Singular extension
+        if (!RootNode
+            && ss->excludedmove == NO_MOVE
+            && depth >= 8
+            && tte.depth >= depth - 3
+            && tte.move == move.get()
+            && ml.size > 1
+            && (tte.flag == EXACT || tte.flag == LOWERBOUND))
+        {
+            Score singCut = tte.score - 2 * depth;
+            int singDepth = depth / 2;
+
+            ss->excludedmove = move.get();
+            Score singScore = absearch(singDepth, singCut - 1, singCut, ss, td);
+            ss->excludedmove = NO_MOVE;
+
+            if (singScore < singCut)
+                extension = 1;
+            else if (singCut >= beta)
+                return singScore;
+        }
+
+        newDepth += extension;
 
         td->nodes++;
         madeMoves++;
@@ -268,7 +298,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove.get());
+    if (!exit_early(td->nodes, td->id)
+        && ss->excludedmove == NO_MOVE) 
+        store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove.get());
     return best;
 }
 
@@ -329,8 +361,11 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     Stack stack[MAX_PLY+4], *ss = stack+2;
     std::memset(ss-2, 0, 4 * sizeof(Stack));
 
-    for (int i = -2; i <= MAX_PLY + 1; ++i)
+    for (int i = -2; i <= MAX_PLY + 1; ++i) 
+    {
+        (ss+i)->excludedmove = NO_MOVE;
         (ss+i)->ply = i;
+    }   
     
     for (depth = 1; depth <= search_depth; depth++)
     {
