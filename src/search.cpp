@@ -361,7 +361,8 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
             if (adjustedTime && td->pv_table[0][0] != reducedTimeMove)
                 searchTime = startTime * 1.05f;
 
-            if (ms + iterationTime * 2 > maxTime) break;
+            long long nextTime = ms + iterationTime;
+            if (nextTime >= searchTime || nextTime >= maxTime) break;
         }
     }
 
