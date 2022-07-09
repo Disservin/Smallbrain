@@ -334,9 +334,16 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     
     for (depth = 1; depth <= search_depth; depth++)
     {
+        TimePoint::time_point lastIterationTime = TimePoint::now();
         result = aspiration_search(depth, result, ss, td);
+        long long iterationTime = std::chrono::duration_cast<std::chrono::milliseconds>(TimePoint::now() - lastIterationTime).count();
+
         if (exit_early(td->nodes, td->id)) break;
         if (threadId != 0) continue;
+
+        previousBestmove = td->pv_table[0][0];
+        auto ms = elapsed();
+        uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
 
         if (searchTime != 0)
         {
@@ -351,14 +358,11 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
                 reducedTimeMove = td->pv_table[0][0];
             }
 
-            if (adjustedTime && td->pv_table[0][0] != reducedTimeMove) {
+            if (adjustedTime && td->pv_table[0][0] != reducedTimeMove)
                 searchTime = startTime * 1.05f;
-            }
-        }
 
-        previousBestmove = td->pv_table[0][0];
-        auto ms = elapsed();
-        uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
+            if (searchTime + iterationTime * 2 > maxTime) break;
+        }
     }
 
     if (threadId == 0)
