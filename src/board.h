@@ -187,20 +187,21 @@ public:
 	U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
 
 	// returns a pawn push (only 1 square)
-	U64 PawnPush(Color c, Square sq);
-	U64 PawnPush2(Color c, Square sq, U64 push);
+	U64 PawnPushSingle(const Color& c, const Square& sq);
+	U64 PawnPushBoth(const Color& c, const Square& sq);
 
 	// legal captures + promotions
-	U64 LegalPawnNoisy(Color c, Square sq, Square ep);
-	U64 LegalKingCaptures(Color c, Square sq);
+	U64 LegalPawnNoisy(const Color& c, const Square& sq, const Square& ep);
+	U64 LegalKingCaptures(const Color& c, const Square& sq);
 
 	// all legal moves for each piece
-	U64 LegalPawnMoves(Color c, Square sq, Square ep);
-	U64 LegalKnightMoves(Color c, Square sq);
-	U64 LegalBishopMoves(Color c, Square sq);
-	U64 LegalRookMoves(Color c, Square sq);
-	U64 LegalQueenMoves(Color c, Square sq);
-	U64 LegalKingMoves(Color c, Square sq);
+	inline U64 LegalPawnMoves(const Color& c, const Square& sq);
+	inline U64 LegalPawnMovesEP(const Color& c, const Square& sq, const Square& ep);
+	inline U64 LegalKnightMoves(const Color& c, const Square& sq);
+	inline U64 LegalBishopMoves(const Color& c, const Square& sq);
+	inline U64 LegalRookMoves(const Color& c, const Square& sq);
+	inline U64 LegalQueenMoves(const Color& c, const Square& sq);
+	inline U64 LegalKingMoves(const Color& c, const Square& sq);
 
 	// all legal moves for a position
 	Movelist legalmoves();

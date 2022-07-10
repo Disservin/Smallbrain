@@ -9,12 +9,18 @@
 std::vector<std::string> split_input(std::string fen);
 
 //Gets the file index of the square where 0 is the a-file
-uint8_t square_file(Square sq);
+inline uint8_t square_file(Square sq) {
+    return sq & 7;
+}
 
 //Gets the rank index of the square where 0 is the first rank."""
-uint8_t square_rank(Square sq);
+inline uint8_t square_rank(Square sq) {
+    return sq >> 3;
+}
 
-uint8_t square_distance(Square a, Square b);
+inline uint8_t square_distance(Square a, Square b) {
+    return std::max(std::abs(square_file(a) - square_file(b)), std::abs(square_rank(a) - square_rank(b)));
+}
 
 Square bsf(U64 mask);
 Square bsr(U64 mask);
