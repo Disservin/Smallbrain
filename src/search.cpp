@@ -188,64 +188,75 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         Move move = ml.list[i];
         bool capture = td->board.pieceAtB(move.to()) != None;
 
-        if (!capture) quietMoves.Add(move);
-
-        int newDepth = depth - 1;
-        // Pruning
-        if (!RootNode
-            && best > -VALUE_INFINITE) 
+        if (ss->ply < 2)
         {
-            // late move pruning/movecount pruning
-            if (!capture 
-                && !inCheck
-                && !PvNode
-                && !move.promoted()
-                && depth <= 4
-                && quietMoves.size > (4 + depth * depth))
-                continue;
-
-            // See pruning
-            if (depth < 6 
-                && !see(move, -(depth * 100), td->board))
-                continue;
-        }
-
-        td->nodes++;
-        madeMoves++;
-
-        if (td->id == 0 && RootNode && !stopped && elapsed() > 10000 ) 
-            std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move) << " currmovenumber " << madeMoves << "\n";
-
-        td->board.makeMove(move);
-
-	    U64 nodeCount = td->nodes;
-        ss->currentmove = move.get();
-        // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
-
-        // late move reduction
-        if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
-            int rdepth = reductions[madeMoves][depth];
-            rdepth -= td->id % 2;
-            rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
-
-            score = -absearch(rdepth, -alpha - 1, -alpha, ss+1, td);
-            doFullSearch = score > alpha;
+            td->board.makeMove(move);
+            td->board.makeNullMove();
+            score = absearch(depth, alpha, beta, ss+1, td);
+            td->board.unmakeNullMove();
         }
         else
-            doFullSearch = !PvNode || madeMoves > 1;
+        {
+            if (!capture) quietMoves.Add(move);
 
-        // do a full research if lmr failed or lmr was skipped
-        if (doFullSearch) {
-            score = -absearch(newDepth, -alpha - 1, -alpha, ss+1, td);
-        }
+            int newDepth = depth - 1;
+            // Pruning
+            if (!RootNode
+                && best > -VALUE_INFINITE) 
+            {
+                // late move pruning/movecount pruning
+                if (!capture 
+                    && !inCheck
+                    && !PvNode
+                    && !move.promoted()
+                    && depth <= 4
+                    && quietMoves.size > (4 + depth * depth))
+                    continue;
 
-        // PVS search
-        if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(newDepth, -beta, -alpha, ss+1, td);
+                // See pruning
+                if (depth < 6 
+                    && !see(move, -(depth * 100), td->board))
+                    continue;
+            }
+
+            td->nodes++;
+            madeMoves++;
+
+            if (td->id == 0 && RootNode && !stopped && elapsed() > 10000 ) 
+                std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+
+            td->board.makeMove(move);
+
+            U64 nodeCount = td->nodes;
+            ss->currentmove = move.get();
+            // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
+
+            // late move reduction
+            if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
+                int rdepth = reductions[madeMoves][depth];
+                rdepth -= td->id % 2;
+                rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
+
+                score = -absearch(rdepth, -alpha - 1, -alpha, ss+1, td);
+                doFullSearch = score > alpha;
+            }
+            else
+                doFullSearch = !PvNode || madeMoves > 1;
+
+            // do a full research if lmr failed or lmr was skipped
+            if (doFullSearch) {
+                score = -absearch(newDepth, -alpha - 1, -alpha, ss+1, td);
+            }
+
+            // PVS search
+            if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
+                score = -absearch(newDepth, -beta, -alpha, ss+1, td);
+            }
+            spentEffort[move.from()][move.to()] += td->nodes - nodeCount;
         }
 
         td->board.unmakeMove(move);
-	    spentEffort[move.from()][move.to()] += td->nodes - nodeCount;
+	    
 
         if (score > best) {
             best = score;
