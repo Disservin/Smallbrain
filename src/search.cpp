@@ -458,13 +458,13 @@ int Search::mmlva(Move& move, Board& board) {
 
 int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
     if (ttMove && move.get() == TTable[td->board.hashKey % TT_SIZE].move) {
-        return 2147483647 - 1;
+        return 300'000;
     }
     else if (move.promoted()) {
-        return 2147483647 - 20 + move.piece();
+        return 300'000 - 20 + move.piece();
     }
     else if (td->board.pieceAtB(move.to()) != None) {
-        return see(move, -100, td->board) ? mmlva(move, td->board) * 10000 : mmlva(move, td->board);
+        return see(move, -100, td->board) ? mmlva(move, td->board) * 100 : mmlva(move, td->board);
     }
     else if (td->killerMoves[0][ply] == move) {
         return killerscore1;
