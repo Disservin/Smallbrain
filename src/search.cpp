@@ -200,7 +200,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
                 && !inCheck
                 && !PvNode
                 && !move.promoted()
-                && depth <= 4
                 && quietMoves.size > (4 + depth * depth))
                 continue;
 
@@ -464,7 +463,7 @@ int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
         return 2147483647 - 20 + move.piece();
     }
     else if (td->board.pieceAtB(move.to()) != None) {
-        return see(move, -100, td->board) ? mmlva(move, td->board) * 10000 : mmlva(move, td->board);
+        return see(move, -100, td->board) ? mmlva(move, td->board) * 10000 : -mmlva(move, td->board) * 10000;
     }
     else if (td->killerMoves[0][ply] == move) {
         return killerscore1;
