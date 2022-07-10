@@ -126,13 +126,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // use tt eval for a better staticEval
     ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
                                                    
-    // improving boolean, similar to stockfish
+    // improving boolean, similar to stockfish's implementation
     improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
 
     // Razoring
     if (!PvNode
         && depth < 2
-        && staticEval + 240 < alpha)
+        && staticEval + 140 <= alpha)
         return qsearch(15, alpha, beta, ss->ply, td);
 
     // Reverse futility pruning
