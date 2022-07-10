@@ -137,7 +137,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !PvNode) {
-        if (depth <= 8 && staticEval - 150 * depth + 100 * improving >= beta) return beta;
+        if (depth <= 8 && staticEval - 150 * depth / (1 +  improving) >= beta) return beta;
     }
 
     // Null move pruning
