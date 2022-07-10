@@ -293,11 +293,14 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         beta = prev_eval + 50;
     }
 
+    resolveFail = false;
+
     while (true) {
         if (stopped) return 0;
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
         result = absearch(depth, alpha, beta, ss, td);
+
         if (result <= alpha) {
             research++;
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
@@ -308,6 +311,13 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         }
         else {
             return result;
+        }
+        
+        if (td->id == 0 && stopped && elapsed() < maxTime) 
+        {
+            stopped = false;
+            searchTime = maxTime;
+            resolveFail = true;
         }
     }
 }
@@ -346,6 +356,16 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         if (exit_early(td->nodes, td->id)) break;
         if (threadId != 0) continue;
 
+        previousBestmove = td->pv_table[0][0];
+        auto ms = elapsed();
+        uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
+
+        if (resolveFail)
+        {
+            stopped = true;
+            break;
+        }
+
         if (searchTime != 0)
         {
             if (rootSize == 1)
@@ -363,10 +383,6 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
                 searchTime = startTime * 1.05f;
             }
         }
-
-        previousBestmove = td->pv_table[0][0];
-        auto ms = elapsed();
-        uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
     }
 
     if (threadId == 0)

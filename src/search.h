@@ -55,6 +55,8 @@ public:
     int64_t maxTime{};
     int checkTime;
     
+    bool resolveFail;
+
     U64 spentEffort[MAX_SQ][MAX_SQ];
     int rootSize;
     TimePoint::time_point t0;
