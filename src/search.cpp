@@ -95,16 +95,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (depth <= 0) return qsearch(15, alpha, beta, ss->ply, td);
 
     // Selective depth (heighest depth we have ever reached)
-    if (ss->ply > td->seldepth) td->seldepth = ss->ply;
-    if (inCheck)
-    {
-        improving = false;
-        staticEval = VALUE_NONE;
-        goto moves;
-    } 
+    if (ss->ply > td->seldepth) td->seldepth = ss->ply; 
 
     // Look up in the TT
-    
     ttHit = false;
     probe_tt(tte, ttHit, td->board.hashKey, depth);
 
@@ -123,6 +116,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (alpha >= beta) return tte.score;
     }
 
+    if (inCheck)
+    {
+        improving = false;
+        staticEval = VALUE_NONE;
+        goto moves;
+    }
+    
     // use tt eval for a better staticEval
     ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
                                                    
