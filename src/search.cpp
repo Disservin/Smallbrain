@@ -61,11 +61,14 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (exit_early(td->nodes, td->id)) return 0;
     if (ss->ply > MAX_PLY - 1) return evaluation(td->board);
 
+    TEntry tte;
     Score best = -VALUE_INFINITE;
+    Score staticEval;
     Score oldAlpha = alpha;
     bool RootNode = ss->ply == 0;
+    bool improving, ttHit;
     Color color = td->board.sideToMove;
-
+    
     td->pv_length[ss->ply] = ss->ply;
 
     // Draw detection and mate pruning
@@ -92,13 +95,10 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (depth <= 0) return qsearch(15, alpha, beta, ss->ply, td);
 
     // Selective depth (heighest depth we have ever reached)
-    if (ss->ply > td->seldepth) td->seldepth = ss->ply;
-
-    Score staticEval;
+    if (ss->ply > td->seldepth) td->seldepth = ss->ply; 
 
     // Look up in the TT
-    TEntry tte;
-    bool ttHit = false;
+    ttHit = false;
     probe_tt(tte, ttHit, td->board.hashKey, depth);
 
     // Adjust alpha and beta for non PV nodes
@@ -116,11 +116,18 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (alpha >= beta) return tte.score;
     }
 
+    if (inCheck)
+    {
+        improving = false;
+        staticEval = VALUE_NONE;
+        goto moves;
+    }
+    
     // use tt eval for a better staticEval
     ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
                                                    
     // improving boolean, similar to stockfish
-    bool improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
+    improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
 
     // Razoring
     if (!PvNode
@@ -152,6 +159,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (depth >= 4 && !ttHit)
         depth--;
 
+    moves:
     Movelist ml = td->board.legalmoves();
 
     // if the move list is empty, we are in checkmate or stalemate
@@ -166,16 +174,17 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     if (RootNode && td->id == 0) rootSize = ml.size;
 
-    // sort the moves
-    sortMoves(ml, 0);
-
     Move bestMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
     Movelist quietMoves;
     uint16_t madeMoves = 0;
     Score score = 0;
     bool doFullSearch = false;
 
+
     for (int i = 0; i < ml.size; i++) {
+        // sort the moves
+        sortMoves(ml, i);
+
         Move move = ml.list[i];
         bool capture = td->board.pieceAtB(move.to()) != None;
 
@@ -262,7 +271,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
                 }
             }
         }
-        sortMoves(ml, i + 1);
     }
     if (best >= beta && td->board.pieceAtB(bestMove.to()) == None)
         UpdateHH(bestMove, depth, quietMoves, td);
