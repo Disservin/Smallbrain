@@ -132,19 +132,19 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Razoring
     if (!PvNode
         && depth < 2
-        && staticEval + 640 < alpha
-        && !inCheck)
+        && staticEval + 240 < alpha)
         return qsearch(15, alpha, beta, ss->ply, td);
 
     // Reverse futility pruning
-    if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
-        if (depth < 7 && staticEval - 150 * depth + 100 * improving >= beta) return beta;
+    if (std::abs(beta) < VALUE_MATE_IN_PLY && !PvNode) {
+        if (depth <= 8 && staticEval - 150 * depth + 100 * improving >= beta) return beta;
     }
 
     // Null move pruning
     if (td->board.nonPawnMat(color) 
         && (ss-1)->currentmove != NULLMOVE
-        && depth >= 3 && !inCheck
+        && depth >= 3
+        && !PvNode
         && staticEval >= beta) 
     {
         int r = 3 + depth / 5;
