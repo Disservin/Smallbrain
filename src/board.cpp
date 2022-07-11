@@ -550,13 +550,9 @@ U64 Board::LegalPawnMovesEP(const Color& c, const Square& sq, const Square& ep) 
     if (pinD & (1ULL << sq)) return PawnAttacks(sq, c) & pinD & checkMask & (Enemy(c) | (1ULL << ep));
 
     // Calculate pawn pushs
-    // since the distance has to be 1 between the ep square and the from square
-    // we can only do a push and no double push
-    // this is checked in legalmovegen
-    // U64 push = PawnPushSingle(c, sq)
     
     // If we are pinned horizontally we can do no moves but if we are pinned vertically we can only do pawn pushs
-    if (pinHV & (1ULL << sq)) return PawnPushSingle(c, sq) & pinHV & checkMask;
+    if (pinHV & (1ULL << sq)) return PawnPushBoth(c, sq) & pinHV & checkMask;
     U64 attacks = PawnAttacks(sq, c);
     if (checkMask != 18446744073709551615ULL)
     {
@@ -564,10 +560,10 @@ U64 Board::LegalPawnMovesEP(const Color& c, const Square& sq, const Square& ep) 
         // return the ep mask as a move square
         if (attacks & (1ULL << ep) && checkMask & (1ULL << (ep - (c * -2 + 1) * 8))) return 1ULL << ep;
         // If we are in check we can do all moves that are on the checkmask
-        return ((attacks & Enemy(c)) | PawnPushSingle(c, sq)) & checkMask;
+        return ((attacks & Enemy(c)) | PawnPushBoth(c, sq)) & checkMask;
     }
 
-    U64 moves = ((attacks & Enemy(c)) | PawnPushSingle(c, sq)) & checkMask;
+    U64 moves = ((attacks & Enemy(c)) | PawnPushBoth(c, sq)) & checkMask;
     // We need to make extra sure that ep moves dont leave the king in check
     // 7k/8/8/K1Pp3r/8/8/8/8 w - d6 0 1 
     // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant 
@@ -575,14 +571,15 @@ U64 Board::LegalPawnMovesEP(const Color& c, const Square& sq, const Square& ep) 
     if ((1ULL << ep) & attacks) {
         Square tP = c == White ? Square((int)ep - 8) : Square((int)ep + 8);
         Square kSQ = KingSQ(c);
-        if ((Rooks(~c) | Queens(~c)) & MASK_RANK[square_rank(kSQ)])
+        U64 enemyQueenRook = Rooks(~c) | Queens(~c);
+        if ((enemyQueenRook) & MASK_RANK[square_rank(kSQ)])
         {
             Piece ourPawn = makePiece(PAWN, c);
             Piece theirPawn = makePiece(PAWN, ~c);
             removePieceSimple(ourPawn, sq);
             removePieceSimple(theirPawn, tP);
             placePieceSimple(ourPawn, ep);
-            if (!((RookAttacks(kSQ, All()) & (Rooks(~c) | Queens(~c))))) moves |= (1ULL << ep);
+            if (!((RookAttacks(kSQ, All()) & (enemyQueenRook)))) moves |= (1ULL << ep);
             placePieceSimple(ourPawn, sq);
             placePieceSimple(theirPawn, tP);
             removePieceSimple(ourPawn, ep);            
@@ -679,7 +676,7 @@ Movelist Board::legalmoves() {
 
         while (pawns_mask) {
             Square from = poplsb(pawns_mask);
-            U64 moves = noEP || square_distance(from, enPassantSquare) != 1 
+            U64 moves =   noEP
                         ? LegalPawnMoves(sideToMove, from) 
                         : LegalPawnMovesEP(sideToMove, from, enPassantSquare);
             while (moves) {
