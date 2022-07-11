@@ -270,6 +270,22 @@ public:
     }
 };
 
+inline Square from(uint16_t move) {
+    return Square(move & 0b111111);
+}
+
+inline Square to(uint16_t move) {
+    return Square((move & 0b111111000000) >> 6);
+}
+
+inline PieceType piece(uint16_t move) {
+    return PieceType((move & 0b111000000000000) >> 12);
+}
+
+inline bool promoted(uint16_t move) {
+    return bool((move & 0b1000000000000000) >> 15);
+}
+
 static uint16_t NULLMOVE = Move(NONETYPE, NO_SQ, NO_SQ, false).get();
 static uint16_t NO_MOVE = Move(PAWN, SQ_A1, SQ_A1, false).get();
 

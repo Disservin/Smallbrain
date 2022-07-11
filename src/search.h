@@ -77,7 +77,7 @@ public:
     int mmlva(Move& move, Board& board);
 
     // scoring functions
-    int score_move(Move& move, int ply, bool ttMove, ThreadData *td);
+    int score_move(Move& move, int ply, bool ttMove, ThreadData *td, Stack *ss);
     int score_qmove(Move& move, Board& board);
     
     // utility functions
