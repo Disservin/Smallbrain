@@ -404,9 +404,11 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
         this->tds[i].board = board;
         this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, i);
     }
+
     this->tds[0].board = board;
     this->tds[0].id = 0;
     Search::iterative_deepening(search_depth, maxN, time, 0);
+    std::cout << "size: " << threads.size() << std::endl;
     for (std::thread& th: threads) {
         if (th.joinable())
             th.join();
