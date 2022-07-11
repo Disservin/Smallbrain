@@ -68,7 +68,7 @@ public:
 	U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ]{};
 
 	// all bits set
-	U64 checkMask = 18446744073709551615ULL;
+	U64 checkMask = DEFAULT_CHECKMASK;
 
 	U64 pinHV{};
 	U64 pinD{};
@@ -202,6 +202,7 @@ public:
 	U64 LegalRookMoves(Color c, Square sq);
 	U64 LegalQueenMoves(Color c, Square sq);
 	U64 LegalKingMoves(Color c, Square sq);
+	U64 LegalKingMovesCastling(Color c, Square sq);
 
 	// all legal moves for a position
 	Movelist legalmoves();

@@ -9,6 +9,8 @@
 static constexpr int MAX_PLY = 120;
 static constexpr int MAX_MOVES = 256;
 
+static constexpr U64 DEFAULT_CHECKMASK = 18446744073709551615ULL;
+
 enum Color : uint8_t {
     White, Black
 };
