@@ -202,6 +202,7 @@ public:
 	U64 LegalRookMoves(Color c, Square sq);
 	U64 LegalQueenMoves(Color c, Square sq);
 	U64 LegalKingMoves(Color c, Square sq);
+	U64 LegalKingMovesCastling(Color c, Square sq);
 
 	// all legal moves for a position
 	Movelist legalmoves();

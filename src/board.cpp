@@ -631,7 +631,7 @@ U64 Board::LegalKingMoves(Color c, Square sq) {
     return final_moves;
 }
 
-U64 Board::LegalKingMovesCastling(const Color& c, const Square& sq) {
+U64 Board::LegalKingMovesCastling(Color c, Square sq) {
     U64 moves = KingAttacks(sq) & enemyEmptyBB;
 
     // king is blocked by own pieces
