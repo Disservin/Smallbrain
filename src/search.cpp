@@ -395,7 +395,12 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
     threads.clear();
     stopped = false;
     // If we dont have previous data create default data
-    for (int i = tds.size(); i < workers; i++) {
+    if (tds.size() > 1) {
+        for (int i = tds.size(); i > 1; i--) {
+            tds.pop_back();
+        }
+    }
+    for (int i = 1; i < workers; i++) {
         ThreadData td;
         td.board = board;
         td.id = i;

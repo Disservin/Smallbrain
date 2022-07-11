@@ -50,6 +50,12 @@ int main(int argc, char** argv) {
     // making sure threads and tds are really clear
     searcher.threads.clear();
     searcher.tds.clear();
+
+    // create mainthread
+    ThreadData td;
+    td.board = board;
+    td.id = 0;
+    searcher.tds.emplace_back(td);
     while (true) {
         // ./smallbrain bench
         if (argc > 1) {
