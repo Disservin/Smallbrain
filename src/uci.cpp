@@ -299,7 +299,7 @@ void stop_threads()
 {
     stopped = true;
     if (searchThread.joinable()) {
-        searchThread.join();
+        searchThread.detach();
     }
     // for (std::thread& th: searcher.threads) {
     //     if (th.joinable())
