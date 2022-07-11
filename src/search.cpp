@@ -372,6 +372,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     if (threadId == 0)
     {
         stopped = true;
+        return;
         for (std::thread& th : threads) {
             th.join();
         }
