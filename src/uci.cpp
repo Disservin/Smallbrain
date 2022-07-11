@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <math.h> 
 #include <fstream>
+#include <thread>
 
 std::atomic<bool> stopped;
 
@@ -21,6 +22,7 @@ Board board = Board();
 Search searcher = Search();
 NNUE nnue = NNUE();
 
+std::thread searchThread;
 int threads = 1;
 
 int main(int argc, char** argv) {
@@ -200,7 +202,8 @@ int main(int argc, char** argv) {
             }
             stopped = false;
             // start search
-            searcher.start_thinking(board, threads, depth, nodes, time);
+            searchThread = std::thread(&Search::start_thinking, &searcher, board, threads, depth, nodes, time);
+            // searcher.start_thinking(board, threads, depth, nodes, time);
         }
         // ENGINE SPECIFIC
         if (input == "print") {
@@ -294,9 +297,13 @@ Move convert_uci_to_Move(std::string input) {
 
 void stop_threads()
 {
-    for (std::thread& th: searcher.threads) {
-        if (th.joinable())
-            th.join();
+    stopped = true;
+    if (searchThread.joinable()) {
+        searchThread.join();
     }
-    searcher.threads.clear();    
+    // for (std::thread& th: searcher.threads) {
+    //     if (th.joinable())
+    //         th.join();
+    // }
+    // searcher.threads.clear();    
 }

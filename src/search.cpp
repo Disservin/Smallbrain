@@ -371,9 +371,14 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
 
     if (threadId == 0)
     {
-        Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
-        std::cout << "bestmove " << td->board.printMove(bestmove) << std::endl;
         stopped = true;
+        for (std::thread& th : threads) {
+            th.join();
+        }
+        threads.clear();
+
+        Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
+        std::cout << "bestmove " << td->board.printMove(bestmove) << std::endl; 
     }
     
     return;
@@ -395,13 +400,19 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
         this->tds.push_back(td);
     }
 
-    this->tds[0].board = board;
-    this->tds[0].id = 0;
-    this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, 0);
     for (int i = 1; i < workers; i++) {
         this->tds[i].board = board;
         this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, i);
     }
+    this->tds[0].board = board;
+    this->tds[0].id = 0;
+    Search::iterative_deepening(search_depth, maxN, time, 0);
+    for (std::thread& th: threads) {
+        if (th.joinable())
+            th.join();
+    }
+    threads.clear();    
+    return;
 }
 
 // Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
