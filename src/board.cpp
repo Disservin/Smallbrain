@@ -258,6 +258,7 @@ PieceType Board::piece_type(Piece piece) {
 
 std::string Board::printMove(Move& move) {
     std::string m = "";
+    std::cout << "Move: " << move.from() << " " << move.to() << " "<< move.promoted()<< std::endl;
     m += squareToString[move.from()];
     m += squareToString[move.to()];
     if (move.promoted()) m += PieceTypeToPromPiece[move.piece()];
