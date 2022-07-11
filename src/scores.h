@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-extern int piece_values[2][6];
+extern int piece_values[2][7];
 
 extern int killerscore1;
 extern int killerscore2;
