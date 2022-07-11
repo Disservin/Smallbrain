@@ -187,15 +187,16 @@ public:
 	U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
 
 	// returns a pawn push (only 1 square)
-	U64 PawnPush(Color c, Square sq);
-	U64 PawnPush2(Color c, Square sq, U64 push);
+	U64 PawnPushSingle(Color c, Square sq);
+	U64 PawnPushBoth(Color c, Square sq);
 
 	// legal captures + promotions
 	U64 LegalPawnNoisy(Color c, Square sq, Square ep);
 	U64 LegalKingCaptures(Color c, Square sq);
 
 	// all legal moves for each piece
-	U64 LegalPawnMoves(Color c, Square sq, Square ep);
+	U64 LegalPawnMoves(Color c, Square sq);
+	U64 LegalPawnMovesEP(Color c, Square sq, Square ep);
 	U64 LegalKnightMoves(Color c, Square sq);
 	U64 LegalBishopMoves(Color c, Square sq);
 	U64 LegalRookMoves(Color c, Square sq);
