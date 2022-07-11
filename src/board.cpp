@@ -100,10 +100,25 @@ void Board::applyFen(std::string fen) {
     // default
     std::string half_move_clock = "0";
     std::string full_move_counter = "1";
-    if (params.size() > 4) {
+    size_t size = params.size();
+
+    if (size == 4) {
+        half_move_clock = "0";
+        full_move_counter = "1";
+    }
+    else if (size == 5) {
+        half_move_clock = params[4];
+        full_move_counter = "1";
+    }
+    else if (size == 6) {
         half_move_clock = params[4];
         full_move_counter = params[5];
     }
+    else if (size > 6) {
+        half_move_clock = "0";
+        full_move_counter = "1";
+    }
+
     sideToMove = (move_right == "w") ? White : Black;
 
     for (int i = 0; i < HIDDEN_BIAS; i++) {
