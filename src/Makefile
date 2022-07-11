@@ -19,10 +19,22 @@ else
 	uname_S := $(shell uname -s)
 endif
 ifeq ($(uname_S), Darwin)
-	NATIVE = -mcpu=apple-a14
+	NATIVE = -mcpu=apple-a14	
+	CXFLAGS = 
 else
+ifeq ($(uname_S), Linux)
 	NATIVE = -march=native
-	CFLAGS = -static -static-libgcc -static-libstdc++
+	CFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+else
+ifeq ($(OS), Windows_NT)
+	NATIVE = -march=native
+	CFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+endif
+endif
+endif
+
+ifeq ($(build), release)
+	CFLAGS = -static-libgcc -static-libstdc++ -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 endif
 
 SRCS := $(wildcard *.cpp)
@@ -33,7 +45,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(EXE) $^ $(CXFLAGS)
 %.o: %.cpp
-	$(CC) -c $(CFLAGS) $(NATIVE) -DEVALFILE=\"$(EVALFILE)\" -flto -O3 -std=c++20 -Wall $< $(CXFLAGS)
+	$(CC) -c $(CFLAGS) $(NATIVE) -DEVALFILE=\"$(EVALFILE)\" -flto -O3 -std=c++17 -Wall $< $(CXFLAGS)
 clean:
 	rm -rf $(TARGET) *.o
 	
