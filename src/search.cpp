@@ -343,7 +343,6 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     for (depth = 1; depth <= search_depth; depth++)
     {
         result = aspiration_search(depth, result, ss, td);
-        if (stopped) std::cout << "stopped" << std::endl;
         if (exit_early(td->nodes, td->id)) break;
         if (threadId != 0) continue;
 
@@ -378,7 +377,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         }
         threads.clear();
 
-        
+        if (stopped) std::cout << "stopped" << std::endl;
         Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
         std::cout << "bestmove " << td->board.printMove(bestmove) << std::endl; 
     }
