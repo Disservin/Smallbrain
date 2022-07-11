@@ -479,16 +479,16 @@ int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
 
 int Search::score_qmove(Move& move, Board& board) {
     if (move.promoted()) {
-        return 9'000 + move.piece();
+        int victim = board.pieceAtB(move.to()) == None ? -1 : board.piece_type(board.pieceAtB(move.to()));
+        return 5'000 + move.piece() + victim;
     }
-    else if (board.pieceAtB(move.to()) != None) {
-        if (board.piece_type(board.pieceAtB(move.to())) > move.piece())
-            return see(move, -100, board) ? 8'000 + mmlva(move, board) : -mmlva(move, board);
-        return mmlva(move, board);
+    PieceType victim = board.piece_type(board.pieceAtB(move.to()));
+    if (victim != NONETYPE) {
+        if (std::abs(victim - move.piece()) == 1)
+            return see(move, -100, board) ? 2'000 + mmlva(move, board) : mmlva(move, board);
+        return 1'000 + mmlva(move, board);
     }
-    else {
-        return 0;
-    }
+    return 0;
 }
 
 std::string Search::get_pv() {
