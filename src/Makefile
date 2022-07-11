@@ -33,7 +33,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(EXE) $^ $(CXFLAGS)
 %.o: %.cpp
-	$(CC) -c $(CFLAGS) $(NATIVE) -DEVALFILE=\"$(EVALFILE)\" -flto -O3 -std=c++20 -Wall $< $(CXFLAGS)
+	$(CC) -c $(CFLAGS) $(NATIVE) -DEVALFILE=\"$(EVALFILE)\" -flto -O3 -std=c++17 -Wall $< $(CXFLAGS)
 clean:
 	rm -rf $(TARGET) *.o
 	
