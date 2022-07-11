@@ -17,6 +17,8 @@ extern int16_t hiddenBias[HIDDEN_BIAS];
 extern int16_t hiddenWeights[HIDDEN_WEIGHTS];
 extern int32_t outputBias[OUTPUT_BIAS];
 
+static constexpr U64 DEFAULT_CHECKMASK = 18446744073709551615ULL;
+
 struct State {
 	Square enPassant{};
 	uint8_t castling{};
