@@ -451,7 +451,7 @@ bool Search::see(Move& move, int threshold, Board& board) {
 }
 
 int Search::mmlva(Move& move, Board& board) {
-    int attacker = board.piece_type(board.pieceAtB(move.from())) + 1;
+    int attacker = move.piece() + 1;
     int victim = board.piece_type(board.pieceAtB(move.to())) + 1;
     return mvvlva[victim][attacker];
 }
@@ -479,10 +479,12 @@ int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
 
 int Search::score_qmove(Move& move, Board& board) {
     if (move.promoted()) {
-        return 2147483647 - 20 + move.piece();
+        return 9'000 + move.piece();
     }
     else if (board.pieceAtB(move.to()) != None) {
-        return see(move, -100, board) ? mmlva(move, board) * 10000 : mmlva(move, board);
+        if (board.piece_type(board.pieceAtB(move.to())) > move.piece())
+            return see(move, -100, board) ? 8'000 + mmlva(move, board) : -mmlva(move, board);
+        return mmlva(move, board);
     }
     else {
         return 0;

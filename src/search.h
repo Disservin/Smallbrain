@@ -39,6 +39,7 @@ struct ThreadData {
     uint64_t nodes{};
 };
 
+// mvvlva[victim][attacker]
 static constexpr int mvvlva[7][7] = { {0, 0, 0, 0, 0, 0, 0},
                                     {0, 205, 204, 203, 202, 201, 200},
                                     {0, 305, 304, 303, 302, 301, 300},
