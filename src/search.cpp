@@ -132,7 +132,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Razoring
     if (!PvNode
         && depth < 2
-        && staticEval + 640 < alpha
+        && staticEval + 240 < alpha
         && !inCheck)
         return qsearch(15, alpha, beta, ss->ply, td);
 
