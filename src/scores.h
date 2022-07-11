@@ -4,6 +4,7 @@
 #include <cmath>
 
 extern int piece_values[2][6];
+extern int CAP_SCORES[4];
 
 extern int killerscore1;
 extern int killerscore2;

@@ -27,6 +27,10 @@ uint8_t square_distance(Square a, Square b) {
     return std::max(std::abs(square_file(a) - square_file(b)), std::abs(square_rank(a) - square_rank(b)));
 }
 
+PieceType piece_type(Piece piece) {
+    if (piece == None) return NONETYPE;
+    return PieceType(piece % 6);
+}
 
 // Compiler specific functions, taken from Stockfish https://github.com/official-stockfish/Stockfish
 #if defined(__GNUC__)  // GCC, Clang, ICC

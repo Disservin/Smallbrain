@@ -115,6 +115,22 @@ int main(int argc, char** argv) {
             {
                 threads = std::stoi(value); 
             }
+            else if (option == "s0")
+            {
+                CAP_SCORES[0] = std::stoi(value);
+            }
+            else if (option == "s1")
+            {
+                CAP_SCORES[1] = std::stoi(value);
+            }
+            else if (option == "s2")
+            {
+                CAP_SCORES[2] = std::stoi(value);
+            }
+            else if (option == "s3")
+            {
+                CAP_SCORES[3] = std::stoi(value);
+            }
         }
         if (input.find("position") != std::string::npos) {
             if (tokens[1] == "fen") 

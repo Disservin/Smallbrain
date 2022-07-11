@@ -9,6 +9,7 @@
 #include "tt.h"
 #include "timemanager.h"
 #include "evaluation.h"
+#include "helper.h"
 
 extern std::atomic<bool> stopped;
 extern TEntry* TTable;

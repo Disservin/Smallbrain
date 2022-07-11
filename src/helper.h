@@ -16,6 +16,8 @@ uint8_t square_rank(Square sq);
 
 uint8_t square_distance(Square a, Square b);
 
+PieceType piece_type(Piece piece);
+
 Square bsf(U64 mask);
 Square bsr(U64 mask);
 uint8_t popcount(U64 mask);
