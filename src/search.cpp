@@ -169,7 +169,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = score_move(ml.list[i], ss->ply, ttHit, td);
+        ml.list[i].value = score_move(ml.list[i], ss->ply, ttHit, td, ss);
     }
 
     if (RootNode && td->id == 0) rootSize = ml.size;
@@ -456,7 +456,7 @@ int Search::mmlva(Move& move, Board& board) {
     return mvvlva[victim][attacker];
 }
 
-int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
+int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td, Stack *ss) {
     if (ttMove && move.get() == TTable[td->board.hashKey % TT_SIZE].move) {
         return 10'000'000;
     }
@@ -464,7 +464,10 @@ int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
         return 9'000'000 + move.piece();
     }
     else if (td->board.pieceAtB(move.to()) != None) {
-        return see(move, -100, td->board) ? 7'000'000 + mmlva(move, td->board) : mmlva(move, td->board);
+        PieceType victim = td->board.piece_type(td->board.pieceAtB(move.to()));
+        if (std::abs(victim - move.piece()) == 1)
+            return see(move, -100, td->board) ? 7'000'000 + mmlva(move, td->board) + 1'000 : 7'000'000 + mmlva(move, td->board);
+        return 7'000'000 + mmlva(move, td->board);
     }
     else if (td->killerMoves[0][ply] == move) {
         return killerscore1;
