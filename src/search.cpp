@@ -380,7 +380,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         
         Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
         std::cout << "bestmove " << td->board.printMove(bestmove) << std::endl; 
-        if (stopped) std::cout << "stopped" << std::endl;
+        if (stopped) std::cout << "stopped2" << std::endl;
     }
     
     return;
@@ -409,8 +409,9 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
 
     this->tds[0].board = board;
     this->tds[0].id = 0;
+    std::cout << "size: " << tds.size() << std::endl;
     Search::iterative_deepening(search_depth, maxN, time, 0);
-    std::cout << "size: " << threads.size() << std::endl;
+    
     for (std::thread& th: threads) {
         if (th.joinable())
             th.join();
