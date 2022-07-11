@@ -14,7 +14,7 @@ ifeq ($(OS), Windows_NT)
 	CXFLAGS  = -pthread -lstdc++
 	SUFFIX  := .exe
 else
-	CXFLAGS  = -pthread -lstdc++
+	CXFLAGS  = -D_GLIBCXX_GTHREAD_USE_WEAK=0 -static -pthread -lstdc++
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
 endif
