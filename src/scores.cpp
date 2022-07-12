@@ -2,6 +2,23 @@
 
 int piece_values[2][7] = { { 98, 337, 365, 477, 1025, 0, 0}, { 114, 281, 297, 512,  936, 0, 0} };
 
+int razor_margin = 240;
+
+int fut_margin_1 = 150;
+int fut_margin_2 = 100;
+
+int nmp_depth = 5;
+int nmp_depth_divisor = 256;
+
+int late_move_pruning_depth = 4;
+int late_move_pruning_th = 4;
+
+int seeDepth = 6;
+int seeThreshold = 100;
+
+int lmr_margin = 3;
+int lmr_margin_2 = 2;
+
 int killerscore1 = 6'000'000;
 int killerscore2 = 5'000'000;
 

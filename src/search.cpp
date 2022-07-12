@@ -132,13 +132,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Razoring
     if (!PvNode
         && depth < 2
-        && staticEval + 240 < alpha
+        && staticEval + razor_margin < alpha
         && !inCheck)
         return qsearch(15, alpha, beta, ss->ply, td);
 
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
-        if (depth < 7 && staticEval - 150 * depth + 100 * improving >= beta) return beta;
+        if (depth < 7 && staticEval - fut_margin_1 * depth + fut_margin_2 * improving >= beta) return beta;
     }
 
     // Null move pruning
@@ -147,7 +147,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         && depth >= 3 && !inCheck
         && staticEval >= beta) 
     {
-        int r = 5 + depth / 5 + std::min(3, (staticEval - beta) / 256);
+        int r = nmp_depth + depth / 5 + std::min(3, (staticEval - beta) / nmp_depth_divisor);
         td->board.makeNullMove();
         (ss)->currentmove = NULLMOVE;
         Score score = -absearch(depth - r, -beta, -beta + 1, ss+1, td);
@@ -200,13 +200,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
                 && !inCheck
                 && !PvNode
                 && !move.promoted()
-                && depth <= 4
-                && quietMoves.size > (4 + depth * depth))
+                && depth <= late_move_pruning_depth
+                && quietMoves.size > (late_move_pruning_th + depth * depth))
                 continue;
 
             // See pruning
-            if (depth < 6 
-                && !see(move, -(depth * 100), td->board))
+            if (depth < seeDepth
+                && !see(move, -(depth * seeThreshold), td->board))
                 continue;
         }
 
@@ -223,7 +223,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
 
         // late move reduction
-        if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
+        if (depth >= 3 && !inCheck && madeMoves > lmr_margin + lmr_margin_2 * PvNode) {
             int rdepth = reductions[madeMoves][depth];
             rdepth -= td->id % 2;
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);

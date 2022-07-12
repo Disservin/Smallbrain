@@ -115,6 +115,51 @@ int main(int argc, char** argv) {
             {
                 threads = std::stoi(value); 
             }
+            // TUNING
+            else if (option == "razor_margin")
+            {
+                razor_margin = std::stoi(value); 
+            }
+            else if (option == "fut_margin_1")
+            {
+                fut_margin_1 = std::stoi(value); 
+            }
+            else if (option == "fut_margin_2")
+            {
+                fut_margin_2 = std::stoi(value); 
+            }
+            else if (option == "nmp_depth")
+            {
+                nmp_depth = std::stoi(value); 
+            }
+            else if (option == "nmp_depth_divisor")
+            {
+                nmp_depth_divisor = std::stoi(value); 
+            }
+            else if (option == "late_move_pruning_depth")
+            {
+                late_move_pruning_depth = std::stoi(value); 
+            }
+            else if (option == "late_move_pruning_th")
+            {
+                late_move_pruning_th = std::stoi(value); 
+            }
+            else if (option == "seeDepth")
+            {
+                seeDepth = std::stoi(value); 
+            }
+            else if (option == "seeThreshold")
+            {
+                seeThreshold = std::stoi(value); 
+            }
+            else if (option == "lmr_margin")
+            {
+                lmr_margin = std::stoi(value); 
+            }
+            else if (option == "lmr_margin_2")
+            {
+                lmr_margin_2 = std::stoi(value); 
+            }
         }
         if (input.find("position") != std::string::npos) {
             if (tokens[1] == "fen") 
