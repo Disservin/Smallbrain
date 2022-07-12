@@ -482,7 +482,7 @@ int Search::score_qmove(Move& move, Board& board) {
         return 2147483647 - 20 + move.piece();
     }
     else if (board.pieceAtB(move.to()) != None) {
-        return see(move, -100, board) ? mmlva(move, board) * 10000 : mmlva(move, board);
+        return see(move, -100, board) ? mmlva(move, board) + s0 : mmlva(move, board) + s1;
     }
     else {
         return 0;

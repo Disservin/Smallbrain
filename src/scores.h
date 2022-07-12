@@ -5,6 +5,9 @@
 
 extern int piece_values[2][7];
 
+extern int s0;
+extern int s1;
+
 extern int killerscore1;
 extern int killerscore2;
 

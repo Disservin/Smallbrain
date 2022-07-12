@@ -115,6 +115,14 @@ int main(int argc, char** argv) {
             {
                 threads = std::stoi(value); 
             }
+            else if (option == "s0")
+            {
+                s0 = std::stoi(value);
+            }
+            else if (option == "s1")
+            {
+                s1 = std::stoi(value);
+            }
         }
         if (input.find("position") != std::string::npos) {
             if (tokens[1] == "fen") 
