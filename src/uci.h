@@ -5,6 +5,7 @@
 #include <atomic>
 #include <thread>
 #include <algorithm>
+#include <cstring>
 
 #include "board.h"
 #include "search.h"
@@ -19,3 +20,7 @@ std::vector<std::string> split_input(std::string fen);
 Move convert_uci_to_Move(std::string input);
 
 void stop_threads();
+
+void allocate_tt();
+
+void reallocate_tt(U64 elements);

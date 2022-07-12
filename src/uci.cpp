@@ -28,12 +28,7 @@ int main(int argc, char** argv) {
     signal(SIGINT, signal_callback_handler);
     
     // Initialize TT
-    TEntry* oldbuffer;
-    if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) 
-    {
-        std::cout << "Error: Could not allocate memory for TT" << std::endl;
-        exit(1);
-    }
+    allocate_tt();
 
     // Initialize NNUE
     // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled with.
@@ -97,14 +92,7 @@ int main(int argc, char** argv) {
             if (option == "Hash")
             {
                 U64 elements = (static_cast<unsigned long long>(std::stoi(value)) * 1000000) / sizeof(TEntry);
-                oldbuffer = TTable;
-                if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
-                {
-                    std::cout << "Error: Could not allocate memory for TT" << std::endl;
-                    free(oldbuffer);
-                    exit(1);
-                }
-                TT_SIZE = elements;  
+                reallocate_tt(elements);
             }
             else if (option == "EvalFile")
             {
@@ -299,4 +287,28 @@ void stop_threads()
             th.join();
     }
     searcher.threads.clear();    
+}
+
+void allocate_tt()
+{
+    if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) 
+    {
+        std::cout << "Error: Could not allocate memory for TT" << std::endl;
+        exit(1);
+    }
+    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
+}
+
+void reallocate_tt(U64 elements)
+{
+    TEntry* oldbuffer = TTable;
+    if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
+    {
+        std::cout << "Error: Could not allocate memory for TT" << std::endl;
+        free(oldbuffer);
+        exit(1);
+    }
+
+    TT_SIZE = elements;  
+    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));    
 }
