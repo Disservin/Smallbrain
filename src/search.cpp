@@ -464,7 +464,7 @@ int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
         return 9'000'000 + move.piece();
     }
     else if (td->board.pieceAtB(move.to()) != None) {
-        return see(move, -100, td->board) ? 7'000'000 + mmlva(move, td->board) : mmlva(move, td->board);
+        return see(move, -100, td->board) ? mmlva(move, board) + s0 : mmlva(move, board) + s1;
     }
     else if (td->killerMoves[0][ply] == move) {
         return killerscore1;
