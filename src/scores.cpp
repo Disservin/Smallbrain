@@ -2,19 +2,19 @@
 
 int piece_values[2][7] = { { 98, 337, 365, 477, 1025, 0, 0}, { 114, 281, 297, 512,  936, 0, 0} };
 
-int razor_margin = 166;
+int razor_margin = 102;
 
-int fut_margin_1 = 127;
-int fut_margin_2 = 107;
+int fut_margin_1 = 67;
+int fut_margin_2 = 76;
 
-int nmp_depth = 4;
-int nmp_depth_divisor = 210;
+int nmp_depth = 5;
+int nmp_depth_divisor = 214;
 
 int late_move_pruning_depth = 4;
-int late_move_pruning_th = 6;
+int late_move_pruning_th = 3;
 
-int seeDepth = 8;
-int seeThreshold = 268;
+int seeDepth = 5;
+int seeThreshold = 146;
 
 int lmr_margin = 3;
 int lmr_margin_2 = 2;
