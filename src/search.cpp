@@ -132,13 +132,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Razoring
     if (!PvNode
         && depth < 2
-        && staticEval + 240 < alpha
+        && staticEval + 102 < alpha
         && !inCheck)
         return qsearch(15, alpha, beta, ss->ply, td);
 
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
-        if (depth < 7 && staticEval - 150 * depth + 100 * improving >= beta) return beta;
+        if (depth < 7 && staticEval - 67 * depth + 76 * improving >= beta) return beta;
     }
 
     // Null move pruning
@@ -147,7 +147,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         && depth >= 3 && !inCheck
         && staticEval >= beta) 
     {
-        int r = 5 + depth / 5 + std::min(3, (staticEval - beta) / 256);
+        int r = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
         td->board.makeNullMove();
         (ss)->currentmove = NULLMOVE;
         Score score = -absearch(depth - r, -beta, -beta + 1, ss+1, td);
@@ -201,12 +201,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
                 && !PvNode
                 && !move.promoted()
                 && depth <= 4
-                && quietMoves.size > (4 + depth * depth))
+                && quietMoves.size > (3 + depth * depth))
                 continue;
 
             // See pruning
-            if (depth < 6 
-                && !see(move, -(depth * 100), td->board))
+            if (depth < 5
+                && !see(move, -(depth * 146), td->board))
                 continue;
         }
 
