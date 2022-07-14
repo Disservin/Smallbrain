@@ -50,9 +50,9 @@ U64 Perft::perft_function(int depth, int max) {
     U64 nodesIt = 0;
     for (int i = 0; i < ml.size; i++) {
         Move move = ml.list[i];
-        board.makeMove(move);
+        board.makeMovePerft(move);
         nodesIt += perft_function(depth - 1, depth);
-        board.unmakeMove(move);
+        board.unmakeMovePerft(move);
         if (depth == max) {
             nodes += nodesIt;
             std::cout << board.printMove(move) << " " << nodesIt << std::endl;

@@ -63,11 +63,8 @@ void NNUE::init(const char* filename) {
 //     }
 // }
 
-int NNUE::relu(int x) {
-    if (x < 0) {
-        return 0;
-    }
-    return x;
+int16_t NNUE::relu(int16_t x) {
+    return std::max((int16_t)0, x);
 }
 
 int32_t NNUE::output(int16_t accumulator[HIDDEN_BIAS]) {

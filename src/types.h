@@ -231,58 +231,33 @@ static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
       }
 };
 
-class Move {
-public:
-    uint16_t move;
-
-    // move score
-    int value;
-
-    // constructor for encoding a move
-    inline Move(
-        PieceType piece = NONETYPE,
-        Square source  = NO_SQ,
-        Square target  = NO_SQ,
-        bool promoted = false
-
-    ) {
-        move = (uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15;
-    }
-
-    inline Square from() {
-        return Square(move & 0b111111);
-    }
-
-    inline Square to() {
-        return Square((move & 0b111111000000) >> 6);
-    }
-
-    inline PieceType piece() {
-        return PieceType((move & 0b111000000000000) >> 12);
-    }
-
-    inline bool promoted() {
-        return bool((move & 0b1000000000000000) >> 15);
-    }
-
-    inline uint16_t get() {
-        return move;
-    }
+enum Move : uint16_t {
+    NO_MOVE = 0,
+    NULL_MOVE = 65
 };
 
-static uint16_t NULLMOVE = Move(NONETYPE, NO_SQ, NO_SQ, false).get();
-static uint16_t NO_MOVE = Move(PAWN, SQ_A1, SQ_A1, false).get();
+inline Square from(Move move) {
+    return Square(move & 0b111111);
+}
+
+inline Square to(Move move) {
+    return Square((move & 0b111111000000) >> 6);
+}
+
+inline PieceType piece(Move move) {
+    return PieceType((move & 0b111000000000000) >> 12);
+}
+
+inline bool promoted(Move move) {
+    return bool((move & 0b1000000000000000) >> 15);
+}
+
+inline Move make(PieceType piece = NONETYPE, Square source = NO_SQ, Square target = NO_SQ, bool promoted = false) {
+    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
+}
 
 static constexpr U64 WK_CASTLE_MASK = (1ULL << SQ_F1) | (1ULL << SQ_G1);
 static constexpr U64 WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL << SQ_B1);
 
 static constexpr U64 BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
 static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);
-
-inline bool operator==(Move& m, Move& m2) {
-    return m.move == m2.move;
-}
-
-inline bool operator!=(Move& m, Move& m2) {
-    return m.move == m2.move;
-}
