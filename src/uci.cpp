@@ -235,7 +235,6 @@ void signal_callback_handler(int signum) {
 }
 
 Move convert_uci_to_Move(std::string input) {
-    Move move;
     if (input.length() == 4) {
         std::string from = input.substr(0, 2);
         std::string to = input.substr(2);
@@ -252,7 +251,7 @@ Move convert_uci_to_Move(std::string input) {
         int to_index = (rank - 1) * 8 + file - 1;
         Square target = Square(to_index);
         PieceType piece = board.piece_type(board.pieceAtBB(source));
-        return Move(piece, source, target, false);
+        return make(piece, source, target, false);
     }
     if (input.length() == 5) {
         std::string from = input.substr(0, 2);
@@ -272,11 +271,11 @@ Move convert_uci_to_Move(std::string input) {
  
         char prom = input.at(4);
         PieceType piece = piece_to_int[prom];
-        return Move(piece, source, target, true);
+        return make(piece, source, target, true);
     }
     else {
         std::cout << "FALSE INPUT" << std::endl;
-        return Move(NONETYPE, NO_SQ, NO_SQ, false);
+        return make(NONETYPE, NO_SQ, NO_SQ, false);
     }
 }
 

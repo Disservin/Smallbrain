@@ -48,6 +48,7 @@ struct States {
 
 struct Movelist {
 	Move list[MAX_MOVES]{};
+	int values[MAX_MOVES]{};
 	uint8_t size{};
 
 	void Add(Move move) {
@@ -76,8 +77,8 @@ public:
 	U64 pinD{};
 	uint8_t doubleCheck{};
 	U64 hashKey{};
-	U64 occWhite{};
-	U64 occBlack{};
+	U64 occUs;
+	U64 occEnemy;
 	U64 occAll{};
 	U64 enemyEmptyBB{};
 
@@ -185,6 +186,7 @@ public:
 
 	// Is square attacked by color c
 	bool isSquareAttacked(Color c, Square sq);
+	bool isSquareAttackedStatic(Color c, Square sq);
 	U64 allAttackers(Square sq, U64 occupiedBB);
 	U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
 
@@ -213,6 +215,8 @@ public:
 	// plays the move on the internal board
 	void makeMove(Move& move);
 	void unmakeMove(Move& move);
+	void makeMovePerft(Move& move);
+	void unmakeMovePerft(Move& move);
 	void makeNullMove();
 	void unmakeNullMove();
 };

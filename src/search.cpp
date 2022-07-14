@@ -1,11 +1,11 @@
 #include "search.h"
 
 void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData *td) {
-    if (depth > 1) td->history_table[td->board.sideToMove][bestMove.from()][bestMove.to()] += depth * depth;
+    if (depth > 1) td->history_table[td->board.sideToMove][from(bestMove)][to(bestMove)] += depth * depth;
     for (int i = 0; i < quietMoves.size; i++) {
         Move move = quietMoves.list[i];
         if (move == bestMove) continue;
-        td->history_table[td->board.sideToMove][move.from()][move.to()] -= depth * depth;
+        td->history_table[td->board.sideToMove][from(move)][to(move)] -= depth * depth;
     }
 }
 
@@ -26,19 +26,21 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = score_qmove(ml.list[i], td->board);
+        ml.values[i] = score_qmove(ml.list[i], td->board);
     }
 
-    // sort the moves
-    sortMoves(ml);
+
 
     // search the moves
     for (int i = 0; i < (int)ml.size; i++) {
+        // sort the moves
+        sortMoves(ml, i);
+
         Move move = ml.list[i];
 
-        Piece captured = td->board.pieceAtB(move.to());
+        Piece captured = td->board.pieceAtB(to(move));
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
-        if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !move.promoted() && td->board.nonPawnMat(color)) continue;
+        if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !promoted(move) && td->board.nonPawnMat(color)) continue;
         if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, -100, td->board)) continue;
 
         td->nodes++;
@@ -74,7 +76,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Draw detection and mate pruning
     if (!RootNode) {
         if (td->board.halfMoveClock >= 100) return 0;
-        if (td->board.isRepetition() && (ss-1)->currentmove != NULLMOVE) return - 3 + (td->nodes & 7);
+        if (td->board.isRepetition() && (ss-1)->currentmove != NULL_MOVE) return - 3 + (td->nodes & 7);
         int all = popcount(td->board.All());
         if (all == 2) return 0;
         if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight])) return 0;
@@ -104,7 +106,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode 
         && ttHit && tte.depth >= depth
-        && (ss-1)->currentmove != NULLMOVE)
+        && (ss-1)->currentmove != NULL_MOVE)
     {
         if (tte.flag == EXACT) return tte.score;
         else if (tte.flag == LOWERBOUND) {
@@ -143,13 +145,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // Null move pruning
     if (td->board.nonPawnMat(color) 
-        && (ss-1)->currentmove != NULLMOVE
+        && (ss-1)->currentmove != NULL_MOVE
         && depth >= 3 && !inCheck
         && staticEval >= beta) 
     {
         int r = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
         td->board.makeNullMove();
-        (ss)->currentmove = NULLMOVE;
+        (ss)->currentmove = NULL_MOVE;
         Score score = -absearch(depth - r, -beta, -beta + 1, ss+1, td);
         td->board.unmakeNullMove();
         if (score >= beta) return beta;
@@ -169,12 +171,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.list[i].value = score_move(ml.list[i], ss->ply, ttHit, td);
+        ml.values[i] = score_move(ml.list[i], ss->ply, ttHit, td);
     }
 
     if (RootNode && td->id == 0) rootSize = ml.size;
 
-    Move bestMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
+    Move bestMove = NO_MOVE;
     Movelist quietMoves;
     uint16_t madeMoves = 0;
     Score score = 0;
@@ -186,7 +188,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         sortMoves(ml, i);
 
         Move move = ml.list[i];
-        bool capture = td->board.pieceAtB(move.to()) != None;
+        bool capture = td->board.pieceAtB(to(move)) != None;
 
         if (!capture) quietMoves.Add(move);
 
@@ -199,7 +201,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             if (!capture 
                 && !inCheck
                 && !PvNode
-                && !move.promoted()
+                && !promoted(move)
                 && depth <= 4
                 && quietMoves.size > (3 + depth * depth))
                 continue;
@@ -219,7 +221,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         td->board.makeMove(move);
 
 	    U64 nodeCount = td->nodes;
-        ss->currentmove = move.get();
+        ss->currentmove = move;
         // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
 
         // late move reduction
@@ -245,7 +247,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         }
 
         td->board.unmakeMove(move);
-	    spentEffort[move.from()][move.to()] += td->nodes - nodeCount;
+	    spentEffort[from(move)][to(move)] += td->nodes - nodeCount;
 
         if (score > best) {
             best = score;
@@ -272,11 +274,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             }
         }
     }
-    if (best >= beta && td->board.pieceAtB(bestMove.to()) == None)
+    if (best >= beta && td->board.pieceAtB(to(bestMove)) == None)
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove.get());
+    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove);
     return best;
 }
 
@@ -327,7 +329,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     td->nodes = 0;
     td->seldepth = 0;
 
-    Move reducedTimeMove = Move(NONETYPE, NO_SQ, NO_SQ, false);
+    Move reducedTimeMove = NO_MOVE;
     Move previousBestmove;
     bool adjustedTime;
 
@@ -351,7 +353,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
             if (rootSize == 1)
                 searchTime = std::min((int64_t)50, searchTime);
             
-            int effort = (spentEffort[previousBestmove.from()][previousBestmove.to()] * 100) / td->nodes;
+            int effort = (spentEffort[from(previousBestmove)][to(previousBestmove)] * 100) / td->nodes;
 
             if (depth >= 8 && effort >= 95 && searchTime != 0  && !adjustedTime) {
                 adjustedTime = true;
@@ -406,24 +408,24 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
 
 // Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
 bool Search::see(Move& move, int threshold, Board& board) {
-    Square from = move.from();
-    Square to = move.to();
-    PieceType attacker = board.piece_type(board.pieceAtB(from));
-    PieceType victim = board.piece_type(board.pieceAtB(to));
+    Square from_sq = from(move);
+    Square to_sq = to(move);
+    PieceType attacker = board.piece_type(board.pieceAtB(from_sq));
+    PieceType victim = board.piece_type(board.pieceAtB(to_sq));
     int swap = piece_values[MG][victim] - threshold;
     if (swap < 0)
         return false;
     swap -= piece_values[MG][attacker];
     if (swap >= 0)
         return true;
-    U64 occ = (board.All() ^ (1ULL << from)) | (1ULL << to);
-    U64 attackers = board.allAttackers(to, occ) & occ;
+    U64 occ = (board.All() ^ (1ULL << from_sq)) | (1ULL << to_sq);
+    U64 attackers = board.allAttackers(to_sq, occ) & occ;
 
     U64 bishops = board.Bishops(board.sideToMove) | board.Queens(board.sideToMove) 
                   | board.Bishops(~board.sideToMove) | board.Queens(~board.sideToMove);
     U64 rooks = board.Rooks(board.sideToMove) | board.Queens(board.sideToMove) 
                 | board.Rooks(~board.sideToMove) | board.Queens(~board.sideToMove);
-    Color sT = ~Color((board.pieceAtB(from) / 6));
+    Color sT = ~Color((board.pieceAtB(from_sq) / 6));
     
     while (true) {
         attackers &= occ;
@@ -443,27 +445,27 @@ bool Search::see(Move& move, int threshold, Board& board) {
         occ ^= (1ULL << (bsf(myAttackers & (board.Bitboards[pt] | board.Bitboards[pt+6]))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
-            attackers |= board.BishopAttacks(to, occ) & bishops;
+            attackers |= board.BishopAttacks(to_sq, occ) & bishops;
         if (pt == ROOK || pt == QUEEN)
-            attackers |= board.RookAttacks(to, occ) & rooks;
+            attackers |= board.RookAttacks(to_sq, occ) & rooks;
     }
-    return sT != Color((board.pieceAtB(from) / 6));
+    return sT != Color((board.pieceAtB(from_sq) / 6));
 }
 
 int Search::mmlva(Move& move, Board& board) {
-    int attacker = board.piece_type(board.pieceAtB(move.from())) + 1;
-    int victim = board.piece_type(board.pieceAtB(move.to())) + 1;
+    int attacker = board.piece_type(board.pieceAtB(from(move))) + 1;
+    int victim = board.piece_type(board.pieceAtB(to(move))) + 1;
     return mvvlva[victim][attacker];
 }
 
 int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
-    if (ttMove && move.get() == TTable[td->board.hashKey % TT_SIZE].move) {
+    if (ttMove && move == TTable[td->board.hashKey % TT_SIZE].move) {
         return 10'000'000;
     }
-    else if (move.promoted()) {
-        return 9'000'000 + move.piece();
+    else if (promoted(move)) {
+        return 9'000'000 + piece(move);
     }
-    else if (td->board.pieceAtB(move.to()) != None) {
+    else if (td->board.pieceAtB(to(move)) != None) {
         return see(move, -100, td->board) ? 7'000'000 + mmlva(move, td->board) : mmlva(move, td->board);
     }
     else if (td->killerMoves[0][ply] == move) {
@@ -473,15 +475,15 @@ int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
         return killerscore2;
     }
     else {
-        return td->history_table[td->board.sideToMove][move.from()][move.to()];
+        return td->history_table[td->board.sideToMove][from(move)][to(move)];
     }
 }
 
 int Search::score_qmove(Move& move, Board& board) {
-    if (move.promoted()) {
-        return 2147483647 - 20 + move.piece();
+    if (promoted(move)) {
+        return 2147483647 - 20 + piece(move);
     }
-    else if (board.pieceAtB(move.to()) != None) {
+    else if (board.pieceAtB(to(move)) != None) {
         return see(move, -100, board) ? mmlva(move, board) * 10000 : mmlva(move, board);
     }
     else {
@@ -533,25 +535,15 @@ uint64_t Search::get_nodes() {
     return nodes;
 }
 
-void Search::sortMoves(Movelist& moves){
-    int i = moves.size;
-    for (int cmove = 1; cmove < moves.size; cmove++){
-        Move temp = moves.list[cmove];
-        for (i=cmove-1; i>=0 && (moves.list[i].value < temp.value ); i--){
-            moves.list[i+1] = moves.list[i];
-        }
-        moves.list[i+1] = temp;
-    }
-}
-
 void Search::sortMoves(Movelist& moves, int sorted){
     int index = 0 + sorted;
     for (int i = 1 + sorted; i < moves.size; i++) {
-        if (moves.list[i].value > moves.list[index].value) {
+        if (moves.values[i] > moves.values[index]) {
             index = i;
         }
     }
     std::swap(moves.list[index], moves.list[0 + sorted]);
+    std::swap(moves.values[index], moves.values[0 + sorted]);
 }
 
 std::string output_score(int score) {
