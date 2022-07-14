@@ -29,11 +29,13 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
         ml.list[i].value = score_qmove(ml.list[i], td->board);
     }
 
-    // sort the moves
-    sortMoves(ml);
+
 
     // search the moves
     for (int i = 0; i < (int)ml.size; i++) {
+        // sort the moves
+        sortMoves(ml, i);
+
         Move move = ml.list[i];
 
         Piece captured = td->board.pieceAtB(move.to());
@@ -531,17 +533,6 @@ uint64_t Search::get_nodes() {
         nodes += tds[i].nodes;
     }
     return nodes;
-}
-
-void Search::sortMoves(Movelist& moves){
-    int i = moves.size;
-    for (int cmove = 1; cmove < moves.size; cmove++){
-        Move temp = moves.list[cmove];
-        for (i=cmove-1; i>=0 && (moves.list[i].value < temp.value ); i--){
-            moves.list[i+1] = moves.list[i];
-        }
-        moves.list[i+1] = temp;
-    }
 }
 
 void Search::sortMoves(Movelist& moves, int sorted){

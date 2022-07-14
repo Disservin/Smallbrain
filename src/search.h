@@ -86,7 +86,6 @@ public:
     bool exit_early(uint64_t nodes, int ThreadId);
     uint64_t get_nodes();
 
-    void sortMoves(Movelist& moves);
     void sortMoves(Movelist& moves, int sorted);
 };
 
