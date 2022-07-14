@@ -26,7 +26,7 @@ extern int32_t outputBias[OUTPUT_BIAS];
 
 class NNUE {
     public:
-    int relu(int x);
+    int16_t relu(int16_t x);
     void init(const char* filename);
     // void accumulate(Board& b);
     // void activate(int inputNum);
