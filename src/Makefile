@@ -41,7 +41,7 @@ endif
 
 ifeq ($(build), debug)
 	CFLAGS = -g3 -ggdb3
-	CO = -O0
+	CO = -O0 -std=c++17
 endif
 
 SRCS := $(wildcard *.cpp)
