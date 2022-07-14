@@ -40,7 +40,7 @@ ifeq ($(build), release)
 endif
 
 ifeq ($(build), debug)
-	CFLAGS = -g3 -ggdb3 -p -fno-omit-frame-pointer
+	CFLAGS = -g3 -ggdb3 -pg -fno-omit-frame-pointer
 	CO = -O0 -std=c++17
 endif
 
