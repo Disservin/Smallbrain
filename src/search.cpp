@@ -162,7 +162,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         depth--;
 
     moves:
-    Movelist ml = td->board.legalmoves();
+    Movelist ml = td->board.legalmoves(inCheck);
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {

@@ -182,7 +182,7 @@ public:
 	void DoPinMask(Color c, Square sq);
 
 	// creates the pinmask and checkmask
-	void init(Color c, Square sq);
+	void init(Color c, Square sq, bool incheck);
 
 	// Is square attacked by color c
 	bool isSquareAttacked(Color c, Square sq);
@@ -209,7 +209,7 @@ public:
 	U64 LegalKingMovesCastling(Color c, Square sq);
 
 	// all legal moves for a position
-	Movelist legalmoves();
+	Movelist legalmoves(bool incheck = true);
 	Movelist capturemoves();
 
 	// plays the move on the internal board

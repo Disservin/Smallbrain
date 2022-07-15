@@ -439,15 +439,23 @@ void Board::DoPinMask(Color c, Square sq) {
     }
 }
 
-void Board::init(Color c, Square sq) {
+void Board::init(Color c, Square sq, bool incheck) {
     occUs = Us(c);
     occEnemy = Us(~c);
     occAll = occUs | occEnemy;
     enemyEmptyBB = ~occUs;
-    U64 newMask = DoCheckmask(c, sq);
-    checkMask = newMask ? newMask : DEFAULT_CHECKMASK;
+    if (incheck)
+    {
+        U64 newMask = DoCheckmask(c, sq);
+        checkMask = newMask ? newMask : DEFAULT_CHECKMASK;
+    }
+    else 
+    {
+        doubleCheck = 0;
+        checkMask = DEFAULT_CHECKMASK;
+    }
+        
     DoPinMask(c, sq);
-
 }
 
 bool Board::isSquareAttacked(Color c, Square sq) {
@@ -689,11 +697,11 @@ U64 Board::LegalKingMovesCastling(Color c, Square sq) {
     return final_moves;
 }
 
-Movelist Board::legalmoves() {
+Movelist Board::legalmoves(bool incheck) {
     Movelist movelist{};
     movelist.size = 0;
 
-    init(sideToMove, KingSQ(sideToMove));
+    init(sideToMove, KingSQ(sideToMove), incheck);
     if (doubleCheck < 2) {
         U64 pawns_mask = Pawns(sideToMove);
         U64 knights_mask = Knights(sideToMove);
@@ -771,7 +779,7 @@ Movelist Board::capturemoves() {
     Movelist movelist{};
     movelist.size = 0;
 
-    init(sideToMove, KingSQ(sideToMove));
+    init(sideToMove, KingSQ(sideToMove), true);
     if (doubleCheck < 2) {
         U64 pawns_mask = Pawns(sideToMove);
         U64 knights_mask = Knights(sideToMove);
