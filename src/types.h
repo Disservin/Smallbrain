@@ -261,3 +261,14 @@ static constexpr U64 WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL 
 
 static constexpr U64 BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
 static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);
+
+struct Time{
+    int64_t optimum = 0;
+    int64_t maximum = 0;
+};
+
+struct Limits {
+    int depth;
+    Time time;
+    U64 nodes;
+};

@@ -6,6 +6,9 @@
 #include <thread>
 #include <algorithm>
 #include <cstring>
+#include <signal.h>
+#include <math.h> 
+#include <fstream>
 
 #include "board.h"
 #include "search.h"
@@ -24,3 +27,7 @@ void stop_threads();
 void allocate_tt();
 
 void reallocate_tt(U64 elements);
+
+void quit();
+
+int find_element(std::string param, std::vector<std::string> tokens);

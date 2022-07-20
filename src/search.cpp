@@ -481,7 +481,7 @@ int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
 
 int Search::score_qmove(Move& move, Board& board) {
     if (promoted(move)) {
-        return 2147483647 - 20 + piece(move);
+        return 10'000'000 - 20 + piece(move);
     }
     else if (board.pieceAtB(to(move)) != None) {
         return see(move, -100, board) ? mmlva(move, board) * 10000 : mmlva(move, board);

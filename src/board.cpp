@@ -238,6 +238,7 @@ void Board::print() {
             << " " << std::endl;
     }
     std::cout << '\n' << std::endl;
+    std::cout << "Fen: " << getFen() << std::endl;
     std::cout << "Side to move: " << (int)sideToMove << std::endl;
     std::cout << "Castling rights: " << (int)castlingRights << std::endl;
     std::cout << "Halfmoves: " << (int)halfMoveClock << std::endl;
