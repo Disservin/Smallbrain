@@ -89,5 +89,5 @@ public:
     void sortMoves(Movelist& moves, int sorted);
 };
 
-std::string output_score(int score);
-void uci_output(int score, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv);
+std::string output_score(int score, Score alpha, Score beta);
+void uci_output(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv);
