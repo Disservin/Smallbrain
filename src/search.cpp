@@ -306,7 +306,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         if ( td->id == 0)
         {
             bool notExact = (result <= alpha || result >= beta);
-            if ((notExact && depth >= 15) || !notExact)
+            if (!notExact || (notExact && depth >= 15))
                 uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
         }
 
