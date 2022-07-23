@@ -300,20 +300,22 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
         result = absearch(depth, alpha, beta, ss, td);
+        if (exit_early(td->nodes, td->id)) return result;
+
         if (result <= alpha) {
             research++;
-            if (exit_early(td->nodes, td->id)) return result;
+            // print upperbound
             if (td->id == 0) uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
         }
         else if (result >= beta) {
             research++;
-            if (exit_early(td->nodes, td->id)) return result;
+            // print lowerbound
             if (td->id == 0) uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
             beta = std::min(beta + research * research * delta, (int)VALUE_INFINITE);
         }
         else {
-            if (exit_early(td->nodes, td->id)) return result;
+            // print exact result
             if (td->id == 0) uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
             return result;
         }
