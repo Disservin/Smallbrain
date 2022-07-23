@@ -8,10 +8,6 @@
 #include "timemanager.h"
 #include "neuralnet.h"
 
-#include <signal.h>
-#include <math.h> 
-#include <fstream>
-
 std::atomic<bool> stopped;
 
 U64 TT_SIZE = 524287;
@@ -48,10 +44,9 @@ int main(int argc, char** argv) {
         if (argc > 1) {
             if (argv[1] == std::string("bench")) {
                 start_bench();
-                return 0;
+                quit();
             }
         }
-        Time t;
 
         // catching inputs
         std::string input;
@@ -66,25 +61,17 @@ int main(int argc, char** argv) {
                          "option name EvalFile type string default default.net\n" << //NN file
                          "uciok" << std::endl;
         }
-        if (input == "isready") {
-            std::cout << "readyok" << std::endl;
-        }
+        if (input == "isready") std::cout << "readyok" << std::endl;
+
         if (input == "ucinewgame") {
             board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            stopped = true;
             stop_threads();
             searcher.tds.clear();
         }
-        if (input == "quit") {
-            stopped = true;
-            stop_threads();
-            free(TTable);
-            return 0;
-        }
-        if (input == "stop") {
-            stopped = true;
-            stop_threads();
-        }
+        if (input == "quit") quit();
+
+        if (input == "stop") stop_threads();
+
         if (input.find("setoption name") != std::string::npos)
         {
             std::string option = tokens[2];
@@ -99,10 +86,7 @@ int main(int argc, char** argv) {
                 std::cout << "Loading eval file: " << value << std::endl;            
                 nnue.init(value.c_str());    
             }
-            else if (option == "Threads")
-            {
-                threads = std::stoi(value); 
-            }
+            else if (option == "Threads") threads = std::stoi(value); 
         }
         if (input.find("position") != std::string::npos) {
             if (tokens[1] == "fen") 
@@ -126,97 +110,69 @@ int main(int argc, char** argv) {
         }
         if (input.find("go") != std::string::npos) 
         {
-            stopped = true;
             stop_threads();
 
-            int depth = MAX_PLY;
-            int nodes = 0;
-            Time time = t;
+            stopped = false;
+            Limits info;
+            info.depth = MAX_PLY;
+            info.nodes = 0;
+
             std::string limit;
             if (tokens.size() == 1) 
                 limit = "";
             else 
                 limit = tokens[1];
-            if (limit == "depth") {
-                depth = std::stoi(tokens[2]);
-            }
-            else if (limit == "perft") {
-                depth = std::stoi(tokens[2]);
+
+            if (limit == "perft") {
+                int depth = std::stoi(tokens[2]);
                 Perft perft = Perft();
                 perft.board = board;
                 perft.perf_Test(depth, depth);
-                return 0;    
+                quit();
             }
-            else if (limit == "nodes") {
-                nodes = std::stoi(tokens[2]);
-            }
-            else if (limit == "infinite" || input == "go") {
-                depth = MAX_PLY;
-            }
-            else if (limit == "movetime") {
-                auto indexTime = find(tokens.begin(), tokens.end(), "movetime") - tokens.begin();
-                int64_t timegiven = std::stoi(tokens[indexTime + 1]);        
-                time.maximum = timegiven;
-                time.optimum = timegiven;
-            }
-            else if (input.find("wtime") != std::string::npos) {
-                // go wtime 100 btime 100 winc 100 binc 100
-                std::string side = board.sideToMove == White ? "wtime" : "btime";
-                auto indexTime = find(tokens.begin(), tokens.end(), side) - tokens.begin();
-                int64_t timegiven = std::stoi(tokens[indexTime + 1]);
+
+            info.depth = (limit == "depth") ? std::stoi(tokens[2]) : MAX_PLY;
+            info.depth = (limit == "infinite" || input == "go") ? MAX_PLY : info.depth;
+            info.nodes = (limit == "nodes") ? std::stoi(tokens[2]) : 0;
+            info.time.maximum = info.time.optimum = (limit == "movetime") ? find_element("movetime", tokens) : 0;
+
+            std::string side = board.sideToMove == White ? "wtime" : "btime";
+            if (input.find(side) != std::string::npos) {
+                // go wtime 100 btime 100 winc 100 binc 100 
+                std::string inc_str = board.sideToMove == White ? "winc" : "binc";
+                int64_t timegiven = find_element(side, tokens);
                 int64_t inc = 0;
                 int64_t mtg = 0;
                 // Increment 
-                if (input.find("winc") != std::string::npos && tokens.size() > 4) {
-                    std::string inc_str = board.sideToMove == White ? "winc" : "binc";
-                    auto it = find(tokens.begin(), tokens.end(), inc_str);
-                    int index = it - tokens.begin();
+                if (input.find(inc_str) != std::string::npos) {
+                    auto index = find(tokens.begin(), tokens.end(), inc_str) - tokens.begin();
                     inc = std::stoi(tokens[index + 1]);
                 }
                 // Moves to next time control
                 if (input.find("movestogo") != std::string::npos) {
-                    auto it = find(tokens.begin(), tokens.end(), "movestogo");
-                    int index = it - tokens.begin();
+                    auto index = find(tokens.begin(), tokens.end(), "movestogo") - tokens.begin();
                     mtg = std::stoi(tokens[index + 1]);
                 }
                 // Calculate search time
-                time = optimumTime(timegiven, inc, board.fullMoveNumber, mtg);
+                info.time = optimumTime(timegiven, inc, board.fullMoveNumber, mtg);
             }
-            else {
-                std::cout << "Error: Invalid limit" << std::endl; // Silent Error
-                return 0;
-            }
-            stopped = false;
+
             // start search
-            searcher.start_thinking(board, threads, depth, nodes, time);
+            searcher.start_thinking(board, threads, info.depth, info.nodes, info.time);
         }
         // ENGINE SPECIFIC
-        if (input == "print") {
-            board.print();
-            std::cout << board.getFen() << std::endl;
-        }
+        if (input == "print") board.print();
 
-        if (input == "moves") {
-            Movelist ml = board.legalmoves();
-            for (int i = 0; i < ml.size; i++) {
+        if (input == "captures" || input == "moves") {
+            Movelist ml = input == "captures" ? board.capturemoves() : board.legalmoves();
+            for (int i = 0; i < ml.size; i++)
                 std::cout << board.printMove(ml.list[i]) << std::endl;
-            }
+            std::cout << "count: " << signed(ml.size) << std::endl;
         }
 
-        if (input == "captures") {
-            Movelist ml = board.capturemoves();
-            for (int i = 0; i < ml.size; i++) {
-                std::cout << board.printMove(ml.list[i]) << std::endl;
-            }
-        }
+        if (input == "rep") std::cout << board.isRepetition(3) << std::endl;
 
-        if (input == "rep") {
-            std::cout << board.isRepetition(3) << std::endl;
-        }
-
-        if (input == "eval") {
-            std::cout << evaluation(board) << std::endl;
-        }
+        if (input == "eval") std::cout << evaluation(board) << std::endl;
 
         if (input.find("perft") != std::string::npos) {
             Perft perft = Perft();
@@ -235,15 +191,15 @@ void signal_callback_handler(int signum) {
 }
 
 Move convert_uci_to_Move(std::string input) {
-    if (input.length() == 4) {
-        std::string from = input.substr(0, 2);
-        std::string to = input.substr(2);
-        char letter = from[0];
-        int file = letter - 96;
-        int rank = from[1] - 48;
-        int from_index = (rank - 1) * 8 + file - 1;
-        Square source = Square(from_index);
+    std::string from = input.substr(0, 2);
+    char letter = from[0];
+    int file = letter - 96;
+    int rank = from[1] - 48;
+    int from_index = (rank - 1) * 8 + file - 1;
+    Square source = Square(from_index);
 
+    if (input.length() == 4) {
+        std::string to = input.substr(2);
         letter = to[0];
         file = letter - 96;
         rank = to[1] - 48;
@@ -253,15 +209,8 @@ Move convert_uci_to_Move(std::string input) {
         PieceType piece = board.piece_type(board.pieceAtBB(source));
         return make(piece, source, target, false);
     }
-    if (input.length() == 5) {
-        std::string from = input.substr(0, 2);
+    else if (input.length() == 5) {
         std::string to = input.substr(2, 2);
-        char letter = from[0];
-        int file = letter - 96;
-        int rank = from[1] - 48;
-        int from_index = (rank - 1) * 8 + file - 1;
-        Square source = Square(from_index);
-
         letter = to[0];
         file = letter - 96;
         rank = to[1] - 48;
@@ -281,6 +230,7 @@ Move convert_uci_to_Move(std::string input) {
 
 void stop_threads()
 {
+    stopped = true;
     for (std::thread& th: searcher.threads) {
         if (th.joinable())
             th.join();
@@ -310,4 +260,18 @@ void reallocate_tt(U64 elements)
 
     TT_SIZE = elements;  
     std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));    
+}
+
+void quit()
+{
+    stop_threads();
+    free(TTable);
+    exit(0);
+}
+
+int find_element(std::string param, std::vector<std::string> tokens)
+{
+   int index = find(tokens.begin(), tokens.end(), param) - tokens.begin(); 
+   int value = std::stoi(tokens[index + 1]);
+   return value;
 }
