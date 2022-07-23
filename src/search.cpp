@@ -288,7 +288,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
     int delta = 30;
 
     Score result = 0;
-    int research = 0;
+    int research = 1;
 
     if (depth >= 5) {
         alpha = prev_eval - 50;
@@ -300,17 +300,30 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
         result = absearch(depth, alpha, beta, ss, td);
-        if (result <= alpha) {
-            research++;
+
+        if (stopped) return 0;
+
+        if ( td->id == 0)
+        {
+            bool notExact = (result <= alpha || result >= beta);
+            if (!notExact || (notExact && depth >= 15))
+                uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
+        }
+
+        if (result <= alpha) 
+        {
             alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
         }
-        else if (result >= beta) {
-            research++;
+        else if (result >= beta) 
+        {
             beta = std::min(beta + research * research * delta, (int)VALUE_INFINITE);
         }
-        else {
+        else
+        {
             return result;
         }
+        
+        research++;
     }
 }
 
@@ -345,7 +358,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     for (depth = 1; depth <= search_depth; depth++)
     {
         result = aspiration_search(depth, result, ss, td);
-        if (exit_early(td->nodes, td->id)) break;
+        if (stopped) break;
         if (threadId != 0) continue;
 
         if (searchTime != 0)
@@ -367,8 +380,6 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         }
 
         previousBestmove = td->pv_table[0][0];
-        auto ms = elapsed();
-        uci_output(result, depth, td->seldepth, get_nodes(), ms, get_pv());
     }
 
     if (threadId == 0)
@@ -546,8 +557,13 @@ void Search::sortMoves(Movelist& moves, int sorted){
     std::swap(moves.values[index], moves.values[0 + sorted]);
 }
 
-std::string output_score(int score) {
-    if (score >= VALUE_MATE_IN_PLY) {
+std::string output_score(int score, Score alpha, Score beta) 
+{
+    if (score >= beta)
+        return "lowerbound " + std::to_string(score);
+    else if (score <= alpha)
+        return "upperbound " + std::to_string(score);
+    else if (score >= VALUE_MATE_IN_PLY) {
         return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
     }
     else if (score <= VALUE_MATED_IN_PLY) {
@@ -558,10 +574,10 @@ std::string output_score(int score) {
     }
 }
 
-void uci_output(int score, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv) {
+void uci_output(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv) {
     std::cout       << "info depth " << signed(depth)
     << " seldepth " << signed(seldepth)
-    << " score "    << output_score(score)
+    << " score "    << output_score(score, alpha, beta)
     << " nodes "    << nodes 
     << " nps "      << signed((nodes / (time + 1)) * 1000) 
     << " time "     << time
