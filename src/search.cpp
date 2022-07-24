@@ -92,8 +92,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight])) return 0;
         if (all == 3 && (td->board.Bitboards[WhiteBishop] || td->board.Bitboards[BlackBishop])) return 0;
 
-        alpha = std::max(alpha, (int16_t)(-VALUE_MATE + ss->ply));
-        beta = std::min(beta, (int16_t)(VALUE_MATE - ss->ply - 1));
+        alpha = std::max(alpha, mated_in(ss->ply));
+        beta = std::min(beta, mate_in(ss->ply + 1));
         if (alpha >= beta) return alpha;
     }
 
@@ -303,6 +303,10 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
     if (depth >= 5) {
         alpha = prev_eval - 50;
         beta = prev_eval + 50;
+    }
+    if (std::abs(prev_eval) >= VALUE_MATE_IN_PLY) {
+        alpha = -VALUE_INFINITE;
+        beta = VALUE_INFINITE;
     }
 
     while (true) {

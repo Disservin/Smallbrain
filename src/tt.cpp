@@ -9,7 +9,7 @@ void store_entry(int depth, Score bestvalue,
 
     Flag b = bestvalue <= old_alpha ? UPPERBOUND : bestvalue >= beta ? LOWERBOUND : EXACT;
 
-    if (bestvalue < 19000 && bestvalue > -19000
+    if (   std::abs(bestvalue) < VALUE_MATE_IN_PLY
         && (tte.key != key || b == EXACT || depth > (tte.depth * 2) / 3)) 
     {
         tte.depth = depth;

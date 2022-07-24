@@ -272,3 +272,7 @@ struct Limits {
     Time time;
     U64 nodes;
 };
+
+inline Score mate_in(int ply) { return (VALUE_MATE - ply); }
+
+inline Score mated_in(int ply) { return (ply - VALUE_MATE); }
