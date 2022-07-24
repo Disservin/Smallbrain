@@ -317,7 +317,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    if (!stopped) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove);
+    if (!stopped && !RootNode) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove);
     return best;
 }
 
