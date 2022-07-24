@@ -69,7 +69,7 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
             }
         }
     }
-    if (!exit_early(td->nodes, td->id)) store_entry(depth, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
+    if (!exit_early(td->nodes, td->id)) store_entry(0, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
     return bestValue;
 }
 
