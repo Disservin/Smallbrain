@@ -327,10 +327,6 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         alpha = prev_eval - 50;
         beta = prev_eval + 50;
     }
-    if (std::abs(prev_eval) >= VALUE_MATE_IN_PLY) {
-        alpha = -VALUE_INFINITE;
-        beta = VALUE_INFINITE;
-    }
 
     while (true) {
         if (stopped) return 0;
