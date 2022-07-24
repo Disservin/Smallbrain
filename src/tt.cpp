@@ -21,7 +21,7 @@ void store_entry(int depth, Score bestvalue,
     }
 }
 
-void probe_tt(TEntry &tte, bool &ttHit, U64 key, int depth)
+void probe_tt(TEntry &tte, bool &ttHit, U64 key)
 {
     U64 index = key % TT_SIZE;
     tte = TTable[index];

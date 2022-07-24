@@ -16,4 +16,4 @@ void store_entry(int depth, Score bestvalue,
                  Score old_alpha, Score beta, U64 key,
                  uint16_t move);
 
-void probe_tt(TEntry &tte, bool &ttHit, U64 key, int depth);
+void probe_tt(TEntry &tte, bool &ttHit, U64 key);
