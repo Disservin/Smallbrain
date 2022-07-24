@@ -322,14 +322,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td) {
     Score alpha = -VALUE_INFINITE;
     Score beta = VALUE_INFINITE;
-    int delta = 30;
+    int delta = 50;
 
     Score result = 0;
-    int research = 1;
 
-    if (depth >= 5) {
-        alpha = prev_eval - 50;
-        beta = prev_eval + 50;
+    if (depth >= 9) {
+        alpha = prev_eval - delta;
+        beta = prev_eval + delta;
     }
 
     while (true) {
@@ -340,28 +339,29 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
 
         if (stopped) return 0;
 
-        if ( td->id == 0)
-        {
-            bool notExact = (result <= alpha || result >= beta);
-            if (!notExact || (notExact && depth >= 15))
-                uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
-        }
+        if (   td->id == 0
+            && (result <= alpha || result >= beta) 
+            && depth >= 15)
+            uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
 
         if (result <= alpha) 
         {
-            alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
+            beta = (alpha + beta) / 2;
+            alpha = std::max(alpha - delta, -((int)VALUE_INFINITE));
+            delta += delta / 2;
         }
         else if (result >= beta) 
         {
-            beta = std::min(beta + research * research * delta, (int)VALUE_INFINITE);
+            beta = std::min(beta + delta, (int)VALUE_INFINITE);
+            delta += delta / 2;
         }
         else
         {
-            return result;
+            break;
         }
-        
-        research++;
     }
+    uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
+    return result;
 }
 
 void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId) {
