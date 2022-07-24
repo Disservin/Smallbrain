@@ -182,7 +182,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Null move pruning
     if (td->board.nonPawnMat(color) 
         && (ss-1)->currentmove != NULL_MOVE
-        && depth >= 3 && !inCheck
+        && depth >= 3 
+        && !inCheck
+        && !PvNode
         && staticEval >= beta) 
     {
         int r = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
