@@ -20,7 +20,8 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
 
     Score bestValue = -VALUE_INFINITE;
 
-    if (ss->ply > MAX_PLY - 1) return evaluation(td->board);
+    if (td->board.isRepetition() || ss->ply >= MAX_PLY) 
+        return (ss->ply >= MAX_PLY && !inCheck) ? evaluation(td->board) : 0;
 
     if (inCheck)
     {
@@ -85,7 +86,7 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
         }
     }
 
-    if (inCheck && bestValue == -VALUE_INFINITE)
+    if (inCheck && ml.size == 0)
         return mated_in(ss->ply);
 
     if (!stopped) store_entry(0, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
@@ -94,7 +95,6 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
 
 Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
-    if (ss->ply > MAX_PLY - 1) return evaluation(td->board);
 
     TEntry tte;
     Score best = -VALUE_INFINITE;
@@ -103,7 +103,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     bool RootNode = ss->ply == 0;
     bool improving, ttHit;
     Color color = td->board.sideToMove;
-    
+    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
+
+    if (ss->ply >= MAX_PLY) 
+        return (ss->ply >= MAX_PLY && !inCheck) ? evaluation(td->board) : 0;
+
     td->pv_length[ss->ply] = ss->ply;
 
     // Draw detection and mate pruning
@@ -120,7 +124,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (alpha >= beta) return alpha;
     }
 
-    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
 
     // Check extension
@@ -199,7 +202,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {
-        return inCheck ? -VALUE_MATE + ss->ply : 0;
+        return inCheck ? mated_in(ss->ply) : 0;
     }
 
     // assign a value to each move
@@ -390,6 +393,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     
     for (depth = 1; depth <= search_depth; depth++)
     {
+        td->seldepth = 0;
         result = aspiration_search(depth, result, ss, td);
         if (stopped) break;
         if (threadId != 0) continue;

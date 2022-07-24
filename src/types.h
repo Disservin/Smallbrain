@@ -276,3 +276,13 @@ struct Limits {
 inline Score mate_in(int ply) { return (VALUE_MATE - ply); }
 
 inline Score mated_in(int ply) { return (ply - VALUE_MATE); }
+
+inline Score score_to_tt(Score s, int plies)
+{
+    return (s >= VALUE_MATE_IN_PLY ? s + plies : s <= VALUE_MATED_IN_PLY ? s - plies : s);
+}
+
+inline Score score_from_tt(Score s, int plies)
+{
+    return (s >= VALUE_MATE_IN_PLY ? s - plies : s <= VALUE_MATED_IN_PLY ? s + plies : s);
+}
