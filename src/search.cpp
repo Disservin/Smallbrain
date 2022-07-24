@@ -21,6 +21,9 @@ Score Search::qsearch(bool PV, Score alpha, Score beta, Stack *ss, ThreadData *t
 
     if (ss->ply > MAX_PLY - 1) return stand_pat;
 
+    if (stand_pat >= beta) return beta;
+    if (stand_pat > alpha) alpha = stand_pat;
+
     probe_tt(tte, ttHit, td->board.hashKey);
     if (   ttHit 
         && tte.depth >= 0 
@@ -29,9 +32,6 @@ Score Search::qsearch(bool PV, Score alpha, Score beta, Stack *ss, ThreadData *t
         else if (tte.flag == LOWERBOUND && tte.score >= beta) return tte.score;
         else if (tte.flag == UPPERBOUND && tte.score <= alpha) return tte.score;
     }
-
-    if (stand_pat >= beta) return beta;
-    if (stand_pat > alpha) alpha = stand_pat;
 
     Movelist ml = td->board.capturemoves();
 
