@@ -86,6 +86,10 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
             }
         }
     }
+
+    if (inCheck && bestValue == -VALUE_INFINITE)
+        return mated_in(ss->ply);
+
     if (!stopped) store_entry(0, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
     return bestValue;
 }
