@@ -103,6 +103,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     bool RootNode = ss->ply == 0;
     bool improving, ttHit;
     Color color = td->board.sideToMove;
+    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
+
+    if (ss->ply >= MAX_PLY) 
+        return (ss->ply >= MAX_PLY && !inCheck) ? evaluation(td->board) : 0;
+
+    td->pv_length[ss->ply] = ss->ply;
 
     // Draw detection and mate pruning
     if (!RootNode) {
@@ -118,13 +124,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (alpha >= beta) return alpha;
     }
 
-    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
-    
-    if (ss->ply >= MAX_PLY) 
-        return (ss->ply >= MAX_PLY && !inCheck) ? evaluation(td->board) : 0;
-
-    td->pv_length[ss->ply] = ss->ply;
 
     // Check extension
     if (inCheck) depth++;
