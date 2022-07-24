@@ -43,8 +43,6 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
     }
 
     Movelist ml = inCheck ? td->board.legalmoves() : td->board.capturemoves();
-    if (ml.size == 0 && inCheck)
-        return -VALUE_MATE;
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
