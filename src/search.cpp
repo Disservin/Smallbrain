@@ -20,7 +20,8 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
 
     Score bestValue = -VALUE_INFINITE;
 
-    if (ss->ply > MAX_PLY - 1) return evaluation(td->board);
+    if (td->board.isRepetition() || ss->ply >= MAX_PLY) 
+        return (ss->ply >= MAX_PLY && !inCheck) ? evaluation(td->board) : 0;
 
     if (inCheck)
     {
@@ -85,7 +86,7 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
         }
     }
 
-    if (inCheck && bestValue == -VALUE_INFINITE)
+    if (inCheck && ml.size == 0)
         return mated_in(ss->ply);
 
     if (!stopped) store_entry(0, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
@@ -94,7 +95,6 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
 
 Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
-    if (ss->ply > MAX_PLY - 1) return evaluation(td->board);
 
     TEntry tte;
     Score best = -VALUE_INFINITE;
@@ -103,8 +103,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     bool RootNode = ss->ply == 0;
     bool improving, ttHit;
     Color color = td->board.sideToMove;
-    
-    td->pv_length[ss->ply] = ss->ply;
 
     // Draw detection and mate pruning
     if (!RootNode) {
@@ -122,6 +120,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool PvNode = beta - alpha > 1;
+    
+    if (ss->ply >= MAX_PLY) 
+        return (ss->ply >= MAX_PLY && !inCheck) ? evaluation(td->board) : 0;
+
+    td->pv_length[ss->ply] = ss->ply;
 
     // Check extension
     if (inCheck) depth++;
@@ -199,7 +202,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0) {
-        return inCheck ? -VALUE_MATE + ss->ply : 0;
+        return inCheck ? mated_in(ss->ply) : 0;
     }
 
     // assign a value to each move
@@ -318,14 +321,18 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td) {
     Score alpha = -VALUE_INFINITE;
     Score beta = VALUE_INFINITE;
-    int delta = 30;
+    int delta = 50;
 
-    Score result = 0;
-    int research = 1;
+    Score result = VALUE_NONE;
 
-    if (depth >= 5) {
-        alpha = prev_eval - 50;
-        beta = prev_eval + 50;
+    if (depth <= 8) {
+        alpha = -VALUE_INFINITE;
+        beta = VALUE_INFINITE;
+    }
+    else
+    {
+        alpha = std::max(prev_eval - delta, -((int)VALUE_INFINITE));
+        beta = std::min(prev_eval + delta, ((int)VALUE_INFINITE));
     }
 
     while (true) {
@@ -336,28 +343,31 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
 
         if (stopped) return 0;
 
-        if ( td->id == 0)
-        {
-            bool notExact = (result <= alpha || result >= beta);
-            if (!notExact || (notExact && depth >= 15))
-                uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
-        }
+        // if ( td->id == 0)
+        // {
+        //     bool notExact = (result <= alpha || result >= beta);
+        //     if (!notExact || (notExact && depth >= 15))
+        //         uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
+        // }
 
         if (result <= alpha) 
         {
-            alpha = std::max(alpha - research * research * delta, -((int)VALUE_INFINITE));
+            beta = (alpha + beta) / 2;
+            alpha = std::max(alpha - delta, -((int)VALUE_INFINITE));
+            delta += delta / 2;
         }
         else if (result >= beta) 
         {
-            beta = std::min(beta + research * research * delta, (int)VALUE_INFINITE);
+            beta = std::min(beta + delta, (int)VALUE_INFINITE);
+            delta += delta / 2;
         }
         else
         {
-            return result;
+            break;
         }
-        
-        research++;
     }
+    uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
+    return result;
 }
 
 void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId) {
