@@ -168,16 +168,15 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
                                                    
     // improving boolean, similar to stockfish
-    improving = !inCheck && ss->ply >= 2 && staticEval > (ss-2)->eval;
+    improving = ss->ply >= 2 && staticEval > (ss-2)->eval;
 
     // Razoring
     if (   depth < 2
-        && staticEval + 102 < alpha
-        && !inCheck)
+        && staticEval + 102 < alpha)
         return qsearch(PvNode, alpha, beta, ss, td);
 
     // Reverse futility pruning
-    if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck) {
+    if (std::abs(beta) < VALUE_MATE_IN_PLY) {
         if (depth < 7 && staticEval - 67 * depth + 76 * improving >= beta) return beta;
     }
 
@@ -185,7 +184,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (td->board.nonPawnMat(color) 
         && (ss-1)->currentmove != NULL_MOVE
         && depth >= 3 
-        && !inCheck
         && staticEval >= beta) 
     {
         int r = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
