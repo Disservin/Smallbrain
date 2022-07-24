@@ -9,7 +9,7 @@ void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData 
     }
 }
 
-Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *td) {
+Score Search::qsearch(bool PV, Score alpha, Score beta, Stack *ss, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
     Score stand_pat = evaluation(td->board);
     Score bestValue = stand_pat;
@@ -19,29 +19,25 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
     Move bestMove;
     TEntry tte;
 
-    
-
-    if (ply > MAX_PLY - 1) return stand_pat;
+    if (ss->ply > MAX_PLY - 1) return stand_pat;
 
     if (stand_pat >= beta) return beta;
     if (stand_pat > alpha) alpha = stand_pat;
 
-    if (depth == 0) return alpha;
+    probe_tt(tte, ttHit, td->board.hashKey);
+    if (   ttHit 
+        && tte.depth >= 0 
+        && !PV) {
+        if (tte.flag == EXACT) return tte.score;
+        else if (tte.flag == LOWERBOUND && tte.score >= beta) return tte.score;
+        else if (tte.flag == UPPERBOUND && tte.score <= alpha) return tte.score;
+    }
 
     Movelist ml = td->board.capturemoves();
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
         ml.values[i] = score_qmove(ml.list[i], td->board);
-    }
-
-    probe_tt(tte, ttHit, td->board.hashKey);
-    if (ttHit) {
-        if (tte.depth >= 0) {
-            if (tte.flag == EXACT) return tte.score;
-            else if (tte.flag == LOWERBOUND && tte.score >= beta) return tte.score;
-            else if (tte.flag == UPPERBOUND && tte.score <= alpha) return tte.score;
-        }
     }
 
     // search the moves
@@ -58,7 +54,7 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
 
         td->nodes++;
         td->board.makeMove(move);
-        Score score = -qsearch(depth - 1, -beta, -alpha, ply + 1, td);
+        Score score = -qsearch(PV, -beta, -alpha, ss+1, td);
         td->board.unmakeMove(move);
         if (score > bestValue) {
             bestValue = score;
@@ -69,7 +65,7 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
             }
         }
     }
-    if (!exit_early(td->nodes, td->id)) store_entry(0, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
+    if (!stopped) store_entry(0, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
     return bestValue;
 }
 
@@ -108,7 +104,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (inCheck) depth++;
 
     // Enter qsearch
-    if (depth <= 0) return qsearch(15, alpha, beta, ss->ply, td);
+    if (depth <= 0) return qsearch(PvNode, alpha, beta, ss, td);
 
     // Selective depth (heighest depth we have ever reached)
     if (ss->ply > td->seldepth) td->seldepth = ss->ply; 
@@ -150,7 +146,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         && depth < 2
         && staticEval + 102 < alpha
         && !inCheck)
-        return qsearch(15, alpha, beta, ss->ply, td);
+        return qsearch(PvNode, alpha, beta, ss, td);
 
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY && !inCheck && !PvNode) {
@@ -292,7 +288,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    if (!exit_early(td->nodes, td->id)) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove);
+    if (!stopped) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove);
     return best;
 }
 
