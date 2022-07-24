@@ -14,7 +14,13 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
     Score stand_pat = evaluation(td->board);
     Score bestValue = stand_pat;
     Color color = td->board.sideToMove;
+    bool ttHit = false;
+    Score oldAlpha = alpha;
+    Move bestMove;
+    TEntry tte;
+
     
+
     if (ply > MAX_PLY - 1) return stand_pat;
 
     if (stand_pat >= beta) return beta;
@@ -29,7 +35,14 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
         ml.values[i] = score_qmove(ml.list[i], td->board);
     }
 
-
+    probe_tt(tte, ttHit, td->board.hashKey);
+    if (ttHit) {
+        if (tte.depth >= 0) {
+            if (tte.flag == EXACT) return tte.score;
+            else if (tte.flag == LOWERBOUND && tte.score >= beta) return tte.score;
+            else if (tte.flag == UPPERBOUND && tte.score <= alpha) return tte.score;
+        }
+    }
 
     // search the moves
     for (int i = 0; i < (int)ml.size; i++) {
@@ -49,13 +62,14 @@ Score Search::qsearch(int depth, Score alpha, Score beta, int ply, ThreadData *t
         td->board.unmakeMove(move);
         if (score > bestValue) {
             bestValue = score;
-            if (score >= beta) return beta;
+            bestMove = move;
+            if (score >= beta) break;
             if (score > alpha) {
                 alpha = score;
             }
         }
-
     }
+    if (!exit_early(td->nodes, td->id)) store_entry(depth, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
     return bestValue;
 }
 
@@ -101,7 +115,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // Look up in the TT
     ttHit = false;
-    probe_tt(tte, ttHit, td->board.hashKey, depth);
+    probe_tt(tte, ttHit, td->board.hashKey);
 
     // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode 
