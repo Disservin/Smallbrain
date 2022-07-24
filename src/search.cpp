@@ -9,35 +9,44 @@ void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData 
     }
 }
 
-Score Search::qsearch(bool PV, Score alpha, Score beta, Stack *ss, ThreadData *td) {
+Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
-    Score stand_pat = evaluation(td->board);
-    Score bestValue = stand_pat;
     Color color = td->board.sideToMove;
+    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool ttHit = false;
     Score oldAlpha = alpha;
-    Move bestMove;
+    Move bestMove = NO_MOVE;
     TEntry tte;
 
-    if (ss->ply > MAX_PLY - 1) return stand_pat;
+    Score bestValue = -VALUE_INFINITE;
 
-    if (stand_pat >= beta) return beta;
-    if (stand_pat > alpha) alpha = stand_pat;
+    if (ss->ply > MAX_PLY - 1) return evaluation(td->board);
+
+    if (inCheck)
+    {
+        bestValue = -VALUE_INFINITE;
+    }
+    else
+    {
+        bestValue = evaluation(td->board);
+        if (bestValue >= beta) return bestValue;
+        if (bestValue > alpha) alpha = bestValue;
+    }
 
     probe_tt(tte, ttHit, td->board.hashKey);
     if (   ttHit 
         && tte.depth >= 0 
-        && !PV) {
+        && !pv) {
         if (tte.flag == EXACT) return tte.score;
         else if (tte.flag == LOWERBOUND && tte.score >= beta) return tte.score;
         else if (tte.flag == UPPERBOUND && tte.score <= alpha) return tte.score;
     }
 
-    Movelist ml = td->board.capturemoves();
+    Movelist ml = inCheck ? td->board.legalmoves() : td->board.capturemoves();
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++) {
-        ml.values[i] = score_qmove(ml.list[i], td->board);
+        ml.values[i] = score_move(ml.list[i], ss->ply, ttHit, td);
     }
 
     // search the moves
@@ -48,23 +57,37 @@ Score Search::qsearch(bool PV, Score alpha, Score beta, Stack *ss, ThreadData *t
         Move move = ml.list[i];
 
         Piece captured = td->board.pieceAtB(to(move));
+
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
-        if (stand_pat + 400 + piece_values[EG][captured%6] < alpha && !promoted(move) && td->board.nonPawnMat(color)) continue;
-        if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, -100, td->board)) continue;
+        if (   captured != None
+            && !inCheck
+            && bestValue + 400 + piece_values[EG][captured%6] < alpha 
+            && !promoted(move) 
+            && td->board.nonPawnMat(color)) 
+            continue;
+
+        if (   bestValue > VALUE_MATED_IN_PLY 
+            && captured != None 
+            && !see(move, -100, td->board)) 
+            continue;
 
         td->nodes++;
         td->board.makeMove(move);
-        Score score = -qsearch(PV, -beta, -alpha, ss+1, td);
+        Score score = -qsearch(pv, -beta, -alpha, ss+1, td);
         td->board.unmakeMove(move);
         if (score > bestValue) {
             bestValue = score;
-            bestMove = move;
-            if (score >= beta) break;
             if (score > alpha) {
+                bestMove = move;
                 alpha = score;
+                if (score >= beta) break;
             }
         }
     }
+
+    if (inCheck && bestValue == -VALUE_INFINITE)
+        return mated_in(ss->ply);
+
     if (!stopped) store_entry(0, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
     return bestValue;
 }
