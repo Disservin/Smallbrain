@@ -1,14 +1,11 @@
 #include "tt.h"
 
 void store_entry(int depth, Score bestvalue,
-                 Score old_alpha, Score beta, U64 key,
+                 Flag b, U64 key,
                  uint16_t move) 
 {
     U64  index = key % TT_SIZE;                
     TEntry tte = TTable[index];
-
-    Flag b = bestvalue <= old_alpha ? UPPERBOUND : bestvalue >= beta ? LOWERBOUND : EXACT;
-
     if (   std::abs(bestvalue) < VALUE_MATE_IN_PLY 
         && (tte.key != key || b == EXACT || depth > (tte.depth * 2) / 3)) 
     {
