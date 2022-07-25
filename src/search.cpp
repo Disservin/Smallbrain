@@ -327,7 +327,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td) {
     Score alpha = -VALUE_INFINITE;
     Score beta = VALUE_INFINITE;
-    int delta = 50;
+    int delta = 30;
 
     Score result = 0;
 
