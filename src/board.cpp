@@ -343,7 +343,7 @@ void Board::placePiece(Piece piece, Square sq) {
 }
 
 U64 Board::updateKeyPiece(Piece piece, Square sq) {
-    return RANDOM_ARRAY[64 * (piece_type(piece) * 2 + ((piece/6) ^ 1)) + sq];
+    return RANDOM_ARRAY[64 * hash_piece[piece] + sq];
 }
 
 U64 Board::updateKeyEnPassant(Square sq) {

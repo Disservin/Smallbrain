@@ -206,3 +206,8 @@ static constexpr U64 castlingKey[16] = {0, RANDOM_ARRAY[768], RANDOM_ARRAY[768 +
                       RANDOM_ARRAY[768 + 1] ^ RANDOM_ARRAY[768 + 3], RANDOM_ARRAY[768] ^ RANDOM_ARRAY[768 + 1] ^ RANDOM_ARRAY[768 + 3],
                       RANDOM_ARRAY[768 + 3] ^ RANDOM_ARRAY[768 + 2], RANDOM_ARRAY[768 + 3] ^ RANDOM_ARRAY[768 + 2] ^ RANDOM_ARRAY[768], RANDOM_ARRAY[768 + 1] ^ RANDOM_ARRAY[768 + 2] ^ RANDOM_ARRAY[768 + 3],
                       RANDOM_ARRAY[768 + 1] ^ RANDOM_ARRAY[768 + 2] ^ RANDOM_ARRAY[768 + 3] ^ RANDOM_ARRAY[768]};
+
+static constexpr int hash_piece[12] = 
+{
+    1, 3, 5, 7, 9, 11, 0, 2, 4, 6, 8, 10
+};
