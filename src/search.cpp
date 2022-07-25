@@ -89,7 +89,8 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
     if (inCheck && ml.size == 0)
         return mated_in(ss->ply);
 
-    if (!stopped) store_entry(0, bestValue, oldAlpha, beta, td->board.hashKey, bestMove);
+    Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
+    if (!stopped) store_entry(0, bestValue, b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
@@ -320,7 +321,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         UpdateHH(bestMove, depth, quietMoves, td);
 
     // Store position in TT
-    if (!stopped && !RootNode) store_entry(depth, best, oldAlpha, beta, td->board.hashKey, bestMove);
+    Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
+    if (!stopped && !RootNode) store_entry(depth, best, b, td->board.hashKey, bestMove);
     return best;
 }
 
