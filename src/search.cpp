@@ -116,8 +116,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (td->board.isRepetition() && (ss-1)->currentmove != NULL_MOVE) return - 3 + (td->nodes & 7);
         int all = popcount(td->board.All());
         if (all == 2) return 0;
-        if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight])) return 0;
-        if (all == 3 && (td->board.Bitboards[WhiteBishop] || td->board.Bitboards[BlackBishop])) return 0;
+        if (all == 3 && (td->board.Bitboards[WhiteKnight] || td->board.Bitboards[BlackKnight]
+                         || td->board.Bitboards[WhiteBishop] || td->board.Bitboards[BlackBishop])) return 0;
 
         alpha = std::max(alpha, mated_in(ss->ply));
         beta = std::min(beta, mate_in(ss->ply + 1));
@@ -160,9 +160,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         staticEval = VALUE_NONE;
         goto moves;
     }
-
-    if (PvNode)
-        goto moves;
     
     // use tt eval for a better staticEval
     ss->eval = staticEval = ttHit ? tte.score : evaluation(td->board);
@@ -171,7 +168,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     improving = ss->ply >= 2 && staticEval > (ss-2)->eval;
 
     // Razoring
-    if (   depth < 2
+    if (   !PvNode
+        && depth < 2
         && staticEval + 102 < alpha)
         return qsearch(PvNode, alpha, beta, ss, td);
 
@@ -181,7 +179,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     }
 
     // Null move pruning
-    if (td->board.nonPawnMat(color) 
+    if (   !PvNode
+        && td->board.nonPawnMat(color) 
         && (ss-1)->currentmove != NULL_MOVE
         && depth >= 3 
         && staticEval >= beta) 
@@ -197,6 +196,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // IID 
     if (depth >= 4 && !ttHit)
         depth--;
+
+    if (  PvNode
+        && !ttHit)
+        depth--;
+
+    if (depth <= 0) return qsearch(PvNode, alpha, beta, ss, td);
 
     moves:
     Movelist ml = td->board.legalmoves();
