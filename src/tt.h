@@ -17,3 +17,5 @@ void store_entry(int depth, Score bestvalue,
                  uint16_t move);
 
 void probe_tt(TEntry &tte, bool &ttHit, U64 key);
+
+uint32_t tt_index (U64 key);

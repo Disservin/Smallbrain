@@ -10,8 +10,8 @@
 
 std::atomic<bool> stopped;
 
-U64 TT_SIZE = 524287;
-TEntry* TTable;   //TEntry size is 18 bytes
+U64 TT_SIZE = 16 * 1024 * 1024 / sizeof(TEntry); // initialise to 16 MB
+TEntry* TTable;   //TEntry size is 14 bytes
 
 Board board = Board();
 Search searcher = Search();
@@ -56,9 +56,9 @@ int main(int argc, char** argv) {
         if (input == "uci") {
             std::cout << "id name Smallbrain Version 5.0\n" <<
                          "id author Disservin\n" <<
-                         "\noption name Hash type spin default 400 min 1 max 200000\n" << //Hash in mb
-                         "option name Threads type spin default 1 min 1 max 256\n" << //Threads
-                         "option name EvalFile type string default default.net\n" << //NN file
+                         "\noption name Hash type spin default 400 min 1 max 57344\n" << // Hash in MB
+                         "option name Threads type spin default 1 min 1 max 256\n" << // Threads
+                         "option name EvalFile type string default default.net\n" << // NN file
                          "uciok" << std::endl;
         }
         if (input == "isready") std::cout << "readyok" << std::endl;
@@ -78,7 +78,8 @@ int main(int argc, char** argv) {
             std::string value = tokens[4];
             if (option == "Hash")
             {
-                U64 elements = (static_cast<unsigned long long>(std::stoi(value)) * 1000000) / sizeof(TEntry);
+                int sizeMB = std::clamp(std::stoi(value), 2, MAXHASH);
+                U64 elements = (static_cast<unsigned long long>(sizeMB) * 1024 * 1024) / sizeof(TEntry);
                 reallocate_tt(elements);
             }
             else if (option == "EvalFile")
