@@ -515,6 +515,39 @@ U64 Board::PawnPushBoth(Color c, Square sq)
     }
 }
 
+int Board::pseudoLegalMovesNumber()
+{
+    int total = 0;
+    U64 pawns_mask = Pawns(sideToMove);
+    U64 knights_mask = Knights(sideToMove);
+    U64 bishops_mask = Bishops(sideToMove);
+    U64 rooks_mask = Rooks(sideToMove);
+    U64 queens_mask = Queens(sideToMove);
+    while (pawns_mask) {
+        Square from = poplsb(pawns_mask);
+        total += popcount(PawnPushBoth(sideToMove, from) | PawnAttacks(from, sideToMove));
+    }
+    while (knights_mask) {
+        Square from = poplsb(knights_mask);
+        total += popcount(KnightAttacks(from) & enemyEmptyBB);
+    }
+    while (bishops_mask) {
+        Square from = poplsb(bishops_mask);
+        total += popcount(BishopAttacks(from, occAll) & enemyEmptyBB);
+    }
+    while (rooks_mask) {
+        Square from = poplsb(rooks_mask);
+        total += popcount(RookAttacks(from, occAll) & enemyEmptyBB);
+    }
+    while (queens_mask) {
+        Square from = poplsb(queens_mask);
+        total += popcount(QueenAttacks(from, occAll) & enemyEmptyBB);
+    }
+    Square from = KingSQ(sideToMove);
+    total += popcount(KingAttacks(from) & enemyEmptyBB);
+    return total;
+}
+
 U64 Board::LegalPawnNoisy(Color c, Square sq, Square ep) {
     U64 enemy = occEnemy;
     // If we are pinned diagonally we can only do captures which are on the pin_dg and on the checkmask

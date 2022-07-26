@@ -194,10 +194,13 @@ public:
 	U64 PawnPushSingle(Color c, Square sq);
 	U64 PawnPushBoth(Color c, Square sq);
 
+	// pseudo legal moves number estimation
+	int pseudoLegalMovesNumber();
+
 	// legal captures + promotions
 	U64 LegalPawnNoisy(Color c, Square sq, Square ep);
 	U64 LegalKingCaptures(Color c, Square sq);
-
+	
 	// all legal moves for each piece
 	U64 LegalPawnMoves(Color c, Square sq);
 	U64 LegalPawnMovesEP(Color c, Square sq, Square ep);
