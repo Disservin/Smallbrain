@@ -18,6 +18,7 @@ struct Stack {
     uint16_t currentmove;
     uint16_t ply;
     int eval;
+    int verify;
 };
 
 struct ThreadData {
