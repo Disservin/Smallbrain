@@ -14,6 +14,9 @@
 #include "search.h"
 #include "perft.h"
 
+// 57344 MB = 2^32 * 14B / (1024 * 1024)
+#define MAXHASH 57344
+
 int main(int argc, char** argv);
 
 void signal_callback_handler(int signum);

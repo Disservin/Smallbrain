@@ -517,7 +517,7 @@ int Search::mmlva(Move& move, Board& board) {
 }
 
 int Search::score_move(Move& move, int ply, bool ttMove, ThreadData *td) {
-    if (ttMove && move == TTable[td->board.hashKey % TT_SIZE].move) {
+    if (ttMove && move == TTable[tt_index(td->board.hashKey)].move) {
         return 10'000'000;
     }
     else if (promoted(move)) {

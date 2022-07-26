@@ -4,7 +4,7 @@ void store_entry(int depth, Score bestvalue,
                  Flag b, U64 key,
                  uint16_t move) 
 {
-    U64  index = key % TT_SIZE;                
+    U64  index = tt_index(key);              
     TEntry tte = TTable[index];
     if ((tte.key != key || b == EXACT || depth > (tte.depth * 2) / 3)) 
     {
@@ -19,10 +19,13 @@ void store_entry(int depth, Score bestvalue,
 
 void probe_tt(TEntry &tte, bool &ttHit, U64 key)
 {
-    U64 index = key % TT_SIZE;
+    U64 index = tt_index(key);
     tte = TTable[index];
-    if (tte.key == key) {
-        // use TT move
-        ttHit = true;
-    }
+    ttHit = (tte.key == key);
+}
+
+uint32_t tt_index (U64 key)
+{
+    // return key & (TT_SIZE-1);
+    return ((uint32_t)key * (uint64_t)TT_SIZE) >> 32;
 }
