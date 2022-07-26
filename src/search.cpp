@@ -346,11 +346,6 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
 
         if (stopped) return 0;
 
-        if (   td->id == 0
-            && (result <= alpha || result >= beta) 
-            && depth >= 15)
-            uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
-
         if (result <= alpha) 
         {
             beta = (alpha + beta) / 2;
