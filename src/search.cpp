@@ -184,7 +184,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         && td->board.nonPawnMat(color) 
         && (ss-1)->currentmove != NULL_MOVE
         && depth >= 3 
-        && staticEval >= beta) 
+        && staticEval >= beta
+        && td->board.pseudoLegalMovesNumber() > 6) 
     {
         int r = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
         td->board.makeNullMove();
