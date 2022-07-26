@@ -188,7 +188,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         && (ss-1)->currentmove != NULL_MOVE
         && depth >= 3 
         && staticEval >= beta
-        && ss->ply >= ss->verify
         && td->board.pseudoLegalMovesNumber() > 6) 
     {
         int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
@@ -199,12 +198,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (score >= beta)
         {
             if (score >= VALUE_MATE_IN_PLY) score = beta;
-            if (ss->verify || (depth <= 14 && std::abs(beta) < 10000)) return score;
-
-            ss->verify = ss->ply + 3 * (depth - R) / 4;
-            Score verifyScore = absearch(depth - R, beta - 1, beta, ss, td);
-            ss->verify = 0;
-            if (verifyScore >= beta) return score;
+            return score;
         }
     }
 
