@@ -6,8 +6,7 @@ void store_entry(int depth, Score bestvalue,
 {
     U64  index = key % TT_SIZE;                
     TEntry tte = TTable[index];
-    if (   std::abs(bestvalue) < VALUE_MATE_IN_PLY 
-        && (tte.key != key || b == EXACT || depth > (tte.depth * 2) / 3)) 
+    if ((tte.key != key || b == EXACT || depth > (tte.depth * 2) / 3)) 
     {
         tte.depth = depth;
         tte.score = bestvalue;

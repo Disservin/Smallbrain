@@ -35,12 +35,14 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
     }
 
     probe_tt(tte, ttHit, td->board.hashKey);
+    Score ttScore = VALUE_NONE;
     if (   ttHit 
         && tte.depth >= 0 
         && !pv) {
-        if (tte.flag == EXACT) return tte.score;
-        else if (tte.flag == LOWERBOUND && tte.score >= beta) return tte.score;
-        else if (tte.flag == UPPERBOUND && tte.score <= alpha) return tte.score;
+        ttScore = score_from_tt(tte.score, ss->ply);
+        if (tte.flag == EXACT) return ttScore;
+        else if (tte.flag == LOWERBOUND && ttScore >= beta) return ttScore;
+        else if (tte.flag == UPPERBOUND && ttScore <= alpha) return ttScore;
     }
 
     Movelist ml = inCheck ? td->board.legalmoves() : td->board.capturemoves();
@@ -90,7 +92,7 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
         return mated_in(ss->ply);
 
     Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
-    if (!stopped) store_entry(0, bestValue, b, td->board.hashKey, bestMove);
+    if (!stopped) store_entry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
@@ -139,20 +141,21 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Look up in the TT
     ttHit = false;
     probe_tt(tte, ttHit, td->board.hashKey);
-
+    Score ttScore = VALUE_NONE;
     // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode 
         && ttHit && tte.depth >= depth
         && (ss-1)->currentmove != NULL_MOVE)
     {
-        if (tte.flag == EXACT) return tte.score;
+        ttScore = score_from_tt(tte.score, ss->ply);;
+        if (tte.flag == EXACT) return ttScore;
         else if (tte.flag == LOWERBOUND) {
-            alpha = std::max(alpha, tte.score);
+            alpha = std::max(alpha, ttScore);
         }
         else if (tte.flag == UPPERBOUND) {
-            beta = std::min(beta, tte.score);
+            beta = std::min(beta, ttScore);
         }
-        if (alpha >= beta) return tte.score;
+        if (alpha >= beta) return ttScore;
     }
 
     if (inCheck)
@@ -186,12 +189,16 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         && depth >= 3 
         && staticEval >= beta) 
     {
-        int r = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
+        int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
         td->board.makeNullMove();
         (ss)->currentmove = NULL_MOVE;
-        Score score = -absearch(depth - r, -beta, -beta + 1, ss+1, td);
+        Score score = -absearch(depth - R, -beta, -beta + 1, ss+1, td);
         td->board.unmakeNullMove();
-        if (score >= beta) return beta;
+        if (score >= beta)
+        {
+            if (score >= VALUE_MATE_IN_PLY) score = beta;
+            return score;
+        }
     }
 
     // IID 
@@ -322,7 +329,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
     // Store position in TT
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
-    if (!stopped && !RootNode) store_entry(depth, best, b, td->board.hashKey, bestMove);
+    if (!stopped && !RootNode) store_entry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
     return best;
 }
 
