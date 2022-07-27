@@ -38,6 +38,20 @@ void Board::deactivate(int inputNum) {
     }
 }
 
+void Board::accumulate()
+{
+    for (int i = 0; i < HIDDEN_BIAS; i++)
+        accumulator[i] = hiddenBias[i];
+
+    for (int i = 0; i < 64; i++) {
+        Piece p = board[i];
+        bool input = p != None;
+        if (!input) continue;
+        int j = Square(i) + (p) * 64;
+        activate(j);
+    }
+}
+
 Board::Board() {
     initializeLookupTables();
 }
@@ -88,7 +102,7 @@ Piece Board::pieceAtB(Square sq) {
     return board[sq];
 }
 
-void Board::applyFen(std::string fen) {
+void Board::applyFen(std::string fen, bool updateAcc) {
     for (int i = 0; i < 12; i++) {
         Bitboards[i] = 0ULL;
     }
@@ -106,16 +120,20 @@ void Board::applyFen(std::string fen) {
     }
     sideToMove = (move_right == "w") ? White : Black;
 
-    for (int i = 0; i < HIDDEN_BIAS; i++) {
-        accumulator[i] = hiddenBias[i];
+    if (updateAcc)
+    {
+        for (int i = 0; i < HIDDEN_BIAS; i++)
+            accumulator[i] = hiddenBias[i];  
     }
+
 
     Square square = Square(56);
     for (int index = 0; index < (int)position.size(); index++) {
         char curr = position[index];
         if (charToPiece.find(curr) != charToPiece.end()) {
             Piece piece = charToPiece[curr];
-            placePiece(piece, square);
+            if (updateAcc) placePiece(piece, square);
+            else placePieceSimple(piece, square);
             square = Square(square + 1);
         }
         else if (curr == '/') square = Square(square - 16);

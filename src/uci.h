@@ -14,8 +14,17 @@
 #include "search.h"
 #include "perft.h"
 
-// 57344 MB = 2^32 * 14B / (1024 * 1024)
-#define MAXHASH 57344
+#define TUNE_INT(x, min, max)                                        \
+    do {                                                             \
+        extern int x;                                                \
+        options.add_int_tune_option(#x, "spin", x, min, max);        \
+    } while (0);
+
+#define TUNE_DOUBLE(x, min, max)                                     \
+    do {                                                             \
+        extern double x;                                             \
+        options.add_double_tune_option(#x, "spin", x, min, max);     \
+    } while (0);
 
 int main(int argc, char** argv);
 
@@ -23,13 +32,7 @@ void signal_callback_handler(int signum);
 
 std::vector<std::string> split_input(std::string fen);
 
-Move convert_uci_to_Move(std::string input);
-
 void stop_threads();
-
-void allocate_tt();
-
-void reallocate_tt(U64 elements);
 
 void quit();
 

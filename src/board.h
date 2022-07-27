@@ -88,6 +88,7 @@ public:
 	int16_t accumulator[HIDDEN_BIAS];
 	void activate(int inputNum);
 	void deactivate(int inputNum);
+	void accumulate();
 
 	Board();
 	U64 zobristHash();
@@ -102,7 +103,7 @@ public:
 	Piece pieceAtB(Square sq);
 
 	// aplys a new Fen to the board
-	void applyFen(std::string fen);
+	void applyFen(std::string fen, bool updateAcc = true);
 
 	// returns a Fen string of the current board
 	std::string getFen();
