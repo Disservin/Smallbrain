@@ -297,7 +297,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         madeMoves++;
 
         if (td->id == 0 && RootNode && !stopped && elapsed() > 10000 ) 
-            std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move) << " currmovenumber " << madeMoves << "\n";
+            std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move) << " currmovenumber " << signed(madeMoves) << "\n";
 
         td->board.makeMove(move);
 
