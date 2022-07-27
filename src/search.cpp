@@ -1,11 +1,20 @@
 #include "search.h"
 
-void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData *td) {
-    if (depth > 1) td->history_table[td->board.sideToMove][from(bestMove)][to(bestMove)] += depth * depth;
-    for (int i = 0; i < quietMoves.size; i++) {
-        Move move = quietMoves.list[i];
-        if (move == bestMove) continue;
-        td->history_table[td->board.sideToMove][from(move)][to(move)] -= depth * depth;
+#define hhEntry(bestmove, td) &td->history_table[td->board.sideToMove][from(bestmove)][to(bestmove)]
+
+void Search::UpdateHH(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td) {
+    if (td->board.pieceAtB(to(bestMove)) == None)
+    {
+        if (best < beta) return;
+        int bonus = depth * depth;
+        bonus += bonus - *hhEntry(bestMove, td) * std::abs(bonus) / 16384;
+        if (depth > 1) *hhEntry(bestMove, td) += bonus;
+        for (int i = 0; i < quietMoves.size; i++) 
+        {
+            const Move move = quietMoves.list[i];
+            if (move == bestMove) continue;
+            *hhEntry(move, td) -= bonus;
+        }
     }
 }
 
@@ -348,8 +357,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     }
 
     // update history heuristic
-    if (best >= beta && td->board.pieceAtB(to(bestMove)) == None)
-        UpdateHH(bestMove, depth, quietMoves, td);
+    UpdateHH(bestMove, best, beta, depth, quietMoves, td);
 
     // Store position in TT
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
