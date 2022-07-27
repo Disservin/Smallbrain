@@ -9,20 +9,26 @@ void Search::UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData 
     }
 }
 
-Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *td) {
-    if (exit_early(td->nodes, td->id)) return 0;
-    Color color = td->board.sideToMove;
-    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
+template <Node node>
+Score Search::qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td) {
+    if (exit_early(td->nodes, td->id)) return VALUE_NONE;
+
+    // Initialize various variables
+    constexpr bool PvNode = node == PV;
+    const Color color = td->board.sideToMove;
+    const bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
+
     bool ttHit = false;
-    Score oldAlpha = alpha;
     Move bestMove = NO_MOVE;
+    Score bestValue;
+    Score oldAlpha = alpha;
     TEntry tte;
 
-    Score bestValue = -VALUE_INFINITE;
-
+    // check for repetition or 50 move rule draw
     if (td->board.isRepetition() || ss->ply >= MAX_PLY) 
         return (ss->ply >= MAX_PLY && !inCheck) ? evaluation(td->board) : 0;
 
+    // skip evaluating positions that are in check
     if (inCheck)
     {
         bestValue = -VALUE_INFINITE;
@@ -34,27 +40,32 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
         if (bestValue > alpha) alpha = bestValue;
     }
 
+    // probe the transposition table
     probe_tt(tte, ttHit, td->board.hashKey);
     Score ttScore = VALUE_NONE;
     if (   ttHit 
         && tte.depth >= 0 
-        && !pv) {
+        && !PvNode) 
+    {
         ttScore = score_from_tt(tte.score, ss->ply);
         if (tte.flag == EXACT) return ttScore;
         else if (tte.flag == LOWERBOUND && ttScore >= beta) return ttScore;
         else if (tte.flag == UPPERBOUND && ttScore <= alpha) return ttScore;
     }
 
+    // generate all legalmoves in case we are in check 
     Movelist ml = inCheck ? td->board.legalmoves() : td->board.capturemoves();
 
     // assign a value to each move
-    for (int i = 0; i < ml.size; i++) {
+    for (int i = 0; i < ml.size; i++)
         ml.values[i] = score_move(ml.list[i], ss->ply, ttHit, td);
-    }
 
     // search the moves
-    for (int i = 0; i < (int)ml.size; i++) {
-        // sort the moves
+    for (int i = 0; i < (int)ml.size; i++) 
+    {
+        // sort the best move to the front
+        // we dont need to sort the whole list, since we might have a cutoff
+        // and return before we checked all moves
         sortMoves(ml, i);
 
         Move move = ml.list[i];
@@ -69,6 +80,7 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
             && td->board.nonPawnMat(color)) 
             continue;
 
+        // see based capture pruning
         if (   bestValue > VALUE_MATED_IN_PLY 
             && captured != None 
             && !see(move, -100, td->board)) 
@@ -76,11 +88,15 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
 
         td->nodes++;
         td->board.makeMove(move);
-        Score score = -qsearch(pv, -beta, -alpha, ss+1, td);
+        Score score = -qsearch<node>(-beta, -alpha, ss+1, td);
         td->board.unmakeMove(move);
-        if (score > bestValue) {
+
+        // update the best score
+        if (score > bestValue) 
+        {
             bestValue = score;
-            if (score > alpha) {
+            if (score > alpha) 
+            {
                 bestMove = move;
                 alpha = score;
                 if (score >= beta) break;
@@ -91,21 +107,31 @@ Score Search::qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *t
     if (inCheck && ml.size == 0)
         return mated_in(ss->ply);
 
+    // Transposition table flag
     Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
+
+    // store in the transposition table
     if (!stopped) store_entry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
+template <Node node>
 Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td) {
     if (exit_early(td->nodes, td->id)) return 0;
 
+    // Initialize various variables
+    constexpr bool RootNode = node == Root;
+    constexpr bool PvNode = node != NonPV;
+
+    Color color = td->board.sideToMove;
+
     TEntry tte;
+
     Score best = -VALUE_INFINITE;
     Score staticEval;
     Score oldAlpha = alpha;
-    bool RootNode = ss->ply == 0;
+    
     bool improving, ttHit;
-    Color color = td->board.sideToMove;
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
 
     if (ss->ply >= MAX_PLY) 
@@ -114,7 +140,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     td->pv_length[ss->ply] = ss->ply;
 
     // Draw detection and mate pruning
-    if (!RootNode) {
+    if (!RootNode) 
+    {
         if (td->board.halfMoveClock >= 100) return 0;
         if (td->board.isRepetition() && (ss-1)->currentmove != NULL_MOVE) return - 3 + (td->nodes & 7);
         int all = popcount(td->board.All());
@@ -127,13 +154,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (alpha >= beta) return alpha;
     }
 
-    bool PvNode = beta - alpha > 1;
-
     // Check extension
     if (inCheck) depth++;
 
     // Enter qsearch
-    if (depth <= 0) return qsearch(PvNode, alpha, beta, ss, td);
+    if (depth <= 0) return qsearch<node>(alpha, beta, ss, td);
 
     // Selective depth (heighest depth we have ever reached)
     if (ss->ply > td->seldepth) td->seldepth = ss->ply; 
@@ -147,14 +172,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         && ttHit && tte.depth >= depth
         && (ss-1)->currentmove != NULL_MOVE)
     {
-        ttScore = score_from_tt(tte.score, ss->ply);;
+        ttScore = score_from_tt(tte.score, ss->ply);
         if (tte.flag == EXACT) return ttScore;
-        else if (tte.flag == LOWERBOUND) {
+        else if (tte.flag == LOWERBOUND)
             alpha = std::max(alpha, ttScore);
-        }
-        else if (tte.flag == UPPERBOUND) {
+        else if (tte.flag == UPPERBOUND)
             beta = std::min(beta, ttScore);
-        }
         if (alpha >= beta) return ttScore;
     }
 
@@ -175,12 +198,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     if (   !PvNode
         && depth < 2
         && staticEval + 102 < alpha)
-        return qsearch(PvNode, alpha, beta, ss, td);
+        return qsearch<NonPV>(alpha, beta, ss, td);
 
     // Reverse futility pruning
-    if (std::abs(beta) < VALUE_MATE_IN_PLY) {
+    if (std::abs(beta) < VALUE_MATE_IN_PLY)
         if (depth < 7 && staticEval - 67 * depth + 76 * improving >= beta) return beta;
-    }
 
     // Null move pruning
     if (   !PvNode
@@ -192,10 +214,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
         td->board.makeNullMove();
         (ss)->currentmove = NULL_MOVE;
-        Score score = -absearch(depth - R, -beta, -beta + 1, ss+1, td);
+        Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss+1, td);
         td->board.unmakeNullMove();
         if (score >= beta)
-        {
+        {   
+            // dont return mate scores
             if (score >= VALUE_MATE_IN_PLY) score = beta;
             return score;
         }
@@ -209,29 +232,28 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         && !ttHit)
         depth--;
 
-    if (depth <= 0) return qsearch(PvNode, alpha, beta, ss, td);
+    if (depth <= 0) return qsearch<PV>(alpha, beta, ss, td);
 
     moves:
     Movelist ml = td->board.legalmoves();
 
     // if the move list is empty, we are in checkmate or stalemate
-    if (ml.size == 0) {
+    if (ml.size == 0)
         return inCheck ? mated_in(ss->ply) : 0;
-    }
 
     // assign a value to each move
-    for (int i = 0; i < ml.size; i++) {
+    for (int i = 0; i < ml.size; i++)
         ml.values[i] = score_move(ml.list[i], ss->ply, ttHit, td);
-    }
 
+    // set root node move list size
     if (RootNode && td->id == 0) rootSize = ml.size;
 
-    Move bestMove = NO_MOVE;
     Movelist quietMoves;
-    uint16_t madeMoves = 0;
-    Score score = 0;
+    Move bestMove = NO_MOVE;
+    Score score = VALUE_NONE;
+    uint8_t madeMoves = 0;
+    
     bool doFullSearch = false;
-
 
     for (int i = 0; i < ml.size; i++) {
         // sort the moves
@@ -280,7 +302,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             rdepth -= td->id % 2;
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
-            score = -absearch(rdepth, -alpha - 1, -alpha, ss+1, td);
+            score = -absearch<NonPV>(rdepth, -alpha - 1, -alpha, ss+1, td);
             doFullSearch = score > alpha;
         }
         else
@@ -288,12 +310,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
         // do a full research if lmr failed or lmr was skipped
         if (doFullSearch) {
-            score = -absearch(newDepth, -alpha - 1, -alpha, ss+1, td);
+            score = -absearch<NonPV>(newDepth, -alpha - 1, -alpha, ss+1, td);
         }
 
         // PVS search
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1)) {
-            score = -absearch(newDepth, -beta, -alpha, ss+1, td);
+            score = -absearch<PV>(newDepth, -beta, -alpha, ss+1, td);
         }
 
         td->board.unmakeMove(move);
@@ -324,6 +346,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             }
         }
     }
+
+    // update history heuristic
     if (best >= beta && td->board.pieceAtB(to(bestMove)) == None)
         UpdateHH(bestMove, depth, quietMoves, td);
 
@@ -349,7 +373,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         if (stopped) return 0;
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta  >  3500) beta  =  VALUE_INFINITE;
-        result = absearch(depth, alpha, beta, ss, td);
+        result = absearch<Root>(depth, alpha, beta, ss, td);
 
         if (stopped) return 0;
 

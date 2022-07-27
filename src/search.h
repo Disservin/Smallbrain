@@ -14,6 +14,9 @@ extern std::atomic<bool> stopped;
 extern TEntry* TTable;
 extern U64 TT_SIZE;
 
+
+enum Node { NonPV, PV, Root };
+
 struct Stack {
     uint16_t currentmove;
     uint16_t ply;
@@ -66,8 +69,8 @@ public:
     void UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData *td);
 
     // main search functions
-    Score qsearch(bool pv, Score alpha, Score beta, Stack *ss, ThreadData *td);
-    Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
+    template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
+    template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td);
     void iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId);
     void start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
