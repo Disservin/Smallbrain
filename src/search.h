@@ -28,7 +28,9 @@ struct ThreadData {
 
     int id;
     // move ordering
+    // [sideToMove][from][to]
     int history_table[2][MAX_SQ][MAX_SQ] {};
+
     Move killerMoves[2][MAX_PLY + 1] {};
 
     // pv collection
@@ -66,7 +68,7 @@ public:
     std::vector<std::thread> threads;
     
     // move ordering
-    void UpdateHH(Move bestMove, int depth, Movelist quietMoves, ThreadData *td);
+    void UpdateHH(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td);
 
     // main search functions
     template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
