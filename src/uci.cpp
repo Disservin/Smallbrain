@@ -7,15 +7,17 @@
 #include "benchmark.h"
 #include "timemanager.h"
 #include "neuralnet.h"
+#include "ucioptions.h"
 
 std::atomic<bool> stopped;
 
 U64 TT_SIZE = 16 * 1024 * 1024 / sizeof(TEntry); // initialise to 16 MB
-TEntry* TTable;   //TEntry size is 14 bytes
+TEntry* TTable;                                  //TEntry size is 14 bytes
 
 Board board = Board();
 Search searcher = Search();
 NNUE nnue = NNUE();
+uciOptions options = uciOptions();
 
 int threads = 1;
 
@@ -34,11 +36,17 @@ int main(int argc, char** argv) {
     init_reductions();
 
     // load default position
-    board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    options.uciPosition(board);
 
     // making sure threads and tds are really clear
     searcher.threads.clear();
     searcher.tds.clear();
+    
+    // START OF TUNE
+
+    // TUNE_INT(razorMargin, -100, 100);
+
+    // END OF TUNE
     while (true) {
         // ./smallbrain bench
         if (argc > 1) {
@@ -54,17 +62,15 @@ int main(int argc, char** argv) {
         std::vector<std::string> tokens = split_input(input);
         // UCI COMMANDS
         if (input == "uci") {
-            std::cout << "id name Smallbrain Version 5.0\n" <<
-                         "id author Disservin\n" <<
-                         "\noption name Hash type spin default 400 min 1 max 57344\n" << // Hash in MB
-                         "option name Threads type spin default 1 min 1 max 256\n" << // Threads
-                         "option name EvalFile type string default default.net\n" << // NN file
-                         "uciok" << std::endl;
+            std::cout << "id name Smallbrain Version 5.0" << std::endl;
+            std::cout << "id author Disservin\n" << std::endl;
+            options.printOptions();
+            std::cout << "uciok" << std::endl;
         }
         if (input == "isready") std::cout << "readyok" << std::endl;
 
         if (input == "ucinewgame") {
-            board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            options.uciPosition(board);
             stop_threads();
             searcher.tds.clear();
         }
@@ -76,38 +82,24 @@ int main(int argc, char** argv) {
         {
             std::string option = tokens[2];
             std::string value = tokens[4];
-            if (option == "Hash")
-            {
-                int sizeMB = std::clamp(std::stoi(value), 2, MAXHASH);
-                U64 elements = (static_cast<unsigned long long>(sizeMB) * 1024 * 1024) / sizeof(TEntry);
-                reallocate_tt(elements);
-            }
-            else if (option == "EvalFile")
-            {
-                std::cout << "Loading eval file: " << value << std::endl;            
-                nnue.init(value.c_str());    
-            }
-            else if (option == "Threads") threads = std::stoi(value); 
+            if (option == "Hash") options.uciHash(std::stoi(value));
+            else if (option == "EvalFile") options.uciEvalFile(value);
+            else if (option == "Threads") threads = options.uciThreads(std::stoi(value));
+
+            // ADD TUNES BY HAND AND DO `extern int x;` IN uci.h
+            // else if (option == "")  = std::stoi(value);
+            // double
+            // else if (option == "") = std::stod(value);
         }
         if (input.find("position") != std::string::npos) {
-            if (tokens[1] == "fen") 
-            {
-                std::size_t start_index = input.find("fen");
-                std::string fen = input.substr(start_index + 4);
-                board.applyFen(fen);
-            }
+            bool hasMoves = input.find("moves") != std::string::npos;
+            if (tokens[1] == "fen")
+                options.uciPosition(board, input.substr(input.find("fen") + 4), false);
             else
-            {
-                board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            }
-            if (input.find("moves") != std::string::npos) {
-                std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();
-                index++;
-                for (; index < tokens.size(); index++) {
-                    Move move = convert_uci_to_Move(tokens[index]);
-                    board.makeMove(move);
-                }
-            }
+                options.uciPosition(board, DEFAULT_POS, false);
+
+            if (hasMoves) options.uciMoves(board, tokens);
+            board.accumulate();
         }
         if (input.find("go") != std::string::npos) 
         {
@@ -191,44 +183,6 @@ void signal_callback_handler(int signum) {
     exit(signum);
 }
 
-Move convert_uci_to_Move(std::string input) {
-    std::string from = input.substr(0, 2);
-    char letter = from[0];
-    int file = letter - 96;
-    int rank = from[1] - 48;
-    int from_index = (rank - 1) * 8 + file - 1;
-    Square source = Square(from_index);
-
-    if (input.length() == 4) {
-        std::string to = input.substr(2);
-        letter = to[0];
-        file = letter - 96;
-        rank = to[1] - 48;
-
-        int to_index = (rank - 1) * 8 + file - 1;
-        Square target = Square(to_index);
-        PieceType piece = type_of_piece(board.pieceAtBB(source));
-        return make(piece, source, target, false);
-    }
-    else if (input.length() == 5) {
-        std::string to = input.substr(2, 2);
-        letter = to[0];
-        file = letter - 96;
-        rank = to[1] - 48;
-        
-        int to_index = (rank - 1) * 8 + file - 1;
-        Square target = Square(to_index);
- 
-        char prom = input.at(4);
-        PieceType piece = piece_to_int[prom];
-        return make(piece, source, target, true);
-    }
-    else {
-        std::cout << "FALSE INPUT" << std::endl;
-        return make(NONETYPE, NO_SQ, NO_SQ, false);
-    }
-}
-
 void stop_threads()
 {
     stopped = true;
@@ -237,30 +191,6 @@ void stop_threads()
             th.join();
     }
     searcher.threads.clear();    
-}
-
-void allocate_tt()
-{
-    if ((TTable = (TEntry*)malloc(TT_SIZE * sizeof(TEntry))) == NULL) 
-    {
-        std::cout << "Error: Could not allocate memory for TT" << std::endl;
-        exit(1);
-    }
-    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
-}
-
-void reallocate_tt(U64 elements)
-{
-    TEntry* oldbuffer = TTable;
-    if ((TTable = (TEntry*)realloc(TTable, elements * sizeof(TEntry))) == NULL)
-    {
-        std::cout << "Error: Could not allocate memory for TT" << std::endl;
-        free(oldbuffer);
-        exit(1);
-    }
-
-    TT_SIZE = elements;  
-    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));    
 }
 
 void quit()

@@ -5,6 +5,7 @@
 #define Score int16_t
 #define TimePoint std::chrono::high_resolution_clock
 #define MAX_SQ 64
+#define DEFAULT_POS std::string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
 static constexpr int MAX_PLY = 120;
 static constexpr int MAX_MOVES = 256;
