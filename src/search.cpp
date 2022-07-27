@@ -307,7 +307,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
 
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
-            int rdepth = reductions[madeMoves][depth];
+            int rdepth = reductions[depth][madeMoves];
             rdepth -= td->id % 2;
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
