@@ -492,8 +492,8 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
 bool Search::see(Move& move, int threshold, Board& board) {
     Square from_sq = from(move);
     Square to_sq = to(move);
-    PieceType attacker = board.piece_type(board.pieceAtB(from_sq));
-    PieceType victim = board.piece_type(board.pieceAtB(to_sq));
+    PieceType attacker = type_of_piece(board.pieceAtB(from_sq));
+    PieceType victim = type_of_piece(board.pieceAtB(to_sq));
     int swap = piece_values[MG][victim] - threshold;
     if (swap < 0)
         return false;
@@ -535,8 +535,8 @@ bool Search::see(Move& move, int threshold, Board& board) {
 }
 
 int Search::mmlva(Move& move, Board& board) {
-    int attacker = board.piece_type(board.pieceAtB(from(move))) + 1;
-    int victim = board.piece_type(board.pieceAtB(to(move))) + 1;
+    int attacker = type_of_piece(board.pieceAtB(from(move))) + 1;
+    int victim = type_of_piece(board.pieceAtB(to(move))) + 1;
     return mvvlva[victim][attacker];
 }
 

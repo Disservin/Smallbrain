@@ -207,7 +207,7 @@ Move convert_uci_to_Move(std::string input) {
 
         int to_index = (rank - 1) * 8 + file - 1;
         Square target = Square(to_index);
-        PieceType piece = board.piece_type(board.pieceAtBB(source));
+        PieceType piece = type_of_piece(board.pieceAtBB(source));
         return make(piece, source, target, false);
     }
     else if (input.length() == 5) {

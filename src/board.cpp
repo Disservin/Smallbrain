@@ -252,11 +252,6 @@ Piece Board::makePiece(PieceType type, Color c) {
     return Piece(type + 6 * c);
 }
 
-PieceType Board::piece_type(Piece piece) {
-    if (piece == None) return NONETYPE;
-    return PieceType(piece % 6);
-}
-
 std::string Board::printMove(Move& move) {
     std::string m = "";
     m += squareToString[from(move)];

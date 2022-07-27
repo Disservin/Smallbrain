@@ -30,3 +30,9 @@ uint8_t anti_diagonal_of(Square sq);
 uint8_t manhatten_distance(Square sq1, Square sq2);
 
 bool get_square_color(Square square);
+
+inline PieceType type_of_piece(Piece piece)
+{
+    if (piece == None) return NONETYPE;
+    return PieceToPieceType[piece];
+}

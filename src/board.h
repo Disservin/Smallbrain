@@ -115,10 +115,7 @@ public:
 
 	// makes a Piece from only the piece type and color
 	Piece makePiece(PieceType type, Color c);
-
-	// returns the piecetype of a piece
-	PieceType piece_type(Piece piece);
-
+	
 	// prints a move in uci format
 	std::string printMove(Move& move);
 

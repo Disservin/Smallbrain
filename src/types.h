@@ -120,6 +120,21 @@ const std::string squareToString[64] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
 };
 
+static constexpr PieceType PieceToPieceType[12] = {
+    PAWN,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN,
+    KING,
+    PAWN,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN,
+    KING
+};
+
 //file masks
 static constexpr U64 MASK_FILE[8] = {
     0x101010101010101, 0x202020202020202, 0x404040404040404, 0x808080808080808,
