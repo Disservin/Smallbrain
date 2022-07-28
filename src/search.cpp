@@ -206,7 +206,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // Razoring
     if (   !PvNode
         && depth < 3
-        && staticEval + 196 < alpha)
+        && staticEval + 120 < alpha)
         return qsearch<NonPV>(alpha, beta, ss, td);
 
     // Reverse futility pruning
