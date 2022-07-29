@@ -47,7 +47,7 @@ void uciOptions::uciMoves(Board& board, std::vector<std::string> &tokens)
     index++;
     for (; index < tokens.size(); index++) {
         Move move = convert_uci_to_Move(board, tokens[index]);
-        board.makeMovePerft(move);
+        board.makeMove<false>(move);
     }
 }
 
