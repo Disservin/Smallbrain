@@ -429,6 +429,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
 
     Stack stack[MAX_PLY+4], *ss = stack+2;
     std::memset(ss-2, 0, 4 * sizeof(Stack));
+    std::memset(spentEffort, 0, 64 * 64 * sizeof(U64));
 
     for (int i = -2; i <= MAX_PLY + 1; ++i)
         (ss+i)->ply = i;
