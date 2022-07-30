@@ -67,7 +67,7 @@ int16_t NNUE::relu(int16_t x) {
     return std::max((int16_t)0, x);
 }
 
-int32_t NNUE::output(int16_t accumulator[HIDDEN_BIAS]) {
+int32_t NNUE::output(std::array<int16_t, HIDDEN_BIAS> accumulator) {
     int32_t output = 0;
     for (int i = 0; i < HIDDEN_BIAS; i++) {
         output += relu(accumulator[i]) * hiddenWeights[i];

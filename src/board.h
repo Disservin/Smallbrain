@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <bitset>
+#include <array>
 
 #include "types.h"
 #include "helper.h"
@@ -85,7 +86,9 @@ public:
 	U64 hashHistory[1024]{};
 	States prevStates{};
 
-	int16_t accumulator[HIDDEN_BIAS];
+	std::array<int16_t, HIDDEN_BIAS> accumulator;
+	std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulators;
+
 	void activate(int inputNum);
 	void deactivate(int inputNum);
 	void accumulate();
@@ -243,7 +246,8 @@ void Board::makeMove(Move& move) {
 	hashHistory[fullMoveNumber] = hashKey;
 	State store = State(enPassantSquare, castlingRights, halfMoveClock, capture, hashKey);
 	prevStates.Add(store);
-
+	accumulators.push_back(accumulator);
+	
 	halfMoveClock++;
 	fullMoveNumber++;
 
@@ -370,6 +374,10 @@ void Board::unmakeMove(Move& move) {
 	halfMoveClock = restore.halfMove;
 	Piece capture = restore.capturedPiece;
 	hashKey = restore.h;
+
+	accumulator = accumulators.back();
+	accumulators.pop_back();
+
 	fullMoveNumber--;
 
 	Square from_sq = from(move);
@@ -377,6 +385,7 @@ void Board::unmakeMove(Move& move) {
 	bool promotion = promoted(move);
 	sideToMove = ~sideToMove;
 	Piece p = makePiece(piece(move), sideToMove);
+
 
 	if (promotion) {
 		removePiece<updateNNUE>(p, to_sq);
@@ -408,7 +417,6 @@ void Board::unmakeMove(Move& move) {
 				removePiece<updateNNUE>(WhiteRook, SQ_D1);
 				placePiece<updateNNUE>(WhiteRook, SQ_A1);
 			}
-
 			else if (from_sq == SQ_E8 && to_sq == SQ_G8 && castlingRights & bk) {
 				removePiece<updateNNUE>(BlackRook, SQ_F8);
 				placePiece<updateNNUE>(BlackRook, SQ_H8);

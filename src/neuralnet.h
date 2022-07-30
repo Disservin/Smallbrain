@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstring>
 #include <stdio.h>
+#include <array>
 
 // #include "board.h"
 
@@ -31,7 +32,7 @@ class NNUE {
     // void accumulate(Board& b);
     // void activate(int inputNum);
     // void deactivate(int inputNum);
-    int32_t output(int16_t accumulator[HIDDEN_BIAS]);
+    int32_t output(std::array<int16_t, HIDDEN_BIAS> accumulator);
     // std::vector<int16_t> accumulator;
 
 };
