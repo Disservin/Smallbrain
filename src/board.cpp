@@ -270,11 +270,10 @@ Piece Board::makePiece(PieceType type, Color c) {
     return Piece(type + 6 * c);
 }
 
-std::string Board::printMove(Move& move) {
-    std::string m = "";
-    m += squareToString[from(move)];
-    m += squareToString[to(move)];
-    if (promoted(move)) m += PieceTypeToPromPiece[piece(move)];
+std::string Board::printMove(Move move) {
+    std::string m = std::string{ files[square_file(from(move))], ranks[square_rank(from(move))] };
+    m += std::string{ files[square_file(to(move))], ranks[square_rank(to(move))] };
+    if (promoted(move)) m +=  " nbrq"[piece(move)];
     return m;
 }
 

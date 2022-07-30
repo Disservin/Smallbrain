@@ -203,45 +203,47 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
     // improving boolean, similar to stockfish
     improving = ss->ply >= 2 && staticEval > (ss-2)->eval;
 
-    // Razoring
-    if (   !PvNode
-        && depth < 3
-        && staticEval + 120 < alpha)
-        return qsearch<NonPV>(alpha, beta, ss, td);
-
-    // Reverse futility pruning
-    if (std::abs(beta) < VALUE_MATE_IN_PLY)
-        if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta) return beta;
-
-    // Null move pruning
-    if (   !PvNode
-        && td->board.nonPawnMat(color) 
-        && (ss-1)->currentmove != NULL_MOVE
-        && depth >= 3 
-        && staticEval >= beta) 
+    if (!RootNode)
     {
-        int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
-        td->board.makeNullMove();
-        (ss)->currentmove = NULL_MOVE;
-        Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss+1, td);
-        td->board.unmakeNullMove();
-        if (score >= beta)
-        {   
-            // dont return mate scores
-            if (score >= VALUE_MATE_IN_PLY) score = beta;
-            return score;
+        // Razoring
+        if (   !PvNode
+            && depth < 3
+            && staticEval + 120 < alpha)
+            return qsearch<NonPV>(alpha, beta, ss, td);
+
+        // Reverse futility pruning
+        if (std::abs(beta) < VALUE_MATE_IN_PLY)
+            if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta) return beta;
+
+        // Null move pruning
+        if (   !PvNode
+            && td->board.nonPawnMat(color) 
+            && (ss-1)->currentmove != NULL_MOVE
+            && depth >= 3 
+            && staticEval >= beta) 
+        {
+            int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
+            td->board.makeNullMove();
+            (ss)->currentmove = NULL_MOVE;
+            Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss+1, td);
+            td->board.unmakeNullMove();
+            if (score >= beta)
+            {   
+                // dont return mate scores
+                if (score >= VALUE_MATE_IN_PLY) score = beta;
+                return score;
+            }
         }
+        // IID 
+        if (depth >= 4 && !ttHit)
+            depth--;
+
+        if (  PvNode
+            && !ttHit)
+            depth--;        
+
+        if (depth <= 0) return qsearch<PV>(alpha, beta, ss, td);
     }
-
-    // IID 
-    if (depth >= 4 && !ttHit)
-        depth--;
-
-    if (  PvNode
-        && !ttHit)
-        depth--;
-
-    if (depth <= 0) return qsearch<PV>(alpha, beta, ss, td);
 
     moves:
     Movelist ml = td->board.legalmoves();
@@ -296,7 +298,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         td->nodes++;
         madeMoves++;
 
-        if (td->id == 0 && RootNode && !stopped && elapsed() > 10000 ) 
+        if (RootNode && !stopped && td->id == 0 && elapsed() > 10000 ) 
             std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move) << " currmovenumber " << signed(madeMoves) << "\n";
 
         td->board.makeMove<true>(move);
@@ -401,6 +403,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
             break;
         }
     }
+
     uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(),  elapsed(), get_pv());
     return result;
 }
