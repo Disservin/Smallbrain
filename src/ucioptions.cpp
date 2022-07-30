@@ -8,12 +8,12 @@ std::vector<optionType> optionsPrint {
 };
 
 void uciOptions::printOptions() {
-    for (auto vectoriter = optionsPrint.begin(); vectoriter != optionsPrint.end(); vectoriter++) {
-        std::cout << "option name " << (*vectoriter).name 
-                  << " type "       << (*vectoriter).type 
-                  << " default "    << (*vectoriter).defaultValue 
-                  << " min "        << (*vectoriter).min 
-                  << " max "        << (*vectoriter).max << std::endl;
+    for (size_t i = 0; i < optionsPrint.size(); i++) {
+        std::cout << "option name " << optionsPrint[i].name 
+                  << " type "       << optionsPrint[i].type 
+                  << " default "    << optionsPrint[i].defaultValue 
+                  << " min "        << optionsPrint[i].min 
+                  << " max "        << optionsPrint[i].max << std::endl;
     }
 }
 
