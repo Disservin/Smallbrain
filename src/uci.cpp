@@ -20,6 +20,7 @@ NNUE nnue = NNUE();
 uciOptions options = uciOptions();
 
 int threads = 1;
+int moveoverhead = 10;
 
 int main(int argc, char** argv) {
     stopped = false;
@@ -85,7 +86,8 @@ int main(int argc, char** argv) {
             if (option == "Hash") options.uciHash(std::stoi(value));
             else if (option == "EvalFile") options.uciEvalFile(value);
             else if (option == "Threads") threads = options.uciThreads(std::stoi(value));
-
+            else if (option == "Move Overhead") moveoverhead = options.uciMoveoverhead(std::stoi(value));
+            else std::cout << "info string Unknown option: " << option << std::endl;
             // ADD TUNES BY HAND AND DO `extern int x;` IN uci.h
             // else if (option == "")  = std::stoi(value);
             // double
@@ -147,7 +149,7 @@ int main(int argc, char** argv) {
                     mtg = std::stoi(tokens[index + 1]);
                 }
                 // Calculate search time
-                info.time = optimumTime(timegiven, inc, board.fullMoveNumber, mtg);
+                info.time = optimumTime(timegiven, inc, board.fullMoveNumber, mtg, moveoverhead);
             }
 
             // start search

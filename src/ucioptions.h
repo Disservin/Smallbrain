@@ -47,6 +47,7 @@ class uciOptions{
         int uciThreads(int value);  
         void uciPosition(Board& board, std::string fen = DEFAULT_POS, bool update = true);
         void uciMoves(Board& board, std::vector<std::string> &tokens);
+        int uciMoveoverhead(int value);
         void add_int_tune_option(std::string name, std::string type, 
                                  int defaultValue, int min, int max); 
         void add_double_tune_option(std::string name, std::string type, 
