@@ -121,6 +121,9 @@ const std::string squareToString[64] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
 };
 
+static constexpr char files[8] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+static constexpr char ranks[8] = { '1', '2', '3', '4', '5', '6', '7', '8' };
+
 static constexpr PieceType PieceToPieceType[12] = {
     PAWN,
     KNIGHT,
