@@ -61,7 +61,7 @@ CCRL 40/15
 
 ```
   Name                  Elo      +       -
-  Smallbrain 5.0 64-bit	3106	+363	−306
+  Smallbrain 5.0 64-bit	3135	+38	−38
   Smallbrain 4.0 64-bit	2980	+26	−26
   Smallbrain 2.0 64-bit	2268	+30	−30
   Smallbrain 1.1 64-bit	2223	+29	−30
