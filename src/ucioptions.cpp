@@ -3,16 +3,17 @@
 std::vector<optionType> optionsPrint {
     optionType("Hash", "spin", "400", "1", "57344"),
     optionType("EvalFile", "string", "default.net", "0", "0"),
-    optionType("Threads", "spin", "1", "1", "256")
+    optionType("Threads", "spin", "1", "1", "256"),
+    optionType("Move Overhead", "spin", "10", "1", "1000")
 };
 
 void uciOptions::printOptions() {
-    for (auto vectoriter = optionsPrint.begin(); vectoriter != optionsPrint.end(); vectoriter++) {
-        std::cout << "option name " << (*vectoriter).name 
-                  << " type "       << (*vectoriter).type 
-                  << " default "    << (*vectoriter).defaultValue 
-                  << " min "        << (*vectoriter).min 
-                  << " max "        << (*vectoriter).max << std::endl;
+    for (size_t i = 0; i < optionsPrint.size(); i++) {
+        std::cout << "option name " << optionsPrint[i].name 
+                  << " type "       << optionsPrint[i].type 
+                  << " default "    << optionsPrint[i].defaultValue 
+                  << " min "        << optionsPrint[i].min 
+                  << " max "        << optionsPrint[i].max << std::endl;
     }
 }
 
@@ -49,6 +50,11 @@ void uciOptions::uciMoves(Board& board, std::vector<std::string> &tokens)
         Move move = convert_uci_to_Move(board, tokens[index]);
         board.makeMove<false>(move);
     }
+}
+
+int uciOptions::uciMoveoverhead(int value)
+{
+    return std::clamp(value, 1, 1000);
 }
 
 void uciOptions::add_int_tune_option(std::string name, std::string type, 
