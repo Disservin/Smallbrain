@@ -96,9 +96,9 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td) {
             continue;
 
         td->nodes++;
-        td->board.makeMove(move);
+        td->board.makeMove<true>(move);
         Score score = -qsearch<node>(-beta, -alpha, ss+1, td);
-        td->board.unmakeMove(move);
+        td->board.unmakeMove<true>(move);
 
         // update the best score
         if (score > bestValue) 
@@ -299,7 +299,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
         if (td->id == 0 && RootNode && !stopped && elapsed() > 10000 ) 
             std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move) << " currmovenumber " << signed(madeMoves) << "\n";
 
-        td->board.makeMove(move);
+        td->board.makeMove<true>(move);
 
 	    U64 nodeCount = td->nodes;
         ss->currentmove = move;
@@ -327,7 +327,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData
             score = -absearch<PV>(newDepth, -beta, -alpha, ss+1, td);
         }
 
-        td->board.unmakeMove(move);
+        td->board.unmakeMove<true>(move);
 	    spentEffort[from(move)][to(move)] += td->nodes - nodeCount;
 
         if (score > best) {
