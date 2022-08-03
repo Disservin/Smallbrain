@@ -25,7 +25,7 @@ int moveoverhead = 10;
 int main(int argc, char** argv) {
     stopped = false;
     signal(SIGINT, signal_callback_handler);
-    
+
     // Initialize TT
     allocate_tt();
 
@@ -54,6 +54,7 @@ int main(int argc, char** argv) {
             if (argv[1] == std::string("bench")) {
                 start_bench();
                 quit();
+                return 0;
             }
         }
 
@@ -61,6 +62,10 @@ int main(int argc, char** argv) {
         std::string input;
         std::getline(std::cin, input);
         std::vector<std::string> tokens = split_input(input);
+        
+        quit();
+        return 0;
+
         // UCI COMMANDS
         if (input == "uci") {
             std::cout << "id name Smallbrain Version 5.0" << std::endl;
@@ -75,7 +80,11 @@ int main(int argc, char** argv) {
             stop_threads();
             searcher.tds.clear();
         }
-        if (input == "quit") quit();
+        if (input == "quit") 
+        {
+            quit();
+            return 0;
+        }
 
         if (input == "stop") stop_threads();
 
@@ -124,6 +133,7 @@ int main(int argc, char** argv) {
                 perft.board = board;
                 perft.perf_Test(depth, depth);
                 quit();
+                return 0;
             }
 
             info.depth = (limit == "depth") ? std::stoi(tokens[2]) : MAX_PLY;
@@ -193,13 +203,14 @@ void stop_threads()
             th.join();
     }
     searcher.threads.clear();    
+    searcher.tds.clear();
 }
 
 void quit()
 {
     stop_threads();
+    std::cout << "freeing TT" << std::endl;
     free(TTable);
-    exit(0);
 }
 
 int find_element(std::string param, std::vector<std::string> tokens)

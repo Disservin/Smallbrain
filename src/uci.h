@@ -30,8 +30,6 @@ int main(int argc, char** argv);
 
 void signal_callback_handler(int signum);
 
-std::vector<std::string> split_input(std::string fen);
-
 void stop_threads();
 
 void quit();
