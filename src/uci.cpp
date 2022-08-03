@@ -209,7 +209,6 @@ void stop_threads()
 void quit()
 {
     stop_threads();
-    std::cout << "freeing TT" << std::endl;
     free(TTable);
 }
 
