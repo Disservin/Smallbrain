@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <bitset>
 #include <iostream>
 #include <map>
@@ -93,7 +94,9 @@ class Board
     U64 hashHistory[1024]{};
     States prevStates{};
 
-    int16_t accumulator[HIDDEN_BIAS];
+    std::array<int16_t, HIDDEN_BIAS> accumulator;
+    std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
+
     void activate(int inputNum);
     void deactivate(int inputNum);
     void accumulate();
@@ -247,6 +250,8 @@ template <bool updateNNUE> void Board::makeMove(Move &move)
     State store = State(enPassantSquare, castlingRights, halfMoveClock, capture, hashKey);
     prevStates.Add(store);
 
+    accumulatorStack.push_back(accumulator);
+
     halfMoveClock++;
     fullMoveNumber++;
 
@@ -398,6 +403,9 @@ template <bool updateNNUE> void Board::unmakeMove(Move &move)
     Piece capture = restore.capturedPiece;
     hashKey = restore.h;
     fullMoveNumber--;
+
+    accumulator = accumulatorStack.back();
+    accumulatorStack.pop_back();
 
     Square from_sq = from(move);
     Square to_sq = to(move);
