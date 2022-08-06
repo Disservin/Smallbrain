@@ -48,6 +48,14 @@ struct ThreadData
 
     // nodes searched
     uint64_t nodes{};
+
+    bool allowPrint = true;
+};
+
+struct SearchResult
+{
+    Move move;
+    Score score;
 };
 
 static constexpr int mvvlva[7][7] = {{0, 0, 0, 0, 0, 0, 0},
@@ -81,7 +89,7 @@ class Search
     template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td);
-    void iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId);
+    SearchResult iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId);
     void start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
 
     // capture functions
