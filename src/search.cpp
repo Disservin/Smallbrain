@@ -503,7 +503,18 @@ SearchResult Search::iterative_deepening(int search_depth, uint64_t maxN, Time t
         previousBestmove = td->pv_table[0][0];
     }
 
-    Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
+    Move bestmove;
+
+    if (depth == 1)
+    {
+        sResult.score = result;
+        bestmove = td->pv_table[0][0];
+    }
+    else
+    {
+        bestmove = previousBestmove;
+    }
+
     if (threadId == 0)
     {
         if (td->allowPrint)

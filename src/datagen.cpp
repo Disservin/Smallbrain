@@ -178,7 +178,7 @@ void Datagen::randomPlayout(int threadId)
 
 std::string stringFenData(fenData fenData, Color ws, Color stm)
 {
-    double score;
+    double score = 0.5;
     if (ws == NO_COLOR)
         score = 0.5;
     else if (ws == stm)
