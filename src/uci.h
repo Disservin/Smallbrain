@@ -1,32 +1,34 @@
 #pragma once
 
-#include <sstream>
-#include <map>
-#include <atomic>
-#include <thread>
 #include <algorithm>
+#include <atomic>
 #include <cstring>
-#include <signal.h>
-#include <math.h> 
 #include <fstream>
+#include <map>
+#include <math.h>
+#include <signal.h>
+#include <sstream>
+#include <thread>
 
 #include "board.h"
-#include "search.h"
 #include "perft.h"
+#include "search.h"
 
-#define TUNE_INT(x, min, max)                                        \
-    do {                                                             \
-        extern int x;                                                \
-        options.add_int_tune_option(#x, "spin", x, min, max);        \
+#define TUNE_INT(x, min, max)                                                                                          \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        extern int x;                                                                                                  \
+        options.add_int_tune_option(#x, "spin", x, min, max);                                                          \
     } while (0);
 
-#define TUNE_DOUBLE(x, min, max)                                     \
-    do {                                                             \
-        extern double x;                                             \
-        options.add_double_tune_option(#x, "spin", x, min, max);     \
+#define TUNE_DOUBLE(x, min, max)                                                                                       \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        extern double x;                                                                                               \
+        options.add_double_tune_option(#x, "spin", x, min, max);                                                       \
     } while (0);
 
-int main(int argc, char** argv);
+int main(int argc, char **argv);
 
 void signal_callback_handler(int signum);
 
