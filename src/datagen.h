@@ -25,7 +25,7 @@ class Datagen
   public:
     void generate(int workers = 4);
     void infinite_play(int threadId);
-    void randomPlayout(int threadId);
+    void randomPlayout(std::ofstream &file, int threadId);
     std::vector<std::thread> threads;
 };
 

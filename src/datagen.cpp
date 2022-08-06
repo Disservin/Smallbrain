@@ -21,13 +21,19 @@ void Datagen::generate(int workers)
 
 void Datagen::infinite_play(int threadId)
 {
+    std::ofstream file;
+    std::string filename = "data/data" + std::to_string(threadId) + ".txt";
+    file.open(filename, std::ios::app);
+    U64 games = 0;
     while (!UCI_FORCE_STOP)
     {
-        randomPlayout(threadId);
+        games++;
+        randomPlayout(file, threadId);
     }
+    file.close();
 }
 
-void Datagen::randomPlayout(int threadId)
+void Datagen::randomPlayout(std::ofstream &file, int threadId)
 {
     Board board;
     board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -50,6 +56,28 @@ void Datagen::randomPlayout(int threadId)
 
         board.makeMove<true>(move);
     }
+
+    // std::ifstream fenFile;
+    // fenFile.open("data/fens.epd");
+
+    // int line = 0;
+    // int maxLines = 100'000;
+    // std::uniform_int_distribution<int> rm{0, maxLines};
+    // int lineNum = rm(e);
+
+    // std::string readLine;
+    // std::string fen;
+    // while (std::getline(fenFile, readLine))
+    // {
+    //     line++;
+    //     if (line == lineNum)
+    //     {
+    //         fen = readLine;
+    //         break;
+    //     }
+    // }
+    // board.applyFen(fen);
+    // fenFile.close();
 
     Board randomPlayBoard = board;
 
@@ -164,16 +192,16 @@ void Datagen::randomPlayout(int threadId)
         board.makeMove<true>(result.move);
         search.tds[0].board = board;
     }
-    std::ofstream file;
-    std::string filename = "data/data" + std::to_string(threadId) + ".txt";
-    file.open(filename, std::ios::app);
+    // std::ofstream file;
+    // std::string filename = "data/data" + std::to_string(threadId) + ".txt";
+    // file.open(filename, std::ios::app);
     for (auto &f : fens)
     {
         if (f.use)
             file << stringFenData(f, winningSide, randomPlayBoard.sideToMove) << std::endl;
         randomPlayBoard.makeMove<false>(f.move);
     }
-    file.close();
+    // file.close();
 }
 
 std::string stringFenData(fenData fenData, Color ws, Color stm)
