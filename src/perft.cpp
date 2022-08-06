@@ -65,7 +65,7 @@ U64 Perft::perft_function(int depth, int max)
         if (depth == max)
         {
             nodes += nodesIt;
-            std::cout << board.printMove(move) << " " << nodesIt << std::endl;
+            std::cout << printMove(move) << " " << nodesIt << std::endl;
             nodesIt = 0;
         }
     }

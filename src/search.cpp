@@ -305,8 +305,8 @@ moves:
         madeMoves++;
 
         if (td->id == 0 && RootNode && !stopped && elapsed() > 10000)
-            std::cout << "info depth " << depth - inCheck << " currmove " << td->board.printMove(move)
-                      << " currmovenumber " << signed(madeMoves) << "\n";
+            std::cout << "info depth " << depth - inCheck << " currmove " << printMove(move) << " currmovenumber "
+                      << signed(madeMoves) << "\n";
 
         td->board.makeMove<true>(move);
 
@@ -496,7 +496,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     if (threadId == 0)
     {
         Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
-        std::cout << "bestmove " << td->board.printMove(bestmove) << std::endl;
+        std::cout << "bestmove " << printMove(bestmove) << std::endl;
         stopped = true;
     }
 
@@ -642,7 +642,7 @@ std::string Search::get_pv()
     for (int i = 0; i < tds[0].pv_length[0]; i++)
     {
         line += " ";
-        line += tds[0].board.printMove(tds[0].pv_table[0][i]);
+        line += printMove(tds[0].pv_table[0][i]);
     }
     return line;
 }

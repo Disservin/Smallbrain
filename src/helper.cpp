@@ -158,3 +158,12 @@ bool get_square_color(Square square)
         return true;
     }
 }
+
+std::string printMove(Move move)
+{
+    std::string m = std::string{files[square_file(from(move))], ranks[square_rank(from(move))]};
+    m += std::string{files[square_file(to(move))], ranks[square_rank(to(move))]};
+    if (promoted(move))
+        m += " nbrq"[piece(move)];
+    return m;
+}

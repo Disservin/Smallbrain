@@ -193,6 +193,9 @@ const std::string squareToString[64] = {
 static constexpr PieceType PieceToPieceType[12] = {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
                                                    PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
 
+static constexpr char files[8] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+static constexpr char ranks[8] = {'1', '2', '3', '4', '5', '6', '7', '8'};
+
 // file masks
 static constexpr U64 MASK_FILE[8] = {
     0x101010101010101,  0x202020202020202,  0x404040404040404,  0x808080808080808,
