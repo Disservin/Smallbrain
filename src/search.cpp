@@ -57,7 +57,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     }
 
     // probe the transposition table
-    probe_tt(tte, ttHit, td->board.hashKey);
+    // probe_tt(tte, ttHit, td->board.hashKey);
     Score ttScore = VALUE_NONE;
     if (ttHit && tte.depth >= 0 && !PvNode)
     {
@@ -124,8 +124,8 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
 
     // store in the transposition table
-    if (!stopped)
-        store_entry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
+    // if (!stopped)
+    //     store_entry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
@@ -188,7 +188,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     // Look up in the TT
     ttHit = false;
-    probe_tt(tte, ttHit, td->board.hashKey);
+    // probe_tt(tte, ttHit, td->board.hashKey);
     Score ttScore = VALUE_NONE;
     // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode && ttHit && tte.depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
@@ -304,7 +304,7 @@ moves:
         td->nodes++;
         madeMoves++;
 
-        if (td->id == 0 && RootNode && !stopped && elapsed() > 10000)
+        if (td->id == 0 && td->allowPrint && RootNode && !stopped && elapsed() > 10000)
             std::cout << "info depth " << depth - inCheck << " currmove " << printMove(move) << " currmovenumber "
                       << signed(madeMoves) << "\n";
 
@@ -378,8 +378,8 @@ moves:
 
     // Store position in TT
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
-    if (!stopped && !RootNode)
-        store_entry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
+    // if (!stopped && !RootNode)
+    //     store_entry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
     return best;
 }
 
@@ -426,12 +426,12 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
             break;
         }
     }
-    if (td->id == 0)
+    if (td->id == 0 && td->allowPrint)
         uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
     return result;
 }
 
-void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId)
+SearchResult Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId)
 {
     // Limits
     int64_t startTime = 0;
@@ -446,6 +446,10 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     ThreadData *td = &this->tds[threadId];
     td->nodes = 0;
     td->seldepth = 0;
+
+    SearchResult sResult;
+    sResult.score = VALUE_NONE;
+    sResult.move = NO_MOVE;
 
     Move reducedTimeMove = NO_MOVE;
     Move previousBestmove;
@@ -467,6 +471,9 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         result = aspiration_search(depth, result, ss, td);
         if (stopped)
             break;
+
+        sResult.score = result;
+
         if (threadId != 0)
             continue;
 
@@ -493,14 +500,17 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         previousBestmove = td->pv_table[0][0];
     }
 
+    Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
     if (threadId == 0)
     {
-        Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
-        std::cout << "bestmove " << printMove(bestmove) << std::endl;
+        if (td->allowPrint)
+            std::cout << "bestmove " << printMove(bestmove) << std::endl;
         stopped = true;
     }
 
-    return;
+    sResult.move = bestmove;
+
+    return sResult;
 }
 
 void Search::start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)

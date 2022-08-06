@@ -842,6 +842,9 @@ Movelist Board::legalmoves()
     Movelist movelist{};
     movelist.size = 0;
 
+    if (halfMoveClock >= 100 || fullMoveNumber >= 1024)
+        return movelist;
+
     init(sideToMove, KingSQ(sideToMove));
     if (doubleCheck < 2)
     {
