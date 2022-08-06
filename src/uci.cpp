@@ -58,6 +58,7 @@ int main(int argc, char **argv)
             {
                 start_bench();
                 quit();
+                return 0;
             }
         }
 
@@ -83,7 +84,10 @@ int main(int argc, char **argv)
             searcher.tds.clear();
         }
         if (input == "quit")
+        {
             quit();
+            return 0;
+        }
 
         if (input == "stop")
             stop_threads();
@@ -138,6 +142,7 @@ int main(int argc, char **argv)
                 perft.board = board;
                 perft.perf_Test(depth, depth);
                 quit();
+                return 0;
             }
 
             info.depth = (limit == "depth") ? std::stoi(tokens[2]) : MAX_PLY;
@@ -223,7 +228,6 @@ void quit()
 {
     stop_threads();
     free(TTable);
-    exit(0);
 }
 
 int find_element(std::string param, std::vector<std::string> tokens)
