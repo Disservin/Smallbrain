@@ -1,5 +1,9 @@
 #include "datagen.h"
 
+// random number generator
+std::random_device rd;
+std::mt19937 e{rd()}; // or std::default_random_engine e{rd()};
+
 void Datagen::generate(int workers)
 {
     for (std::thread &th : threads)
@@ -38,7 +42,10 @@ void Datagen::randomPlayout(int threadId)
         if (movelist.size == 0 || UCI_FORCE_STOP)
             break;
 
-        int index = rand() % movelist.size;
+        // int index = rand() % movelist.size;
+        std::uniform_int_distribution<int> rm{0, movelist.size - 1};
+        int index = rm(e);
+
         Move move = movelist.list[index];
 
         board.makeMove<true>(move);
@@ -137,11 +144,11 @@ void Datagen::randomPlayout(int threadId)
                 winningSide = ~board.sideToMove;
             break;
         }
-        else if (board.halfMoveClock >= 80 && absScore > 600)
+        else if (board.halfMoveClock >= 80 && absScore > 400)
         {
-            if (result.score > 600)
+            if (result.score > 400)
                 winningSide = board.sideToMove;
-            else if (result.score < -600)
+            else if (result.score < -400)
                 winningSide = ~board.sideToMove;
             break;
         }
@@ -166,7 +173,6 @@ void Datagen::randomPlayout(int threadId)
             file << stringFenData(f, winningSide, randomPlayBoard.sideToMove) << std::endl;
         randomPlayBoard.makeMove<false>(f.move);
     }
-    file << std::endl;
     file.close();
 }
 

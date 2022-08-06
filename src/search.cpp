@@ -57,7 +57,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     }
 
     // probe the transposition table
-    // probe_tt(tte, ttHit, td->board.hashKey);
+    probe_tt(tte, ttHit, td->board.hashKey);
     Score ttScore = VALUE_NONE;
     if (ttHit && tte.depth >= 0 && !PvNode)
     {
@@ -124,8 +124,8 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
 
     // store in the transposition table
-    // if (!stopped)
-    //     store_entry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
+    if (!stopped)
+        store_entry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
@@ -188,7 +188,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     // Look up in the TT
     ttHit = false;
-    // probe_tt(tte, ttHit, td->board.hashKey);
+    probe_tt(tte, ttHit, td->board.hashKey);
     Score ttScore = VALUE_NONE;
     // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode && ttHit && tte.depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
@@ -217,42 +217,45 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     // improving boolean, similar to stockfish
     improving = ss->ply >= 2 && staticEval > (ss - 2)->eval;
 
-    // Razoring
-    if (!PvNode && depth < 3 && staticEval + 120 < alpha)
-        return qsearch<NonPV>(alpha, beta, ss, td);
-
-    // Reverse futility pruning
-    if (std::abs(beta) < VALUE_MATE_IN_PLY)
-        if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta)
-            return beta;
-
-    // Null move pruning
-    if (!PvNode && td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 &&
-        staticEval >= beta)
+    if (!RootNode)
     {
-        int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
-        td->board.makeNullMove();
-        (ss)->currentmove = NULL_MOVE;
-        Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss + 1, td);
-        td->board.unmakeNullMove();
-        if (score >= beta)
+        // Razoring
+        if (!PvNode && depth < 3 && staticEval + 120 < alpha)
+            return qsearch<NonPV>(alpha, beta, ss, td);
+
+        // Reverse futility pruning
+        if (std::abs(beta) < VALUE_MATE_IN_PLY)
+            if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta)
+                return beta;
+
+        // Null move pruning
+        if (!PvNode && td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 &&
+            staticEval >= beta)
         {
-            // dont return mate scores
-            if (score >= VALUE_MATE_IN_PLY)
-                score = beta;
-            return score;
+            int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
+            td->board.makeNullMove();
+            (ss)->currentmove = NULL_MOVE;
+            Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss + 1, td);
+            td->board.unmakeNullMove();
+            if (score >= beta)
+            {
+                // dont return mate scores
+                if (score >= VALUE_MATE_IN_PLY)
+                    score = beta;
+                return score;
+            }
         }
+
+        // IID
+        if (depth >= 4 && !ttHit)
+            depth--;
+
+        if (PvNode && !ttHit)
+            depth--;
+
+        if (depth <= 0)
+            return qsearch<PV>(alpha, beta, ss, td);
     }
-
-    // IID
-    if (depth >= 4 && !ttHit)
-        depth--;
-
-    if (PvNode && !ttHit)
-        depth--;
-
-    if (depth <= 0)
-        return qsearch<PV>(alpha, beta, ss, td);
 
 moves:
     Movelist ml = td->board.legalmoves();
@@ -378,8 +381,8 @@ moves:
 
     // Store position in TT
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
-    // if (!stopped && !RootNode)
-    //     store_entry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
+    if (!stopped && !RootNode)
+        store_entry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
     return best;
 }
 
@@ -399,7 +402,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
 
     while (true)
     {
-        if (stopped)
+        if (exit_early(td->nodes, td->id))
             return 0;
         if (alpha < -3500)
             alpha = -VALUE_INFINITE;
@@ -407,7 +410,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
             beta = VALUE_INFINITE;
         result = absearch<Root>(depth, alpha, beta, ss, td);
 
-        if (stopped)
+        if (exit_early(td->nodes, td->id))
             return 0;
 
         if (result <= alpha)
@@ -469,7 +472,7 @@ SearchResult Search::iterative_deepening(int search_depth, uint64_t maxN, Time t
     {
         td->seldepth = 0;
         result = aspiration_search(depth, result, ss, td);
-        if (stopped)
+        if (exit_early(td->nodes, td->id))
             break;
 
         sResult.score = result;
@@ -504,8 +507,10 @@ SearchResult Search::iterative_deepening(int search_depth, uint64_t maxN, Time t
     if (threadId == 0)
     {
         if (td->allowPrint)
+        {
             std::cout << "bestmove " << printMove(bestmove) << std::endl;
-        stopped = true;
+            stopped = true;
+        }
     }
 
     sResult.move = bestmove;
@@ -671,7 +676,6 @@ bool Search::exit_early(uint64_t nodes, int ThreadId)
         return false;
     if (maxNodes != 0 && nodes >= maxNodes)
     {
-        stopped = true;
         return true;
     }
 

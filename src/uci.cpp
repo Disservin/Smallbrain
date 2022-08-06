@@ -70,7 +70,8 @@ int main(int argc, char **argv)
             }
             else if (argv[1] == std::string("gen"))
             {
-                dg.generate(1);
+                int workers = argc > 2 ? atoi(argv[2]) : 1;
+                dg.generate(workers);
             }
         }
 

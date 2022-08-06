@@ -6,6 +6,7 @@
 #include <atomic>
 #include <cstring>
 #include <iomanip> // std::setprecision
+#include <random>
 #include <thread>
 #include <vector>
 
