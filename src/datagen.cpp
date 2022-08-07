@@ -53,7 +53,6 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         int index = rm(e);
 
         Move move = movelist.list[index];
-
         board.makeMove<true>(move);
     }
 
@@ -144,7 +143,6 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         const bool inCheck = board.checkMask != DEFAULT_CHECKMASK;
 
         fenData fn;
-        fn.fen = board.getFen();
         fn.score = result.score;
         fn.move = result.move;
         fn.use = true;
@@ -187,6 +185,11 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
             winningSide = NO_COLOR;
             break;
         }
+
+        if (fn.use)
+            fn.fen = board.getFen();
+        else
+            fn.fen = "";
 
         fens.push_back(fn);
 
