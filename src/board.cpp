@@ -256,6 +256,7 @@ std::string Board::getFen()
         fen += rank > 0 ? "/" : "";
     }
     fen += sideToMove == White ? " w " : " b ";
+
     if (castlingRights & wk)
         fen += "K";
     if (castlingRights & wq)
@@ -265,7 +266,8 @@ std::string Board::getFen()
     if (castlingRights & bq)
         fen += "q";
     if (castlingRights == 0)
-        fen += " - ";
+        fen += "-";
+
     if (enPassantSquare == NO_SQ)
         fen += " - ";
     else
