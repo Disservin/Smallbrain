@@ -13,7 +13,8 @@ static constexpr int MAX_MOVES = 256;
 enum Color : uint8_t
 {
     White,
-    Black
+    Black,
+    NO_COLOR
 };
 
 constexpr Color operator~(Color C)

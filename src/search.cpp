@@ -217,42 +217,45 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     // improving boolean, similar to stockfish
     improving = ss->ply >= 2 && staticEval > (ss - 2)->eval;
 
-    // Razoring
-    if (!PvNode && depth < 3 && staticEval + 120 < alpha)
-        return qsearch<NonPV>(alpha, beta, ss, td);
-
-    // Reverse futility pruning
-    if (std::abs(beta) < VALUE_MATE_IN_PLY)
-        if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta)
-            return beta;
-
-    // Null move pruning
-    if (!PvNode && td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 &&
-        staticEval >= beta)
+    if (!RootNode)
     {
-        int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
-        td->board.makeNullMove();
-        (ss)->currentmove = NULL_MOVE;
-        Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss + 1, td);
-        td->board.unmakeNullMove();
-        if (score >= beta)
+        // Razoring
+        if (!PvNode && depth < 3 && staticEval + 120 < alpha)
+            return qsearch<NonPV>(alpha, beta, ss, td);
+
+        // Reverse futility pruning
+        if (std::abs(beta) < VALUE_MATE_IN_PLY)
+            if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta)
+                return beta;
+
+        // Null move pruning
+        if (!PvNode && td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 &&
+            staticEval >= beta)
         {
-            // dont return mate scores
-            if (score >= VALUE_MATE_IN_PLY)
-                score = beta;
-            return score;
+            int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
+            td->board.makeNullMove();
+            (ss)->currentmove = NULL_MOVE;
+            Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss + 1, td);
+            td->board.unmakeNullMove();
+            if (score >= beta)
+            {
+                // dont return mate scores
+                if (score >= VALUE_MATE_IN_PLY)
+                    score = beta;
+                return score;
+            }
         }
+
+        // IID
+        if (depth >= 4 && !ttHit)
+            depth--;
+
+        if (PvNode && !ttHit)
+            depth--;
+
+        if (depth <= 0)
+            return qsearch<PV>(alpha, beta, ss, td);
     }
-
-    // IID
-    if (depth >= 4 && !ttHit)
-        depth--;
-
-    if (PvNode && !ttHit)
-        depth--;
-
-    if (depth <= 0)
-        return qsearch<PV>(alpha, beta, ss, td);
 
 moves:
     Movelist ml = td->board.legalmoves();
@@ -304,7 +307,7 @@ moves:
         td->nodes++;
         madeMoves++;
 
-        if (td->id == 0 && RootNode && !stopped && elapsed() > 10000)
+        if (td->id == 0 && td->allowPrint && RootNode && !stopped && elapsed() > 10000)
             std::cout << "info depth " << depth - inCheck << " currmove " << printMove(move) << " currmovenumber "
                       << signed(madeMoves) << "\n";
 
@@ -399,7 +402,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
 
     while (true)
     {
-        if (stopped)
+        if (exit_early(td->nodes, td->id))
             return 0;
         if (alpha < -3500)
             alpha = -VALUE_INFINITE;
@@ -407,7 +410,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
             beta = VALUE_INFINITE;
         result = absearch<Root>(depth, alpha, beta, ss, td);
 
-        if (stopped)
+        if (exit_early(td->nodes, td->id))
             return 0;
 
         if (result <= alpha)
@@ -426,12 +429,12 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
             break;
         }
     }
-    if (td->id == 0)
+    if (td->id == 0 && td->allowPrint)
         uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
     return result;
 }
 
-void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId)
+SearchResult Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId)
 {
     // Limits
     int64_t startTime = 0;
@@ -446,6 +449,10 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     ThreadData *td = &this->tds[threadId];
     td->nodes = 0;
     td->seldepth = 0;
+
+    SearchResult sResult;
+    sResult.score = VALUE_NONE;
+    sResult.move = NO_MOVE;
 
     Move reducedTimeMove = NO_MOVE;
     Move previousBestmove;
@@ -465,8 +472,11 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     {
         td->seldepth = 0;
         result = aspiration_search(depth, result, ss, td);
-        if (stopped)
+        if (exit_early(td->nodes, td->id))
             break;
+
+        sResult.score = result;
+
         if (threadId != 0)
             continue;
 
@@ -493,14 +503,30 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         previousBestmove = td->pv_table[0][0];
     }
 
-    if (threadId == 0)
+    Move bestmove;
+
+    if (depth == 1)
     {
-        Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
-        std::cout << "bestmove " << printMove(bestmove) << std::endl;
-        stopped = true;
+        sResult.score = result;
+        bestmove = td->pv_table[0][0];
+    }
+    else
+    {
+        bestmove = previousBestmove;
     }
 
-    return;
+    if (threadId == 0)
+    {
+        if (td->allowPrint)
+        {
+            std::cout << "bestmove " << printMove(bestmove) << std::endl;
+            stopped = true;
+        }
+    }
+
+    sResult.move = bestmove;
+
+    return sResult;
 }
 
 void Search::start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)
@@ -661,7 +687,6 @@ bool Search::exit_early(uint64_t nodes, int ThreadId)
         return false;
     if (maxNodes != 0 && nodes >= maxNodes)
     {
-        stopped = true;
         return true;
     }
 
