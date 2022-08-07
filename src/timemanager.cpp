@@ -3,6 +3,10 @@
 Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
 {
     Time time;
+
+    if (avaiableTime > 30)
+        avaiableTime -= 10;
+
     time.optimum = avaiableTime / 20;
     if (mtg > 0)
     {
