@@ -137,6 +137,8 @@ int main(int argc, char **argv)
             stop_threads();
 
             stopped = false;
+            UCI_FORCE_STOP = false;
+
             Limits info;
             info.depth = MAX_PLY;
             info.nodes = 0;
