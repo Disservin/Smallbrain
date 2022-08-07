@@ -11,6 +11,7 @@
 #include "tt.h"
 
 extern std::atomic<bool> stopped;
+extern std::atomic<bool> UCI_FORCE_STOP;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 

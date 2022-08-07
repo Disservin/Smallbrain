@@ -402,7 +402,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
 
     while (true)
     {
-        if (exit_early(td->nodes, td->id))
+        if (UCI_FORCE_STOP)
             return 0;
         if (alpha < -3500)
             alpha = -VALUE_INFINITE;
@@ -410,7 +410,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
             beta = VALUE_INFINITE;
         result = absearch<Root>(depth, alpha, beta, ss, td);
 
-        if (exit_early(td->nodes, td->id))
+        if (UCI_FORCE_STOP)
             return 0;
 
         if (result <= alpha)
@@ -681,7 +681,7 @@ long long Search::elapsed()
 
 bool Search::exit_early(uint64_t nodes, int ThreadId)
 {
-    if (stopped)
+    if (stopped || UCI_FORCE_STOP)
         return true;
     if (ThreadId != 0)
         return false;
@@ -699,7 +699,7 @@ bool Search::exit_early(uint64_t nodes, int ThreadId)
         auto ms = elapsed();
         if (ms >= searchTime || ms >= maxTime)
         {
-            stopped = true;
+            stopped = UCI_FORCE_STOP = true;
             return true;
         }
     }
