@@ -42,7 +42,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     Movelist movelist;
     int ply = 0;
 
-    while (ply++ <= 9)
+    while (ply++ <= 7)
     {
         movelist = board.legalmoves();
         if (movelist.size == 0 || UCI_FORCE_STOP)
@@ -89,7 +89,8 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     td.allowPrint = false;
     search.tds.push_back(td);
 
-    constexpr int nodes = 5000;
+    constexpr int nodes = 0;
+    constexpr int depth = 8;
 
     Time t;
 
@@ -122,7 +123,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         }
 
         stopped = false;
-        SearchResult result = search.iterative_deepening(MAX_PLY, nodes, t, 0);
+        SearchResult result = search.iterative_deepening(depth, nodes, t, 0);
 
         // Shouldnt happen
         if (result.score == VALUE_NONE)
@@ -147,7 +148,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         fn.score = result.score;
         fn.move = result.move;
         fn.use = true;
-        fn.use = !(capture || inCheck);
+        fn.use = !(capture || inCheck || ply < 15);
 
         Score absScore = std::abs(result.score);
         if (absScore >= 0 && absScore <= 10)
@@ -164,7 +165,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
             fn.use = false;
         }
 
-        if (winCount > 5 || absScore >= VALUE_MATE_IN_PLY)
+        if (winCount >= 4 || absScore >= VALUE_MATE_IN_PLY)
         {
             if (result.score > 1500)
                 winningSide = board.sideToMove;
@@ -181,7 +182,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
             break;
         }
 
-        if (drawCount > 5)
+        if (drawCount >= 8)
         {
             winningSide = NO_COLOR;
             break;
