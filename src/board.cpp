@@ -28,22 +28,6 @@ void Board::initializeLookupTables()
     }
 }
 
-void Board::activate(int inputNum)
-{
-    for (int i = 0; i < HIDDEN_BIAS; i++)
-    {
-        accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
-    }
-}
-
-void Board::deactivate(int inputNum)
-{
-    for (int i = 0; i < HIDDEN_BIAS; i++)
-    {
-        accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
-    }
-}
-
 void Board::accumulate()
 {
     for (int i = 0; i < HIDDEN_BIAS; i++)
@@ -56,7 +40,7 @@ void Board::accumulate()
         if (!input)
             continue;
         int j = Square(i) + (p)*64;
-        activate(j);
+        NNUE::activate(accumulator, j);
     }
 }
 

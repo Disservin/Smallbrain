@@ -11,7 +11,6 @@
 #include "types.h"
 #include "zobrist.h"
 
-// extern NNUE nnue;
 extern uint8_t inputValues[INPUT_WEIGHTS];
 extern int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
 extern int16_t hiddenBias[HIDDEN_BIAS];
@@ -97,8 +96,6 @@ class Board
     std::array<int16_t, HIDDEN_BIAS> accumulator;
     std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
 
-    void activate(int inputNum);
-    void deactivate(int inputNum);
     void accumulate();
 
     Board();
@@ -228,7 +225,7 @@ template <bool update> void Board::removePiece(Piece piece, Square sq)
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
     if constexpr (update)
-        deactivate(sq + piece * 64);
+        NNUE::deactivate(accumulator, sq + piece * 64);
 }
 
 template <bool update> void Board::placePiece(Piece piece, Square sq)
@@ -236,7 +233,7 @@ template <bool update> void Board::placePiece(Piece piece, Square sq)
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
     if constexpr (update)
-        activate(sq + piece * 64);
+        NNUE::activate(accumulator, sq + piece * 64);
 }
 
 template <bool updateNNUE> void Board::makeMove(Move &move)

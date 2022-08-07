@@ -11,7 +11,9 @@ int16_t hiddenBias[HIDDEN_BIAS];
 int16_t hiddenWeights[HIDDEN_WEIGHTS];
 int32_t outputBias[OUTPUT_BIAS];
 
-void NNUE::init(const char *filename)
+namespace NNUE
+{
+void init(const char *filename)
 {
     FILE *f = fopen(filename, "rb");
     if (f != NULL)
@@ -40,7 +42,7 @@ void NNUE::init(const char *filename)
 
 // This is no longer used.
 // applyFen resets the accumulator and activates the input neurons
-// void NNUE::accumulate(Board& b) {
+// void accumulate(Board& b) {
 //     for (int i = 0; i < HIDDEN_BIAS; i++) {
 //         accumulator[i] = hiddenBias[i];
 //     }
@@ -54,24 +56,28 @@ void NNUE::init(const char *filename)
 //     }
 // }
 
-// void NNUE::activate(int inputNum) {
-//     for (int i = 0; i < HIDDEN_BIAS; i++) {
-//         accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
-//     }
-// }
+void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum)
+{
+    for (int i = 0; i < HIDDEN_BIAS; i++)
+    {
+        accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
+    }
+}
 
-// void NNUE::deactivate(int inputNum) {
-//     for (int i = 0; i < HIDDEN_BIAS; i++) {
-//         accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
-//     }
-// }
+void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum)
+{
+    for (int i = 0; i < HIDDEN_BIAS; i++)
+    {
+        accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
+    }
+}
 
-int16_t NNUE::relu(int16_t x)
+int16_t relu(int16_t x)
 {
     return std::max((int16_t)0, x);
 }
 
-int32_t NNUE::output(std::array<int16_t, HIDDEN_BIAS> accumulator)
+int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator)
 {
     int32_t output = 0;
     for (int i = 0; i < HIDDEN_BIAS; i++)
@@ -81,3 +87,4 @@ int32_t NNUE::output(std::array<int16_t, HIDDEN_BIAS> accumulator)
     output += outputBias[0];
     return output / (64 * 256);
 }
+} // namespace NNUE
