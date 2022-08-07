@@ -4,18 +4,18 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
 {
     Time time;
 
-    if (avaiableTime > 30)
-        avaiableTime -= 10;
-
     time.optimum = avaiableTime / 20;
     if (mtg > 0)
     {
+        avaiableTime -= avaiableTime > 30 ? 10 * mtg : 0;
         time.optimum = avaiableTime / mtg;
     }
     else
     {
-        time.optimum = avaiableTime / 20;
+        avaiableTime -= avaiableTime > 30 ? 10 * 50 : 0;
+        time.optimum = avaiableTime / 30;
     }
+
     time.optimum += inc / 2;
     if (time.optimum >= avaiableTime)
     {
@@ -27,6 +27,7 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
     {
         time.maximum = time.optimum;
     }
+
     if (time.maximum == 0 || time.optimum == 0)
     {
         time.maximum = time.optimum = 1;

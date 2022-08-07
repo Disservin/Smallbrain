@@ -77,7 +77,7 @@ int16_t relu(int16_t x)
     return std::max((int16_t)0, x);
 }
 
-int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator)
+int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator)
 {
     int32_t output = 0;
     for (int i = 0; i < HIDDEN_BIAS; i++)

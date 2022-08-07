@@ -32,6 +32,6 @@ void init(const char *filename);
 // void accumulate(Board& b);
 void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
 void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
-int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator);
+int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator);
 // std::vector<int16_t> accumulator;
 } // namespace NNUE
