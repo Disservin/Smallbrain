@@ -431,4 +431,3 @@ FodyWeavers.xsd
 *.sln.iml
 .vscode/settings.json
 
-**/data
