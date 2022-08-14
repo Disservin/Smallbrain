@@ -429,7 +429,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
             break;
         }
     }
-    if (td->allowPrint)
+    if (td->allowPrint && td->id == 0)
         uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
     return result;
 }
