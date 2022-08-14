@@ -1,6 +1,7 @@
 #include "uci.h"
 #include "benchmark.h"
 #include "board.h"
+#include "datagen.h"
 #include "evaluation.h"
 #include "neuralnet.h"
 #include "scores.h"
@@ -10,6 +11,7 @@
 #include "ucioptions.h"
 
 std::atomic<bool> stopped;
+std::atomic<bool> UCI_FORCE_STOP;
 
 U64 TT_SIZE = 16 * 1024 * 1024 / sizeof(TEntry); // initialise to 16 MB
 TEntry *TTable;                                  // TEntry size is 14 bytes
@@ -18,13 +20,19 @@ Board board = Board();
 Search searcher = Search();
 NNUE nnue = NNUE();
 uciOptions options = uciOptions();
+Datagen dg = Datagen();
 
 int threads = 1;
 
 int main(int argc, char **argv)
 {
+    UCI_FORCE_STOP = false;
     stopped = false;
+
     signal(SIGINT, signal_callback_handler);
+#ifdef SIGBREAK
+    signal(SIGBREAK, signal_callback_handler);
+#endif
 
     // Initialize TT
     allocate_tt();
@@ -59,6 +67,11 @@ int main(int argc, char **argv)
                 start_bench();
                 quit();
                 return 0;
+            }
+            else if (argv[1] == std::string("gen"))
+            {
+                int workers = argc > 2 ? atoi(argv[2]) : 1;
+                dg.generate(workers);
             }
         }
 
@@ -205,23 +218,30 @@ int main(int argc, char **argv)
     }
 }
 
-void signal_callback_handler(int signum)
-{
-    stopped = true;
-    stop_threads();
-    free(TTable);
-    exit(signum);
-}
-
 void stop_threads()
 {
     stopped = true;
+    UCI_FORCE_STOP = true;
     for (std::thread &th : searcher.threads)
     {
         if (th.joinable())
             th.join();
     }
     searcher.threads.clear();
+
+    for (std::thread &th : dg.threads)
+    {
+        if (th.joinable())
+            th.join();
+    }
+    dg.threads.clear();
+}
+
+void signal_callback_handler(int signum)
+{
+    stop_threads();
+    free(TTable);
+    exit(signum);
 }
 
 void quit()

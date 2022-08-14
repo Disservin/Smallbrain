@@ -307,7 +307,7 @@ moves:
         td->nodes++;
         madeMoves++;
 
-        if (td->id == 0 && RootNode && !stopped && elapsed() > 10000)
+        if (td->id == 0 && RootNode && !stopped && elapsed() > 10000 && td->allowPrint)
             std::cout << "info depth " << depth - inCheck << " currmove " << printMove(move) << " currmovenumber "
                       << signed(madeMoves) << "\n";
 
@@ -429,11 +429,12 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
             break;
         }
     }
-    uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
+    if (td->allowPrint)
+        uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
     return result;
 }
 
-void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId)
+SearchResult Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId)
 {
     // Limits
     int64_t startTime = 0;
@@ -452,6 +453,7 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
     Move reducedTimeMove = NO_MOVE;
     Move previousBestmove;
     bool adjustedTime;
+    SearchResult sr;
 
     int result = -VALUE_INFINITE;
     int depth = 1;
@@ -469,6 +471,8 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         result = aspiration_search(depth, result, ss, td);
         if (stopped)
             break;
+
+        sr.score = result;
         if (threadId != 0)
             continue;
 
@@ -495,14 +499,15 @@ void Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int
         previousBestmove = td->pv_table[0][0];
     }
 
-    if (threadId == 0)
+    Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
+    if (threadId == 0 && td->allowPrint)
     {
-        Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
+
         std::cout << "bestmove " << printMove(bestmove) << std::endl;
         stopped = true;
     }
-
-    return;
+    sr.move = bestmove;
+    return sr;
 }
 
 void Search::start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)
@@ -663,7 +668,6 @@ bool Search::exit_early(uint64_t nodes, int ThreadId)
         return false;
     if (maxNodes != 0 && nodes >= maxNodes)
     {
-        stopped = true;
         return true;
     }
 
