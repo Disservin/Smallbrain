@@ -158,3 +158,13 @@ bool get_square_color(Square square)
         return true;
     }
 }
+
+std::string printMove(Move move)
+{
+    std::string m = "";
+    m += squareToString[from(move)];
+    m += squareToString[to(move)];
+    if (promoted(move))
+        m += PieceTypeToPromPiece[piece(move)];
+    return m;
+}

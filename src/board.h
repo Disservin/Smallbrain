@@ -124,9 +124,6 @@ class Board
     // makes a Piece from only the piece type and color
     Piece makePiece(PieceType type, Color c);
 
-    // prints a move in uci format
-    std::string printMove(Move &move);
-
     // detects if the position is a repetition by default 2, fide would be 3
     bool isRepetition(int draw = 2);
 
