@@ -1,14 +1,14 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <stdio.h>
+#include <string>
+#include <vector>
 
 // #include "board.h"
 
@@ -24,14 +24,14 @@ extern int16_t hiddenBias[HIDDEN_BIAS];
 extern int16_t hiddenWeights[HIDDEN_WEIGHTS];
 extern int32_t outputBias[OUTPUT_BIAS];
 
-class NNUE {
-    public:
+class NNUE
+{
+  public:
     int16_t relu(int16_t x);
-    void init(const char* filename);
+    void init(const char *filename);
     // void accumulate(Board& b);
     // void activate(int inputNum);
     // void deactivate(int inputNum);
     int32_t output(int16_t accumulator[HIDDEN_BIAS]);
     // std::vector<int16_t> accumulator;
-
 };
