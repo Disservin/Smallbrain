@@ -37,3 +37,6 @@ inline PieceType type_of_piece(Piece piece)
         return NONETYPE;
     return PieceToPieceType[piece];
 }
+
+// prints a move in uci format
+std::string printMove(Move move);

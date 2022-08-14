@@ -185,7 +185,7 @@ int main(int argc, char **argv)
         {
             Movelist ml = input == "captures" ? board.capturemoves() : board.legalmoves();
             for (int i = 0; i < ml.size; i++)
-                std::cout << board.printMove(ml.list[i]) << std::endl;
+                std::cout << printMove(ml.list[i]) << std::endl;
             std::cout << "count: " << signed(ml.size) << std::endl;
         }
 

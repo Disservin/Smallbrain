@@ -315,16 +315,6 @@ Piece Board::makePiece(PieceType type, Color c)
     return Piece(type + 6 * c);
 }
 
-std::string Board::printMove(Move &move)
-{
-    std::string m = "";
-    m += squareToString[from(move)];
-    m += squareToString[to(move)];
-    if (promoted(move))
-        m += PieceTypeToPromPiece[piece(move)];
-    return m;
-}
-
 bool Board::isRepetition(int draw)
 {
     for (int i = fullMoveNumber - 2; i >= 0 && i >= fullMoveNumber - halfMoveClock; i -= 2)
