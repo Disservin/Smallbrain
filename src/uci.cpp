@@ -18,7 +18,6 @@ TEntry *TTable;                                  // TEntry size is 14 bytes
 
 Board board = Board();
 Search searcher = Search();
-NNUE nnue = NNUE();
 uciOptions options = uciOptions();
 Datagen dg = Datagen();
 
@@ -40,7 +39,7 @@ int main(int argc, char **argv)
     // Initialize NNUE
     // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled
     // with.
-    nnue.init("default.net");
+    NNUE::init("default.net");
 
     // Initialize reductions used in search
     init_reductions();

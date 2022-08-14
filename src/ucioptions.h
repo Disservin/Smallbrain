@@ -10,7 +10,6 @@
 
 extern TEntry *TTable;
 extern U64 TT_SIZE;
-extern NNUE nnue;
 
 // 57344 MB = 2^32 * 14B / (1024 * 1024)
 #define MAXHASH 57344
