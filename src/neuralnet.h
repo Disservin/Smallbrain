@@ -13,8 +13,8 @@
 // #include "board.h"
 
 #define INPUT_WEIGHTS 64 * 12
-#define HIDDEN_BIAS 64 * 2 * 2
-#define HIDDEN_WEIGHTS 64 * 2 * 2
+#define HIDDEN_BIAS 512
+#define HIDDEN_WEIGHTS 512
 #define OUTPUT_BIAS 1
 
 /// HIDDEN_BIAS/HIDDEN_WEIGHTS is basically the width of the hidden layer.

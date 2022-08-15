@@ -32,7 +32,7 @@ they should be the same.
   
 * EvalFile<br>
   The neural net used for the evaluation,<br>
-  currently only default.net exist.
+  currently only default.nnue exist.
   
 ## Engine specific commands
 * go perft *depth*<br>

@@ -1,6 +1,6 @@
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
-EVALFILE   = $(_ROOT)/default.net
+EVALFILE   = $(_ROOT)/default.nnue
 CC        := g++
 TARGET    := smallbrain
 

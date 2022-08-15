@@ -41,7 +41,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     std::vector<fenData> fens;
     Movelist movelist;
     int ply = 0;
-    int randomMoves = 10;
+    int randomMoves = 12;
 
     while (ply < randomMoves)
     {
@@ -62,27 +62,6 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     if (movelist.size == 0 || board.isRepetition(3))
         return;
 
-    // std::ifstream fenFile;
-    // fenFile.open("data/fens.epd");
-
-    // int line = 0;
-    // int maxLines = 100'000;
-    // std::uniform_int_distribution<int> rm{0, maxLines};
-    // int lineNum = rm(e);
-
-    // std::string readLine;
-    // std::string fen;
-    // while (std::getline(fenFile, readLine))
-    // {
-    //     line++;
-    //     if (line == lineNum)
-    //     {
-    //         fen = readLine;
-    //         break;
-    //     }
-    // }
-    // board.applyFen(fen);
-    // fenFile.close();
     Search search = Search();
 
     ThreadData td;
