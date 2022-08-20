@@ -309,7 +309,8 @@ Piece Board::makePiece(PieceType type, Color c)
 
 bool Board::isRepetition(int draw)
 {
-    for (size_t i = hashHistory.size() - 2; i >= 0 && i >= hashHistory.size() - halfMoveClock; i -= 2)
+    for (int i = static_cast<int>(hashHistory.size()) - 2;
+         i >= 0 && i >= static_cast<int>(hashHistory.size()) - halfMoveClock; i -= 2)
     {
         if (hashHistory[i] == hashKey)
             return true;
