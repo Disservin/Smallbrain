@@ -44,7 +44,7 @@ ifeq ($(build), debug)
 	CO = -O0 -std=c++17
 endif
 
-DATE= `date +'%d%m%y'`
+DATE = `date +'%d%m%y'`
 
 SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))

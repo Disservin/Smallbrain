@@ -79,9 +79,13 @@ int main(int argc, char **argv)
         std::getline(std::cin, input);
         std::vector<std::string> tokens = splitInput(input);
         // UCI COMMANDS
+        const int MAXLEN = 80;
+        char s[MAXLEN];
+        time_t t = time(0);
+        strftime(s, MAXLEN, "%d%m%Y", localtime(&t));
         if (input == "uci")
         {
-            std::cout << "id name Smallbrain Version 5.0" << std::endl;
+            std::cout << "id name Smallbrain dev " << s << std::endl;
             std::cout << "id author Disservin\n" << std::endl;
             options.printOptions();
             std::cout << "uciok" << std::endl;
