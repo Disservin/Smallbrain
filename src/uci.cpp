@@ -213,6 +213,7 @@ int main(int argc, char **argv)
             Perft perft = Perft();
             perft.board = board;
             perft.testAllPos();
+            quit();
             return 0;
         }
     }

@@ -404,8 +404,12 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     hashKey = restore.h;
     fullMoveNumber--;
 
-    accumulator = accumulatorStack.back();
-    accumulatorStack.pop_back();
+    if (accumulatorStack.size() > 0)
+    {
+        accumulator = accumulatorStack.back();
+        accumulatorStack.pop_back();
+    }
+
     hashHistory.pop_back();
 
     Square from_sq = from(move);
