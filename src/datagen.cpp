@@ -41,7 +41,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     std::vector<fenData> fens;
     Movelist movelist;
     int ply = 0;
-    int randomMoves = 12;
+    int randomMoves = 10;
 
     while (ply < randomMoves)
     {
@@ -49,7 +49,6 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         if (movelist.size == 0 || UCI_FORCE_STOP)
             return;
 
-        // int index = rand() % movelist.size;
         std::uniform_int_distribution<std::mt19937::result_type> randomNum{
             0, static_cast<std::mt19937::result_type>(movelist.size - 1)};
         int index = randomNum(e);
@@ -71,7 +70,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     search.tds.push_back(td);
 
     constexpr uint64_t nodes = 0;
-    constexpr int depth = 7;
+    constexpr int depth = 9;
 
     Time t;
 
@@ -134,14 +133,14 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         fn.use = !(capture || inCheck || ply < 16);
 
         Score absScore = std::abs(result.score);
-        if (absScore >= 1000 && ply == randomMoves)
+        if (absScore >= 1500 && ply == randomMoves)
             return;
         else if (absScore <= 4)
         {
             drawCount++;
             winCount = 0;
         }
-        else if (absScore >= 1000)
+        else if (absScore >= 1500)
         {
             winCount++;
             drawCount = 0;
@@ -157,7 +156,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
             winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
             break;
         }
-        else if (board.halfMoveClock >= 80 && absScore > 200)
+        else if (board.halfMoveClock >= 80 && absScore > 250)
         {
             winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
             break;
