@@ -204,6 +204,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
 
     prevStates.size = 0;
     hashKey = zobristHash();
+    accumulatorStack.clear();
 }
 
 std::string Board::getFen()
