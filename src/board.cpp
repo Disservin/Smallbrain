@@ -28,22 +28,6 @@ void Board::initializeLookupTables()
     }
 }
 
-void Board::activate(int inputNum)
-{
-    for (int i = 0; i < HIDDEN_BIAS; i++)
-    {
-        accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
-    }
-}
-
-void Board::deactivate(int inputNum)
-{
-    for (int i = 0; i < HIDDEN_BIAS; i++)
-    {
-        accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
-    }
-}
-
 void Board::accumulate()
 {
     for (int i = 0; i < HIDDEN_BIAS; i++)
@@ -56,13 +40,15 @@ void Board::accumulate()
         if (!input)
             continue;
         int j = Square(i) + (p)*64;
-        activate(j);
+        NNUE::activate(accumulator, j);
     }
 }
 
 Board::Board()
 {
     initializeLookupTables();
+    prevStates.list.reserve(MAX_PLY);
+    hashHistory.reserve(512);
 }
 
 U64 Board::zobristHash()
@@ -218,8 +204,12 @@ void Board::applyFen(std::string fen, bool updateAcc)
     // full_move_counter actually half moves
     fullMoveNumber = std::stoi(full_move_counter) * 2;
 
-    prevStates.size = 0;
+    hashHistory.clear();
+    hashHistory.push_back(zobristHash());
+
+    prevStates.list.clear();
     hashKey = zobristHash();
+    accumulatorStack.clear();
 }
 
 std::string Board::getFen()
@@ -319,7 +309,8 @@ Piece Board::makePiece(PieceType type, Color c)
 
 bool Board::isRepetition(int draw)
 {
-    for (int i = fullMoveNumber - 2; i >= 0 && i >= fullMoveNumber - halfMoveClock; i -= 2)
+    for (int i = static_cast<int>(hashHistory.size()) - 2;
+         i >= 0 && i >= static_cast<int>(hashHistory.size()) - halfMoveClock; i -= 2)
     {
         if (hashHistory[i] == hashKey)
             return true;
@@ -844,9 +835,6 @@ Movelist Board::legalmoves()
     Movelist movelist{};
     movelist.size = 0;
 
-    if (halfMoveClock >= 100 || fullMoveNumber >= 1024)
-        return movelist;
-
     init(sideToMove, KingSQ(sideToMove));
     if (doubleCheck < 2)
     {
@@ -1035,6 +1023,7 @@ void Board::unmakeNullMove()
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
     hashKey = restore.h;
+
     fullMoveNumber--;
     sideToMove = ~sideToMove;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <fstream>
@@ -29,8 +30,7 @@ namespace NNUE
 int16_t relu(int16_t x);
 void init(const char *filename);
 // void accumulate(Board& b);
-// void activate(int inputNum);
-// void deactivate(int inputNum);
-int32_t output(int16_t accumulator[HIDDEN_BIAS]);
-// std::vector<int16_t> accumulator;
+void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
+void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
+int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator);
 } // namespace NNUE

@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <bitset>
 #include <iostream>
 #include <map>
@@ -36,19 +37,18 @@ struct State
 
 struct States
 {
-    State list[1024]{};
-    uint16_t size{};
+    std::vector<State> list;
 
     void Add(State s)
     {
-        list[size] = s;
-        size++;
+        list.push_back(s);
     }
 
     State Get()
     {
-        size--;
-        return list[size];
+        State s = list.back();
+        list.pop_back();
+        return s;
     }
 };
 
@@ -90,12 +90,13 @@ class Board
     U64 occAll{};
     U64 enemyEmptyBB{};
 
-    U64 hashHistory[1024]{};
-    States prevStates{};
+    // U64 hashHistory[1024]{};
+    std::vector<U64> hashHistory;
+    States prevStates;
 
-    int16_t accumulator[HIDDEN_BIAS];
-    void activate(int inputNum);
-    void deactivate(int inputNum);
+    std::array<int16_t, HIDDEN_BIAS> accumulator;
+    std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
+
     void accumulate();
 
     Board();
@@ -214,8 +215,8 @@ class Board
     Movelist capturemoves();
 
     // plays the move on the internal board
-    template <bool updateNNUE> void makeMove(Move &move);
-    template <bool updateNNUE> void unmakeMove(Move &move);
+    template <bool updateNNUE> void makeMove(Move move);
+    template <bool updateNNUE> void unmakeMove(Move move);
     void makeNullMove();
     void unmakeNullMove();
 };
@@ -225,7 +226,7 @@ template <bool update> void Board::removePiece(Piece piece, Square sq)
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
     if constexpr (update)
-        deactivate(sq + piece * 64);
+        NNUE::deactivate(accumulator, sq + piece * 64);
 }
 
 template <bool update> void Board::placePiece(Piece piece, Square sq)
@@ -233,19 +234,23 @@ template <bool update> void Board::placePiece(Piece piece, Square sq)
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
     if constexpr (update)
-        activate(sq + piece * 64);
+        NNUE::activate(accumulator, sq + piece * 64);
 }
 
-template <bool updateNNUE> void Board::makeMove(Move &move)
+template <bool updateNNUE> void Board::makeMove(Move move)
 {
     Piece p = makePiece(piece(move), sideToMove);
     Square from_sq = from(move);
     Square to_sq = to(move);
     Piece capture = board[to_sq];
 
-    hashHistory[fullMoveNumber] = hashKey;
+    hashHistory.emplace_back(hashKey);
+
     State store = State(enPassantSquare, castlingRights, halfMoveClock, capture, hashKey);
     prevStates.Add(store);
+
+    if constexpr (updateNNUE)
+        accumulatorStack.emplace_back(accumulator);
 
     halfMoveClock++;
     fullMoveNumber++;
@@ -389,7 +394,7 @@ template <bool updateNNUE> void Board::makeMove(Move &move)
     hashKey ^= updateKeySideToMove();
 }
 
-template <bool updateNNUE> void Board::unmakeMove(Move &move)
+template <bool updateNNUE> void Board::unmakeMove(Move move)
 {
     State restore = prevStates.Get();
     enPassantSquare = restore.enPassant;
@@ -398,6 +403,10 @@ template <bool updateNNUE> void Board::unmakeMove(Move &move)
     Piece capture = restore.capturedPiece;
     hashKey = restore.h;
     fullMoveNumber--;
+
+    accumulator = accumulatorStack.back();
+    accumulatorStack.pop_back();
+    hashHistory.pop_back();
 
     Square from_sq = from(move);
     Square to_sq = to(move);

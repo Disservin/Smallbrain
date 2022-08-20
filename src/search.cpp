@@ -101,7 +101,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         td->nodes++;
         td->board.makeMove<true>(move);
         Score score = -qsearch<node>(-beta, -alpha, ss + 1, td);
-        td->board.unmakeMove<true>(move);
+        td->board.unmakeMove<false>(move);
 
         // update the best score
         if (score > bestValue)
@@ -342,7 +342,7 @@ moves:
             score = -absearch<PV>(newDepth, -beta, -alpha, ss + 1, td);
         }
 
-        td->board.unmakeMove<true>(move);
+        td->board.unmakeMove<false>(move);
         spentEffort[from(move)][to(move)] += td->nodes - nodeCount;
 
         if (score > best)
