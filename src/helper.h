@@ -6,7 +6,7 @@
 
 #include "types.h"
 
-std::vector<std::string> split_input(std::string fen);
+std::vector<std::string> splitInput(std::string fen);
 
 // Gets the file index of the square where 0 is the a-file
 uint8_t square_file(Square sq);

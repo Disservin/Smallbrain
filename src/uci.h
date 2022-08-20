@@ -18,24 +18,24 @@
     do                                                                                                                 \
     {                                                                                                                  \
         extern int x;                                                                                                  \
-        options.add_int_tune_option(#x, "spin", x, min, max);                                                          \
+        options.addIntTuneOption(#x, "spin", x, min, max);                                                             \
     } while (0);
 
 #define TUNE_DOUBLE(x, min, max)                                                                                       \
     do                                                                                                                 \
     {                                                                                                                  \
         extern double x;                                                                                               \
-        options.add_double_tune_option(#x, "spin", x, min, max);                                                       \
+        options.addDoubleTuneOption(#x, "spin", x, min, max);                                                          \
     } while (0);
 
 int main(int argc, char **argv);
 
-void signal_callback_handler(int signum);
+void signalCallbackHandler(int signum);
 
-std::vector<std::string> split_input(std::string fen);
+std::vector<std::string> splitInput(std::string fen);
 
-void stop_threads();
+void stopThreads();
 
 void quit();
 
-int find_element(std::string param, std::vector<std::string> tokens);
+int findElement(std::string param, std::vector<std::string> tokens);

@@ -1,1 +1,1 @@
-int start_bench();
+int startBench();

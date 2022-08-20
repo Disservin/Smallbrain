@@ -1,9 +1,9 @@
 #include "perft.h"
 
-void Perft::perf_Test(int depth, int max)
+void Perft::perfTest(int depth, int max)
 {
     auto t1 = TimePoint::now();
-    perft_function(depth, max);
+    perftFunction(depth, max);
     auto t2 = TimePoint::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     std::cout << "\ntime: " << ms << "ms" << std::endl;
@@ -27,7 +27,7 @@ void Perft::testAllPos()
     {
         board.applyFen(tests[i]);
         nodes = 0;
-        perf_Test(depths[i], depths[i]);
+        perfTest(depths[i], depths[i]);
         total += nodes;
         if (nodes == expected[i])
         {
@@ -48,7 +48,7 @@ void Perft::testAllPos()
               << "6" << std::endl;
 }
 
-U64 Perft::perft_function(int depth, int max)
+U64 Perft::perftFunction(int depth, int max)
 {
     Movelist ml = board.legalmoves();
     if (depth == 1)
@@ -60,7 +60,7 @@ U64 Perft::perft_function(int depth, int max)
     {
         Move move = ml.list[i];
         board.makeMove<false>(move);
-        nodesIt += perft_function(depth - 1, depth);
+        nodesIt += perftFunction(depth - 1, depth);
         board.unmakeMove<false>(move);
         if (depth == max)
         {

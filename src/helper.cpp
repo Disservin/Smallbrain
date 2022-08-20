@@ -1,6 +1,6 @@
 #include "helper.h"
 
-std::vector<std::string> split_input(std::string fen)
+std::vector<std::string> splitInput(std::string fen)
 {
     std::stringstream fen_stream(fen);
     std::string segment;

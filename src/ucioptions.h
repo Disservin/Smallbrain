@@ -51,12 +51,12 @@ class uciOptions
     int uciThreads(int value);
     void uciPosition(Board &board, std::string fen = DEFAULT_POS, bool update = true);
     void uciMoves(Board &board, std::vector<std::string> &tokens);
-    void add_int_tune_option(std::string name, std::string type, int defaultValue, int min, int max);
-    void add_double_tune_option(std::string name, std::string type, double defaultValue, double min, double max);
+    void addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max);
+    void addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max);
 };
 
-void allocate_tt();
+void allocateTT();
 
-void reallocate_tt(U64 elements);
+void reallocateTT(U64 elements);
 
-Move convert_uci_to_Move(Board &board, std::string input);
+Move convertUciToMove(Board &board, std::string input);

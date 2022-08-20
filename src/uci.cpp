@@ -28,13 +28,13 @@ int main(int argc, char **argv)
     UCI_FORCE_STOP = false;
     stopped = false;
 
-    signal(SIGINT, signal_callback_handler);
+    signal(SIGINT, signalCallbackHandler);
 #ifdef SIGBREAK
-    signal(SIGBREAK, signal_callback_handler);
+    signal(SIGBREAK, signalCallbackHandler);
 #endif
 
     // Initialize TT
-    allocate_tt();
+    allocateTT();
 
     // Initialize NNUE
     // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
         {
             if (argv[1] == std::string("bench"))
             {
-                start_bench();
+                startBench();
                 quit();
                 return 0;
             }
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
         // catching inputs
         std::string input;
         std::getline(std::cin, input);
-        std::vector<std::string> tokens = split_input(input);
+        std::vector<std::string> tokens = splitInput(input);
         // UCI COMMANDS
         if (input == "uci")
         {
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
         if (input == "ucinewgame")
         {
             options.uciPosition(board);
-            stop_threads();
+            stopThreads();
             searcher.tds.clear();
         }
         if (input == "quit")
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
         }
 
         if (input == "stop")
-            stop_threads();
+            stopThreads();
 
         if (input.find("setoption name") != std::string::npos)
         {
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
         }
         if (input.find("go") != std::string::npos)
         {
-            stop_threads();
+            stopThreads();
 
             stopped = false;
             Limits info;
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
                 int depth = std::stoi(tokens[2]);
                 Perft perft = Perft();
                 perft.board = board;
-                perft.perf_Test(depth, depth);
+                perft.perfTest(depth, depth);
                 quit();
                 return 0;
             }
@@ -161,14 +161,14 @@ int main(int argc, char **argv)
             info.depth = (limit == "depth") ? std::stoi(tokens[2]) : MAX_PLY;
             info.depth = (limit == "infinite" || input == "go") ? MAX_PLY : info.depth;
             info.nodes = (limit == "nodes") ? std::stoi(tokens[2]) : 0;
-            info.time.maximum = info.time.optimum = (limit == "movetime") ? find_element("movetime", tokens) : 0;
+            info.time.maximum = info.time.optimum = (limit == "movetime") ? findElement("movetime", tokens) : 0;
 
             std::string side = board.sideToMove == White ? "wtime" : "btime";
             if (input.find(side) != std::string::npos)
             {
                 // go wtime 100 btime 100 winc 100 binc 100
                 std::string inc_str = board.sideToMove == White ? "winc" : "binc";
-                int64_t timegiven = find_element(side, tokens);
+                int64_t timegiven = findElement(side, tokens);
                 int64_t inc = 0;
                 int64_t mtg = 0;
                 // Increment
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
             }
 
             // start search
-            searcher.start_thinking(board, threads, info.depth, info.nodes, info.time);
+            searcher.startThinking(board, threads, info.depth, info.nodes, info.time);
         }
         // ENGINE SPECIFIC
         if (input == "print")
@@ -218,7 +218,7 @@ int main(int argc, char **argv)
     }
 }
 
-void stop_threads()
+void stopThreads()
 {
     stopped = true;
     UCI_FORCE_STOP = true;
@@ -237,20 +237,20 @@ void stop_threads()
     dg.threads.clear();
 }
 
-void signal_callback_handler(int signum)
+void signalCallbackHandler(int signum)
 {
-    stop_threads();
+    stopThreads();
     free(TTable);
     exit(signum);
 }
 
 void quit()
 {
-    stop_threads();
+    stopThreads();
     free(TTable);
 }
 
-int find_element(std::string param, std::vector<std::string> tokens)
+int findElement(std::string param, std::vector<std::string> tokens)
 {
     int index = find(tokens.begin(), tokens.end(), param) - tokens.begin();
     int value = std::stoi(tokens[index + 1]);
