@@ -89,8 +89,8 @@ class Search
     template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td);
-    SearchResult iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId);
-    void start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
+    SearchResult iterativeDeepening(int search_depth, uint64_t maxN, Time time, int threadId);
+    void startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
 
     // capture functions
     bool see(Move &move, int threshold, Board &board);
@@ -103,7 +103,7 @@ class Search
     // utility functions
     std::string get_pv();
     long long elapsed();
-    bool exit_early(uint64_t nodes, int ThreadId);
+    bool exitEarly(uint64_t nodes, int ThreadId);
     uint64_t get_nodes();
 
     void sortMoves(Movelist &moves, int sorted);

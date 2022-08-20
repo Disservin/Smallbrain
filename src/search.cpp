@@ -24,7 +24,7 @@ void Search::UpdateHH(Move bestMove, Score best, Score beta, int depth, Movelist
 
 template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td)
 {
-    if (exit_early(td->nodes, td->id))
+    if (exitEarly(td->nodes, td->id))
         return VALUE_NONE;
 
     // Initialize various variables
@@ -57,7 +57,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     }
 
     // probe the transposition table
-    probe_tt(tte, ttHit, td->board.hashKey);
+    probeTT(tte, ttHit, td->board.hashKey);
     Score ttScore = VALUE_NONE;
     if (ttHit && tte.depth >= 0 && !PvNode)
     {
@@ -125,13 +125,13 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
 
     // store in the transposition table
     if (!stopped)
-        store_entry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
+        storeEntry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
 template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td)
 {
-    if (exit_early(td->nodes, td->id))
+    if (exitEarly(td->nodes, td->id))
         return 0;
 
     // Initialize various variables
@@ -188,7 +188,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     // Look up in the TT
     ttHit = false;
-    probe_tt(tte, ttHit, td->board.hashKey);
+    probeTT(tte, ttHit, td->board.hashKey);
     Score ttScore = VALUE_NONE;
     // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode && ttHit && tte.depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
@@ -382,7 +382,7 @@ moves:
     // Store position in TT
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
     if (!stopped && !RootNode)
-        store_entry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
+        storeEntry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
     return best;
 }
 
@@ -434,7 +434,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
     return result;
 }
 
-SearchResult Search::iterative_deepening(int search_depth, uint64_t maxN, Time time, int threadId)
+SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time time, int threadId)
 {
     // Limits
     int64_t startTime = 0;
@@ -510,7 +510,7 @@ SearchResult Search::iterative_deepening(int search_depth, uint64_t maxN, Time t
     return sr;
 }
 
-void Search::start_thinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)
+void Search::startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)
 {
     stopped = true;
     for (std::thread &th : threads)
@@ -531,11 +531,11 @@ void Search::start_thinking(Board board, int workers, int search_depth, uint64_t
 
     this->tds[0].board = board;
     this->tds[0].id = 0;
-    this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, 0);
+    this->threads.emplace_back(&Search::iterativeDeepening, this, search_depth, maxN, time, 0);
     for (int i = 1; i < workers; i++)
     {
         this->tds[i].board = board;
-        this->threads.emplace_back(&Search::iterative_deepening, this, search_depth, maxN, time, i);
+        this->threads.emplace_back(&Search::iterativeDeepening, this, search_depth, maxN, time, i);
     }
 }
 
@@ -601,7 +601,7 @@ int Search::mmlva(Move &move, Board &board)
 
 int Search::score_move(Move &move, int ply, bool ttMove, ThreadData *td)
 {
-    if (ttMove && move == TTable[tt_index(td->board.hashKey)].move)
+    if (ttMove && move == TTable[ttIndex(td->board.hashKey)].move)
     {
         return 10'000'000;
     }
@@ -660,7 +660,7 @@ long long Search::elapsed()
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 }
 
-bool Search::exit_early(uint64_t nodes, int ThreadId)
+bool Search::exitEarly(uint64_t nodes, int ThreadId)
 {
     if (stopped)
         return true;

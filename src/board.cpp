@@ -121,7 +121,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
     {
         Bitboards[i] = 0ULL;
     }
-    std::vector<std::string> params = split_input(fen);
+    std::vector<std::string> params = splitInput(fen);
     std::string position = params[0];
     std::string move_right = params[1];
     std::string castling = params[2];

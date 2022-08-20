@@ -44,9 +44,11 @@ ifeq ($(build), debug)
 	CO = -O0 -std=c++17
 endif
 
+DATE= `date +'%d%m%y'`
+
 SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
-EXE := $(NAME)_$(MAJOR).$(MINOR)$(SUFFIX)
+EXE := $(NAME)$(MAJOR).$(MINOR)_$(DATE)$(SUFFIX)
 
 all: $(TARGET)
 $(TARGET): $(OBJS)
@@ -55,5 +57,6 @@ $(TARGET): $(OBJS)
 	$(CC) -c $(CFLAGS) $(NATIVE) $(CO) -DEVALFILE=\"$(EVALFILE)\" -flto -Wall $< $(CXFLAGS)
 clean:
 	rm -rf $(TARGET) *.o
+	rm *.exe
 	
 .PHONY: all clean

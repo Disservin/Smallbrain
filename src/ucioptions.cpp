@@ -18,7 +18,7 @@ void uciOptions::uciHash(int value)
 {
     int sizeMB = std::clamp(value, 2, MAXHASH);
     U64 elements = (static_cast<unsigned long long>(sizeMB) * 1024 * 1024) / sizeof(TEntry);
-    reallocate_tt(elements);
+    reallocateTT(elements);
 }
 
 void uciOptions::uciEvalFile(std::string name)
@@ -43,24 +43,24 @@ void uciOptions::uciMoves(Board &board, std::vector<std::string> &tokens)
     index++;
     for (; index < tokens.size(); index++)
     {
-        Move move = convert_uci_to_Move(board, tokens[index]);
+        Move move = convertUciToMove(board, tokens[index]);
         board.makeMove<false>(move);
     }
 }
 
-void uciOptions::add_int_tune_option(std::string name, std::string type, int defaultValue, int min, int max)
+void uciOptions::addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max)
 {
     optionsPrint.push_back(
         optionType(name, type, std::to_string(defaultValue), std::to_string(min), std::to_string(max)));
 }
 
-void uciOptions::add_double_tune_option(std::string name, std::string type, double defaultValue, double min, double max)
+void uciOptions::addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max)
 {
     optionsPrint.push_back(
         optionType(name, type, std::to_string(defaultValue), std::to_string(min), std::to_string(max)));
 }
 
-void allocate_tt()
+void allocateTT()
 {
     if ((TTable = (TEntry *)malloc(TT_SIZE * sizeof(TEntry))) == NULL)
     {
@@ -70,7 +70,7 @@ void allocate_tt()
     std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
 }
 
-void reallocate_tt(U64 elements)
+void reallocateTT(U64 elements)
 {
     TEntry *oldbuffer = TTable;
     if ((TTable = (TEntry *)realloc(TTable, elements * sizeof(TEntry))) == NULL)
@@ -84,7 +84,7 @@ void reallocate_tt(U64 elements)
     std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
 }
 
-Move convert_uci_to_Move(Board &board, std::string input)
+Move convertUciToMove(Board &board, std::string input)
 {
     std::string from = input.substr(0, 2);
     char letter = from[0];

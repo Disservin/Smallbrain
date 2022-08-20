@@ -15,11 +15,11 @@ void Datagen::generate(int workers)
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&Datagen::infinite_play, this, i);
+        threads.emplace_back(&Datagen::infinitePlay, this, i);
     }
 }
 
-void Datagen::infinite_play(int threadId)
+void Datagen::infinitePlay(int threadId)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
@@ -92,7 +92,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
             break;
         }
 
-        SearchResult result = search.iterative_deepening(depth, nodes, t, 0);
+        SearchResult result = search.iterativeDeepening(depth, nodes, t, 0);
 
         // Shouldnt happen
         if (result.score == VALUE_NONE)
