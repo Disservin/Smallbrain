@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <bitset>
 #include <iostream>
 #include <map>
@@ -93,9 +94,8 @@ class Board
     U64 hashHistory[1024]{};
     States prevStates{};
 
-    int16_t accumulator[HIDDEN_BIAS];
-    void activate(int inputNum);
-    void deactivate(int inputNum);
+    std::array<int16_t, HIDDEN_BIAS> accumulator;
+
     void accumulate();
 
     Board();
@@ -225,7 +225,7 @@ template <bool update> void Board::removePiece(Piece piece, Square sq)
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
     if constexpr (update)
-        deactivate(sq + piece * 64);
+        NNUE::deactivate(accumulator, sq + piece * 64);
 }
 
 template <bool update> void Board::placePiece(Piece piece, Square sq)
@@ -233,7 +233,7 @@ template <bool update> void Board::placePiece(Piece piece, Square sq)
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
     if constexpr (update)
-        activate(sq + piece * 64);
+        NNUE::activate(accumulator, sq + piece * 64);
 }
 
 template <bool updateNNUE> void Board::makeMove(Move &move)

@@ -56,24 +56,28 @@ void init(const char *filename)
 //     }
 // }
 
-// void activate(int inputNum) {
-//     for (int i = 0; i < HIDDEN_BIAS; i++) {
-//         accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
-//     }
-// }
+void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum)
+{
+    for (int i = 0; i < HIDDEN_BIAS; i++)
+    {
+        accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
+    }
+}
 
-// void deactivate(int inputNum) {
-//     for (int i = 0; i < HIDDEN_BIAS; i++) {
-//         accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
-//     }
-// }
+void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum)
+{
+    for (int i = 0; i < HIDDEN_BIAS; i++)
+    {
+        accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
+    }
+}
 
 int16_t relu(int16_t x)
 {
     return std::max((int16_t)0, x);
 }
 
-int32_t output(int16_t accumulator[HIDDEN_BIAS])
+int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator)
 {
     int32_t output = outputBias[0];
     for (int i = 0; i < HIDDEN_BIAS; i++)
