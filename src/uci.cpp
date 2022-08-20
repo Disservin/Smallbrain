@@ -130,6 +130,7 @@ int main(int argc, char **argv)
 
             if (hasMoves)
                 options.uciMoves(board, tokens);
+            board.prevStates.list.clear();
             board.accumulate();
         }
         if (input.find("go") != std::string::npos)

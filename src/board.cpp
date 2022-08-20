@@ -47,6 +47,8 @@ void Board::accumulate()
 Board::Board()
 {
     initializeLookupTables();
+    prevStates.list.reserve(MAX_PLY);
+    hashHistory.reserve(512);
 }
 
 U64 Board::zobristHash()
@@ -202,7 +204,10 @@ void Board::applyFen(std::string fen, bool updateAcc)
     // full_move_counter actually half moves
     fullMoveNumber = std::stoi(full_move_counter) * 2;
 
-    prevStates.size = 0;
+    hashHistory.clear();
+    hashHistory.push_back(zobristHash());
+
+    prevStates.list.clear();
     hashKey = zobristHash();
     accumulatorStack.clear();
 }
@@ -304,7 +309,7 @@ Piece Board::makePiece(PieceType type, Color c)
 
 bool Board::isRepetition(int draw)
 {
-    for (int i = fullMoveNumber - 2; i >= 0 && i >= fullMoveNumber - halfMoveClock; i -= 2)
+    for (size_t i = hashHistory.size() - 2; i >= 0 && i >= hashHistory.size() - halfMoveClock; i -= 2)
     {
         if (hashHistory[i] == hashKey)
             return true;

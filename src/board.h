@@ -37,19 +37,18 @@ struct State
 
 struct States
 {
-    State list[1024]{};
-    uint16_t size{};
+    std::vector<State> list;
 
     void Add(State s)
     {
-        list[size] = s;
-        size++;
+        list.push_back(s);
     }
 
     State Get()
     {
-        size--;
-        return list[size];
+        State s = list.back();
+        list.pop_back();
+        return s;
     }
 };
 
@@ -91,8 +90,9 @@ class Board
     U64 occAll{};
     U64 enemyEmptyBB{};
 
-    U64 hashHistory[1024]{};
-    States prevStates{};
+    // U64 hashHistory[1024]{};
+    std::vector<U64> hashHistory;
+    States prevStates;
 
     std::array<int16_t, HIDDEN_BIAS> accumulator;
     std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
@@ -244,7 +244,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     Square to_sq = to(move);
     Piece capture = board[to_sq];
 
-    hashHistory[fullMoveNumber] = hashKey;
+    hashHistory.emplace_back(hashKey);
+
     State store = State(enPassantSquare, castlingRights, halfMoveClock, capture, hashKey);
     prevStates.Add(store);
 
@@ -405,6 +406,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
     accumulator = accumulatorStack.back();
     accumulatorStack.pop_back();
+    hashHistory.pop_back();
 
     Square from_sq = from(move);
     Square to_sq = to(move);
