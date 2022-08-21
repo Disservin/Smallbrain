@@ -11,8 +11,6 @@
 #include <string>
 #include <vector>
 
-// #include "board.h"
-
 #define INPUT_WEIGHTS 64 * 12
 #define HIDDEN_BIAS 512
 #define HIDDEN_WEIGHTS 512
@@ -29,7 +27,6 @@ namespace NNUE
 {
 int16_t relu(int16_t x);
 void init(const char *filename);
-// void accumulate(Board& b);
 void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
 void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
 int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator);

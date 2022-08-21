@@ -2,6 +2,6 @@
 #include <map>
 
 #include "board.h"
-#include "neuralnet.h"
+#include "nnue.h"
 
 Score evaluation(Board &board);

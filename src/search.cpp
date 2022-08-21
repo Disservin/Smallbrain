@@ -75,7 +75,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++)
-        ml.values[i] = score_move(ml.list[i], ss->ply, ttHit, td);
+        ml.values[i] = scoreMove(ml.list[i], ss->ply, ttHit, td);
 
     // search the moves
     for (int i = 0; i < (int)ml.size; i++)
@@ -266,7 +266,7 @@ moves:
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++)
-        ml.values[i] = score_move(ml.list[i], ss->ply, ttHit, td);
+        ml.values[i] = scoreMove(ml.list[i], ss->ply, ttHit, td);
 
     // set root node move list size
     if (RootNode && td->id == 0)
@@ -386,7 +386,7 @@ moves:
     return best;
 }
 
-Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td)
+Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td)
 {
     Score alpha = -VALUE_INFINITE;
     Score beta = VALUE_INFINITE;
@@ -430,7 +430,7 @@ Score Search::aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadDat
         }
     }
     if (td->allowPrint && td->id == 0)
-        uci_output(result, alpha, beta, depth, td->seldepth, get_nodes(), elapsed(), get_pv());
+        uciOutput(result, alpha, beta, depth, td->seldepth, getNodes(), elapsed(), get_pv());
     return result;
 }
 
@@ -468,7 +468,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     for (depth = 1; depth <= search_depth; depth++)
     {
         td->seldepth = 0;
-        result = aspiration_search(depth, result, ss, td);
+        result = aspirationSearch(depth, result, ss, td);
         if (stopped)
             break;
 
@@ -599,7 +599,7 @@ int Search::mmlva(Move &move, Board &board)
     return mvvlva[victim][attacker];
 }
 
-int Search::score_move(Move &move, int ply, bool ttMove, ThreadData *td)
+int Search::scoreMove(Move &move, int ply, bool ttMove, ThreadData *td)
 {
     if (ttMove && move == TTable[ttIndex(td->board.hashKey)].move)
     {
@@ -627,7 +627,7 @@ int Search::score_move(Move &move, int ply, bool ttMove, ThreadData *td)
     }
 }
 
-int Search::score_qmove(Move &move, Board &board)
+int Search::scoreQmove(Move &move, Board &board)
 {
     if (promoted(move))
     {
@@ -687,7 +687,7 @@ bool Search::exitEarly(uint64_t nodes, int ThreadId)
     return false;
 }
 
-uint64_t Search::get_nodes()
+uint64_t Search::getNodes()
 {
     uint64_t nodes = 0;
     for (size_t i = 0; i < tds.size(); i++)
@@ -711,7 +711,7 @@ void Search::sortMoves(Movelist &moves, int sorted)
     std::swap(moves.values[index], moves.values[0 + sorted]);
 }
 
-std::string output_score(int score, Score alpha, Score beta)
+std::string outputScore(int score, Score alpha, Score beta)
 {
     if (score >= beta)
         return "lowerbound " + std::to_string(score);
@@ -731,9 +731,9 @@ std::string output_score(int score, Score alpha, Score beta)
     }
 }
 
-void uci_output(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv)
+void uciOutput(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv)
 {
     std::cout << "info depth " << signed(depth) << " seldepth " << signed(seldepth) << " score "
-              << output_score(score, alpha, beta) << " nodes " << nodes << " nps "
-              << signed((nodes / (time + 1)) * 1000) << " time " << time << " pv" << pv << std::endl;
+              << outputScore(score, alpha, beta) << " nodes " << nodes << " nps " << signed((nodes / (time + 1)) * 1000)
+              << " time " << time << " pv" << pv << std::endl;
 }

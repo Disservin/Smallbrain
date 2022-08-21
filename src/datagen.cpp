@@ -70,7 +70,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     search.tds.push_back(td);
 
     constexpr uint64_t nodes = 0;
-    constexpr int depth = 9;
+    constexpr int depth = 8;
 
     Time t;
 

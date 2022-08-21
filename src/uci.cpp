@@ -3,7 +3,7 @@
 #include "board.h"
 #include "datagen.h"
 #include "evaluation.h"
-#include "neuralnet.h"
+#include "nnue.h"
 #include "scores.h"
 #include "search.h"
 #include "timemanager.h"
