@@ -4,16 +4,13 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
 {
     Time time;
     time.optimum = avaiableTime / 20;
-    if (mtg > 0)
-    {
-        avaiableTime -= avaiableTime > 30 ? 10 * mtg : 0;
-        time.optimum = avaiableTime / mtg;
-    }
-    else
-    {
-        avaiableTime -= avaiableTime > 30 ? 10 * 50 : 0;
-        time.optimum = avaiableTime / 20;
-    }
+
+    mtg = mtg == 0 ? 20 : mtg;
+    int overhead = avaiableTime < 200 ? (avaiableTime < 100 ? 5 : 0) : 10;
+
+    avaiableTime -= overhead;
+    time.optimum = avaiableTime / mtg;
+
     time.optimum += inc / 2;
     if (time.optimum >= avaiableTime)
     {
