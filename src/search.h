@@ -88,7 +88,7 @@ class Search
     // main search functions
     template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
-    Score aspiration_search(int depth, Score prev_eval, Stack *ss, ThreadData *td);
+    Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
     SearchResult iterativeDeepening(int search_depth, uint64_t maxN, Time time, int threadId);
     void startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
 
@@ -97,17 +97,17 @@ class Search
     int mmlva(Move &move, Board &board);
 
     // scoring functions
-    int score_move(Move &move, int ply, bool ttMove, ThreadData *td);
-    int score_qmove(Move &move, Board &board);
+    int scoreMove(Move &move, int ply, bool ttMove, ThreadData *td);
+    int scoreQmove(Move &move, Board &board);
 
     // utility functions
     std::string get_pv();
     long long elapsed();
     bool exitEarly(uint64_t nodes, int ThreadId);
-    uint64_t get_nodes();
+    uint64_t getNodes();
 
     void sortMoves(Movelist &moves, int sorted);
 };
 
-std::string output_score(int score, Score alpha, Score beta);
-void uci_output(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv);
+std::string outputScore(int score, Score alpha, Score beta);
+void uciOutput(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv);

@@ -6,12 +6,11 @@
 #include <string>
 
 #include "helper.h"
-#include "neuralnet.h"
+#include "nnue.h"
 #include "scores.h"
 #include "types.h"
 #include "zobrist.h"
 
-// extern NNUE nnue;
 extern uint8_t inputValues[INPUT_WEIGHTS];
 extern int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
 extern int16_t hiddenBias[HIDDEN_BIAS];
@@ -90,7 +89,6 @@ class Board
     U64 occAll{};
     U64 enemyEmptyBB{};
 
-    // U64 hashHistory[1024]{};
     std::vector<U64> hashHistory;
     States prevStates;
 

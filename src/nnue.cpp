@@ -1,4 +1,4 @@
-#include "neuralnet.h"
+#include "nnue.h"
 
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
@@ -39,22 +39,6 @@ void init(const char *filename)
         memoryIndex += OUTPUT_BIAS * sizeof(int32_t);
     }
 }
-
-// This is no longer used.
-// applyFen resets the accumulator and activates the input neurons
-// void accumulate(Board& b) {
-//     for (int i = 0; i < HIDDEN_BIAS; i++) {
-//         accumulator[i] = hiddenBias[i];
-//     }
-
-//     for (int i = 0; i < 64; i++) {
-//         bool input = b.pieceAtB(Square(i)) != None;
-//         if (!input) continue;
-//         int j = Square(i) + (b.pieceAtB(Square(i))) * 64;
-//         inputValues[j] = 1;
-//         activate(j);
-//     }
-// }
 
 void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum)
 {

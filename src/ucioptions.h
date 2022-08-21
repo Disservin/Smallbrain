@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "board.h"
-#include "neuralnet.h"
+#include "nnue.h"
 #include "tt.h"
 #include "types.h"
 
