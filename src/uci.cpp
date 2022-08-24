@@ -72,6 +72,14 @@ int main(int argc, char **argv)
                 int workers = argc > 2 ? atoi(argv[2]) : 1;
                 dg.generate(workers);
             }
+            else if (argv[1] == std::string("perft"))
+            {
+                Perft perft = Perft();
+                perft.board = board;
+                perft.testAllPos();
+                quit();
+                return 0;
+            }
         }
 
         // catching inputs

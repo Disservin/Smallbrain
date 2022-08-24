@@ -36,7 +36,8 @@ endif
 endif
 
 ifeq ($(build), release)
-	CFLAGS = -static-libgcc -static-libstdc++ -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	CFLAGS = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	CXFLAGS  = -pthread -lstdc++ -static
 endif
 
 ifeq ($(build), debug)
@@ -44,11 +45,9 @@ ifeq ($(build), debug)
 	CO = -O0 -std=c++17
 endif
 
-DATE = `date +'%d%m%y'`
-
 SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
-EXE := $(NAME)$(MAJOR).$(MINOR)_$(DATE)$(SUFFIX)
+EXE := $(NAME)$(MAJOR).$(MINOR)$(SUFFIX)
 
 all: $(TARGET)
 $(TARGET): $(OBJS)
