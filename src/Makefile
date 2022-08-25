@@ -25,7 +25,7 @@ ifeq ($(uname_S), Darwin)
 	CXFLAGS = 
 else
 ifeq ($(uname_S), Linux)
-	NATIVE = -march=native
+	NATIVE = -march=native --help=target
 	CFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
 ifeq ($(OS), Windows_NT)

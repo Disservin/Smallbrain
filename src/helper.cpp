@@ -116,15 +116,7 @@ uint8_t PopCnt16[1 << 16];
 uint8_t popcount(U64 mask)
 {
 
-#ifndef USE_POPCNT
-
-    union {
-        U64 bb;
-        uint16_t u[4];
-    } v = {mask};
-    return PopCnt16[v.u[0]] + PopCnt16[v.u[1]] + PopCnt16[v.u[2]] + PopCnt16[v.u[3]];
-
-#elif defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 
     return (int)_mm_popcnt_u64(mask);
 
