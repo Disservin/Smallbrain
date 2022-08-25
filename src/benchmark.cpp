@@ -61,7 +61,7 @@ int startBench()
     int depth = 12;
     searcher.tds.clear();
     ThreadData td;
-
+    searcher.tds.emplace_back(tds);
     auto t1 = TimePoint::now();
     for (int positions = 0; positions < 50; positions++)
     {
