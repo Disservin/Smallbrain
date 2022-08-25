@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt-get install g++
           sudo apt update
-          apt-get install libc6-db
+          sudo apt-get install libc6-db
           wget ftp://sourceware.org/pub/valgrind/valgrind-3.19.0.tar.bz2
           tar xvf valgrind-3.19.0.tar.bz2
           cd valgrind-3.19.0
