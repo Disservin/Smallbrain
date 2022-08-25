@@ -34,7 +34,13 @@ jobs:
       - name: Download required linux packages
         run: |
           sudo apt update
-          sudo apt install expect valgrind g++-multilib qemu-user
+          wget ftp://sourceware.org/pub/valgrind/valgrind-3.13.0.tar.bz2
+          tar -xjf valgrind-3.13.0.tar.bz2
+          cd valgrind-3.13.0/
+          ./configure
+          make
+          sudo make install
+          sudo update-alternatives --install /usr/bin/valgrind valgrind /usr/local/bin/valgrind 1 --force
           
       - name: make
         run: make
