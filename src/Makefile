@@ -25,11 +25,11 @@ ifeq ($(uname_S), Darwin)
 	CXFLAGS = 
 else
 ifeq ($(uname_S), Linux)
-	NATIVE = -march=x86-64
+	NATIVE = -mavx2
 	CFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
 ifeq ($(OS), Windows_NT)
-	NATIVE = -march=x86-64
+	NATIVE = -mavx2
 	CFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 endif
 endif
