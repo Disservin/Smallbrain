@@ -59,8 +59,11 @@ int startBench()
     Search searcher = Search();
     Time t;
     int depth = 12;
-    searcher.tds.clear();
+
     ThreadData td;
+    td.id = 0;
+
+    searcher.tds.clear();
     searcher.tds.emplace_back(td);
     auto t1 = TimePoint::now();
     for (int positions = 0; positions < 50; positions++)
@@ -68,9 +71,7 @@ int startBench()
         stopped = false;
         std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
 
-        td.board.applyFen(benchmarkfens[positions]);
-
-        searcher.tds[0] = td;
+        searcher.tds[0].board.applyFen(benchmarkfens[positions]);
         searcher.iterativeDeepening(depth, 0, t, 0);
 
         totalNodes += searcher.tds[0].nodes;
