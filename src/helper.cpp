@@ -113,7 +113,7 @@ Square bsr(U64 b)
 
 uint8_t PopCnt16[1 << 16];
 
-inline int popcount(U64 mask)
+uint8_t popcount(U64 mask)
 {
 
 #ifndef USE_POPCNT
