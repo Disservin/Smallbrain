@@ -57,5 +57,6 @@ $(TARGET): $(OBJS)
 clean:
 	rm -rf $(TARGET) *.o
 	rm *.exe
+	rm $(EXE)
 	
 .PHONY: all clean
