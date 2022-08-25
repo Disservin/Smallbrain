@@ -111,15 +111,26 @@ Square bsr(U64 b)
 
 #endif
 
-uint8_t popcount(U64 b)
-{
-#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+uint8_t PopCnt16[1 << 16];
 
-    return (uint8_t)_mm_popcnt_u64(b);
+inline int popcount(U64 mask)
+{
+
+#ifndef USE_POPCNT
+
+    union {
+        U64 bb;
+        uint16_t u[4];
+    } v = {mask};
+    return PopCnt16[v.u[0]] + PopCnt16[v.u[1]] + PopCnt16[v.u[2]] + PopCnt16[v.u[3]];
+
+#elif defined(_MSC_VER) || defined(__INTEL_COMPILER)
+
+    return (int)_mm_popcnt_u64(mask);
 
 #else // Assumed gcc or compatible compiler
 
-    return __builtin_popcountll(b);
+    return __builtin_popcountll(mask);
 
 #endif
 }
