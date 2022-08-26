@@ -466,22 +466,20 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
 SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time time, int threadId)
 {
     // Limits
-    int64_t startTime = 0;
     if (threadId == 0)
     {
         t0 = TimePoint::now();
-        searchTime = startTime = time.optimum;
+        searchTime = time.optimum;
         maxTime = time.maximum;
         maxNodes = maxN;
         checkTime = 0;
     }
+
     ThreadData *td = &this->tds[threadId];
     td->nodes = 0;
     td->seldepth = 0;
 
-    Move reducedTimeMove = NO_MOVE;
-    Move previousBestmove;
-    bool adjustedTime;
+    Move bestmove;
     SearchResult sr;
 
     int result = -VALUE_INFINITE;
@@ -498,44 +496,41 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     {
         td->seldepth = 0;
         result = aspirationSearch(depth, result, ss, td);
-        if (stopped)
+
+        if (exitEarly(td->nodes, td->id))
             break;
 
+        // only mainthread manages time control
         if (threadId != 0)
             continue;
 
-        if (maxNodes != 0 && td->nodes >= maxNodes)
-            break;
-
         sr.score = result;
 
+        bestmove = td->pv_table[0][0];
+
+        // limit type time
         if (searchTime != 0)
         {
+            // 1 legal move
             if (rootSize == 1)
                 searchTime = std::min((int64_t)50, searchTime);
 
-            int effort = (spentEffort[from(previousBestmove)][to(previousBestmove)] * 100) / td->nodes;
-
-            if (depth >= 8 && effort >= 95 && searchTime != 0 && !adjustedTime)
-            {
-                adjustedTime = true;
-                searchTime = searchTime / 3;
-                reducedTimeMove = td->pv_table[0][0];
-            }
-
-            if (adjustedTime && td->pv_table[0][0] != reducedTimeMove)
-            {
-                searchTime = startTime * 1.05f;
-            }
+            // node count time management (https://github.com/Luecx/Koivisto 's idea)
+            int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / td->nodes;
+            if (searchTime * (110 - std::min(effort, 90)) / 100 < elapsed())
+                break;
         }
-
-        previousBestmove = td->pv_table[0][0];
     }
 
-    Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
+    // in case its depth we use current pv table move since it might be
+    // that search was interrupted before search finished properly
+    if (depth == 1)
+        bestmove = td->pv_table[0][0];
+
+    // mainthread prints bestmove
+    // allowprint is disabled in data generation
     if (threadId == 0 && td->allowPrint)
     {
-
         std::cout << "bestmove " << printMove(bestmove) << std::endl;
         stopped = true;
     }
