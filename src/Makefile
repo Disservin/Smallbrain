@@ -10,15 +10,11 @@ MINOR     := 0
 MAJOR     := 5
 
 ifeq ($(ARCH),)
-	NATIVE += -msse
+	NATIVE += -march=native
 endif
 
-ifeq ($(ARCH),x86-64-modern)
+ifeq ($(ARCH), debug)
 	NATIVE = -msse -msse3 -mpopcnt
-endif
-
-ifeq ($(ARCH),x86-64-bmi2)
-	NATIVE = -msse -msse3 -mpopcnt -msse4 -mbmi2
 endif
 
 ifeq ($(OS), Windows_NT)
