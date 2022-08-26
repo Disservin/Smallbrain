@@ -46,6 +46,8 @@ void Perft::testAllPos()
     std::cout << "Nodes/second       : " << ((total * 1000) / ms) << std::endl;
     std::cout << "Correct Positions  : " << passed << "/"
               << "6" << std::endl;
+    if (passed != 6)
+        exit(1);
 }
 
 U64 Perft::perftFunction(int depth, int max)

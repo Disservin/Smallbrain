@@ -39,3 +39,6 @@ void stopThreads();
 void quit();
 
 int findElement(std::string param, std::vector<std::string> tokens);
+
+// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime();

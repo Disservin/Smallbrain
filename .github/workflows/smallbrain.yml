@@ -1,0 +1,80 @@
+name: Test bench
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config: 
+        - {
+            name: "Ubuntu 20.04 GCC",
+            os: ubuntu-20.04,
+            compiler: g++,
+            comp: gcc,
+            shell: 'bash {0}',
+            ext: ""
+          }
+        - {
+            name: "Windows 2022 Mingw-w64 GCC x86_64",
+            os: windows-2022,
+            compiler: g++,
+            comp: mingw,
+            msys_sys: 'mingw64',
+            msys_env: 'x86_64-gcc',
+            shell: 'msys2 {0}'
+          }
+    defaults:
+      run:
+        working-directory: ./src
+        shell: ${{ matrix.config.shell }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Download required linux packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install g++
+          sudo apt update
+          sudo apt install expect valgrind g++-multilib qemu-user
+
+      - name: Install windows make
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{matrix.config.msys_sys}}
+          install: mingw-w64-${{matrix.config.msys_env}} make git expect
+
+      - name: make
+        if: runner.os == 'Linux'
+        run: make build=debug
+
+      - name: make build windows
+        if: runner.os == 'Windows'
+        run: make build=release
+
+      - name: Perft
+        run: |
+          ./smallbrain* perft
+
+      - name: Valgrind
+        if: runner.os == 'Linux'
+        run: |
+          valgrind ./smallbrain* bench
+
+      - name: Archive executable
+        uses: actions/upload-artifact@v3
+        if: runner.os == 'Windows'
+        with:
+          name: builds
+          path: src/smallbrain5.0.exe
