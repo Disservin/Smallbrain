@@ -25,11 +25,9 @@ ifeq ($(uname_S), Darwin)
 	CXFLAGS = 
 else
 ifeq ($(uname_S), Linux)
-	NATIVE = -mavx2
 	CFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
 ifeq ($(OS), Windows_NT)
-	NATIVE = -mavx2
 	CFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 endif
 endif
@@ -46,7 +44,7 @@ ifeq ($(build), debug)
 endif
 
 ifeq ($(ARCH),)
-	NATIVE=x86-64-modern
+	NATIVE= -x86-64-modern
 endif
 
 ifeq ($(ARCH),x86-64)
