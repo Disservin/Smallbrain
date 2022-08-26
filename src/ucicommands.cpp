@@ -10,29 +10,34 @@ void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
     {
         board.print();
     }
-    if (input == "captures")
+
+    else if (input == "captures")
     {
         Movelist ml = board.capturemoves();
         for (int i = 0; i < ml.size; i++)
             std::cout << printMove(ml.list[i]) << std::endl;
         std::cout << "count: " << signed(ml.size) << std::endl;
     }
-    if (input == "moves")
+
+    else if (input == "moves")
     {
         Movelist ml = board.legalmoves();
         for (int i = 0; i < ml.size; i++)
             std::cout << printMove(ml.list[i]) << std::endl;
         std::cout << "count: " << signed(ml.size) << std::endl;
     }
-    if (input == "rep")
+
+    else if (input == "rep")
     {
         std::cout << board.isRepetition(3) << std::endl;
     }
-    if (input == "eval")
+
+    else if (input == "eval")
     {
         std::cout << Eval::evaluation(board) << std::endl;
     }
-    if (input == "perft")
+
+    else if (input == "perft")
     {
         Perft perft = Perft();
         perft.board = board;
