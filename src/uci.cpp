@@ -87,13 +87,9 @@ int main(int argc, char **argv)
         std::getline(std::cin, input);
         std::vector<std::string> tokens = splitInput(input);
         // UCI COMMANDS
-        const int MAXLEN = 80;
-        char s[MAXLEN];
-        time_t t = time(0);
-        strftime(s, MAXLEN, "%d%m%Y", localtime(&t));
         if (input == "uci")
         {
-            std::cout << "id name Smallbrain dev " << s << std::endl;
+            std::cout << "id name Smallbrain dev " << currentDateTime() << std::endl;
             std::cout << "id author Disservin\n" << std::endl;
             options.printOptions();
             std::cout << "uciok" << std::endl;
@@ -268,4 +264,18 @@ int findElement(std::string param, std::vector<std::string> tokens)
     int index = find(tokens.begin(), tokens.end(), param) - tokens.begin();
     int value = std::stoi(tokens[index + 1]);
     return value;
+}
+
+// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime()
+{
+    time_t now = time(0);
+    struct tm tstruct;
+    char buf[80];
+    tstruct = *localtime(&now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about date/time format
+    strftime(buf, sizeof(buf), "%d%m%Y", &tstruct);
+
+    return buf;
 }

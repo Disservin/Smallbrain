@@ -39,6 +39,7 @@ endif
 
 ifeq ($(build), release)
 	CFLAGS = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	NATIVE = -march=x86-64 -msse -msse3 -mpopcnt -mavx
 	CXFLAGS  = -pthread -lstdc++ -static
 endif
 
