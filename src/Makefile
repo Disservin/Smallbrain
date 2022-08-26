@@ -43,7 +43,7 @@ ifeq ($(build), release)
 endif
 
 ifeq ($(build), debug)
-	CFLAGS = -g3 -ggdb3 -pg -fno-omit-frame-pointer
+	CFLAGS = -g3 -ggdb3 -fno-omit-frame-pointer
 	NATIVE = -msse -msse3 -mpopcnt
 	CO = -O3 -std=c++17
 endif
