@@ -9,6 +9,22 @@ NAME      := smallbrain
 MINOR     := 0
 MAJOR     := 5
 
+ifeq ($(ARCH),)
+	NATIVE = -march=x86-64-modern
+endif
+
+ifeq ($(ARCH),x86-64)
+	NATIVE += -march=x86-64-modern -msse
+endif
+
+ifeq ($(ARCH),x86-64-modern)
+	NATIVE = -march=x86-64-modern -msse -msse3 -mpopcnt
+endif
+
+ifeq ($(ARCH),x86-64-bmi2)
+	NATIVE = -march=x86-64-modern -msse -msse3 -mpopcnt -msse4 -mbmi2
+endif
+
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	CXFLAGS  = -pthread -lstdc++
@@ -41,22 +57,6 @@ endif
 ifeq ($(build), debug)
 	CFLAGS = -g3 -ggdb3 -pg -fno-omit-frame-pointer
 	CO = -O0 -std=c++17
-endif
-
-ifeq ($(ARCH),)
-	NATIVE= -x86-64-modern
-endif
-
-ifeq ($(ARCH),x86-64)
-	NATIVE += -msse
-endif
-
-ifeq ($(ARCH),x86-64-modern)
-	NATIVE += -msse -msse3 -mpopcnt
-endif
-
-ifeq ($(ARCH),x86-64-bmi2)
-	NATIVE += -msse -msse3 -mpopcnt -msse4 -mbmi2
 endif
 
 
