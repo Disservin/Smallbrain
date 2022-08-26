@@ -8,6 +8,7 @@
 #include "search.h"
 #include "timemanager.h"
 #include "tt.h"
+#include "ucicommands.h"
 #include "ucioptions.h"
 
 std::atomic<bool> stopped;
@@ -64,7 +65,7 @@ int main(int argc, char **argv)
             if (argv[1] == std::string("bench"))
             {
                 startBench();
-                quit();
+                uciCommand::quit(searcher, dg);
                 return 0;
             }
             else if (argv[1] == std::string("gen"))
@@ -74,11 +75,7 @@ int main(int argc, char **argv)
             }
             else if (argv[1] == std::string("perft"))
             {
-                Perft perft = Perft();
-                perft.board = board;
-                perft.testAllPos();
-                quit();
-                return 0;
+                uciCommand::parseInput(argv[1], searcher, board, dg);
             }
         }
 
@@ -89,7 +86,7 @@ int main(int argc, char **argv)
         // UCI COMMANDS
         if (input == "uci")
         {
-            std::cout << "id name Smallbrain dev " << currentDateTime() << std::endl;
+            std::cout << "id name Smallbrain dev " << uciCommand::currentDateTime() << std::endl;
             std::cout << "id author Disservin\n" << std::endl;
             options.printOptions();
             std::cout << "uciok" << std::endl;
@@ -100,17 +97,17 @@ int main(int argc, char **argv)
         if (input == "ucinewgame")
         {
             options.uciPosition(board);
-            stopThreads();
+            uciCommand::stopThreads(searcher, dg);
             searcher.tds.clear();
         }
         if (input == "quit")
         {
-            quit();
+            uciCommand::quit(searcher, dg);
             return 0;
         }
 
         if (input == "stop")
-            stopThreads();
+            uciCommand::stopThreads(searcher, dg);
 
         if (input.find("setoption name") != std::string::npos)
         {
@@ -143,7 +140,7 @@ int main(int argc, char **argv)
         }
         if (input.find("go") != std::string::npos)
         {
-            stopThreads();
+            uciCommand::stopThreads(searcher, dg);
 
             stopped = false;
             Limits info;
@@ -162,21 +159,22 @@ int main(int argc, char **argv)
                 Perft perft = Perft();
                 perft.board = board;
                 perft.perfTest(depth, depth);
-                quit();
+                uciCommand::quit(searcher, dg);
                 return 0;
             }
 
             info.depth = (limit == "depth") ? std::stoi(tokens[2]) : MAX_PLY;
             info.depth = (limit == "infinite" || input == "go") ? MAX_PLY : info.depth;
             info.nodes = (limit == "nodes") ? std::stoi(tokens[2]) : 0;
-            info.time.maximum = info.time.optimum = (limit == "movetime") ? findElement("movetime", tokens) : 0;
+            info.time.maximum = info.time.optimum =
+                (limit == "movetime") ? uciCommand::findElement("movetime", tokens) : 0;
 
             std::string side = board.sideToMove == White ? "wtime" : "btime";
             if (input.find(side) != std::string::npos)
             {
                 // go wtime 100 btime 100 winc 100 binc 100
                 std::string inc_str = board.sideToMove == White ? "winc" : "binc";
-                int64_t timegiven = findElement(side, tokens);
+                int64_t timegiven = uciCommand::findElement(side, tokens);
                 int64_t inc = 0;
                 int64_t mtg = 0;
                 // Increment
@@ -199,83 +197,13 @@ int main(int argc, char **argv)
             searcher.startThinking(board, threads, info.depth, info.nodes, info.time);
         }
         // ENGINE SPECIFIC
-        if (input == "print")
-            board.print();
-
-        if (input == "captures" || input == "moves")
-        {
-            Movelist ml = input == "captures" ? board.capturemoves() : board.legalmoves();
-            for (int i = 0; i < ml.size; i++)
-                std::cout << printMove(ml.list[i]) << std::endl;
-            std::cout << "count: " << signed(ml.size) << std::endl;
-        }
-
-        if (input == "rep")
-            std::cout << board.isRepetition(3) << std::endl;
-
-        if (input == "eval")
-            std::cout << evaluation(board) << std::endl;
-
-        if (input.find("perft") != std::string::npos)
-        {
-            Perft perft = Perft();
-            perft.board = board;
-            perft.testAllPos();
-            quit();
-            return 0;
-        }
+        uciCommand::parseInput(input, searcher, board, dg);
     }
-}
-
-void stopThreads()
-{
-    stopped = true;
-    UCI_FORCE_STOP = true;
-    for (std::thread &th : searcher.threads)
-    {
-        if (th.joinable())
-            th.join();
-    }
-    searcher.threads.clear();
-
-    for (std::thread &th : dg.threads)
-    {
-        if (th.joinable())
-            th.join();
-    }
-    dg.threads.clear();
 }
 
 void signalCallbackHandler(int signum)
 {
-    stopThreads();
+    uciCommand::stopThreads(searcher, dg);
     free(TTable);
     exit(signum);
-}
-
-void quit()
-{
-    stopThreads();
-    free(TTable);
-}
-
-int findElement(std::string param, std::vector<std::string> tokens)
-{
-    int index = find(tokens.begin(), tokens.end(), param) - tokens.begin();
-    int value = std::stoi(tokens[index + 1]);
-    return value;
-}
-
-// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
-const std::string currentDateTime()
-{
-    time_t now = time(0);
-    struct tm tstruct;
-    char buf[80];
-    tstruct = *localtime(&now);
-    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
-    // for more information about date/time format
-    strftime(buf, sizeof(buf), "%d%m%Y", &tstruct);
-
-    return buf;
 }

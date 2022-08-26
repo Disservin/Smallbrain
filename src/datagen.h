@@ -1,3 +1,5 @@
+#pragma once
+
 #include "board.h"
 #include "search.h"
 #include "types.h"
