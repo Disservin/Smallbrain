@@ -39,7 +39,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-
       - name: Download required linux packages
         run: |
           sudo apt-get install g++
