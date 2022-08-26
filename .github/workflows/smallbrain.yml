@@ -28,8 +28,9 @@ jobs:
             os: windows-2022,
             compiler: g++,
             comp: mingw,
-            shell: 'msys2 {0}',
-            ext: ".exe"
+            msys_sys: 'mingw64',
+            msys_env: 'x86_64-gcc',
+            shell: 'msys2 {0}'
           }
     defaults:
       run:
