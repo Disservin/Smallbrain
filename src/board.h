@@ -124,7 +124,7 @@ class Board
     Piece makePiece(PieceType type, Color c);
 
     // detects if the position is a repetition by default 2, fide would be 3
-    bool isRepetition(int draw = 2);
+    bool isRepetition(int draw = 1);
 
     // only pawns + king = true else false
     bool nonPawnMat(Color c);
