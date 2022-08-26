@@ -69,8 +69,8 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     td.allowPrint = false;
     search.tds.push_back(td);
 
-    constexpr uint64_t nodes = 0;
-    constexpr int depth = 8;
+    constexpr uint64_t nodes = 5000;
+    constexpr int depth = MAX_PLY;
 
     Time t;
 
