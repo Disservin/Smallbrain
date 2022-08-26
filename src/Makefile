@@ -3,19 +3,15 @@ _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/default.nnue
 CC        := g++
 TARGET    := smallbrain
+NATIVE     = march=native
 
 # name and version
 NAME      := smallbrain
 MINOR     := 0
 MAJOR     := 5
 
-ifeq ($(ARCH),)
-	NATIVE += -march=native
-endif
 
-ifeq ($(ARCH), debug)
-	NATIVE = -msse -msse3 -mpopcnt
-endif
+
 
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
@@ -48,6 +44,7 @@ endif
 
 ifeq ($(build), debug)
 	CFLAGS = -g3 -ggdb3 -pg -fno-omit-frame-pointer
+	NATIVE = -msse -msse3 -mpopcnt
 	CO = -O0 -std=c++17
 endif
 

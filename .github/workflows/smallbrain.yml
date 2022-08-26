@@ -20,7 +20,16 @@ jobs:
             os: ubuntu-20.04,
             compiler: g++,
             comp: gcc,
-            shell: 'bash {0}'
+            shell: 'bash {0}',
+            ext: ""
+          }
+        - {
+            name: "Windows 2022 Mingw-w64 GCC x86_64",
+            os: windows-2022,
+            compiler: g++,
+            comp: mingw,
+            shell: 'msys2 {0}',
+            ext: ".exe"
           }
     defaults:
       run:
@@ -38,12 +47,28 @@ jobs:
           sudo apt install expect valgrind g++-multilib qemu-user
 
       - name: make
+        if: runner.os == 'Linux'
+        run: make build=debug
+
+      - name: make build windows
+        if: runner.os == 'Windows'
         run: make
 
       - name: bench
         run: ./smallbrain* bench
 
-      - name: Perft and valgrind
+      - name: Perft
         run: |
           ./smallbrain* perft
+
+      - name: Valgrind
+      if: runner.os == 'Linux'
+        run: |
           valgrind ./smallbrain* bench
+
+      - name: Archive executable
+        uses: actions/upload-artifact@v3
+        if: runner.os == 'Windows'
+        with:
+          name: builds
+          path: src/smallbrain5.0.exe
