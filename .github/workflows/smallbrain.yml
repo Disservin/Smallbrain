@@ -62,9 +62,6 @@ jobs:
         if: runner.os == 'Windows'
         run: make
 
-      - name: bench
-        run: ./smallbrain* bench
-
       - name: Perft
         run: |
           ./smallbrain* perft
