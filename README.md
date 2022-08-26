@@ -78,7 +78,5 @@ CCRL 40/15
 ## Features
 * Engine
   * Bitboard representation
-  * Zobrist hashing
-  * Legal move generation
 * Evaluation
-  * NNUE 768 Input -> 256 hidden neurons -> 1 output
+  * NNUE 768 Input -> 512 hidden neurons -> 1 output
