@@ -116,7 +116,7 @@ uint8_t popcount(U64 mask)
 
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 
-    return (int)_mm_popcnt_u64(mask);
+    return (uint8_t)_mm_popcnt_u64(mask);
 
 #else // Assumed gcc or compatible compiler
 
