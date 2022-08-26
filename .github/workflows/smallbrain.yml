@@ -74,7 +74,7 @@ jobs:
 
       - name: Archive executable
         uses: actions/upload-artifact@v3
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && github.event_name == 'push'
         with:
           name: builds
           path: src/smallbrain5.0.exe
