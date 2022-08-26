@@ -472,9 +472,13 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         if (stopped)
             break;
 
-        sr.score = result;
         if (threadId != 0)
             continue;
+
+        if (maxNodes != 0 && td->nodes >= maxNodes)
+            break;
+
+        sr.score = result;
 
         if (searchTime != 0)
         {
