@@ -61,7 +61,7 @@ jobs:
 
       - name: make build windows
         if: runner.os == 'Windows'
-        run: make
+        run: make build=release
 
       - name: Perft
         run: |
