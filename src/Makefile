@@ -45,6 +45,23 @@ ifeq ($(build), debug)
 	CO = -O0 -std=c++17
 endif
 
+ifeq ($(ARCH),)
+	NATIVE=x86-64-modern
+endif
+
+ifeq ($(ARCH),x86-64)
+	NATIVE += -msse
+endif
+
+ifeq ($(ARCH),x86-64-modern)
+	NATIVE += -msse -msse3 -mpopcnt
+endif
+
+ifeq ($(ARCH),x86-64-bmi2)
+	NATIVE += -msse -msse3 -mpopcnt -msse4 -mbmi2
+endif
+
+
 SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 EXE := $(NAME)$(MAJOR).$(MINOR)$(SUFFIX)
