@@ -3,7 +3,7 @@ _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/default.nnue
 CC        := g++
 TARGET    := smallbrain
-NATIVE     = march=native
+NATIVE     = -march=native
 
 # name and version
 NAME      := smallbrain

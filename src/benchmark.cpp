@@ -66,6 +66,7 @@ int startBench()
     searcher.tds.clear();
     searcher.tds.emplace_back(td);
     auto t1 = TimePoint::now();
+
     for (int positions = 0; positions < 50; positions++)
     {
         stopped = false;
