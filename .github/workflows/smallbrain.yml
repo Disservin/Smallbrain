@@ -61,7 +61,7 @@ jobs:
           ./smallbrain* perft
 
       - name: Valgrind
-      if: runner.os == 'Linux'
+        if: runner.os == 'Linux'
         run: |
           valgrind ./smallbrain* bench
 
