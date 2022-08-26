@@ -40,6 +40,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download required linux packages
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get install g++
           sudo apt update
