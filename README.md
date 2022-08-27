@@ -80,3 +80,13 @@ CCRL 40/15
   * Bitboard representation
 * Evaluation
   * NNUE 768 Input -> 512 hidden neurons -> 1 output
+
+## Datageneration
+* .\smallbrain5.0.exe -gen
+  * -threads \<num>
+  * -book \<path/to/book>
+  * -tb \<path/to/tb>
+  * -depth \<depth>
+  * -endgame \<onlyGenEndgames>
+* Example: 
+.\smallbrain5.0.exe -gen -threads 4 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345

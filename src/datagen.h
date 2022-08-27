@@ -1,7 +1,9 @@
 #pragma once
 
 #include "board.h"
+#include "randomFen.h"
 #include "search.h"
+#include "syzygy/Fathom/src/tbprobe.h"
 #include "types.h"
 
 #include <algorithm>
@@ -11,6 +13,8 @@
 #include <random>
 #include <thread>
 #include <vector>
+
+extern std::atomic<bool> useTB;
 
 struct fenData
 {
@@ -25,9 +29,9 @@ extern std::atomic<bool> UCI_FORCE_STOP;
 class Datagen
 {
   public:
-    void generate(int workers = 4);
-    void infinitePlay(int threadId);
-    void randomPlayout(std::ofstream &file, int threadId);
+    void generate(int workers = 4, std::string book = "", int depth = 7, bool additionalEndgame = false);
+    void infinitePlay(int threadId, std::string book, int depth, bool additionalEndgame);
+    void randomPlayout(std::ofstream &file, int threadId, std::string &bookm, int depth, bool additionalEndgame);
     std::vector<std::thread> threads;
 };
 

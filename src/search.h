@@ -5,12 +5,16 @@
 #include <thread>
 #include <vector>
 
+#include "syzygy/Fathom/src/tbprobe.h"
+
+#include "attacks.h"
 #include "board.h"
 #include "evaluation.h"
 #include "timemanager.h"
 #include "tt.h"
 
 extern std::atomic<bool> stopped;
+extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
@@ -54,6 +58,7 @@ struct ThreadData
 
     // nodes searched
     uint64_t nodes{};
+    uint64_t tbhits{};
 
     bool allowPrint = true;
 };
@@ -117,9 +122,12 @@ class Search
     long long elapsed();
     bool exitEarly(uint64_t nodes, int ThreadId);
     uint64_t getNodes();
+    uint64_t getTbHits();
 
     void sortMoves(Movelist &moves, int sorted);
+    Score probeTB(ThreadData *td);
+    Move probeDTZ(ThreadData *td);
 };
 
-std::string outputScore(int score, Score alpha, Score beta);
-void uciOutput(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv);
+std::string outputScore(int score, Score beta);
+void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv);

@@ -10,9 +10,6 @@ NAME      := smallbrain
 MINOR     := 0
 MAJOR     := 5
 
-
-
-
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	CXFLAGS  = -pthread -lstdc++
@@ -49,8 +46,7 @@ ifeq ($(build), debug)
 	CO = -O3 -std=c++17
 endif
 
-
-SRCS := $(wildcard *.cpp)
+SRCS := $(wildcard *.cpp) ./syzygy/Fathom/src/tbprobe.c
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 EXE := $(NAME)$(MAJOR).$(MINOR)$(SUFFIX)
 
