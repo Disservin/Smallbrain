@@ -24,6 +24,7 @@ void Datagen::infinitePlay(int threadId)
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
+
     U64 games = 0;
     while (!UCI_FORCE_STOP)
     {
@@ -42,6 +43,33 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     Movelist movelist;
     int ply = 0;
     int randomMoves = 10;
+
+    // std::uniform_int_distribution<std::mt19937::result_type> dfrc{0, static_cast<std::mt19937::result_type>(2)};
+
+    // if (dfrc(e) == 0)
+    if (true)
+    {
+        std::ifstream openingFile;
+        openingFile.open("data/DFRC_openings.epd");
+
+        std::string line;
+        uint64_t count = 0;
+
+        std::uniform_int_distribution<std::mt19937::result_type> maxLines{
+            0, static_cast<std::mt19937::result_type>(921'600)};
+
+        uint64_t randLine = maxLines(e);
+        while (std::getline(openingFile, line))
+        {
+            if (count == randLine)
+            {
+                board.applyFen(line);
+                break;
+            }
+            count++;
+        }
+        openingFile.close();
+    }
 
     while (ply < randomMoves)
     {
