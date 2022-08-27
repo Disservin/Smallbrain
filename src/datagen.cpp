@@ -4,7 +4,7 @@
 std::random_device rd;
 std::mt19937 e(rd()); // or std::default_random_engine e{rd()};
 
-void Datagen::generate(int workers)
+void Datagen::generate(int workers, std::string book, int depth, bool additionalEndgame)
 {
     for (std::thread &th : threads)
     {
@@ -15,33 +15,67 @@ void Datagen::generate(int workers)
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&Datagen::infinitePlay, this, i);
+        threads.emplace_back(&Datagen::infinitePlay, this, i, book, depth, additionalEndgame);
     }
 }
 
-void Datagen::infinitePlay(int threadId)
+void Datagen::infinitePlay(int threadId, std::string book, int depth, bool additionalEndgame)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
+
     U64 games = 0;
     while (!UCI_FORCE_STOP)
     {
         games++;
-        randomPlayout(file, threadId);
+        randomPlayout(file, threadId, book, depth, additionalEndgame);
     }
     file.close();
 }
 
-void Datagen::randomPlayout(std::ofstream &file, int threadId)
+void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book, int depth, bool additionalEndgame)
 {
     Board board;
-    board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     std::vector<fenData> fens;
     Movelist movelist;
     int ply = 0;
-    int randomMoves = 10;
+    int randomMoves = 8;
+
+    if (!additionalEndgame)
+    {
+        board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    }
+    else if (book != "")
+    {
+        std::ifstream openingFile;
+        openingFile.open(book);
+
+        std::string line;
+        uint64_t count = 0;
+
+        std::uniform_int_distribution<std::mt19937::result_type> maxLines{
+            0, static_cast<std::mt19937::result_type>(5'821'600)};
+
+        uint64_t randLine = maxLines(e);
+        while (std::getline(openingFile, line))
+        {
+            if (count == randLine)
+            {
+                board.applyFen(line);
+                break;
+            }
+            count++;
+        }
+        openingFile.close();
+    }
+    else
+    {
+        ply = 8;
+        randomMoves = 8;
+        board.applyFen(getRandomfen());
+    }
 
     while (ply < randomMoves)
     {
@@ -58,7 +92,10 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         ply++;
     }
 
-    if (movelist.size == 0 || board.isRepetition(3))
+    board.hashHistory.clear();
+
+    movelist = board.legalmoves();
+    if (movelist.size == 0)
         return;
 
     Search search = Search();
@@ -69,8 +106,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     td.allowPrint = false;
     search.tds.push_back(td);
 
-    constexpr uint64_t nodes = 5000;
-    constexpr int depth = MAX_PLY;
+    constexpr uint64_t nodes = 0;
 
     Time t;
 
@@ -78,34 +114,14 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     int winCount = 0;
 
     Color winningSide = NO_COLOR;
+
     while (true)
     {
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
-
-        ply++;
         movelist = board.legalmoves();
-
         if (movelist.size == 0)
         {
             winningSide = inCheck ? ((board.sideToMove == White) ? Black : White) : NO_COLOR;
-            break;
-        }
-
-        SearchResult result = search.iterativeDeepening(depth, nodes, t, 0);
-
-        // Shouldnt happen
-        if (result.score == VALUE_NONE)
-        {
-            std::cout << "meh" << std::endl;
-            board.print();
-            exit(1);
-        }
-
-        int all = popcount(board.All());
-
-        if (ply > 300)
-        {
-            winningSide = NO_COLOR;
             break;
         }
         else if (board.isRepetition(3) || board.halfMoveClock >= 100)
@@ -113,16 +129,14 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
             winningSide = NO_COLOR;
             break;
         }
-        else if (all == 2)
+
+        SearchResult result = search.iterativeDeepening(depth, nodes, t, 0);
+
+        // CATCH BUGS
+        if (result.score == VALUE_NONE)
         {
-            winningSide = NO_COLOR;
-            break;
-        }
-        else if (all == 3 && (board.Bitboards[WhiteKnight] || board.Bitboards[BlackKnight] ||
-                              board.Bitboards[WhiteBishop] || board.Bitboards[BlackBishop]))
-        {
-            winningSide = NO_COLOR;
-            break;
+            board.print();
+            exit(1);
         }
 
         const bool capture = board.pieceAtB(to(result.move)) != None;
@@ -130,48 +144,68 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         fenData fn;
         fn.score = board.sideToMove == White ? result.score : -result.score;
         fn.move = result.move;
-        fn.use = !(capture || inCheck || ply < 16);
-
-        Score absScore = std::abs(result.score);
-        if (absScore >= 1500 && ply == randomMoves)
-            return;
-        else if (absScore <= 4)
-        {
-            drawCount++;
-            winCount = 0;
-        }
-        else if (absScore >= 1500)
-        {
-            winCount++;
-            drawCount = 0;
-        }
-        else
-        {
-            drawCount = 0;
-            winCount = 0;
-        }
-
-        if (winCount >= 4 || absScore >= VALUE_MATE_IN_PLY)
-        {
-            winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
-            break;
-        }
-        else if (board.halfMoveClock >= 80 && absScore > 250)
-        {
-            winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
-            break;
-        }
-        else if (drawCount >= 12)
-        {
-            winningSide = NO_COLOR;
-            break;
-        }
+        fn.use = !(capture || inCheck || ply < 8);
 
         if (fn.use)
             fn.fen = board.getFen();
         else
             fn.fen = "";
 
+        Score absScore = std::abs(result.score);
+        if (absScore >= 1500)
+        {
+            winCount++;
+            if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY)
+            {
+                winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
+                break;
+            }
+        }
+        else if (absScore <= 4)
+        {
+            drawCount++;
+            if (drawCount >= 12)
+            {
+                winningSide = NO_COLOR;
+                break;
+            }
+            winCount = 0;
+        }
+        else
+        {
+            drawCount = 0;
+            winCount = 0;
+        }
+
+        if (board.halfMoveClock >= 50 && popcount(board.All()) <= 6 && useTB)
+        {
+            Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
+
+            unsigned TBresult =
+                tb_probe_wdl(board.Us(White), board.Us(Black), board.Kings(White) | board.Kings(Black),
+                             board.Queens(White) | board.Queens(Black), board.Rooks(White) | board.Rooks(Black),
+                             board.Bishops(White) | board.Bishops(Black), board.Knights(White) | board.Knights(Black),
+                             board.Pawns(White) | board.Pawns(Black), 0, board.castlingRights, ep,
+                             ~board.sideToMove); //  * - turn: true=white, false=black
+
+            if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)
+            {
+                winningSide = ~board.sideToMove;
+                break;
+            }
+            else if (TBresult == TB_WIN || TBresult == TB_CURSED_WIN)
+            {
+                winningSide = board.sideToMove;
+                break;
+            }
+            else if (TBresult == TB_DRAW)
+            {
+                winningSide = NO_COLOR;
+                break;
+            }
+        }
+
+        ply++;
         fens.push_back(fn);
 
         board.makeMove<true>(result.move);

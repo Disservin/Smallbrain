@@ -8,6 +8,7 @@
 #include "perft.h"
 #include "scores.h"
 #include "search.h"
+#include "syzygy/Fathom/src/tbprobe.h"
 #include "timemanager.h"
 #include "tt.h"
 
@@ -26,7 +27,9 @@ void signalCallbackHandler(Search &searcher, Datagen &dg, int signum);
 
 void quit(Search &searcher, Datagen &dg);
 
+bool elementInVector(std::string el, std::vector<std::string> tokens);
 int findElement(std::string param, std::vector<std::string> tokens);
+std::string findElementString(std::string param, std::vector<std::string> tokens);
 
 // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
 const std::string currentDateTime();

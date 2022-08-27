@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 
+#include "attacks.h"
 #include "helper.h"
 #include "nnue.h"
 #include "scores.h"
@@ -131,14 +132,6 @@ class Board
 
     // only pawns + king = true else false
     bool nonPawnMat(Color c);
-
-    // Attacks of each piece
-    U64 PawnAttacks(Square sq, Color c);
-    U64 KnightAttacks(Square sq);
-    U64 BishopAttacks(Square sq, U64 occupied);
-    U64 RookAttacks(Square sq, U64 occupied);
-    U64 QueenAttacks(Square sq, U64 occupied);
-    U64 KingAttacks(Square sq);
 
     // Gets the piece of the specified color
     U64 Pawns(Color c);
