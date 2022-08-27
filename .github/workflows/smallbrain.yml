@@ -70,7 +70,7 @@ jobs:
       - name: Valgrind
         if: runner.os == 'Linux'
         run: |
-          valgrind --error-exitcode=1 -show-error-list=yes ./smallbrain* bench
+          valgrind --error-exitcode=1 ./smallbrain* bench
 
       - name: Archive executable
         uses: actions/upload-artifact@v3
