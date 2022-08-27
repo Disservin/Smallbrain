@@ -215,7 +215,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     ss->eval = staticEval = ttHit ? tte.score : Eval::evaluation(td->board);
 
     // improving boolean, similar to stockfish
-    improving = ss->ply >= 2 && staticEval > (ss - 2)->eval;
+    improving = ss->ply >= 2 ? staticEval > (ss - 2)->eval : false;
 
     if (RootNode)
         goto moves;
@@ -322,7 +322,11 @@ moves:
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode)
         {
             int rdepth = reductions[depth][madeMoves];
+
             rdepth -= td->id % 2;
+
+            rdepth += improving;
+
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
             score = -absearch<NonPV>(rdepth, -alpha - 1, -alpha, ss + 1, td);
