@@ -215,7 +215,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     ss->eval = staticEval = ttHit ? tte.score : Eval::evaluation(td->board);
 
     // improving boolean, similar to stockfish
-    improving = ss->ply >= 2 && staticEval > (ss - 2)->eval;
+    improving = ss->ply >= 2 ? staticEval > (ss - 2)->eval : false;
 
     if (RootNode)
         goto moves;
