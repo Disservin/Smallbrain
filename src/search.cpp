@@ -148,6 +148,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     bool improving, ttHit;
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
+    ss->eval = VALUE_NONE;
 
     if (ss->ply >= MAX_PLY)
         return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(td->board) : 0;
@@ -214,8 +215,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     // use tt eval for a better staticEval
     ss->eval = staticEval = ttHit ? tte.score : Eval::evaluation(td->board);
 
-    // improving boolean, similar to stockfish
-    improving = ss->ply >= 2 && staticEval > (ss - 2)->eval;
+    // improving boolean
+    improving = (ss - 2)->eval != VALUE_NONE ? staticEval > (ss - 2)->eval : false;
 
     if (RootNode)
         goto moves;
@@ -322,7 +323,11 @@ moves:
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode)
         {
             int rdepth = reductions[depth][madeMoves];
+
             rdepth -= td->id % 2;
+
+            rdepth += improving;
+
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
             score = -absearch<NonPV>(rdepth, -alpha - 1, -alpha, ss + 1, td);
