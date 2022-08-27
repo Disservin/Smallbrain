@@ -2,22 +2,27 @@
 
 #define hhEntry(bestmove, td) &td->history_table[td->board.sideToMove][from(bestmove)][to(bestmove)]
 
+int bonus(int depth)
+{
+    return std::min(1000, depth * 32 - 50);
+}
+
 void Search::UpdateHH(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td)
 {
     if (td->board.pieceAtB(to(bestMove)) == None)
     {
         if (best < beta)
             return;
-        int bonus = depth * depth;
-        bonus += bonus - *hhEntry(bestMove, td) * std::abs(bonus) / 16384;
+        int b = bonus(depth);
+        b += b - *hhEntry(bestMove, td) * std::abs(b) / 16384;
         if (depth > 1)
-            *hhEntry(bestMove, td) += bonus;
+            *hhEntry(bestMove, td) += b;
         for (int i = 0; i < quietMoves.size; i++)
         {
             const Move move = quietMoves.list[i];
             if (move == bestMove)
                 continue;
-            *hhEntry(move, td) -= bonus;
+            *hhEntry(move, td) -= b;
         }
     }
 }
