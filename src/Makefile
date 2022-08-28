@@ -10,9 +10,6 @@ NAME      := smallbrain
 MINOR     := 0
 MAJOR     := 5
 
-
-
-
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	CXFLAGS  = -pthread -lstdc++
@@ -49,12 +46,14 @@ ifeq ($(build), debug)
 	CO = -O3 -std=c++17
 endif
 
-
-SRCS := $(wildcard *.cpp)
+SRCS := $(wildcard *.cpp) ./syzygy/Fathom/src/tbprobe.c
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 EXE := $(NAME)$(MAJOR).$(MINOR)$(SUFFIX)
 
-all: $(TARGET)
+all: syzygy $(TARGET)
+syzygy:
+	git submodule update --init
+	git submodule update --recursive --remote
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(EXE) $^ $(CXFLAGS)
 %.o: %.cpp
@@ -64,4 +63,4 @@ clean:
 	rm *.exe
 	rm $(EXE)
 	
-.PHONY: all clean
+.PHONY: all clean syzygy

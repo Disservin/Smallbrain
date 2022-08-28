@@ -1,13 +1,16 @@
 #include <algorithm>
+#include <atomic>
 #include <cstring>
 #include <iostream>
 #include <vector>
 
 #include "board.h"
 #include "nnue.h"
+#include "syzygy/Fathom/src/tbprobe.h"
 #include "tt.h"
 #include "types.h"
 
+extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
@@ -49,6 +52,7 @@ class uciOptions
     void uciHash(int value);
     void uciEvalFile(std::string name);
     int uciThreads(int value);
+    void uciSyzygy(std::string path);
     void uciPosition(Board &board, std::string fen = DEFAULT_POS, bool update = true);
     void uciMoves(Board &board, std::vector<std::string> &tokens);
     void addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max);

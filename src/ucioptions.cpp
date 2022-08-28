@@ -1,16 +1,24 @@
 #include "ucioptions.h"
 
-std::vector<optionType> optionsPrint{optionType("Hash", "spin", "400", "1", "57344"),
-                                     optionType("EvalFile", "string", "default.nnue", "0", "0"),
-                                     optionType("Threads", "spin", "1", "1", "256")};
+std::vector<optionType> optionsPrint{
+    optionType("Hash", "spin", "400", "1", "57344"), optionType("EvalFile", "string", "default.nnue", "0", "0"),
+    optionType("Threads", "spin", "1", "1", "256"), optionType("SyzygyPath", "string", "<empty>", "", "")};
 
 void uciOptions::printOptions()
 {
     for (auto vectoriter = optionsPrint.begin(); vectoriter != optionsPrint.end(); vectoriter++)
     {
-        std::cout << "option name " << (*vectoriter).name << " type " << (*vectoriter).type << " default "
-                  << (*vectoriter).defaultValue << " min " << (*vectoriter).min << " max " << (*vectoriter).max
-                  << std::endl;
+        if ((*vectoriter).min != "")
+        {
+            std::cout << "option name " << (*vectoriter).name << " type " << (*vectoriter).type << " default "
+                      << (*vectoriter).defaultValue << " min " << (*vectoriter).min << " max " << (*vectoriter).max
+                      << std::endl;
+        }
+        else
+        {
+            std::cout << "option name " << (*vectoriter).name << " type " << (*vectoriter).type << " default "
+                      << (*vectoriter).defaultValue << std::endl;
+        }
     }
 }
 
@@ -30,6 +38,19 @@ void uciOptions::uciEvalFile(std::string name)
 int uciOptions::uciThreads(int value)
 {
     return std::clamp(value, 1, 512);
+}
+
+void uciOptions::uciSyzygy(std::string path)
+{
+    tb_init(path.c_str());
+    if (TB_LARGEST == 0)
+    {
+        std::cout << "TB NOT FOUND" << std::endl;
+    }
+    else
+    {
+        useTB = true;
+    }
 }
 
 void uciOptions::uciPosition(Board &board, std::string fen, bool update)

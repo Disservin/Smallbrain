@@ -10,9 +10,19 @@
 #include <sstream>
 #include <thread>
 
+#include "benchmark.h"
 #include "board.h"
+#include "datagen.h"
+#include "evaluation.h"
+#include "nnue.h"
 #include "perft.h"
+#include "scores.h"
 #include "search.h"
+#include "syzygy/Fathom/src/tbprobe.h"
+#include "timemanager.h"
+#include "tt.h"
+#include "ucicommands.h"
+#include "ucioptions.h"
 
 #define TUNE_INT(x, min, max)                                                                                          \
     do                                                                                                                 \
@@ -37,8 +47,6 @@ std::vector<std::string> splitInput(std::string fen);
 void stopThreads();
 
 void quit();
-
-int findElement(std::string param, std::vector<std::string> tokens);
 
 // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
 const std::string currentDateTime();

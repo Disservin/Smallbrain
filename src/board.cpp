@@ -2,10 +2,6 @@
 #include <locale>
 
 #include "board.h"
-#include "helper.h"
-#include "sliders.hpp"
-
-using namespace Chess_Lookup::Fancy;
 
 void Board::initializeLookupTables()
 {
@@ -324,36 +320,6 @@ bool Board::isRepetition(int draw)
 bool Board::nonPawnMat(Color c)
 {
     return Knights(c) | Bishops(c) | Rooks(c) | Queens(c);
-}
-
-U64 Board::PawnAttacks(Square sq, Color c)
-{
-    return PAWN_ATTACKS_TABLE[c][sq];
-}
-
-U64 Board::KnightAttacks(Square sq)
-{
-    return KNIGHT_ATTACKS_TABLE[sq];
-}
-
-U64 Board::BishopAttacks(Square sq, U64 occupied)
-{
-    return GetBishopAttacks(sq, occupied);
-}
-
-U64 Board::RookAttacks(Square sq, U64 occupied)
-{
-    return GetRookAttacks(sq, occupied);
-}
-
-U64 Board::QueenAttacks(Square sq, U64 occupied)
-{
-    return GetQueenAttacks(sq, occupied);
-}
-
-U64 Board::KingAttacks(Square sq)
-{
-    return KING_ATTACKS_TABLE[sq];
 }
 
 U64 Board::Pawns(Color c)

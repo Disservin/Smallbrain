@@ -1,0 +1,3 @@
+[submodule "src/syzygy/Fathom"]
+	path = src/syzygy/Fathom
+	url = https://github.com/Disservin/Fathom

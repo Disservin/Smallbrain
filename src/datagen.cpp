@@ -4,7 +4,7 @@
 std::random_device rd;
 std::mt19937 e(rd()); // or std::default_random_engine e{rd()};
 
-void Datagen::generate(int workers)
+void Datagen::generate(int workers, std::string book)
 {
     for (std::thread &th : threads)
     {
@@ -15,11 +15,11 @@ void Datagen::generate(int workers)
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&Datagen::infinitePlay, this, i);
+        threads.emplace_back(&Datagen::infinitePlay, this, i, book);
     }
 }
 
-void Datagen::infinitePlay(int threadId)
+void Datagen::infinitePlay(int threadId, std::string book)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
@@ -29,12 +29,12 @@ void Datagen::infinitePlay(int threadId)
     while (!UCI_FORCE_STOP)
     {
         games++;
-        randomPlayout(file, threadId);
+        randomPlayout(file, threadId, book);
     }
     file.close();
 }
 
-void Datagen::randomPlayout(std::ofstream &file, int threadId)
+void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book)
 {
     Board board;
     board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -44,13 +44,12 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     int ply = 0;
     int randomMoves = 10;
 
-    // std::uniform_int_distribution<std::mt19937::result_type> dfrc{0, static_cast<std::mt19937::result_type>(2)};
-
-    // if (dfrc(e) == 0)
-    if (true)
+    // USE BOOK
+    std::uniform_int_distribution<std::mt19937::result_type> dfrc{0, static_cast<std::mt19937::result_type>(4)};
+    if (book != "" && dfrc(e) == 0)
     {
         std::ifstream openingFile;
-        openingFile.open("data/DFRC_openings.epd");
+        openingFile.open(book);
 
         std::string line;
         uint64_t count = 0;
@@ -97,8 +96,8 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
     td.allowPrint = false;
     search.tds.push_back(td);
 
-    constexpr uint64_t nodes = 5000;
-    constexpr int depth = MAX_PLY;
+    constexpr uint64_t nodes = 0;
+    constexpr int depth = 7;
 
     Time t;
 
@@ -131,12 +130,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
 
         int all = popcount(board.All());
 
-        if (ply > 300)
-        {
-            winningSide = NO_COLOR;
-            break;
-        }
-        else if (board.isRepetition(3) || board.halfMoveClock >= 100)
+        if (board.isRepetition(3) || board.halfMoveClock >= 100)
         {
             winningSide = NO_COLOR;
             break;
@@ -158,7 +152,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
         fenData fn;
         fn.score = board.sideToMove == White ? result.score : -result.score;
         fn.move = result.move;
-        fn.use = !(capture || inCheck || ply < 16);
+        fn.use = !(capture || inCheck || ply < 12 || promoted(result.move));
 
         Score absScore = std::abs(result.score);
         if (absScore >= 1500 && ply == randomMoves)
@@ -179,12 +173,34 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId)
             winCount = 0;
         }
 
-        if (winCount >= 4 || absScore >= VALUE_MATE_IN_PLY)
+        if (all <= 5 && useTB)
         {
-            winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
-            break;
+            Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
+
+            unsigned TBresult =
+                tb_probe_wdl(board.Us(White), board.Us(Black), board.Kings(White) | board.Kings(Black),
+                             board.Queens(White) | board.Queens(Black), board.Rooks(White) | board.Rooks(Black),
+                             board.Bishops(White) | board.Bishops(Black), board.Knights(White) | board.Knights(Black),
+                             board.Pawns(White) | board.Pawns(Black), 0, board.castlingRights, ep,
+                             ~board.sideToMove); //  * - turn: true=white, false=black
+
+            if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)
+            {
+                winningSide = ~board.sideToMove;
+                break;
+            }
+            else if (TBresult == TB_WIN || TBresult == TB_CURSED_WIN)
+            {
+                winningSide = board.sideToMove;
+                break;
+            }
+            else if (TBresult == TB_DRAW)
+            {
+                winningSide = NO_COLOR;
+                break;
+            }
         }
-        else if (board.halfMoveClock >= 80 && absScore > 250)
+        else if (winCount >= 4 || absScore >= VALUE_TB_WIN_IN_MAX_PLY)
         {
             winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
             break;

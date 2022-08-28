@@ -148,6 +148,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     TEntry tte;
 
     Score best = -VALUE_INFINITE;
+    Score maxValue = VALUE_MATE;
     Score staticEval;
     Score oldAlpha = alpha;
 
@@ -164,9 +165,18 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (!RootNode)
     {
         if (td->board.halfMoveClock >= 100)
+        {
+            if (inCheck)
+            {
+                Movelist ml = td->board.legalmoves();
+                return ml.size == 0 ? mated_in(ss->ply) : 0;
+            }
             return 0;
+        }
+
         if (td->board.isRepetition() && (ss - 1)->currentmove != NULL_MOVE)
             return -3 + (td->nodes & 7);
+
         int all = popcount(td->board.All());
         if (all == 2)
             return 0;
@@ -210,6 +220,55 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
             return ttScore;
     }
 
+    /********************
+     *  Tablebase probing
+     *******************/
+
+    if (!RootNode && useTB)
+    {
+        Score tbRes = probeTB(td);
+
+        if (tbRes != VALUE_NONE)
+        {
+            Flag flag = NONEBOUND;
+            td->tbhits++;
+
+            switch (tbRes)
+            {
+            case VALUE_TB_WIN:
+                tbRes = VALUE_MATE_IN_PLY - ss->ply - 1;
+                flag = LOWERBOUND;
+                break;
+            case VALUE_TB_LOSS:
+                tbRes = VALUE_MATED_IN_PLY + ss->ply + 1;
+                flag = UPPERBOUND;
+                break;
+            default:
+                tbRes = 0;
+                flag = EXACT;
+                break;
+            }
+
+            if (flag == EXACT || (flag == LOWERBOUND && tbRes >= beta) || (flag == UPPERBOUND && tbRes <= alpha))
+            {
+                return tbRes;
+            }
+
+            if (PvNode)
+            {
+                if (flag == LOWERBOUND)
+                {
+                    best = tbRes;
+                    alpha = std::max(alpha, best);
+                }
+                else
+                {
+                    maxValue = tbRes;
+                }
+            }
+        }
+    }
+
     if (inCheck)
     {
         improving = false;
@@ -247,8 +306,9 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         if (score >= beta)
         {
             // dont return mate scores
-            if (score >= VALUE_MATE_IN_PLY)
+            if (score >= VALUE_TB_WIN_IN_MAX_PLY)
                 score = beta;
+
             return score;
         }
     }
@@ -388,6 +448,8 @@ moves:
         }
     }
 
+    best = std::min(best, maxValue);
+
     // update history heuristic
     UpdateHH(bestMove, best, beta, depth, quietMoves, td);
 
@@ -443,7 +505,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
     }
 
     if (td->allowPrint && td->id == 0)
-        uciOutput(result, alpha, beta, depth, td->seldepth, getNodes(), elapsed(), get_pv());
+        uciOutput(result, alpha, beta, depth, td->seldepth, getNodes(), getTbHits(), elapsed(), get_pv());
 
     return result;
 }
@@ -462,6 +524,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     }
     ThreadData *td = &this->tds[threadId];
     td->nodes = 0;
+    td->tbhits = 0;
     td->seldepth = 0;
 
     Move reducedTimeMove = NO_MOVE;
@@ -517,10 +580,16 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         previousBestmove = td->pv_table[0][0];
     }
 
+    if (threadId == 0 && (searchTime != 0 || (search_depth == MAX_PLY && maxN == 0)))
+    {
+        while (!stopped)
+        {
+        }
+    }
+
     Move bestmove = depth == 1 ? td->pv_table[0][0] : previousBestmove;
     if (threadId == 0 && td->allowPrint)
     {
-
         std::cout << "bestmove " << printMove(bestmove) << std::endl;
         stopped = true;
     }
@@ -538,6 +607,7 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
     }
     threads.clear();
     stopped = false;
+
     // If we dont have previous data create default data
     for (int i = tds.size(); i < workers; i++)
     {
@@ -557,7 +627,8 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
     }
 }
 
-// Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
+// Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under
+// GPL-3.0
 bool Search::see(Move &move, int threshold, Board &board)
 {
     Square from_sq = from(move);
@@ -603,9 +674,9 @@ bool Search::see(Move &move, int threshold, Board &board)
         occ ^= (1ULL << (bsf(myAttackers & (board.Bitboards[pt] | board.Bitboards[pt + 6]))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
-            attackers |= board.BishopAttacks(to_sq, occ) & bishops;
+            attackers |= BishopAttacks(to_sq, occ) & bishops;
         if (pt == ROOK || pt == QUEEN)
-            attackers |= board.RookAttacks(to_sq, occ) & rooks;
+            attackers |= RookAttacks(to_sq, occ) & rooks;
     }
     return sT != Color((board.pieceAtB(from_sq) / 6));
 }
@@ -715,6 +786,16 @@ uint64_t Search::getNodes()
     return nodes;
 }
 
+uint64_t Search::getTbHits()
+{
+    uint64_t nodes = 0;
+    for (size_t i = 0; i < tds.size(); i++)
+    {
+        nodes += tds[i].tbhits;
+    }
+    return nodes;
+}
+
 void Search::sortMoves(Movelist &moves, int sorted)
 {
     int index = 0 + sorted;
@@ -729,8 +810,53 @@ void Search::sortMoves(Movelist &moves, int sorted)
     std::swap(moves.values[index], moves.values[0 + sorted]);
 }
 
+Score Search::probeTB(ThreadData *td)
+{
+    Square ep = td->board.enPassantSquare <= 63 ? td->board.enPassantSquare : Square(0);
+
+    if (popcount(td->board.All()) > (signed)TB_LARGEST)
+        return VALUE_NONE;
+
+    unsigned TBresult;
+    TBresult = tb_probe_wdl(
+        td->board.Us(White), td->board.Us(Black), td->board.Kings(White) | td->board.Kings(Black),
+        td->board.Queens(White) | td->board.Queens(Black), td->board.Rooks(White) | td->board.Rooks(Black),
+        td->board.Bishops(White) | td->board.Bishops(Black), td->board.Knights(White) | td->board.Knights(Black),
+        td->board.Pawns(White) | td->board.Pawns(Black), td->board.halfMoveClock, td->board.castlingRights, ep,
+        ~td->board.sideToMove); //  * - turn: true=white, false=black
+
+    if (TBresult == TB_RESULT_FAILED)
+    {
+        return VALUE_NONE;
+    }
+    else if (TBresult == TB_LOSS)
+    {
+        return VALUE_TB_LOSS;
+    }
+    else if (TBresult == TB_WIN)
+    {
+        return VALUE_TB_WIN;
+    }
+    else if (TBresult == TB_BLESSED_LOSS)
+    {
+        return VALUE_NONE;
+    }
+    else if (TBresult == TB_CURSED_WIN)
+    {
+        return VALUE_NONE;
+    }
+    else if (TBresult == TB_DRAW)
+    {
+        return Score(0);
+    }
+    return VALUE_NONE;
+}
+
 std::string outputScore(int score, Score alpha, Score beta)
 {
+    if (std::abs(score) <= 4)
+        score = 0;
+
     if (score >= beta)
         return "lowerbound " + std::to_string(score);
     else if (score <= alpha)
@@ -749,9 +875,10 @@ std::string outputScore(int score, Score alpha, Score beta)
     }
 }
 
-void uciOutput(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv)
+void uciOutput(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time,
+               std::string pv)
 {
     std::cout << "info depth " << signed(depth) << " seldepth " << signed(seldepth) << " score "
-              << outputScore(score, alpha, beta) << " nodes " << nodes << " nps " << signed((nodes / (time + 1)) * 1000)
-              << " time " << time << " pv" << pv << std::endl;
+              << outputScore(score, alpha, beta) << " tbhits " << tbHits << " nodes " << nodes << " nps "
+              << signed((nodes / (time + 1)) * 1000) << " time " << time << " pv" << pv << std::endl;
 }

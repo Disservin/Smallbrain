@@ -1,18 +1,8 @@
 #include "uci.h"
-#include "benchmark.h"
-#include "board.h"
-#include "datagen.h"
-#include "evaluation.h"
-#include "nnue.h"
-#include "scores.h"
-#include "search.h"
-#include "timemanager.h"
-#include "tt.h"
-#include "ucicommands.h"
-#include "ucioptions.h"
 
 std::atomic<bool> stopped;
 std::atomic<bool> UCI_FORCE_STOP;
+std::atomic<bool> useTB;
 
 U64 TT_SIZE = 16 * 1024 * 1024 / sizeof(TEntry); // initialise to 16 MB
 TEntry *TTable;                                  // TEntry size is 14 bytes
@@ -28,6 +18,7 @@ int main(int argc, char **argv)
 {
     UCI_FORCE_STOP = false;
     stopped = false;
+    useTB = false;
 
     signal(SIGINT, signalCallbackHandler);
 #ifdef SIGBREAK
@@ -62,20 +53,40 @@ int main(int argc, char **argv)
         // ./smallbrain bench
         if (argc > 1)
         {
-            if (argv[1] == std::string("bench"))
+            std::vector<std::string> allArgs(argv + 1, argv + argc);
+
+            if (uciCommand::elementInVector("bench", allArgs))
             {
                 startBench();
                 uciCommand::quit(searcher, dg);
                 return 0;
             }
-            else if (argv[1] == std::string("gen"))
+            else if (uciCommand::elementInVector("-gen", allArgs))
             {
-                int workers = argc > 2 ? atoi(argv[2]) : 1;
-                dg.generate(workers);
+                int workers = 1;
+                std::string bookPath = "";
+                std::string tbPath = "";
+
+                if (uciCommand::elementInVector("-threads", allArgs))
+                {
+                    workers = uciCommand::findElement("-threads", allArgs);
+                }
+
+                if (uciCommand::elementInVector("-book", allArgs))
+                {
+                    bookPath = uciCommand::findElementString("-book", allArgs);
+                }
+
+                if (uciCommand::elementInVector("-tb", allArgs))
+                {
+                    options.uciSyzygy(uciCommand::findElementString("-tb", allArgs));
+                }
+
+                dg.generate(workers, bookPath);
             }
-            else if (argv[1] == std::string("perft"))
+            else if (uciCommand::elementInVector("perft", allArgs))
             {
-                uciCommand::parseInput(argv[1], searcher, board, dg);
+                uciCommand::parseInput(allArgs[0], searcher, board, dg);
             }
         }
 
@@ -119,6 +130,8 @@ int main(int argc, char **argv)
                 options.uciEvalFile(value);
             else if (option == "Threads")
                 threads = options.uciThreads(std::stoi(value));
+            else if (option == "SyzygyPath")
+                options.uciSyzygy(value);
 
             // ADD TUNES BY HAND AND DO `extern int x;` IN uci.h
             // else if (option == "")  = std::stoi(value);
