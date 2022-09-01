@@ -825,25 +825,13 @@ Score Search::probeTB(ThreadData *td)
         td->board.Pawns(White) | td->board.Pawns(Black), td->board.halfMoveClock, td->board.castlingRights, ep,
         ~td->board.sideToMove); //  * - turn: true=white, false=black
 
-    if (TBresult == TB_RESULT_FAILED)
-    {
-        return VALUE_NONE;
-    }
-    else if (TBresult == TB_LOSS)
+    if (TBresult == TB_LOSS)
     {
         return VALUE_TB_LOSS;
     }
     else if (TBresult == TB_WIN)
     {
         return VALUE_TB_WIN;
-    }
-    else if (TBresult == TB_BLESSED_LOSS)
-    {
-        return VALUE_NONE;
-    }
-    else if (TBresult == TB_CURSED_WIN)
-    {
-        return VALUE_NONE;
     }
     else if (TBresult == TB_DRAW)
     {
