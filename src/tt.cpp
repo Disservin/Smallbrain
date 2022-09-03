@@ -4,12 +4,15 @@ void storeEntry(int depth, Score bestvalue, Flag b, U64 key, uint16_t move)
 {
     U64 index = ttIndex(key);
     TEntry tte = TTable[index];
-    if ((tte.key != key || b == EXACT || depth > (tte.depth * 2) / 3))
+
+    if (tte.key != key || move)
+        tte.move = move;
+
+    if (tte.key != key || b == EXACT || depth + 4 > tte.depth)
     {
         tte.depth = depth;
         tte.score = bestvalue;
         tte.key = key;
-        tte.move = move;
         tte.flag = b;
         TTable[index] = tte;
     }

@@ -83,6 +83,9 @@ class Search
     std::vector<std::thread> threads;
 
     // move ordering
+    int getHistory(Move move, ThreadData *td);
+    void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td);
+    void updateHistoryBonus(Move move, int b, ThreadData *td);
     void UpdateHH(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td);
 
     // main search functions
