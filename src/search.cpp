@@ -31,13 +31,18 @@ void Search::updateHistory(Move bestmove, int bonus, int depth, Movelist &quietM
     }
 }
 
-void Search::UpdateHH(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td)
+void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td,
+                                Stack *ss)
 {
     if (best < beta)
         return;
 
     if (td->board.pieceAtB(to(bestMove)) == None)
     {
+        // update Killer Moves
+        td->killerMoves[1][ss->ply] = td->killerMoves[0][ss->ply];
+        td->killerMoves[0][ss->ply] = bestMove;
+
         int depthBonus = bonus(depth);
         updateHistory(bestMove, depthBonus, depth, quietMoves, td);
     }
@@ -390,13 +395,8 @@ moves:
 
                 if (score >= beta)
                 {
-                    // update Killer Moves
-                    if (!capture)
-                    {
-                        td->killerMoves[1][ss->ply] = td->killerMoves[0][ss->ply];
-                        td->killerMoves[0][ss->ply] = move;
-                    }
-                    UpdateHH(bestMove, best, beta, depth, quietMoves, td);
+                    // update history heuristic
+                    updateAllHistories(bestMove, best, beta, depth, quietMoves, td, ss);
                     break;
                 }
             }
@@ -405,12 +405,11 @@ moves:
             quietMoves.Add(move);
     }
 
-    // update history heuristic
-
     // Store position in TT
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
     if (!stopped)
         storeEntry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
+
     return best;
 }
 
@@ -661,22 +660,6 @@ int Search::scoreMove(Move &move, int ply, bool ttMove, ThreadData *td)
     }
 }
 
-int Search::scoreQmove(Move &move, Board &board)
-{
-    if (promoted(move))
-    {
-        return 2147483647 - 20 + piece(move);
-    }
-    else if (board.pieceAtB(to(move)) != None)
-    {
-        return see(move, 0, board) ? mmlva(move, board) * 10000 : mmlva(move, board);
-    }
-    else
-    {
-        return 0;
-    }
-}
-
 std::string Search::get_pv()
 {
     std::string line = "";
@@ -701,9 +684,7 @@ bool Search::exitEarly(uint64_t nodes, int ThreadId)
     if (ThreadId != 0)
         return false;
     if (maxNodes != 0 && nodes >= maxNodes)
-    {
         return true;
-    }
 
     if (--checkTime > 0)
         return false;
@@ -725,9 +706,7 @@ uint64_t Search::getNodes()
 {
     uint64_t nodes = 0;
     for (size_t i = 0; i < tds.size(); i++)
-    {
         nodes += tds[i].nodes;
-    }
     return nodes;
 }
 
@@ -737,9 +716,7 @@ void Search::sortMoves(Movelist &moves, int sorted)
     for (int i = 1 + sorted; i < moves.size; i++)
     {
         if (moves.values[i] > moves.values[index])
-        {
             index = i;
-        }
     }
     std::swap(moves.list[index], moves.list[0 + sorted]);
     std::swap(moves.values[index], moves.values[0 + sorted]);
@@ -752,17 +729,11 @@ std::string outputScore(int score, Score alpha, Score beta)
     else if (score <= alpha)
         return "upperbound " + std::to_string(score);
     else if (score >= VALUE_MATE_IN_PLY)
-    {
         return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
-    }
     else if (score <= VALUE_MATED_IN_PLY)
-    {
         return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
-    }
     else
-    {
         return "cp " + std::to_string(score);
-    }
 }
 
 void uciOutput(int score, Score alpha, Score beta, int depth, uint8_t seldepth, U64 nodes, int time, std::string pv)
