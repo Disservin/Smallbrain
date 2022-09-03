@@ -496,12 +496,65 @@ void Board::DoPinMask(Color c, Square sq)
     }
 }
 
+void Board::seenSquares(Color c)
+{
+    U64 pawns = Pawns(c);
+    U64 knights = Knights(c);
+    U64 bishops = Bishops(c);
+    U64 rooks = Rooks(c);
+    U64 queens = Queens(c);
+    U64 kings = Kings(c);
+
+    seen = 0ULL;
+    Square kSq = KingSQ(~c);
+    occAll &= ~(1ULL << kSq);
+
+    if (c == White)
+    {
+        seen |= pawns << 9 & ~MASK_FILE[0];
+        seen |= pawns << 7 & ~MASK_FILE[7];
+    }
+    else
+    {
+        seen |= pawns >> 7 & ~MASK_FILE[0];
+        seen |= pawns >> 9 & ~MASK_FILE[7];
+    }
+    while (knights)
+    {
+        Square index = poplsb(knights);
+        seen |= KnightAttacks(index);
+    }
+    while (bishops)
+    {
+        Square index = poplsb(bishops);
+        seen |= BishopAttacks(index, occAll);
+    }
+    while (rooks)
+    {
+        Square index = poplsb(rooks);
+        seen |= RookAttacks(index, occAll);
+    }
+    while (queens)
+    {
+        Square index = poplsb(queens);
+        seen |= QueenAttacks(index, occAll);
+    }
+    while (kings)
+    {
+        Square index = poplsb(kings);
+        seen |= KingAttacks(index);
+    }
+
+    occAll |= (1ULL << kSq);
+}
+
 void Board::init(Color c, Square sq)
 {
     occUs = Us(c);
     occEnemy = Us(~c);
     occAll = occUs | occEnemy;
     enemyEmptyBB = ~occUs;
+    seenSquares(~c);
     U64 newMask = DoCheckmask(c, sq);
     checkMask = newMask ? newMask : DEFAULT_CHECKMASK;
     DoPinMask(c, sq);
@@ -645,22 +698,9 @@ U64 Board::LegalPawnNoisy(Color c, Square sq, Square ep)
     return ((attacks & enemy) | pawnPromote) & checkMask;
 }
 
-U64 Board::LegalKingCaptures(Color c, Square sq)
+U64 Board::LegalKingCaptures(Square sq)
 {
-    U64 moves = KingAttacks(sq) & occEnemy;
-    U64 final_moves = 0ULL;
-    Piece k = makePiece(KING, c);
-
-    removePiece<false>(k, sq);
-    while (moves)
-    {
-        Square index = poplsb(moves);
-        if (isSquareAttacked(~c, index))
-            continue;
-        final_moves |= (1ULL << index);
-    }
-    placePiece<false>(k, sq);
-    return final_moves;
+    return KingAttacks(sq) & occEnemy & ~seen;
 }
 
 U64 Board::LegalPawnMoves(Color c, Square sq)
@@ -728,14 +768,14 @@ U64 Board::LegalPawnMovesEP(Color c, Square sq, Square ep)
     return moves;
 }
 
-U64 Board::LegalKnightMoves(Color c, Square sq)
+U64 Board::LegalKnightMoves(Square sq)
 {
     if (pinD & (1ULL << sq) || pinHV & (1ULL << sq))
         return 0ULL;
     return KnightAttacks(sq) & enemyEmptyBB & checkMask;
 }
 
-U64 Board::LegalBishopMoves(Color c, Square sq)
+U64 Board::LegalBishopMoves(Square sq)
 {
     if (pinHV & (1ULL << sq))
         return 0ULL;
@@ -744,7 +784,7 @@ U64 Board::LegalBishopMoves(Color c, Square sq)
     return BishopAttacks(sq, occAll) & enemyEmptyBB & checkMask;
 }
 
-U64 Board::LegalRookMoves(Color c, Square sq)
+U64 Board::LegalRookMoves(Square sq)
 {
     if (pinD & (1ULL << sq))
         return 0ULL;
@@ -753,84 +793,43 @@ U64 Board::LegalRookMoves(Color c, Square sq)
     return RookAttacks(sq, occAll) & enemyEmptyBB & checkMask;
 }
 
-U64 Board::LegalQueenMoves(Color c, Square sq)
+U64 Board::LegalQueenMoves(Square sq)
 {
-    return LegalRookMoves(c, sq) | LegalBishopMoves(c, sq);
+    return LegalRookMoves(sq) | LegalBishopMoves(sq);
 }
 
-U64 Board::LegalKingMoves(Color c, Square sq)
+U64 Board::LegalKingMoves(Square sq)
 {
-    U64 moves = KingAttacks(sq) & enemyEmptyBB;
-
-    // king is blocked by own pieces
-    if (moves == 0ULL)
-        return 0ULL;
-
-    U64 final_moves = 0ULL;
-    Piece k = makePiece(KING, c);
-    removePiece<false>(k, sq);
-
-    while (moves)
-    {
-        Square index = poplsb(moves);
-        if (isSquareAttacked(~c, index))
-            continue;
-        final_moves |= (1ULL << index);
-    }
-
-    placePiece<false>(k, sq);
-    return final_moves;
+    return KingAttacks(sq) & enemyEmptyBB & ~seen;
 }
 
 U64 Board::LegalKingMovesCastling(Color c, Square sq)
 {
-    U64 moves = KingAttacks(sq) & enemyEmptyBB;
-
-    // king is blocked by own pieces
-    if (moves == 0ULL)
-        return 0ULL;
-
-    U64 final_moves = 0ULL;
-    Piece k = makePiece(KING, c);
-    removePiece<false>(k, sq);
-
-    while (moves)
-    {
-        Square index = poplsb(moves);
-        if (isSquareAttacked(~c, index))
-            continue;
-        final_moves |= (1ULL << index);
-    }
-
-    placePiece<false>(k, sq);
+    U64 moves = KingAttacks(sq) & enemyEmptyBB & ~seen;
 
     if (c == White)
     {
-        if (castlingRights & wk && !(WK_CASTLE_MASK & occAll) && final_moves & (1ULL << SQ_F1) &&
-            !isSquareAttackedStatic(Black, SQ_G1))
+        if (castlingRights & wk && !(WK_CASTLE_MASK & occAll) && moves & (1ULL << SQ_F1) && !(seen & (1ULL << SQ_G1)))
         {
-            final_moves |= (1ULL << SQ_G1);
+            moves |= (1ULL << SQ_G1);
         }
-        if (castlingRights & wq && !(WQ_CASTLE_MASK & occAll) && final_moves & (1ULL << SQ_D1) &&
-            !isSquareAttackedStatic(Black, SQ_C1))
+        if (castlingRights & wq && !(WQ_CASTLE_MASK & occAll) && moves & (1ULL << SQ_D1) && !(seen & (1ULL << SQ_C1)))
         {
-            final_moves |= (1ULL << SQ_C1);
+            moves |= (1ULL << SQ_C1);
         }
     }
     else
     {
-        if (castlingRights & bk && !(BK_CASTLE_MASK & occAll) && final_moves & (1ULL << SQ_F8) &&
-            !isSquareAttackedStatic(White, SQ_G8))
+        if (castlingRights & bk && !(BK_CASTLE_MASK & occAll) && moves & (1ULL << SQ_F8) && !(seen & (1ULL << SQ_G8)))
         {
-            final_moves |= (1ULL << SQ_G8);
+            moves |= (1ULL << SQ_G8);
         }
-        if (castlingRights & bq && !(BQ_CASTLE_MASK & occAll) && final_moves & (1ULL << SQ_D8) &&
-            !isSquareAttackedStatic(White, SQ_C8))
+        if (castlingRights & bq && !(BQ_CASTLE_MASK & occAll) && moves & (1ULL << SQ_D8) && !(seen & (1ULL << SQ_C8)))
         {
-            final_moves |= (1ULL << SQ_C8);
+            moves |= (1ULL << SQ_C8);
         }
     }
-    return final_moves;
+    return moves;
 }
 
 Movelist Board::legalmoves()
@@ -872,7 +871,7 @@ Movelist Board::legalmoves()
         while (knights_mask)
         {
             Square from = poplsb(knights_mask);
-            U64 moves = LegalKnightMoves(sideToMove, from);
+            U64 moves = LegalKnightMoves(from);
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -882,7 +881,7 @@ Movelist Board::legalmoves()
         while (bishops_mask)
         {
             Square from = poplsb(bishops_mask);
-            U64 moves = LegalBishopMoves(sideToMove, from);
+            U64 moves = LegalBishopMoves(from);
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -892,7 +891,7 @@ Movelist Board::legalmoves()
         while (rooks_mask)
         {
             Square from = poplsb(rooks_mask);
-            U64 moves = LegalRookMoves(sideToMove, from);
+            U64 moves = LegalRookMoves(from);
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -902,7 +901,7 @@ Movelist Board::legalmoves()
         while (queens_mask)
         {
             Square from = poplsb(queens_mask);
-            U64 moves = LegalQueenMoves(sideToMove, from);
+            U64 moves = LegalQueenMoves(from);
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -912,7 +911,7 @@ Movelist Board::legalmoves()
     }
 
     Square from = KingSQ(sideToMove);
-    U64 moves = !castlingRights || checkMask != DEFAULT_CHECKMASK ? LegalKingMoves(sideToMove, from)
+    U64 moves = !castlingRights || checkMask != DEFAULT_CHECKMASK ? LegalKingMoves(from)
                                                                   : LegalKingMovesCastling(sideToMove, from);
     while (moves)
     {
@@ -959,7 +958,7 @@ Movelist Board::capturemoves()
         while (knights_mask)
         {
             Square from = poplsb(knights_mask);
-            U64 moves = LegalKnightMoves(sideToMove, from) & enemy;
+            U64 moves = LegalKnightMoves(from) & enemy;
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -969,7 +968,7 @@ Movelist Board::capturemoves()
         while (bishops_mask)
         {
             Square from = poplsb(bishops_mask);
-            U64 moves = LegalBishopMoves(sideToMove, from) & enemy;
+            U64 moves = LegalBishopMoves(from) & enemy;
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -979,7 +978,7 @@ Movelist Board::capturemoves()
         while (rooks_mask)
         {
             Square from = poplsb(rooks_mask);
-            U64 moves = LegalRookMoves(sideToMove, from) & enemy;
+            U64 moves = LegalRookMoves(from) & enemy;
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -989,7 +988,7 @@ Movelist Board::capturemoves()
         while (queens_mask)
         {
             Square from = poplsb(queens_mask);
-            U64 moves = LegalQueenMoves(sideToMove, from) & enemy;
+            U64 moves = LegalQueenMoves(from) & enemy;
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -998,7 +997,7 @@ Movelist Board::capturemoves()
         }
     }
     Square from = KingSQ(sideToMove);
-    U64 moves = LegalKingCaptures(sideToMove, from);
+    U64 moves = LegalKingCaptures(from);
     while (moves)
     {
         Square to = poplsb(moves);
