@@ -100,7 +100,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
             continue;
 
         // see based capture pruning
-        if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, -100, td->board))
+        if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, 0, td->board))
             continue;
 
         td->nodes++;
@@ -564,10 +564,10 @@ bool Search::see(Move &move, int threshold, Board &board)
     Square to_sq = to(move);
     PieceType attacker = type_of_piece(board.pieceAtB(from_sq));
     PieceType victim = type_of_piece(board.pieceAtB(to_sq));
-    int swap = piece_values[MG][victim] - threshold;
+    int swap = piece_values_default[victim] - threshold;
     if (swap < 0)
         return false;
-    swap -= piece_values[MG][attacker];
+    swap -= piece_values_default[attacker];
     if (swap >= 0)
         return true;
     U64 occ = (board.All() ^ (1ULL << from_sq)) | (1ULL << to_sq);
@@ -629,7 +629,7 @@ int Search::scoreMove(Move &move, int ply, bool ttMove, ThreadData *td)
     }
     else if (td->board.pieceAtB(to(move)) != None)
     {
-        return see(move, -100, td->board) ? 7'000'000 + mmlva(move, td->board) : mmlva(move, td->board);
+        return see(move, 0, td->board) ? 7'000'000 + mmlva(move, td->board) : mmlva(move, td->board);
     }
     else if (td->killerMoves[0][ply] == move)
     {
@@ -653,7 +653,7 @@ int Search::scoreQmove(Move &move, Board &board)
     }
     else if (board.pieceAtB(to(move)) != None)
     {
-        return see(move, -100, board) ? mmlva(move, board) * 10000 : mmlva(move, board);
+        return see(move, 0, board) ? mmlva(move, board) * 10000 : mmlva(move, board);
     }
     else
     {
