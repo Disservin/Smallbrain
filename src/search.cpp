@@ -13,7 +13,7 @@ int Search::getHistory(Move move, ThreadData *td)
 void Search::updateHistoryBonus(Move move, int bonus, ThreadData *td)
 {
     td->history_table[td->board.sideToMove][from(move)][to(move)] +=
-        bonus - getHistory(move, td) * std::abs(bonus) / (16384 * 2);
+        bonus - getHistory(move, td) * std::abs(bonus) / 16384;
 }
 
 void Search::updateHistory(Move bestmove, int bonus, int depth, Movelist &quietMoves, ThreadData *td)
