@@ -88,6 +88,7 @@ class Board
     U64 occEnemy;
     U64 occAll{};
     U64 enemyEmptyBB{};
+    U64 seen{};
 
     std::vector<U64> hashHistory;
     States prevStates;
@@ -178,6 +179,9 @@ class Board
     // creates the pinmask
     void DoPinMask(Color c, Square sq);
 
+    // seen squares
+    void seenSquares(Color c);
+
     // creates the pinmask and checkmask
     void init(Color c, Square sq);
 
@@ -196,16 +200,16 @@ class Board
 
     // legal captures + promotions
     U64 LegalPawnNoisy(Color c, Square sq, Square ep);
-    U64 LegalKingCaptures(Color c, Square sq);
+    U64 LegalKingCaptures(Square sq);
 
     // all legal moves for each piece
     U64 LegalPawnMoves(Color c, Square sq);
     U64 LegalPawnMovesEP(Color c, Square sq, Square ep);
-    U64 LegalKnightMoves(Color c, Square sq);
-    U64 LegalBishopMoves(Color c, Square sq);
-    U64 LegalRookMoves(Color c, Square sq);
-    U64 LegalQueenMoves(Color c, Square sq);
-    U64 LegalKingMoves(Color c, Square sq);
+    U64 LegalKnightMoves(Square sq);
+    U64 LegalBishopMoves(Square sq);
+    U64 LegalRookMoves(Square sq);
+    U64 LegalQueenMoves(Square sq);
+    U64 LegalKingMoves(Square sq);
     U64 LegalKingMovesCastling(Color c, Square sq);
 
     // all legal moves for a position
