@@ -86,7 +86,8 @@ class Search
     int getHistory(Move move, ThreadData *td);
     void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td);
     void updateHistoryBonus(Move move, int b, ThreadData *td);
-    void UpdateHH(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td);
+    void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td,
+                            Stack *ss);
 
     // main search functions
     template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
@@ -101,7 +102,6 @@ class Search
 
     // scoring functions
     int scoreMove(Move &move, int ply, bool ttMove, ThreadData *td);
-    int scoreQmove(Move &move, Board &board);
 
     // utility functions
     std::string get_pv();
