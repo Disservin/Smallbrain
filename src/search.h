@@ -105,11 +105,12 @@ class Search
     void startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
 
     // capture functions
-    bool see(Move &move, int threshold, Board &board);
-    int mmlva(Move &move, Board &board);
+    bool see(Move move, int threshold, Board &board);
+    int mmlva(Move move, Board &board);
 
     // scoring functions
-    int scoreMove(Move &move, int ply, bool ttMove, ThreadData *td);
+    int scoreqMove(Move move, int ply, bool ttMove, ThreadData *td);
+    int scoreMove(Move move, int ply, bool ttMove, ThreadData *td);
 
     // utility functions
     std::string get_pv();

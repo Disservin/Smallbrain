@@ -104,7 +104,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++)
-        ml.values[i] = scoreMove(ml.list[i], ss->ply, ttHit, td);
+        ml.values[i] = scoreqMove(ml.list[i], ss->ply, ttHit, td);
 
     // search the moves
     for (int i = 0; i < (int)ml.size; i++)
@@ -124,7 +124,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
             continue;
 
         // see based capture pruning
-        if (bestValue > VALUE_MATED_IN_PLY && captured != None && !see(move, 0, td->board))
+        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && ml.values[i] == -50'000)
             continue;
 
         td->nodes++;
@@ -571,7 +571,7 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
 }
 
 // Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
-bool Search::see(Move &move, int threshold, Board &board)
+bool Search::see(Move move, int threshold, Board &board)
 {
     Square from_sq = from(move);
     Square to_sq = to(move);
@@ -623,14 +623,14 @@ bool Search::see(Move &move, int threshold, Board &board)
     return sT != Color((board.pieceAtB(from_sq) / 6));
 }
 
-int Search::mmlva(Move &move, Board &board)
+int Search::mmlva(Move move, Board &board)
 {
     int attacker = type_of_piece(board.pieceAtB(from(move))) + 1;
     int victim = type_of_piece(board.pieceAtB(to(move))) + 1;
     return mvvlva[victim][attacker];
 }
 
-int Search::scoreMove(Move &move, int ply, bool ttMove, ThreadData *td)
+int Search::scoreMove(Move move, int ply, bool ttMove, ThreadData *td)
 {
     if (ttMove && move == TTable[ttIndex(td->board.hashKey)].move)
     {
@@ -643,6 +643,34 @@ int Search::scoreMove(Move &move, int ply, bool ttMove, ThreadData *td)
     else if (td->board.pieceAtB(to(move)) != None)
     {
         return see(move, 0, td->board) ? 7'000'000 + mmlva(move, td->board) : mmlva(move, td->board);
+    }
+    else if (td->killerMoves[0][ply] == move)
+    {
+        return killerscore1;
+    }
+    else if (td->killerMoves[1][ply] == move)
+    {
+        return killerscore2;
+    }
+    else
+    {
+        return getHistory<QUIET>(move, td);
+    }
+}
+
+int Search::scoreqMove(Move move, int ply, bool ttMove, ThreadData *td)
+{
+    if (ttMove && move == TTable[ttIndex(td->board.hashKey)].move)
+    {
+        return 10'000'000;
+    }
+    else if (promoted(move))
+    {
+        return 9'000'000 + piece(move);
+    }
+    else if (td->board.pieceAtB(to(move)) != None)
+    {
+        return see(move, 0, td->board) ? 7'000'000 + mmlva(move, td->board) : -50'000;
     }
     else if (td->killerMoves[0][ply] == move)
     {
