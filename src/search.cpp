@@ -5,29 +5,32 @@ int bonus(int depth)
     return std::min(2000, depth * depth);
 }
 
-int Search::getHistory(Move move, ThreadData *td)
+template <Movetype type> int Search::getHistory(Move move, ThreadData *td)
 {
-    return td->history_table[td->board.sideToMove][from(move)][to(move)];
+    if constexpr (type == QUIET)
+        return td->historyTable[td->board.sideToMove][from(move)][to(move)];
 }
 
-void Search::updateHistoryBonus(Move move, int bonus, ThreadData *td)
+template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus, ThreadData *td)
 {
-    td->history_table[td->board.sideToMove][from(move)][to(move)] +=
-        bonus - getHistory(move, td) * std::abs(bonus) / 16384;
+    int hhBonus = bonus - getHistory<type>(move, td) * std::abs(bonus) / 16384;
+    if constexpr (type == QUIET)
+        td->historyTable[td->board.sideToMove][from(move)][to(move)] += hhBonus;
 }
 
-void Search::updateHistory(Move bestmove, int bonus, int depth, Movelist &quietMoves, ThreadData *td)
+template <Movetype type>
+void Search::updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td)
 {
     if (depth > 1)
-        updateHistoryBonus(bestmove, bonus, td);
+        updateHistoryBonus<type>(bestmove, bonus, td);
 
-    for (int i = 0; i < quietMoves.size; i++)
+    for (int i = 0; i < movelist.size; i++)
     {
-        const Move move = quietMoves.list[i];
+        const Move move = movelist.list[i];
         if (move == bestmove)
             continue;
 
-        updateHistoryBonus(move, -bonus, td);
+        updateHistoryBonus<type>(move, -bonus, td);
     }
 }
 
@@ -37,14 +40,14 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
     if (best < beta)
         return;
 
+    int depthBonus = bonus(depth);
     if (td->board.pieceAtB(to(bestMove)) == None)
     {
         // update Killer Moves
         td->killerMoves[1][ss->ply] = td->killerMoves[0][ss->ply];
         td->killerMoves[0][ss->ply] = bestMove;
 
-        int depthBonus = bonus(depth);
-        updateHistory(bestMove, depthBonus, depth, quietMoves, td);
+        updateHistory<QUIET>(bestMove, depthBonus, depth, quietMoves, td);
     }
 }
 
@@ -179,7 +182,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (ss->ply >= MAX_PLY)
         return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(td->board) : 0;
 
-    td->pv_length[ss->ply] = ss->ply;
+    td->pvLength[ss->ply] = ss->ply;
 
     // Draw detection and mate pruning
     if (!RootNode)
@@ -382,12 +385,12 @@ moves:
             bestMove = move;
 
             // update the PV
-            td->pv_table[ss->ply][ss->ply] = move;
-            for (int next_ply = ss->ply + 1; next_ply < td->pv_length[ss->ply + 1]; next_ply++)
+            td->pvTable[ss->ply][ss->ply] = move;
+            for (int next_ply = ss->ply + 1; next_ply < td->pvLength[ss->ply + 1]; next_ply++)
             {
-                td->pv_table[ss->ply][next_ply] = td->pv_table[ss->ply + 1][next_ply];
+                td->pvTable[ss->ply][next_ply] = td->pvTable[ss->ply + 1][next_ply];
             }
-            td->pv_length[ss->ply] = td->pv_length[ss->ply + 1];
+            td->pvLength[ss->ply] = td->pvLength[ss->ply + 1];
 
             if (score > alpha)
             {
@@ -506,7 +509,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
         sr.score = result;
 
-        bestmove = td->pv_table[0][0];
+        bestmove = td->pvTable[0][0];
 
         // limit type time
         if (searchTime != 0)
@@ -525,7 +528,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     // in case its depth we use current pv table move since it might be
     // that search was interrupted before search finished properly
     if (depth == 1)
-        bestmove = td->pv_table[0][0];
+        bestmove = td->pvTable[0][0];
 
     // mainthread prints bestmove
     // allowprint is disabled in data generation
@@ -651,17 +654,17 @@ int Search::scoreMove(Move &move, int ply, bool ttMove, ThreadData *td)
     }
     else
     {
-        return getHistory(move, td);
+        return getHistory<QUIET>(move, td);
     }
 }
 
 std::string Search::get_pv()
 {
     std::string line = "";
-    for (int i = 0; i < tds[0].pv_length[0]; i++)
+    for (int i = 0; i < tds[0].pvLength[0]; i++)
     {
         line += " ";
-        line += printMove(tds[0].pv_table[0][i]);
+        line += printMove(tds[0].pvTable[0][i]);
     }
     return line;
 }
