@@ -14,6 +14,12 @@ extern std::atomic<bool> stopped;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
+enum Movetype : uint8_t
+{
+    QUIET,
+    CAPTURE
+};
+
 enum Node
 {
     NonPV,
@@ -35,13 +41,13 @@ struct ThreadData
     int id;
     // move ordering
     // [sideToMove][from][to]
-    int history_table[2][MAX_SQ][MAX_SQ]{};
+    int historyTable[2][MAX_SQ][MAX_SQ]{};
 
     Move killerMoves[2][MAX_PLY + 1]{};
 
     // pv collection
-    uint8_t pv_length[MAX_PLY]{};
-    Move pv_table[MAX_PLY][MAX_PLY]{};
+    uint8_t pvLength[MAX_PLY]{};
+    Move pvTable[MAX_PLY][MAX_PLY]{};
 
     // selective depth
     uint8_t seldepth{};
@@ -83,9 +89,11 @@ class Search
     std::vector<std::thread> threads;
 
     // move ordering
-    int getHistory(Move move, ThreadData *td);
+    template <Movetype type> int getHistory(Move move, ThreadData *td);
+    template <Movetype type> void updateHistoryBonus(Move move, int bonus, ThreadData *td);
+    template <Movetype type>
     void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td);
-    void updateHistoryBonus(Move move, int b, ThreadData *td);
+
     void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td,
                             Stack *ss);
 
