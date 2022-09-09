@@ -119,7 +119,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         Piece captured = td->board.pieceAtB(to(move));
 
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
-        if (captured != None && !inCheck && bestValue + 400 + piece_values[EG][captured % 6] < alpha &&
+        if (captured != None && !inCheck && bestValue + 400 + piece_values[EG][type_of_piece(captured)] < alpha &&
             !promoted(move) && td->board.nonPawnMat(color))
             continue;
 
