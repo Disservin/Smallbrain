@@ -1008,12 +1008,14 @@ Movelist Board::capturemoves()
 
 void Board::makeNullMove()
 {
-    State store = State(enPassantSquare, castlingRights, halfMoveClock, None, hashKey);
+    State store = State(enPassantSquare, castlingRights, halfMoveClock, None);
     prevStates.Add(store);
     sideToMove = ~sideToMove;
+
     hashKey ^= updateKeySideToMove();
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
+
     enPassantSquare = NO_SQ;
     fullMoveNumber++;
 }
@@ -1024,7 +1026,10 @@ void Board::unmakeNullMove()
     enPassantSquare = restore.enPassant;
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
-    hashKey = restore.h;
+
+    hashKey ^= updateKeySideToMove();
+    if (enPassantSquare != NO_SQ)
+        hashKey ^= updateKeyEnPassant(enPassantSquare);
 
     fullMoveNumber--;
     sideToMove = ~sideToMove;

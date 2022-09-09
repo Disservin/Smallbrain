@@ -25,11 +25,10 @@ struct State
     uint8_t castling{};
     uint8_t halfMove{};
     Piece capturedPiece = None;
-    U64 h{};
     State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, uint8_t halfMoveCopy = {},
           Piece capturedPieceCopy = None, U64 hashCopy = {})
         : enPassant(enpassantCopy), castling(castlingRightsCopy), halfMove(halfMoveCopy),
-          capturedPiece(capturedPieceCopy), h(hashCopy)
+          capturedPiece(capturedPieceCopy)
     {
     }
 };
@@ -248,7 +247,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashHistory.emplace_back(hashKey);
 
-    State store = State(enPassantSquare, castlingRights, halfMoveClock, capture, hashKey);
+    State store = State(enPassantSquare, castlingRights, halfMoveClock, capture);
     prevStates.Add(store);
 
     if constexpr (updateNNUE)
@@ -403,7 +402,6 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
     Piece capture = restore.capturedPiece;
-    hashKey = restore.h;
     fullMoveNumber--;
 
     if (accumulatorStack.size() > 0)
@@ -412,6 +410,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
         accumulatorStack.pop_back();
     }
 
+    hashKey = hashHistory.back();
     hashHistory.pop_back();
 
     Square from_sq = from(move);
