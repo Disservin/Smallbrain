@@ -1013,6 +1013,10 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     Square to_sq = to(move);
     Piece capture = board[to_sq];
 
+    // *****************************
+    // STORE STATE HISTORY
+    // *****************************
+
     hashHistory.emplace_back(hashKey);
 
     State store = State(enPassantSquare, castlingRights, halfMoveClock, capture);
@@ -1028,13 +1032,14 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     const int movedDistance = std::abs(to_sq - from_sq);
     bool ep = to_sq == enPassantSquare;
 
+    // *****************************
+    // UPDATE HASH
+    // *****************************
+
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
     enPassantSquare = NO_SQ;
 
-    // *****************************
-    // UPDATE HASH
-    // *****************************
     hashKey ^= updateKeyCastling();
     if (piece(move) == KING && movedDistance)
     {
@@ -1149,9 +1154,10 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     prefetch(&TTable[ttIndex(hashKey)]);
 
-    // ******************************
-    // UPDATE PIECES
-    // ******************************
+    // *****************************
+    // UPDATE PIECES AND NNUE
+    // *****************************
+
     if (piece(move) == KING && movedDistance)
     {
         if (to_sq == SQ_G1 && savedCastlingrights & wk)
@@ -1220,7 +1226,8 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     Square from_sq = from(move);
     Square to_sq = to(move);
     bool promotion = promoted(move);
-    sideToMove = ~sideToMove;
+
+        sideToMove = ~sideToMove;
     Piece p = makePiece(piece(move), sideToMove);
 
     if (promotion)
@@ -1248,31 +1255,28 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     {
         placePiece<updateNNUE>(capture, to_sq);
     }
-    else
+    else if (piece(move) == KING)
     {
-        if (piece(move) == KING)
+        if (from_sq == SQ_E1 && to_sq == SQ_G1 && castlingRights & wk)
         {
-            if (from_sq == SQ_E1 && to_sq == SQ_G1 && castlingRights & wk)
-            {
-                removePiece<updateNNUE>(WhiteRook, SQ_F1);
-                placePiece<updateNNUE>(WhiteRook, SQ_H1);
-            }
-            else if (from_sq == SQ_E1 && to_sq == SQ_C1 && castlingRights & wq)
-            {
-                removePiece<updateNNUE>(WhiteRook, SQ_D1);
-                placePiece<updateNNUE>(WhiteRook, SQ_A1);
-            }
+            removePiece<updateNNUE>(WhiteRook, SQ_F1);
+            placePiece<updateNNUE>(WhiteRook, SQ_H1);
+        }
+        else if (from_sq == SQ_E1 && to_sq == SQ_C1 && castlingRights & wq)
+        {
+            removePiece<updateNNUE>(WhiteRook, SQ_D1);
+            placePiece<updateNNUE>(WhiteRook, SQ_A1);
+        }
 
-            else if (from_sq == SQ_E8 && to_sq == SQ_G8 && castlingRights & bk)
-            {
-                removePiece<updateNNUE>(BlackRook, SQ_F8);
-                placePiece<updateNNUE>(BlackRook, SQ_H8);
-            }
-            else if (from_sq == SQ_E8 && to_sq == SQ_C8 && castlingRights & bq)
-            {
-                removePiece<updateNNUE>(BlackRook, SQ_D8);
-                placePiece<updateNNUE>(BlackRook, SQ_A8);
-            }
+        else if (from_sq == SQ_E8 && to_sq == SQ_G8 && castlingRights & bk)
+        {
+            removePiece<updateNNUE>(BlackRook, SQ_F8);
+            placePiece<updateNNUE>(BlackRook, SQ_H8);
+        }
+        else if (from_sq == SQ_E8 && to_sq == SQ_C8 && castlingRights & bq)
+        {
+            removePiece<updateNNUE>(BlackRook, SQ_D8);
+            placePiece<updateNNUE>(BlackRook, SQ_A8);
         }
     }
 }
