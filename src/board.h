@@ -29,7 +29,7 @@ struct State
     uint8_t halfMove{};
     Piece capturedPiece = None;
     State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, uint8_t halfMoveCopy = {},
-          Piece capturedPieceCopy = None, U64 hashCopy = {})
+          Piece capturedPieceCopy = None)
         : enPassant(enpassantCopy), castling(castlingRightsCopy), halfMove(halfMoveCopy),
           capturedPiece(capturedPieceCopy)
     {
