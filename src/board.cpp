@@ -1227,7 +1227,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     Square to_sq = to(move);
     bool promotion = promoted(move);
 
-        sideToMove = ~sideToMove;
+    sideToMove = ~sideToMove;
     Piece p = makePiece(piece(move), sideToMove);
 
     if (promotion)
@@ -1290,6 +1290,8 @@ void Board::makeNullMove()
     hashKey ^= updateKeySideToMove();
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
+
+    prefetch(&TTable[ttIndex(hashKey)]);
 
     enPassantSquare = NO_SQ;
     fullMoveNumber++;
