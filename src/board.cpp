@@ -1283,32 +1283,32 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
 void Board::makeNullMove()
 {
-    State store = State(enPassantSquare, castlingRights, halfMoveClock, None);
-    prevStates.Add(store);
-    sideToMove = ~sideToMove;
-
     hashKey ^= updateKeySideToMove();
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
 
     prefetch(&TTable[ttIndex(hashKey)]);
 
+    State store = State(enPassantSquare, castlingRights, halfMoveClock, None);
+    prevStates.Add(store);
+    sideToMove = ~sideToMove;
+
     enPassantSquare = NO_SQ;
     fullMoveNumber++;
+    halfMoveClock++;
 }
 
 void Board::unmakeNullMove()
 {
     State restore = prevStates.Get();
     enPassantSquare = restore.enPassant;
-    castlingRights = restore.castling;
-    halfMoveClock = restore.halfMove;
 
     hashKey ^= updateKeySideToMove();
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
 
     fullMoveNumber--;
+    halfMoveClock--;
     sideToMove = ~sideToMove;
 }
 
