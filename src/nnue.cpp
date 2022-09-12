@@ -68,6 +68,6 @@ int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator)
     {
         output += relu(accumulator[i]) * hiddenWeights[i];
     }
-    return output / (64 * 256);
+    return output / (16 * 512);
 }
 } // namespace NNUE
