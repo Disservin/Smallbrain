@@ -241,7 +241,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      *  Tablebase probing
      *******************/
 
-    if (!RootNode && td->allowPrint)
+    if (!RootNode && td->allowPrint && useTB)
     {
         Score tbRes = probeTB(td);
 
