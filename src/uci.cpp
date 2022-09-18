@@ -6,14 +6,9 @@ Datagen dg = Datagen();
 
 int uciLoop(int argc, char **argv)
 {
-    signal(SIGINT, signalCallbackHandler);
-#ifdef SIGBREAK
-    signal(SIGBREAK, signalCallbackHandler);
-#endif
-
-    int threads = 1;
     Board board = Board();
     uciOptions options = uciOptions();
+    int threads = 1;
 
     // load default position
     options.uciPosition(board);
@@ -48,10 +43,7 @@ int uciLoop(int argc, char **argv)
             uciCommand::ucinewgameInput(options, board, searcher, dg);
 
         if (input == "quit")
-        {
             uciCommand::quit(searcher, dg);
-            return 0;
-        }
 
         if (input == "stop")
             uciCommand::stopThreads(searcher, dg);
@@ -85,6 +77,7 @@ int uciLoop(int argc, char **argv)
 
             if (hasMoves)
                 options.uciMoves(board, tokens);
+
             board.prevStates.list.clear();
             board.accumulate();
         }
@@ -167,7 +160,6 @@ void parseArgs(int argc, char **argv, uciOptions options, Board board)
         {
             startBench();
             uciCommand::quit(searcher, dg);
-            exit(0);
         }
         else if (uciCommand::elementInVector("-gen", allArgs))
         {

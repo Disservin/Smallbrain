@@ -24,5 +24,11 @@ int main(int argc, char **argv)
     // Initialize reductions used in search
     init_reductions();
 
+    signal(SIGINT, signalCallbackHandler);
+    signal(SIGTERM, signalCallbackHandler);
+#ifdef SIGBREAK
+    signal(SIGBREAK, signalCallbackHandler);
+#endif
+
     uciLoop(argc, argv);
 }
