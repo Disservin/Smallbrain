@@ -53,7 +53,6 @@ Square bsr(U64 b)
 #include <intrin.h>
 Square bsf(U64 b)
 {
-
     unsigned long idx;
     _BitScanForward64(&idx, b);
     return (Square)idx;
@@ -61,7 +60,6 @@ Square bsf(U64 b)
 
 Square bsr(U64 b)
 {
-
     unsigned long idx;
     _BitScanReverse64(&idx, b);
     return (Square)idx;
@@ -71,7 +69,6 @@ Square bsr(U64 b)
 #include <intrin.h>
 Square bsf(U64 b)
 {
-
     unsigned long idx;
 
     if (b & 0xffffffff)
@@ -88,7 +85,6 @@ Square bsf(U64 b)
 
 Square bsr(U64 b)
 {
-
     unsigned long idx;
 
     if (b >> 32)
@@ -113,7 +109,6 @@ Square bsr(U64 b)
 
 uint8_t popcount(U64 mask)
 {
-
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 
     return (uint8_t)_mm_popcnt_u64(mask);
@@ -162,7 +157,6 @@ bool get_square_color(Square square)
 
 void prefetch(void *addr)
 {
-
 #if defined(__INTEL_COMPILER)
     __asm__("");
 #endif

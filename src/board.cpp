@@ -1069,7 +1069,6 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     }
     else if (piece(move) == ROOK)
     {
-
         if (sideToMove == White && from_sq == SQ_A1)
         {
             castlingRights &= ~wq;
