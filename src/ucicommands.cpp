@@ -93,7 +93,6 @@ void quit(Search &searcher, Datagen &dg)
     stopThreads(searcher, dg);
     free(TTable);
     tb_free();
-    exit(0);
 }
 
 bool elementInVector(std::string el, std::vector<std::string> tokens)

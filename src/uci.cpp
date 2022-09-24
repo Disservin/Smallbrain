@@ -17,7 +17,24 @@ int uciLoop(int argc, char **argv)
     searcher.threads.clear();
     searcher.tds.clear();
 
-    parseArgs(argc, argv, options, board);
+    std::vector<std::string> allArgs(argv + 1, argv + argc);
+
+    if (uciCommand::elementInVector("bench", allArgs))
+    {
+        startBench();
+        uciCommand::quit(searcher, dg);
+        return 0;
+    }
+    else if (uciCommand::elementInVector("perft", allArgs))
+    {
+        uciCommand::parseInput(allArgs[0], searcher, board, dg);
+        uciCommand::quit(searcher, dg);
+        return 0;
+    }
+    else
+    {
+        parseArgs(argc, argv, options, board);
+    }
 
     // START OF TUNE
 
@@ -156,12 +173,7 @@ void parseArgs(int argc, char **argv, uciOptions options, Board board)
     {
         std::vector<std::string> allArgs(argv + 1, argv + argc);
 
-        if (uciCommand::elementInVector("bench", allArgs))
-        {
-            startBench();
-            uciCommand::quit(searcher, dg);
-        }
-        else if (uciCommand::elementInVector("-gen", allArgs))
+        if (uciCommand::elementInVector("-gen", allArgs))
         {
             int workers = 1;
             int depth = 7;
@@ -195,10 +207,6 @@ void parseArgs(int argc, char **argv, uciOptions options, Board board)
             }
 
             dg.generate(workers, bookPath, depth, additionalEndgame);
-        }
-        else if (uciCommand::elementInVector("perft", allArgs))
-        {
-            uciCommand::parseInput(allArgs[0], searcher, board, dg);
         }
     }
 }
