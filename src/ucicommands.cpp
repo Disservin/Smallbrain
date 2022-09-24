@@ -3,6 +3,26 @@
 namespace uciCommand
 {
 
+void uciInput(uciOptions options)
+{
+    std::cout << "id name Smallbrain dev " << uciCommand::currentDateTime() << std::endl;
+    std::cout << "id author Disservin\n" << std::endl;
+    options.printOptions();
+    std::cout << "uciok" << std::endl;
+}
+
+void isreadyInput()
+{
+    std::cout << "readyok" << std::endl;
+}
+
+void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen &dg)
+{
+    options.uciPosition(board);
+    stopThreads(searcher, dg);
+    searcher.tds.clear();
+}
+
 void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
 {
 

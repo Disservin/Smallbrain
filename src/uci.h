@@ -24,6 +24,11 @@
 #include "ucicommands.h"
 #include "ucioptions.h"
 
+extern std::atomic<bool> stopped;
+extern std::atomic<bool> UCI_FORCE_STOP;
+extern std::atomic<bool> useTB;
+extern TEntry *TTable;
+
 #define TUNE_INT(x, min, max)                                                                                          \
     do                                                                                                                 \
     {                                                                                                                  \
@@ -38,7 +43,7 @@
         options.addDoubleTuneOption(#x, "spin", x, min, max);                                                          \
     } while (0);
 
-int main(int argc, char **argv);
+int uciLoop(int argc, char **argv);
 
 void signalCallbackHandler(int signum);
 
@@ -50,3 +55,5 @@ void quit();
 
 // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
 const std::string currentDateTime();
+
+void parseArgs(int argc, char **argv, uciOptions options, Board board);

@@ -11,6 +11,7 @@
 #include "syzygy/Fathom/src/tbprobe.h"
 #include "timemanager.h"
 #include "tt.h"
+#include "ucioptions.h"
 
 extern std::atomic<bool> stopped;
 extern TEntry *TTable;
@@ -18,6 +19,10 @@ extern U64 TT_SIZE;
 
 namespace uciCommand
 {
+
+void uciInput(uciOptions options);
+void isreadyInput();
+void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen &dg);
 
 void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg);
 
