@@ -25,7 +25,6 @@ void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datage
 
 void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
 {
-
     if (input == "print")
     {
         board.print();
