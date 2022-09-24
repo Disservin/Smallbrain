@@ -1000,3 +1000,282 @@ void Board::unmakeNullMove()
     fullMoveNumber--;
     sideToMove = ~sideToMove;
 }
+
+template <bool updateNNUE> void Board::makeMove(Move move)
+{
+    Piece p = makePiece(piece(move), sideToMove);
+    Square from_sq = from(move);
+    Square to_sq = to(move);
+    Piece capture = board[to_sq];
+
+    // *****************************
+    // STORE STATE HISTORY
+    // *****************************
+
+    hashHistory.emplace_back(hashKey);
+
+    State store = State(enPassantSquare, castlingRights, halfMoveClock, capture);
+    prevStates.Add(store);
+
+    if constexpr (updateNNUE)
+        accumulatorStack.emplace_back(accumulator);
+
+    halfMoveClock++;
+    fullMoveNumber++;
+
+    uint8_t savedCastlingrights = castlingRights;
+    bool ep = to_sq == enPassantSquare;
+
+    // *****************************
+    // UPDATE HASH
+    // *****************************
+
+    if (enPassantSquare != NO_SQ)
+        hashKey ^= updateKeyEnPassant(enPassantSquare);
+    enPassantSquare = NO_SQ;
+
+    hashKey ^= updateKeyCastling();
+    if (piece(move) == KING)
+    {
+        if (sideToMove == White && from_sq == SQ_E1 && to_sq == SQ_G1 && castlingRights & wk)
+        {
+            hashKey ^= updateKeyPiece(WhiteRook, SQ_H1);
+            hashKey ^= updateKeyPiece(WhiteRook, SQ_F1);
+        }
+        else if (sideToMove == White && from_sq == SQ_E1 && to_sq == SQ_C1 && castlingRights & wq)
+        {
+            hashKey ^= updateKeyPiece(WhiteRook, SQ_A1);
+            hashKey ^= updateKeyPiece(WhiteRook, SQ_D1);
+        }
+        else if (sideToMove == Black && from_sq == SQ_E8 && to_sq == SQ_G8 && castlingRights & bk)
+        {
+            hashKey ^= updateKeyPiece(BlackRook, SQ_H8);
+            hashKey ^= updateKeyPiece(BlackRook, SQ_F8);
+        }
+        else if (sideToMove == Black && from_sq == SQ_E8 && to_sq == SQ_C8 && castlingRights & bq)
+        {
+            hashKey ^= updateKeyPiece(BlackRook, SQ_A8);
+            hashKey ^= updateKeyPiece(BlackRook, SQ_D8);
+        }
+
+        if (sideToMove == White)
+        {
+            castlingRights &= ~(wk | wq);
+        }
+        else
+        {
+            castlingRights &= ~(bk | bq);
+        }
+    }
+    else if (piece(move) == ROOK)
+    {
+
+        if (sideToMove == White && from_sq == SQ_A1)
+        {
+            castlingRights &= ~wq;
+        }
+        else if (sideToMove == White && from_sq == SQ_H1)
+        {
+            castlingRights &= ~wk;
+        }
+        else if (sideToMove == Black && from_sq == SQ_A8)
+        {
+            castlingRights &= ~bq;
+        }
+        else if (sideToMove == Black && from_sq == SQ_H8)
+        {
+            castlingRights &= ~bk;
+        }
+    }
+    else if (piece(move) == PAWN)
+    {
+        halfMoveClock = 0;
+        if (ep)
+        {
+            hashKey ^= updateKeyPiece(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8));
+        }
+        else if (std::abs(from_sq - to_sq) == 16)
+        {
+            U64 epMask = PawnAttacks(Square(to_sq - (sideToMove * -2 + 1) * 8), sideToMove);
+            if (epMask & Pawns(~sideToMove))
+            {
+                enPassantSquare = Square(to_sq - (sideToMove * -2 + 1) * 8);
+                hashKey ^= updateKeyEnPassant(enPassantSquare);
+            }
+        }
+    }
+
+    if (capture != None)
+    {
+        halfMoveClock = 0;
+        hashKey ^= updateKeyPiece(capture, to_sq);
+        if (type_of_piece(capture) == ROOK)
+        {
+            if (to_sq == SQ_A1)
+            {
+                castlingRights &= ~wq;
+            }
+            else if (to_sq == SQ_H1)
+            {
+                castlingRights &= ~wk;
+            }
+            else if (to_sq == SQ_A8)
+            {
+                castlingRights &= ~bq;
+            }
+            else if (to_sq == SQ_H8)
+            {
+                castlingRights &= ~bk;
+            }
+        }
+    }
+
+    if (promoted(move))
+    {
+        halfMoveClock = 0;
+
+        hashKey ^= updateKeyPiece(makePiece(PAWN, sideToMove), from_sq);
+        hashKey ^= updateKeyPiece(p, to_sq);
+    }
+    else
+    {
+        hashKey ^= updateKeyPiece(p, from_sq);
+        hashKey ^= updateKeyPiece(p, to_sq);
+    }
+
+    hashKey ^= updateKeySideToMove();
+    hashKey ^= updateKeyCastling();
+
+    prefetch(&TTable[ttIndex(hashKey)]);
+
+    // *****************************
+    // UPDATE PIECES AND NNUE
+    // *****************************
+
+    if (piece(move) == KING)
+    {
+        if (sideToMove == White && from_sq == SQ_E1 && to_sq == SQ_G1 && savedCastlingrights & wk)
+        {
+            removePiece<updateNNUE>(WhiteRook, SQ_H1);
+            placePiece<updateNNUE>(WhiteRook, SQ_F1);
+        }
+        else if (sideToMove == White && from_sq == SQ_E1 && to_sq == SQ_C1 && savedCastlingrights & wq)
+        {
+            removePiece<updateNNUE>(WhiteRook, SQ_A1);
+            placePiece<updateNNUE>(WhiteRook, SQ_D1);
+        }
+        else if (sideToMove == Black && from_sq == SQ_E8 && to_sq == SQ_G8 && savedCastlingrights & bk)
+        {
+            removePiece<updateNNUE>(BlackRook, SQ_H8);
+            placePiece<updateNNUE>(BlackRook, SQ_F8);
+        }
+        else if (sideToMove == Black && from_sq == SQ_E8 && to_sq == SQ_C8 && savedCastlingrights & bq)
+        {
+            removePiece<updateNNUE>(BlackRook, SQ_A8);
+            placePiece<updateNNUE>(BlackRook, SQ_D8);
+        }
+    }
+    else if (piece(move) == PAWN && ep)
+    {
+        removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8));
+    }
+
+    if (capture != None)
+    {
+        removePiece<updateNNUE>(capture, to_sq);
+    }
+
+    if (promoted(move))
+    {
+        removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
+        placePiece<updateNNUE>(p, to_sq);
+    }
+    else
+    {
+        removePiece<updateNNUE>(p, from_sq);
+        placePiece<updateNNUE>(p, to_sq);
+    }
+
+    sideToMove = ~sideToMove;
+}
+
+template <bool updateNNUE> void Board::unmakeMove(Move move)
+{
+    State restore = prevStates.Get();
+    enPassantSquare = restore.enPassant;
+    castlingRights = restore.castling;
+    halfMoveClock = restore.halfMove;
+    Piece capture = restore.capturedPiece;
+    fullMoveNumber--;
+
+    if (accumulatorStack.size() > 0)
+    {
+        accumulator = accumulatorStack.back();
+        accumulatorStack.pop_back();
+    }
+
+    hashKey = hashHistory.back();
+    hashHistory.pop_back();
+
+    Square from_sq = from(move);
+    Square to_sq = to(move);
+    bool promotion = promoted(move);
+
+    sideToMove = ~sideToMove;
+    Piece p = makePiece(piece(move), sideToMove);
+
+    if (promotion)
+    {
+        removePiece<updateNNUE>(p, to_sq);
+        placePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
+        if (capture != None)
+        {
+            placePiece<updateNNUE>(capture, to_sq);
+        }
+        return;
+    }
+    else
+    {
+        removePiece<updateNNUE>(p, to_sq);
+        placePiece<updateNNUE>(p, from_sq);
+    }
+
+    if (to_sq == enPassantSquare && piece(move) == PAWN)
+    {
+        int8_t offset = sideToMove == White ? -8 : 8;
+        placePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(enPassantSquare + offset));
+    }
+    else if (capture != None)
+    {
+        placePiece<updateNNUE>(capture, to_sq);
+    }
+    else if (piece(move) == KING)
+    {
+        if (from_sq == SQ_E1 && to_sq == SQ_G1 && castlingRights & wk)
+        {
+            removePiece<updateNNUE>(WhiteRook, SQ_F1);
+            placePiece<updateNNUE>(WhiteRook, SQ_H1);
+        }
+        else if (from_sq == SQ_E1 && to_sq == SQ_C1 && castlingRights & wq)
+        {
+            removePiece<updateNNUE>(WhiteRook, SQ_D1);
+            placePiece<updateNNUE>(WhiteRook, SQ_A1);
+        }
+
+        else if (from_sq == SQ_E8 && to_sq == SQ_G8 && castlingRights & bk)
+        {
+            removePiece<updateNNUE>(BlackRook, SQ_F8);
+            placePiece<updateNNUE>(BlackRook, SQ_H8);
+        }
+        else if (from_sq == SQ_E8 && to_sq == SQ_C8 && castlingRights & bq)
+        {
+            removePiece<updateNNUE>(BlackRook, SQ_D8);
+            placePiece<updateNNUE>(BlackRook, SQ_A8);
+        }
+    }
+}
+
+template void Board::makeMove<false>(Move move);
+template void Board::makeMove<true>(Move move);
+template void Board::unmakeMove<false>(Move move);
+template void Board::unmakeMove<true>(Move move);
