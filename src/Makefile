@@ -54,7 +54,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(EXE) $^ $(CXFLAGS)
 %.o: %.cpp
-	$(CC) -c $(CFLAGS) $(NATIVE) $(CO) -DEVALFILE=\"$(EVALFILE)\" -flto -Wall $< $(CXFLAGS)
+	$(CC) -c $(CFLAGS) -funroll-loops $(NATIVE) $(CO) -DEVALFILE=\"$(EVALFILE)\" -flto -Wall $< $(CXFLAGS)
 clean:
 	rm -rf $(TARGET) *.o
 	rm *.exe
