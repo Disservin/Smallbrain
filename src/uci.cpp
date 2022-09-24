@@ -60,7 +60,10 @@ int uciLoop(int argc, char **argv)
             uciCommand::ucinewgameInput(options, board, searcher, dg);
 
         if (input == "quit")
+        {
             uciCommand::quit(searcher, dg);
+            return 0;
+        }
 
         if (input == "stop")
             uciCommand::stopThreads(searcher, dg);
