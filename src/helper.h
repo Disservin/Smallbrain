@@ -38,5 +38,7 @@ inline PieceType type_of_piece(Piece piece)
     return PieceToPieceType[piece];
 }
 
+void prefetch(void *addr);
+
 // prints a move in uci format
 std::string printMove(Move move);
