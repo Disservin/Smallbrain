@@ -2,7 +2,7 @@
 
 int bonus(int depth)
 {
-    return std::min(2000, depth * depth);
+    return std::min(2000, depth * 150);
 }
 
 template <Movetype type> int Search::getHistory(Move move, ThreadData *td)
