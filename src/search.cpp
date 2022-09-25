@@ -402,7 +402,7 @@ moves:
 
         U64 nodeCount = td->nodes;
         ss->currentmove = move;
-        bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
+        // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
 
         // late move reduction
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode)
@@ -413,7 +413,7 @@ moves:
 
             rdepth += improving;
 
-            rdepth -= givesCheck;
+            rdepth -= PvNode;
 
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
