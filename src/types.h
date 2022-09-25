@@ -243,12 +243,12 @@ inline Score mated_in(int ply)
     return (ply - VALUE_MATE);
 }
 
-inline Score score_to_tt(Score s, int plies)
+inline Score scoreToTT(Score s, int plies)
 {
     return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s + plies : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies : s);
 }
 
-inline Score score_from_tt(Score s, int plies)
+inline Score scoreFromTT(Score s, int plies)
 {
     return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s - plies : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies : s);
 }

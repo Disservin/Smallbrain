@@ -90,7 +90,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     Score ttScore = VALUE_NONE;
     if (ttHit && tte.depth >= 0 && !PvNode)
     {
-        ttScore = score_from_tt(tte.score, ss->ply);
+        ttScore = scoreFromTT(tte.score, ss->ply);
         if (tte.flag == EXACT)
             return ttScore;
         else if (tte.flag == LOWERBOUND && ttScore >= beta)
@@ -146,15 +146,20 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         }
     }
 
-    if (inCheck && ml.size == 0)
-        return mated_in(ss->ply);
+    if (ml.size == 0)
+    {
+        if (inCheck)
+            return mated_in(ss->ply);
+        else if (!td->board.hasLegalMoves())
+            return 0;
+    }
 
     // Transposition table flag
     Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
 
     // store in the transposition table
     if (!stopped)
-        storeEntry(0, score_to_tt(bestValue, ss->ply), b, td->board.hashKey, bestMove);
+        storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
@@ -192,8 +197,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         {
             if (inCheck)
             {
-                Movelist ml = td->board.legalmoves();
-                return ml.size == 0 ? mated_in(ss->ply) : 0;
+                return !td->board.hasLegalMoves() ? mated_in(ss->ply) : 0;
             }
             return 0;
         }
@@ -226,7 +230,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     // Adjust alpha and beta for non PV nodes
     if (!RootNode && !PvNode && ttHit && tte.depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
     {
-        ttScore = score_from_tt(tte.score, ss->ply);
+        ttScore = scoreFromTT(tte.score, ss->ply);
         if (tte.flag == EXACT)
             return ttScore;
         else if (tte.flag == LOWERBOUND)
@@ -466,7 +470,7 @@ moves:
     // Store position in TT
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
     if (!stopped)
-        storeEntry(depth, score_to_tt(best, ss->ply), b, td->board.hashKey, bestMove);
+        storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 
     return best;
 }

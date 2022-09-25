@@ -209,6 +209,7 @@ class Board
     // all legal moves for a position
     Movelist legalmoves();
     Movelist capturemoves();
+    bool hasLegalMoves();
 
     // plays the move on the internal board
     template <bool updateNNUE> void makeMove(Move move);
