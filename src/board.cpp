@@ -972,6 +972,76 @@ Movelist Board::capturemoves()
     return movelist;
 }
 
+bool Board::hasLegalMoves()
+{
+    init(sideToMove, KingSQ(sideToMove));
+    if (doubleCheck < 2)
+    {
+        U64 pawns_mask = Pawns(sideToMove);
+        U64 knights_mask = Knights(sideToMove);
+        U64 bishops_mask = Bishops(sideToMove);
+        U64 rooks_mask = Rooks(sideToMove);
+        U64 queens_mask = Queens(sideToMove);
+
+        const bool noEP = enPassantSquare == NO_SQ;
+
+        while (pawns_mask)
+        {
+            Square from = poplsb(pawns_mask);
+            U64 moves = noEP ? LegalPawnMoves(sideToMove, from) : LegalPawnMovesEP(sideToMove, from, enPassantSquare);
+            while (moves)
+            {
+                return true;
+            }
+        }
+        while (knights_mask)
+        {
+            Square from = poplsb(knights_mask);
+            U64 moves = LegalKnightMoves(from);
+            while (moves)
+            {
+                return true;
+            }
+        }
+        while (bishops_mask)
+        {
+            Square from = poplsb(bishops_mask);
+            U64 moves = LegalBishopMoves(from);
+            while (moves)
+            {
+                return true;
+            }
+        }
+        while (rooks_mask)
+        {
+            Square from = poplsb(rooks_mask);
+            U64 moves = LegalRookMoves(from);
+            while (moves)
+            {
+                return true;
+            }
+        }
+        while (queens_mask)
+        {
+            Square from = poplsb(queens_mask);
+            U64 moves = LegalQueenMoves(from);
+            while (moves)
+            {
+                return true;
+            }
+        }
+    }
+
+    Square from = KingSQ(sideToMove);
+    U64 moves = !castlingRights || checkMask != DEFAULT_CHECKMASK ? LegalKingMoves(from)
+                                                                  : LegalKingMovesCastling(sideToMove, from);
+    while (moves)
+    {
+        return true;
+    }
+    return false;
+}
+
 void Board::makeNullMove()
 {
     State store = State(enPassantSquare, castlingRights, halfMoveClock, None);

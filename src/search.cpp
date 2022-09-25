@@ -146,8 +146,13 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         }
     }
 
-    if (inCheck && ml.size == 0)
-        return mated_in(ss->ply);
+    if (ml.size == 0)
+    {
+        if (inCheck)
+            return mated_in(ss->ply);
+        else if (!td->board.hasLegalMoves())
+            return 0;
+    }
 
     // Transposition table flag
     Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
@@ -192,8 +197,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         {
             if (inCheck)
             {
-                Movelist ml = td->board.legalmoves();
-                return ml.size == 0 ? mated_in(ss->ply) : 0;
+                return !td->board.hasLegalMoves() ? mated_in(ss->ply) : 0;
             }
             return 0;
         }
