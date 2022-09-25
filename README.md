@@ -61,18 +61,19 @@ CCRL 40/15
 
 ```
   Name                  Elo      +       -
-  Smallbrain 5.0 64-bit	3136	+23	−23
-  Smallbrain 4.0 64-bit	2980	+26	−26
-  Smallbrain 2.0 64-bit	2268	+30	−30
-  Smallbrain 1.1 64-bit	2223	+29	−30
+  Smallbrain 5.0 4CPU   3214	+23	−23
+  Smallbrain 5.0        3134	+21	−21
+  Smallbrain 4.0        2979	+25	−25	
+  Smallbrain 2.0        2277	+28	−29	
+  Smallbrain 1.1        2224	+29	−30
 ```
  CCRL Blitz 2'+1" (Blitz)
 ```
   Name                  Elo      +       -
-  Smallbrain 5.0 64-bit	3194	+30	−30
-  Smallbrain 4.0 64-bit	3004	+18	−18
-  Smallbrain 3.0 64-bit	2925	+25	−25
-  Smallbrain 1.1 64-bit	2174	+21	−21
+  Smallbrain 5.0      	3200	+18	−19
+  Smallbrain 4.0      	3005	+18	−18
+  Smallbrain 3.0        2921	+19	−20
+  Smallbrain 1.1        2173	+20	−20
 ```
 
 ## Features
