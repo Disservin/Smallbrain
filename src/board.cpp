@@ -646,29 +646,6 @@ int Board::pseudoLegalMovesNumber()
     return total;
 }
 
-U64 Board::LegalPawnNoisy(Color c, Square sq, Square ep)
-{
-    U64 enemy = occEnemy;
-    // If we are pinned diagonally we can only do captures which are on the pin_dg and on the checkmask
-    if (pinD & (1ULL << sq))
-        return PawnAttacks(sq, c) & pinD & checkMask & (enemy | (1ULL << ep));
-    // If we are pinned horizontally/vertically we can do no captures
-    if (pinHV & (1ULL << sq))
-        return 0ULL;
-    U64 attacks = PawnAttacks(sq, c);
-    U64 pawnPromote = 0ULL;
-    if ((square_rank(sq) == 1 && c == Black) || (square_rank(sq) == 6 && c == White))
-    {
-        pawnPromote = PawnPushSingle(c, sq) & ~occAll;
-    }
-    return ((attacks & enemy) | pawnPromote) & checkMask;
-}
-
-U64 Board::LegalKingCaptures(Square sq)
-{
-    return KingAttacks(sq) & occEnemy & ~seen;
-}
-
 U64 Board::LegalPawnMoves(Color c, Square sq)
 {
     // If we are pinned diagonally we can only do captures which are on the pin_dg and on the checkmask
@@ -798,6 +775,59 @@ U64 Board::LegalKingMovesCastling(Color c, Square sq)
     return moves;
 }
 
+U64 Board::LegalPawnCaptures(Color c, Square sq, Square ep)
+{
+    U64 enemy = occEnemy;
+    // If we are pinned diagonally we can only do captures which are on the pin_dg and on the checkmask
+    if (pinD & (1ULL << sq))
+        return PawnAttacks(sq, c) & pinD & checkMask & (enemy | (1ULL << ep));
+    // If we are pinned horizontally/vertically we can do no captures
+    if (pinHV & (1ULL << sq))
+        return 0ULL;
+    U64 attacks = PawnAttacks(sq, c);
+    U64 pawnPromote = 0ULL;
+    if ((square_rank(sq) == 1 && c == Black) || (square_rank(sq) == 6 && c == White))
+    {
+        pawnPromote = PawnPushSingle(c, sq) & ~occAll;
+    }
+    return ((attacks & enemy) | pawnPromote) & checkMask;
+}
+
+U64 Board::LegalKnightCaptures(Square sq)
+{
+    if (pinD & (1ULL << sq) || pinHV & (1ULL << sq))
+        return 0ULL;
+    return KnightAttacks(sq) & occEnemy & checkMask;
+}
+
+U64 Board::LegalBishopCaptures(Square sq)
+{
+    if (pinHV & (1ULL << sq))
+        return 0ULL;
+    if (pinD & (1ULL << sq))
+        return BishopAttacks(sq, occAll) & occEnemy & pinD & checkMask;
+    return BishopAttacks(sq, occAll) & occEnemy & checkMask;
+}
+
+U64 Board::LegalRookCaptures(Square sq)
+{
+    if (pinD & (1ULL << sq))
+        return 0ULL;
+    if (pinHV & (1ULL << sq))
+        return RookAttacks(sq, occAll) & occEnemy & pinHV & checkMask;
+    return RookAttacks(sq, occAll) & occEnemy & checkMask;
+}
+
+U64 Board::LegalQueenCaptures(Square sq)
+{
+    return LegalRookCaptures(sq) | LegalBishopCaptures(sq);
+}
+
+U64 Board::LegalKingCaptures(Square sq)
+{
+    return KingAttacks(sq) & occEnemy & ~seen;
+}
+
 Movelist Board::legalmoves()
 {
     Movelist movelist{};
@@ -900,11 +930,10 @@ Movelist Board::capturemoves()
         U64 bishops_mask = Bishops(sideToMove);
         U64 rooks_mask = Rooks(sideToMove);
         U64 queens_mask = Queens(sideToMove);
-        U64 enemy = occEnemy;
         while (pawns_mask)
         {
             Square from = poplsb(pawns_mask);
-            U64 moves = LegalPawnNoisy(sideToMove, from, enPassantSquare);
+            U64 moves = LegalPawnCaptures(sideToMove, from, enPassantSquare);
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -924,7 +953,7 @@ Movelist Board::capturemoves()
         while (knights_mask)
         {
             Square from = poplsb(knights_mask);
-            U64 moves = LegalKnightMoves(from) & enemy;
+            U64 moves = LegalKnightCaptures(from);
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -934,7 +963,7 @@ Movelist Board::capturemoves()
         while (bishops_mask)
         {
             Square from = poplsb(bishops_mask);
-            U64 moves = LegalBishopMoves(from) & enemy;
+            U64 moves = LegalBishopCaptures(from);
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -944,7 +973,7 @@ Movelist Board::capturemoves()
         while (rooks_mask)
         {
             Square from = poplsb(rooks_mask);
-            U64 moves = LegalRookMoves(from) & enemy;
+            U64 moves = LegalRookCaptures(from);
             while (moves)
             {
                 Square to = poplsb(moves);
@@ -954,7 +983,7 @@ Movelist Board::capturemoves()
         while (queens_mask)
         {
             Square from = poplsb(queens_mask);
-            U64 moves = LegalQueenMoves(from) & enemy;
+            U64 moves = LegalQueenCaptures(from);
             while (moves)
             {
                 Square to = poplsb(moves);
