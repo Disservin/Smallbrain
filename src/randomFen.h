@@ -36,4 +36,5 @@ static std::unordered_map<char, int> charToNum({{'P', 0},
                                                 {'k', 11},
                                                 {'.', 12}});
 
+// get a random fen matching the current config
 std::string getRandomfen();

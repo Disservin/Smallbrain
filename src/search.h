@@ -94,30 +94,40 @@ class Search
     std::vector<std::thread> threads;
 
     // move ordering
+
+    // return the history of the move
     template <Movetype type> int getHistory(Move move, ThreadData *td);
+    // update move history
     template <Movetype type> void updateHistoryBonus(Move move, int bonus, ThreadData *td);
+    // update history for all moves
     template <Movetype type>
     void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td);
-
+    // update all history + other move ordering
     void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td,
                             Stack *ss);
 
     // main search functions
+
     template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
     SearchResult iterativeDeepening(int search_depth, uint64_t maxN, Time time, int threadId);
+
+    // search entry function
     void startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
 
     // capture functions
+
     bool see(Move move, int threshold, Board &board);
     int mmlva(Move move, Board &board);
 
     // scoring functions
+
     int scoreqMove(Move move, int ply, bool ttMove, ThreadData *td);
     int scoreMove(Move move, int ply, bool ttMove, ThreadData *td);
 
     // utility functions
+
     std::string get_pv();
     long long elapsed();
     bool exitEarly(uint64_t nodes, int ThreadId);
