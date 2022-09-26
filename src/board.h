@@ -192,10 +192,6 @@ class Board
     // pseudo legal moves number estimation
     int pseudoLegalMovesNumber();
 
-    // legal captures + promotions
-    U64 LegalPawnNoisy(Color c, Square sq, Square ep);
-    U64 LegalKingCaptures(Square sq);
-
     // all legal moves for each piece
     U64 LegalPawnMoves(Color c, Square sq);
     U64 LegalPawnMovesEP(Color c, Square sq, Square ep);
@@ -205,6 +201,14 @@ class Board
     U64 LegalQueenMoves(Square sq);
     U64 LegalKingMoves(Square sq);
     U64 LegalKingMovesCastling(Color c, Square sq);
+
+    // legal captures + promotions
+    U64 LegalPawnCaptures(Color c, Square sq, Square ep);
+    U64 LegalKnightCaptures(Square sq);
+    U64 LegalBishopCaptures(Square sq);
+    U64 LegalRookCaptures(Square sq);
+    U64 LegalQueenCaptures(Square sq);
+    U64 LegalKingCaptures(Square sq);
 
     // all legal moves for a position
     Movelist legalmoves();
