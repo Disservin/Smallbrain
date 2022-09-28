@@ -43,11 +43,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
     int ply = 0;
     int randomMoves = 8;
 
-    if (!additionalEndgame)
-    {
-        board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    }
-    else if (book != "")
+    if (book != "")
     {
         std::ifstream openingFile;
         openingFile.open(book);
@@ -72,9 +68,19 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
     }
     else
     {
-        ply = 8;
-        randomMoves = 8;
-        board.applyFen(getRandomfen());
+        std::uniform_int_distribution<std::mt19937::result_type> maxLines{0,
+                                                                          static_cast<std::mt19937::result_type>(20)};
+
+        if (maxLines(e) == 1)
+        {
+            ply = 8;
+            randomMoves = 8;
+            board.applyFen(getRandomfen());
+        }
+        else
+        {
+            board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        }
     }
 
     while (ply < randomMoves)
@@ -152,7 +158,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
             fn.fen = "";
 
         Score absScore = std::abs(result.score);
-        if (absScore >= 1500)
+        if (absScore >= 2000)
         {
             winCount++;
             if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY)

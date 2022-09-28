@@ -18,9 +18,13 @@ void isreadyInput()
 
 void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen &dg)
 {
-    options.uciPosition(board);
+    board = Board();
+    options.uciPosition(board, DEFAULT_POS, true);
     stopThreads(searcher, dg);
+    searcher = Search();
+    searcher.threads.clear();
     searcher.tds.clear();
+    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
 }
 
 void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)

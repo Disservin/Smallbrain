@@ -501,7 +501,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
             beta = VALUE_INFINITE;
         result = absearch<Root>(depth, alpha, beta, ss, td);
 
-        if (stopped)
+        if (stopped || (td->id == 0 && maxNodes != 0 && td->nodes >= maxNodes))
             return 0;
 
         if (result <= alpha)
@@ -559,6 +559,9 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
     for (depth = 1; depth <= search_depth; depth++)
     {
+        std::memset(td->pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
+        std::memset(td->pvLength, 0, MAX_PLY * sizeof(uint8_t));
+
         td->seldepth = 0;
         result = aspirationSearch(depth, result, ss, td);
 
