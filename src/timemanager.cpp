@@ -4,7 +4,7 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, double mtg)
 {
     Time time;
 
-    mtg = mtg == 0 ? 20.0 : mtg;
+    mtg = mtg == 0 ? 50.0 : mtg;
 
     int overhead = avaiableTime < 200 ? (avaiableTime < 100 ? 0 : 5) : 10;
     avaiableTime -= overhead;
