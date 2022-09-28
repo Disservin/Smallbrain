@@ -501,7 +501,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
             beta = VALUE_INFINITE;
         result = absearch<Root>(depth, alpha, beta, ss, td);
 
-        if (stopped)
+        if (stopped || (td->id == 0 && maxNodes != 0 && td->nodes >= maxNodes))
             return 0;
 
         if (result <= alpha)
