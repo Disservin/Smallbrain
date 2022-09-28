@@ -1,15 +1,24 @@
 #include "timemanager.h"
 
-Time optimumTime(int64_t avaiableTime, int inc, int ply, double mtg)
+Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
 {
     Time time;
+    int overhead;
 
-    mtg = mtg == 0 ? 50.0 : mtg;
+    if (mtg == 0)
+    {
+        mtg = 20;
+        overhead = std::max(10 * (mtg - ply / 2), 0);
+    }
+    else
+    {
+        overhead = std::max(10 * mtg / 2, 0);
+    }
 
-    int overhead = avaiableTime < 200 ? (avaiableTime < 100 ? 0 : 5) : 10;
-    avaiableTime -= overhead;
+    if (avaiableTime - overhead >= 100)
+        avaiableTime -= overhead;
 
-    time.optimum = (int64_t)(avaiableTime / mtg);
+    time.optimum = (int64_t)(avaiableTime / (double)mtg);
     time.optimum += inc / 2;
     if (time.optimum >= avaiableTime)
     {
