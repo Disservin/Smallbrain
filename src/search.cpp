@@ -100,7 +100,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     }
 
     // generate all legalmoves in case we are in check
-    Movelist ml = inCheck ? td->board.legalmoves() : td->board.capturemoves();
+    Movelist ml = inCheck ? Movegen::legalmoves(td->board) : Movegen::capturemoves(td->board);
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++)
@@ -150,7 +150,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     {
         if (inCheck)
             return mated_in(ss->ply);
-        else if (!td->board.hasLegalMoves())
+        else if (!Movegen::hasLegalMoves(td->board))
             return 0;
     }
 
@@ -197,7 +197,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         {
             if (inCheck)
             {
-                return !td->board.hasLegalMoves() ? mated_in(ss->ply) : 0;
+                return !Movegen::hasLegalMoves(td->board) ? mated_in(ss->ply) : 0;
             }
             return 0;
         }
@@ -345,7 +345,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         return qsearch<PV>(alpha, beta, ss, td);
 
 moves:
-    Movelist ml = td->board.legalmoves();
+    Movelist ml = Movegen::legalmoves(td->board);
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0)
@@ -836,8 +836,8 @@ void Search::sortMoves(Movelist &moves, int sorted)
 
 Score Search::probeTB(ThreadData *td)
 {
-    U64 white = td->board.Us(White);
-    U64 black = td->board.Us(Black);
+    U64 white = td->board.Us<White>();
+    U64 black = td->board.Us<Black>();
 
     if (popcount(white | black) > (signed)TB_LARGEST)
         return VALUE_NONE;
@@ -846,10 +846,11 @@ Score Search::probeTB(ThreadData *td)
 
     unsigned TBresult;
     TBresult = tb_probe_wdl(
-        white, black, td->board.Kings(White) | td->board.Kings(Black),
-        td->board.Queens(White) | td->board.Queens(Black), td->board.Rooks(White) | td->board.Rooks(Black),
-        td->board.Bishops(White) | td->board.Bishops(Black), td->board.Knights(White) | td->board.Knights(Black),
-        td->board.Pawns(White) | td->board.Pawns(Black), td->board.halfMoveClock, td->board.castlingRights, ep,
+        white, black, td->board.Kings<White>() | td->board.Kings<Black>(),
+        td->board.Queens<White>() | td->board.Queens<Black>(), td->board.Rooks<White>() | td->board.Rooks<Black>(),
+        td->board.Bishops<White>() | td->board.Bishops<Black>(),
+        td->board.Knights<White>() | td->board.Knights<Black>(), td->board.Pawns<White>() | td->board.Pawns<Black>(),
+        td->board.halfMoveClock, td->board.castlingRights, ep,
         td->board.sideToMove == White); //  * - turn: true=white, false=black
 
     if (TBresult == TB_LOSS)
@@ -869,8 +870,8 @@ Score Search::probeTB(ThreadData *td)
 
 Move Search::probeDTZ(ThreadData *td)
 {
-    U64 white = td->board.Us(White);
-    U64 black = td->board.Us(Black);
+    U64 white = td->board.Us<White>();
+    U64 black = td->board.Us<Black>();
     if (popcount(white | black) > (signed)TB_LARGEST)
         return NO_MOVE;
 
@@ -878,11 +879,12 @@ Move Search::probeDTZ(ThreadData *td)
 
     unsigned TBresult;
     TBresult = tb_probe_root(
-        white, black, td->board.Kings(White) | td->board.Kings(Black),
-        td->board.Queens(White) | td->board.Queens(Black), td->board.Rooks(White) | td->board.Rooks(Black),
-        td->board.Bishops(White) | td->board.Bishops(Black), td->board.Knights(White) | td->board.Knights(Black),
-        td->board.Pawns(White) | td->board.Pawns(Black), td->board.halfMoveClock, td->board.castlingRights, ep,
-        td->board.sideToMove == White, NULL); //  * - turn: true=white, false=black
+        white, black, td->board.Kings<White>() | td->board.Kings<Black>(),
+        td->board.Queens<White>() | td->board.Queens<Black>(), td->board.Rooks<White>() | td->board.Rooks<Black>(),
+        td->board.Bishops<White>() | td->board.Bishops<Black>(),
+        td->board.Knights<White>() | td->board.Knights<Black>(), td->board.Pawns<White>() | td->board.Pawns<Black>(),
+        td->board.halfMoveClock, td->board.castlingRights, ep, td->board.sideToMove == White,
+        NULL); //  * - turn: true=white, false=black
 
     if (TBresult == TB_RESULT_FAILED || TBresult == TB_RESULT_CHECKMATE || TBresult == TB_RESULT_STALEMATE)
         return NO_MOVE;
@@ -913,7 +915,7 @@ Move Search::probeDTZ(ThreadData *td)
     Square sqFrom = Square(TB_GET_FROM(TBresult));
     Square sqTo = Square(TB_GET_TO(TBresult));
 
-    Movelist legalmoves = td->board.legalmoves();
+    Movelist legalmoves = Movegen::legalmoves(td->board);
 
     for (int i = 0; i < legalmoves.size; i++)
     {
@@ -948,9 +950,20 @@ std::string outputScore(int score)
         return "cp " + std::to_string(score);
 }
 
+// clang-format off
 void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv)
 {
-    std::cout << "info depth " << signed(depth) << " seldepth " << signed(seldepth) << " score " << outputScore(score)
-              << " tbhits " << tbHits << " nodes " << nodes << " nps " << signed((nodes / (time + 1)) * 1000)
-              << " time " << time << " pv" << pv << std::endl;
+    std::stringstream ss;
+
+    ss  << "info depth " << signed(depth) 
+        << " seldepth "  << signed(seldepth) 
+        << " score "     << outputScore(score)
+        << " tbhits "    << tbHits 
+        << " nodes "     << nodes 
+        << " nps "       << signed((nodes / (time + 1)) * 1000)
+        << " time "      << time 
+        << " pv"         << pv;
+
+    std::cout << ss.str() << std::endl;        
 }
+// clang-format on

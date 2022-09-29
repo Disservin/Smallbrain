@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "board.h"
+#include "movegen.h"
 
 class Perft
 {

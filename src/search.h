@@ -10,6 +10,7 @@
 #include "attacks.h"
 #include "board.h"
 #include "evaluation.h"
+#include "movegen.h"
 #include "timemanager.h"
 #include "tt.h"
 

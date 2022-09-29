@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.h"
+#include "movegen.h"
 #include "randomFen.h"
 #include "search.h"
 #include "syzygy/Fathom/src/tbprobe.h"
@@ -29,9 +30,9 @@ extern std::atomic<bool> UCI_FORCE_STOP;
 class Datagen
 {
   public:
-    void generate(int workers = 4, std::string book = "", int depth = 7, bool additionalEndgame = false);
-    void infinitePlay(int threadId, std::string book, int depth, bool additionalEndgame);
-    void randomPlayout(std::ofstream &file, int threadId, std::string &bookm, int depth, bool additionalEndgame);
+    void generate(int workers = 4, std::string book = "", int depth = 7);
+    void infinitePlay(int threadId, std::string book, int depth);
+    void randomPlayout(std::ofstream &file, int threadId, std::string &bookm, int depth, int numLines);
     std::vector<std::thread> threads;
 };
 

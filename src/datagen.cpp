@@ -4,7 +4,7 @@
 std::random_device rd;
 std::mt19937 e(rd()); // or std::default_random_engine e{rd()};
 
-void Datagen::generate(int workers, std::string book, int depth, bool additionalEndgame)
+void Datagen::generate(int workers, std::string book, int depth)
 {
     for (std::thread &th : threads)
     {
@@ -15,26 +15,39 @@ void Datagen::generate(int workers, std::string book, int depth, bool additional
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&Datagen::infinitePlay, this, i, book, depth, additionalEndgame);
+        threads.emplace_back(&Datagen::infinitePlay, this, i, book, depth);
     }
 }
 
-void Datagen::infinitePlay(int threadId, std::string book, int depth, bool additionalEndgame)
+void Datagen::infinitePlay(int threadId, std::string book, int depth)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
 
+    int number_of_lines = 0;
+    if (book != "")
+    {
+        std::ifstream openingFile;
+        std::string line;
+        openingFile.open(book);
+
+        while (std::getline(openingFile, line))
+            ++number_of_lines;
+
+        openingFile.close();
+    }
+
     U64 games = 0;
     while (!UCI_FORCE_STOP)
     {
         games++;
-        randomPlayout(file, threadId, book, depth, additionalEndgame);
+        randomPlayout(file, threadId, book, depth, number_of_lines);
     }
     file.close();
 }
 
-void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book, int depth, bool additionalEndgame)
+void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book, int depth, int numLines)
 {
     Board board;
 
@@ -52,7 +65,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
         uint64_t count = 0;
 
         std::uniform_int_distribution<std::mt19937::result_type> maxLines{
-            0, static_cast<std::mt19937::result_type>(5'821'600)};
+            0, static_cast<std::mt19937::result_type>(numLines)};
 
         uint64_t randLine = maxLines(e);
         while (std::getline(openingFile, line))
@@ -85,7 +98,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
 
     while (ply < randomMoves)
     {
-        movelist = board.legalmoves();
+        movelist = Movegen::legalmoves(board);
         if (movelist.size == 0 || UCI_FORCE_STOP)
             return;
 
@@ -100,7 +113,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
 
     board.hashHistory.clear();
 
-    movelist = board.legalmoves();
+    movelist = Movegen::legalmoves(board);
     if (movelist.size == 0)
         return;
 
@@ -124,7 +137,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
     while (true)
     {
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
-        movelist = board.legalmoves();
+        movelist = Movegen::legalmoves(board);
         if (movelist.size == 0)
         {
             winningSide = inCheck ? ((board.sideToMove == White) ? Black : White) : NO_COLOR;
@@ -187,12 +200,12 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
         {
             Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 
-            unsigned TBresult =
-                tb_probe_wdl(board.Us(White), board.Us(Black), board.Kings(White) | board.Kings(Black),
-                             board.Queens(White) | board.Queens(Black), board.Rooks(White) | board.Rooks(Black),
-                             board.Bishops(White) | board.Bishops(Black), board.Knights(White) | board.Knights(Black),
-                             board.Pawns(White) | board.Pawns(Black), 0, board.castlingRights, ep,
-                             ~board.sideToMove); //  * - turn: true=white, false=black
+            unsigned TBresult = tb_probe_wdl(
+                board.Us<White>(), board.Us<Black>(), board.Kings<White>() | board.Kings<Black>(),
+                board.Queens<White>() | board.Queens<Black>(), board.Rooks<White>() | board.Rooks<Black>(),
+                board.Bishops<White>() | board.Bishops<Black>(), board.Knights<White>() | board.Knights<Black>(),
+                board.Pawns<White>() | board.Pawns<Black>(), 0, board.castlingRights, ep,
+                ~board.sideToMove); //  * - turn: true=white, false=black
 
             if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)
             {

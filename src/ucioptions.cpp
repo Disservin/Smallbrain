@@ -138,7 +138,7 @@ Move convertUciToMove(Board &board, std::string input)
         Square target = Square(to_index);
 
         char prom = input.at(4);
-        PieceType piece = piece_to_int[prom];
+        PieceType piece = pieceToInt[prom];
         return make(piece, source, target, true);
     }
     else

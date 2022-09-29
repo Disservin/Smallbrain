@@ -180,7 +180,6 @@ void parseArgs(int argc, char **argv, uciOptions options, Board board)
         {
             int workers = 1;
             int depth = 7;
-            bool additionalEndgame = false;
             std::string bookPath = "";
             std::string tbPath = "";
 
@@ -204,12 +203,7 @@ void parseArgs(int argc, char **argv, uciOptions options, Board board)
                 depth = uciCommand::findElement("-depth", allArgs);
             }
 
-            if (uciCommand::elementInVector("-endgame", allArgs))
-            {
-                additionalEndgame = uciCommand::findElement("-endgame", allArgs);
-            }
-
-            dg.generate(workers, bookPath, depth, additionalEndgame);
+            dg.generate(workers, bookPath, depth);
         }
     }
 }

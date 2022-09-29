@@ -83,12 +83,9 @@ CCRL 40/15
   * NNUE 768 Input -> 512 hidden neurons -> 1 output
 
 ## Datageneration
-* .\smallbrain5.0.exe -gen
-  * -threads \<num>
-  * -book \<path/to/book>
-  * -tb \<path/to/tb>
-  * -depth \<depth>
-  * -endgame \<onlyGenEndgames>
+* .\smallbrain5.0.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int>
+
 * Example: 
-.\smallbrain5.0.exe -gen -threads 4 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
-.\smallbrain5.0.exe -gen -threads 30 -tb E:/Chess/345
+  .\smallbrain5.0.exe -gen -threads 4 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
+  .\smallbrain5.0.exe -gen -threads 30 -tb E:/Chess/345
+* Book reading isnt fully optimized, very large books will slowdown the generation.

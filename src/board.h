@@ -19,9 +19,8 @@ extern int16_t hiddenBias[HIDDEN_BIAS];
 extern int16_t hiddenWeights[HIDDEN_WEIGHTS];
 extern int32_t outputBias[OUTPUT_BIAS];
 
-static constexpr U64 DEFAULT_CHECKMASK = 18446744073709551615ULL;
-
 extern TEntry *TTable;
+
 struct State
 {
     Square enPassant{};
@@ -29,7 +28,7 @@ struct State
     uint8_t halfMove{};
     Piece capturedPiece = None;
     State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, uint8_t halfMoveCopy = {},
-          Piece capturedPieceCopy = None, U64 hashCopy = {})
+          Piece capturedPieceCopy = None)
         : enPassant(enpassantCopy), castling(castlingRightsCopy), halfMove(halfMoveCopy),
           capturedPiece(capturedPieceCopy)
     {
@@ -50,19 +49,6 @@ struct States
         State s = list.back();
         list.pop_back();
         return s;
-    }
-};
-
-struct Movelist
-{
-    Move list[MAX_MOVES]{};
-    int values[MAX_MOVES]{};
-    uint8_t size{};
-
-    void Add(Move move)
-    {
-        list[size] = move;
-        size++;
     }
 };
 
@@ -139,6 +125,12 @@ class Board
     U64 Rooks(Color c);
     U64 Queens(Color c);
     U64 Kings(Color c);
+    template <Color c> U64 Pawns();
+    template <Color c> U64 Knights();
+    template <Color c> U64 Bishops();
+    template <Color c> U64 Rooks();
+    template <Color c> U64 Queens();
+    template <Color c> U64 Kings();
 
     // can also updates accumulator
     template <bool update> void removePiece(Piece piece, Square sq);
@@ -151,69 +143,25 @@ class Board
 
     // returns the King Square of the specified color
     Square KingSQ(Color c);
-
+    template <Color c> Square KingSQ();
     // returns all pieces of color
     U64 Us(Color c);
+    template <Color c> U64 Us();
 
     // returns all pieces of the other color
     U64 Enemy(Color c);
+    template <Color c> U64 Enemy();
 
     // returns all pieces color
     U64 All();
 
-    // returns all empty squares
-    U64 Empty();
-
     // returns all empty squares or squares with an enemy on them
     U64 EnemyEmpty(Color c);
 
-    // creates the checkmask
-    U64 DoCheckmask(Color c, Square sq);
-
-    // creates the pinmask
-    void DoPinMask(Color c, Square sq);
-
-    // seen squares
-    void seenSquares(Color c);
-
-    // creates the pinmask and checkmask
-    void init(Color c, Square sq);
-
     // Is square attacked by color c
     bool isSquareAttacked(Color c, Square sq);
-    bool isSquareAttackedStatic(Color c, Square sq);
     U64 allAttackers(Square sq, U64 occupiedBB);
     U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
-
-    // returns a pawn push (only 1 square)
-    U64 PawnPushSingle(Color c, Square sq);
-    U64 PawnPushBoth(Color c, Square sq);
-
-    // pseudo legal moves number estimation
-    int pseudoLegalMovesNumber();
-
-    // all legal moves for each piece
-    U64 LegalPawnMoves(Color c, Square sq);
-    U64 LegalPawnMovesEP(Color c, Square sq, Square ep);
-    U64 LegalKnightMoves(Square sq);
-    U64 LegalBishopMoves(Square sq);
-    U64 LegalRookMoves(Square sq);
-    U64 LegalQueenMoves(Square sq);
-    U64 LegalKingMoves(Square sq);
-    U64 LegalKingMovesCastling(Color c, Square sq);
-
-    // legal captures + promotions
-    U64 LegalPawnCaptures(Color c, Square sq, Square ep);
-    U64 LegalKnightCaptures(Square sq);
-    U64 LegalBishopCaptures(Square sq);
-    U64 LegalRookCaptures(Square sq);
-    U64 LegalQueenCaptures(Square sq);
-    U64 LegalKingCaptures(Square sq);
-
-    // all legal moves for a position
-    Movelist legalmoves();
-    Movelist capturemoves();
-    bool hasLegalMoves();
 
     // plays the move on the internal board
     template <bool updateNNUE> void makeMove(Move move);
@@ -236,4 +184,67 @@ template <bool update> void Board::placePiece(Piece piece, Square sq)
     board[sq] = piece;
     if constexpr (update)
         NNUE::activate(accumulator, sq + piece * 64);
+}
+
+template <Color c> U64 Board::Pawns()
+{
+    if (c == White)
+        return Bitboards[WhitePawn];
+    else
+        return Bitboards[BlackPawn];
+}
+
+template <Color c> U64 Board::Knights()
+{
+    if (c == White)
+        return Bitboards[WhiteKnight];
+    else
+        return Bitboards[BlackKnight];
+}
+
+template <Color c> U64 Board::Bishops()
+{
+    if (c == White)
+        return Bitboards[WhiteBishop];
+    else
+        return Bitboards[BlackBishop];
+}
+
+template <Color c> U64 Board::Rooks()
+{
+    if (c == White)
+        return Bitboards[WhiteRook];
+    else
+        return Bitboards[BlackRook];
+}
+
+template <Color c> U64 Board::Queens()
+{
+    if (c == White)
+        return Bitboards[WhiteQueen];
+    else
+        return Bitboards[BlackQueen];
+}
+
+template <Color c> U64 Board::Kings()
+{
+    if (c == White)
+        return Bitboards[WhiteKing];
+    else
+        return Bitboards[BlackKing];
+}
+
+template <Color c> U64 Board::Us()
+{
+    return Pawns<c>() | Knights<c>() | Bishops<c>() | Rooks<c>() | Queens<c>() | Kings<c>();
+}
+
+template <Color c> U64 Board::Enemy()
+{
+    return Us<~c>();
+}
+
+template <Color c> Square Board::KingSQ()
+{
+    return bsf(Kings<c>());
 }

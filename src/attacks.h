@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sliders.hpp"
+#include "types.h"
 #include <cstdint>
 
 // clang-format off
@@ -77,7 +78,7 @@ static constexpr uint64_t PAWN_ATTACKS_TABLE[2][64] = {
       }
 };
 
-uint64_t PawnAttacks(uint8_t sq, bool c);
+uint64_t PawnAttacks(uint8_t sq, Color c);
 uint64_t KnightAttacks(uint8_t sq);
 uint64_t BishopAttacks(uint8_t sq, uint64_t occupied);
 uint64_t RookAttacks(uint8_t sq, uint64_t occupied);
