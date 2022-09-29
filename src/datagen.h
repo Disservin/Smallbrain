@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.h"
+#include "movegen.h"
 #include "randomFen.h"
 #include "search.h"
 #include "syzygy/Fathom/src/tbprobe.h"

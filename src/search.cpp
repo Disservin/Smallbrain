@@ -100,7 +100,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     }
 
     // generate all legalmoves in case we are in check
-    Movelist ml = inCheck ? td->board.legalmoves() : td->board.capturemoves();
+    Movelist ml = inCheck ? Movegen::legalmoves(td->board) : Movegen::capturemoves(td->board);
 
     // assign a value to each move
     for (int i = 0; i < ml.size; i++)
@@ -150,7 +150,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     {
         if (inCheck)
             return mated_in(ss->ply);
-        else if (!td->board.hasLegalMoves())
+        else if (!Movegen::hasLegalMoves(td->board))
             return 0;
     }
 
@@ -197,7 +197,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         {
             if (inCheck)
             {
-                return !td->board.hasLegalMoves() ? mated_in(ss->ply) : 0;
+                return !Movegen::hasLegalMoves(td->board) ? mated_in(ss->ply) : 0;
             }
             return 0;
         }
@@ -345,7 +345,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         return qsearch<PV>(alpha, beta, ss, td);
 
 moves:
-    Movelist ml = td->board.legalmoves();
+    Movelist ml = Movegen::legalmoves(td->board);
 
     // if the move list is empty, we are in checkmate or stalemate
     if (ml.size == 0)
@@ -836,8 +836,8 @@ void Search::sortMoves(Movelist &moves, int sorted)
 
 Score Search::probeTB(ThreadData *td)
 {
-    U64 white = td->board.Us(White);
-    U64 black = td->board.Us(Black);
+    U64 white = td->board.Us<White>();
+    U64 black = td->board.Us<Black>();
 
     if (popcount(white | black) > (signed)TB_LARGEST)
         return VALUE_NONE;
@@ -869,8 +869,8 @@ Score Search::probeTB(ThreadData *td)
 
 Move Search::probeDTZ(ThreadData *td)
 {
-    U64 white = td->board.Us(White);
-    U64 black = td->board.Us(Black);
+    U64 white = td->board.Us<White>();
+    U64 black = td->board.Us<Black>();
     if (popcount(white | black) > (signed)TB_LARGEST)
         return NO_MOVE;
 
@@ -913,7 +913,7 @@ Move Search::probeDTZ(ThreadData *td)
     Square sqFrom = Square(TB_GET_FROM(TBresult));
     Square sqTo = Square(TB_GET_TO(TBresult));
 
-    Movelist legalmoves = td->board.legalmoves();
+    Movelist legalmoves = Movegen::legalmoves(td->board);
 
     for (int i = 0; i < legalmoves.size; i++)
     {

@@ -85,7 +85,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
 
     while (ply < randomMoves)
     {
-        movelist = board.legalmoves();
+        movelist = Movegen::legalmoves(board);
         if (movelist.size == 0 || UCI_FORCE_STOP)
             return;
 
@@ -100,7 +100,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
 
     board.hashHistory.clear();
 
-    movelist = board.legalmoves();
+    movelist = Movegen::legalmoves(board);
     if (movelist.size == 0)
         return;
 
@@ -124,7 +124,7 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
     while (true)
     {
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
-        movelist = board.legalmoves();
+        movelist = Movegen::legalmoves(board);
         if (movelist.size == 0)
         {
             winningSide = inCheck ? ((board.sideToMove == White) ? Black : White) : NO_COLOR;
@@ -187,12 +187,12 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
         {
             Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 
-            unsigned TBresult =
-                tb_probe_wdl(board.Us(White), board.Us(Black), board.Kings(White) | board.Kings(Black),
-                             board.Queens(White) | board.Queens(Black), board.Rooks(White) | board.Rooks(Black),
-                             board.Bishops(White) | board.Bishops(Black), board.Knights(White) | board.Knights(Black),
-                             board.Pawns(White) | board.Pawns(Black), 0, board.castlingRights, ep,
-                             ~board.sideToMove); //  * - turn: true=white, false=black
+            unsigned TBresult = tb_probe_wdl(
+                board.Us<White>(), board.Us<Black>(), board.Kings<White>() | board.Kings<Black>(),
+                board.Queens<White>() | board.Queens<Black>(), board.Rooks<White>() | board.Rooks<Black>(),
+                board.Bishops<White>() | board.Bishops<Black>(), board.Knights<White>() | board.Knights<Black>(),
+                board.Pawns<White>() | board.Pawns<Black>(), 0, board.castlingRights, ep,
+                ~board.sideToMove); //  * - turn: true=white, false=black
 
             if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)
             {
