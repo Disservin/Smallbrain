@@ -170,8 +170,9 @@ template <Color c> U64 LegalPawnMoves(const Board &board, Square sq)
     return ((PawnAttacks(sq, c) & board.occEnemy) | PawnPushBoth<c>(board.occAll, sq)) & board.checkMask;
 }
 
-template <Color c> U64 LegalPawnMovesEP(Board &board, Square sq, Square ep)
+template <Color c> U64 LegalPawnMovesEP(Board &board, Square sq)
 {
+    Square ep = board.enPassantSquare;
     // If we are pinned diagonally we can only do captures which are on the pin_dg and on the board.checkMask
     if (board.pinD & (1ULL << sq))
         return PawnAttacks(sq, c) & board.pinD & board.checkMask & (board.occEnemy | (1ULL << ep));
@@ -363,7 +364,7 @@ template <Color c> Movelist legalmoves(Board &board)
         while (pawns_mask)
         {
             Square from = poplsb(pawns_mask);
-            U64 moves = noEP ? LegalPawnMoves<c>(board, from) : LegalPawnMovesEP<c>(board, from, board.enPassantSquare);
+            U64 moves = noEP ? LegalPawnMoves<c>(board, from) : LegalPawnMovesEP<c>(board, from);
             while (moves)
             {
                 Square to = poplsb(moves);

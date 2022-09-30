@@ -44,7 +44,7 @@ template <Color c> U64 PawnPushBoth(U64 occAll, Square sq);
 template <Color c> U64 LegalPawnMoves(const Board &board, Square sq);
 
 // pawn moves with ep square
-template <Color c> U64 LegalPawnMovesEP(const Board &board, Square sq, Square ep);
+template <Color c> U64 LegalPawnMovesEP(const Board &board, Square sq);
 U64 LegalKnightMoves(const Board &board, Square sq);
 U64 LegalBishopMoves(const Board &board, Square sq);
 U64 LegalRookMoves(const Board &board, Square sq);
