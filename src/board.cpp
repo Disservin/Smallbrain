@@ -388,11 +388,6 @@ U64 Board::All()
     return Us<White>() | Us<Black>();
 }
 
-U64 Board::Empty()
-{
-    return ~All();
-}
-
 U64 Board::EnemyEmpty(Color c)
 {
     return ~Us(c);
@@ -407,21 +402,6 @@ bool Board::isSquareAttacked(Color c, Square sq)
     if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, All()))
         return true;
     if ((Rooks(c) | Queens(c)) & RookAttacks(sq, All()))
-        return true;
-    if (Kings(c) & KingAttacks(sq))
-        return true;
-    return false;
-}
-
-bool Board::isSquareAttackedStatic(Color c, Square sq)
-{
-    if (Pawns(c) & PawnAttacks(sq, ~c))
-        return true;
-    if (Knights(c) & KnightAttacks(sq))
-        return true;
-    if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, occAll))
-        return true;
-    if ((Rooks(c) | Queens(c)) & RookAttacks(sq, occAll))
         return true;
     if (Kings(c) & KingAttacks(sq))
         return true;
@@ -451,35 +431,6 @@ U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB)
     attackers |= KingAttacks(sq) & attackingKing;
     attackers |= PawnAttacks(sq, ~attackerColor) & attackingPawns;
     return attackers;
-}
-
-void Board::makeNullMove()
-{
-    State store = State(enPassantSquare, castlingRights, halfMoveClock, None);
-    prevStates.Add(store);
-    sideToMove = ~sideToMove;
-
-    hashKey ^= updateKeySideToMove();
-    if (enPassantSquare != NO_SQ)
-        hashKey ^= updateKeyEnPassant(enPassantSquare);
-
-    enPassantSquare = NO_SQ;
-    fullMoveNumber++;
-}
-
-void Board::unmakeNullMove()
-{
-    State restore = prevStates.Get();
-    enPassantSquare = restore.enPassant;
-    castlingRights = restore.castling;
-    halfMoveClock = restore.halfMove;
-
-    hashKey ^= updateKeySideToMove();
-    if (enPassantSquare != NO_SQ)
-        hashKey ^= updateKeyEnPassant(enPassantSquare);
-
-    fullMoveNumber--;
-    sideToMove = ~sideToMove;
 }
 
 template <bool updateNNUE> void Board::makeMove(Move move)
@@ -753,6 +704,35 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
             placePiece<updateNNUE>(BlackRook, SQ_A8);
         }
     }
+}
+
+void Board::makeNullMove()
+{
+    State store = State(enPassantSquare, castlingRights, halfMoveClock, None);
+    prevStates.Add(store);
+    sideToMove = ~sideToMove;
+
+    hashKey ^= updateKeySideToMove();
+    if (enPassantSquare != NO_SQ)
+        hashKey ^= updateKeyEnPassant(enPassantSquare);
+
+    enPassantSquare = NO_SQ;
+    fullMoveNumber++;
+}
+
+void Board::unmakeNullMove()
+{
+    State restore = prevStates.Get();
+    enPassantSquare = restore.enPassant;
+    castlingRights = restore.castling;
+    halfMoveClock = restore.halfMove;
+
+    hashKey ^= updateKeySideToMove();
+    if (enPassantSquare != NO_SQ)
+        hashKey ^= updateKeyEnPassant(enPassantSquare);
+
+    fullMoveNumber--;
+    sideToMove = ~sideToMove;
 }
 
 template void Board::makeMove<false>(Move move);
