@@ -29,7 +29,7 @@ struct State
     uint8_t halfMove{};
     Piece capturedPiece = None;
     State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, uint8_t halfMoveCopy = {},
-          Piece capturedPieceCopy = None, U64 hashCopy = {})
+          Piece capturedPieceCopy = None)
         : enPassant(enpassantCopy), castling(castlingRightsCopy), halfMove(halfMoveCopy),
           capturedPiece(capturedPieceCopy)
     {
@@ -156,15 +156,11 @@ class Board
     // returns all pieces color
     U64 All();
 
-    // returns all empty squares
-    U64 Empty();
-
     // returns all empty squares or squares with an enemy on them
     U64 EnemyEmpty(Color c);
 
     // Is square attacked by color c
     bool isSquareAttacked(Color c, Square sq);
-    bool isSquareAttackedStatic(Color c, Square sq);
     U64 allAttackers(Square sq, U64 occupiedBB);
     U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
 

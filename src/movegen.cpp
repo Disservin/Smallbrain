@@ -122,7 +122,7 @@ template <Color c> void seenSquares(Board &board)
 template <Color c> void init(Board &board, Square sq)
 {
     board.occUs = board.Us<c>();
-    board.occEnemy = board.Us<~c>();
+    board.occEnemy = board.Enemy<c>();
     board.occAll = board.occUs | board.occEnemy;
     board.enemyEmptyBB = ~board.occUs;
     seenSquares<~c>(board);

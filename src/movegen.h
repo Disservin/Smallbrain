@@ -34,16 +34,26 @@ template <Color c> void init(const Board &board, Square sq);
 
 // returns a pawn push (only 1 square)
 template <Color c> U64 PawnPushSingle(U64 occAll, Square sq);
+
+// returns a double pawn push
 template <Color c> U64 PawnPushBoth(U64 occAll, Square sq);
 
 // all legal moves for each piece
+
+// pawn moves
 template <Color c> U64 LegalPawnMoves(const Board &board, Square sq);
-template <Color c> U64 LegalPawnMovesEP(Board &board, Square sq, Square ep);
+
+// pawn moves with ep square
+template <Color c> U64 LegalPawnMovesEP(const Board &board, Square sq, Square ep);
 U64 LegalKnightMoves(const Board &board, Square sq);
 U64 LegalBishopMoves(const Board &board, Square sq);
 U64 LegalRookMoves(const Board &board, Square sq);
 U64 LegalQueenMoves(const Board &board, Square sq);
+
+// legal king moves without castling
 U64 LegalKingMoves(const Board &board, Square sq);
+
+// legal king moves with castling
 template <Color c> U64 LegalKingMovesCastling(const Board &board, Square sq);
 
 // legal captures + promotions
