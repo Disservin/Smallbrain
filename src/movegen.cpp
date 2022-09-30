@@ -572,7 +572,7 @@ template <Color c> bool hasLegalMoves(Board &board)
         while (pawns_mask)
         {
             Square from = poplsb(pawns_mask);
-            U64 moves = noEP ? LegalPawnMoves<c>(board, from) : LegalPawnMovesEP<c>(board, from, board.enPassantSquare);
+            U64 moves = noEP ? LegalPawnMoves<c>(board, from) : LegalPawnMovesEP<c>(board, from);
             while (moves)
             {
                 return true;
