@@ -32,7 +32,7 @@ void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
 
     else if (input == "captures")
     {
-        Movelist ml = board.capturemoves();
+        Movelist ml = Movegen::capturemoves(board);
         for (int i = 0; i < ml.size; i++)
             std::cout << printMove(ml.list[i]) << std::endl;
         std::cout << "count: " << signed(ml.size) << std::endl;
@@ -40,7 +40,7 @@ void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
 
     else if (input == "moves")
     {
-        Movelist ml = board.legalmoves();
+        Movelist ml = Movegen::legalmoves(board);
         for (int i = 0; i < ml.size; i++)
             std::cout << printMove(ml.list[i]) << std::endl;
         std::cout << "count: " << signed(ml.size) << std::endl;

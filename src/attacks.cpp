@@ -2,7 +2,7 @@
 
 using namespace Chess_Lookup::Fancy;
 
-uint64_t PawnAttacks(uint8_t sq, bool c)
+uint64_t PawnAttacks(uint8_t sq, Color c)
 {
     return PAWN_ATTACKS_TABLE[c][sq];
 }

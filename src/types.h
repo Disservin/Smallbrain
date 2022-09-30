@@ -94,47 +94,13 @@ enum Flag : uint8_t
     NONEBOUND
 };
 
-enum
+enum CastlingRight : uint8_t
 {
     wk = 1,
     wq = 2,
     bk = 4,
     bq = 8
 };
-
-static std::unordered_map<Piece, char> pieceToChar({{WhitePawn, 'P'},
-                                                    {WhiteKnight, 'N'},
-                                                    {WhiteBishop, 'B'},
-                                                    {WhiteRook, 'R'},
-                                                    {WhiteQueen, 'Q'},
-                                                    {WhiteKing, 'K'},
-                                                    {BlackPawn, 'p'},
-                                                    {BlackKnight, 'n'},
-                                                    {BlackBishop, 'b'},
-                                                    {BlackRook, 'r'},
-                                                    {BlackQueen, 'q'},
-                                                    {BlackKing, 'k'},
-                                                    {None, '.'}});
-
-static std::unordered_map<char, Piece> charToPiece({{'P', WhitePawn},
-                                                    {'N', WhiteKnight},
-                                                    {'B', WhiteBishop},
-                                                    {'R', WhiteRook},
-                                                    {'Q', WhiteQueen},
-                                                    {'K', WhiteKing},
-                                                    {'p', BlackPawn},
-                                                    {'n', BlackKnight},
-                                                    {'b', BlackBishop},
-                                                    {'r', BlackRook},
-                                                    {'q', BlackQueen},
-                                                    {'k', BlackKing},
-                                                    {'.', None}});
-
-static std::unordered_map<PieceType, char> PieceTypeToPromPiece(
-    {{KNIGHT, 'n'}, {BISHOP, 'b'}, {ROOK, 'r'}, {QUEEN, 'q'}});
-
-static std::unordered_map<char, PieceType> piece_to_int(
-    {{'n', KNIGHT}, {'b', BISHOP}, {'r', ROOK}, {'q', QUEEN}, {'N', KNIGHT}, {'B', BISHOP}, {'R', ROOK}, {'Q', QUEEN}});
 
 // clang-format off
 const std::string squareToString[64] = {
@@ -220,6 +186,8 @@ static constexpr U64 WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL 
 static constexpr U64 BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
 static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);
 
+static constexpr U64 DEFAULT_CHECKMASK = 18446744073709551615ULL;
+
 struct Time
 {
     int64_t optimum = 0;
@@ -252,3 +220,40 @@ inline Score scoreFromTT(Score s, int plies)
 {
     return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s - plies : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies : s);
 }
+
+static std::unordered_map<Piece, char> pieceToChar({{WhitePawn, 'P'},
+                                                    {WhiteKnight, 'N'},
+                                                    {WhiteBishop, 'B'},
+                                                    {WhiteRook, 'R'},
+                                                    {WhiteQueen, 'Q'},
+                                                    {WhiteKing, 'K'},
+                                                    {BlackPawn, 'p'},
+                                                    {BlackKnight, 'n'},
+                                                    {BlackBishop, 'b'},
+                                                    {BlackRook, 'r'},
+                                                    {BlackQueen, 'q'},
+                                                    {BlackKing, 'k'},
+                                                    {None, '.'}});
+
+static std::unordered_map<char, Piece> charToPiece({{'P', WhitePawn},
+                                                    {'N', WhiteKnight},
+                                                    {'B', WhiteBishop},
+                                                    {'R', WhiteRook},
+                                                    {'Q', WhiteQueen},
+                                                    {'K', WhiteKing},
+                                                    {'p', BlackPawn},
+                                                    {'n', BlackKnight},
+                                                    {'b', BlackBishop},
+                                                    {'r', BlackRook},
+                                                    {'q', BlackQueen},
+                                                    {'k', BlackKing},
+                                                    {'.', None}});
+
+static std::unordered_map<PieceType, char> PieceTypeToPromPiece(
+    {{KNIGHT, 'n'}, {BISHOP, 'b'}, {ROOK, 'r'}, {QUEEN, 'q'}});
+
+static std::unordered_map<char, PieceType> pieceToInt(
+    {{'n', KNIGHT}, {'b', BISHOP}, {'r', ROOK}, {'q', QUEEN}, {'N', KNIGHT}, {'B', BISHOP}, {'R', ROOK}, {'Q', QUEEN}});
+
+static std::unordered_map<Square, CastlingRight> castlingMap(
+    {{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});
