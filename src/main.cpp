@@ -7,6 +7,8 @@ std::atomic<bool> stopped;
 std::atomic<bool> UCI_FORCE_STOP;
 std::atomic<bool> useTB;
 
+// TEST CI
+
 int main(int argc, char **argv)
 {
     UCI_FORCE_STOP = false;
