@@ -338,8 +338,8 @@ template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
     constexpr Direction UP_RIGHT = c == White ? NORTH_EAST : SOUTH_WEST;
     constexpr Direction DOWN_LEFT = c == Black ? NORTH_EAST : SOUTH_WEST;
     constexpr Direction DOWN_RIGHT = c == Black ? NORTH_WEST : SOUTH_EAST;
+
     constexpr U64 RANK_BEFORE_PROMO = c == White ? MASK_RANK[6] : MASK_RANK[1];
-    const bool EP = board.enPassantSquare != NO_SQ;
 
     U64 captureRight = shift<UP_RIGHT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
     U64 captureLeft = shift<UP_LEFT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
@@ -357,55 +357,6 @@ template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
             movelist.Add(make(ROOK, from, to, true));
             movelist.Add(make(KNIGHT, from, to, true));
             movelist.Add(make(BISHOP, from, to, true));
-        }
-    }
-
-    if (EP)
-    {
-        Square ep = board.enPassantSquare;
-        U64 left = shift<UP_LEFT>(pawns_mask & ~RANK_BEFORE_PROMO) & (1ULL << ep);
-        U64 right = shift<UP_RIGHT>(pawns_mask & ~RANK_BEFORE_PROMO) & (1ULL << ep);
-
-        while (left || right)
-        {
-            Square to;
-            Square from;
-            if (left)
-            {
-                to = poplsb(left);
-                from = Square(to + DOWN_RIGHT);
-            }
-            else
-            {
-                to = poplsb(right);
-                from = Square(to + DOWN_LEFT);
-            }
-
-            if ((1ULL << from) & board.pinHV)
-                continue;
-            if ((1ULL << from) & board.pinD)
-                continue;
-
-            Square tP = c == White ? Square((int)ep - 8) : Square((int)ep + 8);
-            Square kSQ = board.KingSQ<c>();
-            U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
-            if (enemyQueenRook & MASK_RANK[square_rank(kSQ)])
-            {
-                Piece ourPawn = board.makePiece(PAWN, c);
-                Piece theirPawn = board.makePiece(PAWN, ~c);
-                board.removePiece<false>(ourPawn, from);
-                board.removePiece<false>(theirPawn, tP);
-                board.placePiece<false>(ourPawn, ep);
-                if (!((RookAttacks(kSQ, board.All()) & (enemyQueenRook))))
-                    movelist.Add(make(PAWN, from, to, false));
-                board.placePiece<false>(ourPawn, from);
-                board.placePiece<false>(theirPawn, tP);
-                board.removePiece<false>(ourPawn, ep);
-            }
-            else
-            {
-                movelist.Add(make(PAWN, from, to, false));
-            }
         }
     }
 
