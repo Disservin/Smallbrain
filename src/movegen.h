@@ -35,10 +35,13 @@ template <Color c> void init(const Board &board, Square sq);
 // returns a pawn push (only 1 square)
 template <Color c> U64 PawnPushSingle(U64 occAll, Square sq);
 template <Color c> U64 PawnPushBoth(U64 occAll, Square sq);
+template<Direction direction> constexpr U64 shift(U64 b);
 
 // all legal moves for each piece
 template <Color c> U64 LegalPawnMoves(const Board &board, Square sq);
 template <Color c> U64 LegalPawnMovesEP(Board &board, Square sq, Square ep);
+template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist, U64 pawns_mask);
+
 U64 LegalKnightMoves(const Board &board, Square sq);
 U64 LegalBishopMoves(const Board &board, Square sq);
 U64 LegalRookMoves(const Board &board, Square sq);

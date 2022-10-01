@@ -102,6 +102,10 @@ enum CastlingRight : uint8_t
     bq = 8
 };
 
+enum Direction : int8_t {
+    NORTH = 8, WEST = -1, SOUTH = -8, EAST = 1, NORTH_EAST = 9, NORTH_WEST = 7, SOUTH_WEST = -9, SOUTH_EAST = -7
+};
+
 // clang-format off
 const std::string squareToString[64] = {
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
