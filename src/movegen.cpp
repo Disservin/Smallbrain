@@ -158,25 +158,26 @@ template <Color c> U64 PawnPushBoth(U64 occAll, Square sq)
     }
 }
 
-template<Direction direction>
-constexpr U64 shift(U64 b) {
-    switch (direction) {
-        case NORTH:
-            return b << 8;
-        case SOUTH:
-            return b >> 8;
-        case NORTH_WEST:
-            return (b & ~MASK_FILE[0]) << 7;
-        case WEST:
-            return (b & ~MASK_FILE[0]) >> 1;
-        case SOUTH_WEST:
-            return (b & ~MASK_FILE[0]) >> 9;
-        case NORTH_EAST:
-            return (b & ~MASK_FILE[7]) << 9;
-        case EAST:
-            return (b & ~MASK_FILE[7]) << 1;
-        case SOUTH_EAST:
-            return (b & ~MASK_FILE[7]) >> 7;
+template <Direction direction> constexpr U64 shift(U64 b)
+{
+    switch (direction)
+    {
+    case NORTH:
+        return b << 8;
+    case SOUTH:
+        return b >> 8;
+    case NORTH_WEST:
+        return (b & ~MASK_FILE[0]) << 7;
+    case WEST:
+        return (b & ~MASK_FILE[0]) >> 1;
+    case SOUTH_WEST:
+        return (b & ~MASK_FILE[0]) >> 9;
+    case NORTH_EAST:
+        return (b & ~MASK_FILE[7]) << 9;
+    case EAST:
+        return (b & ~MASK_FILE[7]) << 1;
+    case SOUTH_EAST:
+        return (b & ~MASK_FILE[7]) >> 7;
     }
 }
 
@@ -195,9 +196,9 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
     constexpr Direction DOWN_LEFT = c == Black ? NORTH_EAST : SOUTH_WEST;
     constexpr Direction DOWN_RIGHT = c == Black ? NORTH_WEST : SOUTH_EAST;
     constexpr U64 RANK_BEFORE_PROMO = c == White ? MASK_RANK[6] : MASK_RANK[1];
-    constexpr U64 doublePushRank = c == White ? MASK_RANK[2] : MASK_RANK[5]; 
+    constexpr U64 doublePushRank = c == White ? MASK_RANK[2] : MASK_RANK[5];
     const bool EP = board.enPassantSquare != NO_SQ;
-    
+
     U64 singlePush = shift<UP>(pawns_mask & moveHV & moveD & ~RANK_BEFORE_PROMO) & empty;
     U64 doublePush = shift<UP>(singlePush & doublePushRank) & empty;
     U64 captureRight = shift<UP_RIGHT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
@@ -246,7 +247,14 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
                 continue;
             if ((1ULL << from) & board.pinD)
                 continue;
-
+            if (board.checkMask != DEFAULT_CHECKMASK)
+            {
+                // If we are in check and the en passant square lies on our attackmask and the en passant piece gives
+                // check return the ep mask as a move square
+                if (board.checkMask & (1ULL << (ep - (c * -2 + 1) * 8)))
+                    movelist.Add(make(PAWN, from, to, false));
+                continue;
+            }
             Square tP = c == White ? Square((int)ep - 8) : Square((int)ep + 8);
             Square kSQ = board.KingSQ<c>();
             U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
@@ -270,7 +278,7 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
         }
     }
 
-    U64 pinnedPawns = pawns_mask & ~moveD; 
+    U64 pinnedPawns = pawns_mask & ~moveD;
     while (pinnedPawns)
     {
         Square from = poplsb(pinnedPawns);
@@ -294,27 +302,30 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
         }
     }
 
-    while (singlePush) {
+    while (singlePush)
+    {
         Square to = poplsb(singlePush);
         movelist.Add(make(PAWN, Square(to + DOWN), to, false));
     }
 
-    while (doublePush) {
+    while (doublePush)
+    {
         Square to = poplsb(doublePush);
         movelist.Add(make(PAWN, Square(to + DOWN + DOWN), to, false));
     }
 
-    while (captureRight) {
+    while (captureRight)
+    {
         Square to = poplsb(captureRight);
         movelist.Add(make(PAWN, Square(to + DOWN_LEFT), to, false));
     }
 
-    while (captureLeft) {
+    while (captureLeft)
+    {
         Square to = poplsb(captureLeft);
         movelist.Add(make(PAWN, Square(to + DOWN_RIGHT), to, false));
     }
 }
-
 
 template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
 {
@@ -329,7 +340,7 @@ template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
     constexpr Direction DOWN_RIGHT = c == Black ? NORTH_WEST : SOUTH_EAST;
     constexpr U64 RANK_BEFORE_PROMO = c == White ? MASK_RANK[6] : MASK_RANK[1];
     const bool EP = board.enPassantSquare != NO_SQ;
-    
+
     U64 captureRight = shift<UP_RIGHT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
     U64 captureLeft = shift<UP_LEFT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
 
@@ -398,7 +409,7 @@ template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
         }
     }
 
-    U64 pinnedPawns = pawns_mask & ~moveD; 
+    U64 pinnedPawns = pawns_mask & ~moveD;
     while (pinnedPawns)
     {
         Square from = poplsb(pinnedPawns);
@@ -410,12 +421,14 @@ template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
         }
     }
 
-    while (captureRight) {
+    while (captureRight)
+    {
         Square to = poplsb(captureRight);
         movelist.Add(make(PAWN, Square(to + DOWN_LEFT), to, false));
     }
 
-    while (captureLeft) {
+    while (captureLeft)
+    {
         Square to = poplsb(captureLeft);
         movelist.Add(make(PAWN, Square(to + DOWN_RIGHT), to, false));
     }
@@ -612,7 +625,7 @@ template <Color c> Movelist legalmoves(Board &board)
     U64 queens_mask = board.Queens<c>();
 
     LegalPawnMovesAll<c>(board, movelist);
-    
+
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
@@ -787,7 +800,8 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (pawns_mask)
     {
         Square from = poplsb(pawns_mask);
-        U64 moves = noEP ? LegalPawnMovesSingle<c>(board, from) : LegalPawnMovesEPSingle<c>(board, from, board.enPassantSquare);
+        U64 moves =
+            noEP ? LegalPawnMovesSingle<c>(board, from) : LegalPawnMovesEPSingle<c>(board, from, board.enPassantSquare);
         while (moves)
         {
             return true;

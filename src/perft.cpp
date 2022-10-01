@@ -53,7 +53,9 @@ void Perft::testAllPos()
 U64 Perft::perftFunction(int depth, int max)
 {
     Movelist ml = Movegen::legalmoves(board);
-    if (depth == 1)
+    if (depth == 0)
+        return 1;
+    else if (depth == 1 && max != 1)
     {
         return ml.size;
     }
