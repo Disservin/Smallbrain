@@ -569,9 +569,9 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     {
         halfMoveClock = 0;
         hashKey ^= updateKeyPiece(capture, to_sq);
-        if (type_of_piece(capture) == ROOK && castlingMap.find(to_sq) != castlingMap.end())
+        if (type_of_piece(capture) == ROOK && castlingMapRook.find(to_sq) != castlingMapRook.end())
         {
-            castlingRights &= ~castlingMap[to_sq];
+            castlingRights &= ~castlingMapRook[to_sq];
         }
     }
 

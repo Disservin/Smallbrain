@@ -51,6 +51,55 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
     }
 }
 
+Move Search::Nextmove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss)
+{
+    switch (mp.stage)
+    {
+    case TT_MOVE:
+        mp.stage++;
+        mp.ttIndex = -1;
+        for (mp.i = 0; mp.i < moves.size; mp.i++)
+        {
+            const Move move = moves.list[mp.i];
+            moves.values[mp.i] = scoreMove(move, ss->ply, ttHit, td);
+            if (moves.values[mp.i] == 10'000'000)
+            {
+                mp.ttIndex = mp.i;
+                mp.i++;
+                return move;
+            }
+        }
+    case EVAL_OTHER:
+        for (; mp.i < moves.size; mp.i++)
+        {
+            moves.values[mp.i] = scoreMove(moves.list[mp.i], ss->ply, false, td);
+        }
+        if (mp.ttIndex != -1)
+        {
+            std::swap(moves.list[0], moves.list[mp.ttIndex]);
+            std::swap(moves.values[0], moves.values[mp.ttIndex]);
+            mp.i = 1;
+        }
+        else
+            mp.i = 0;
+        
+        mp.stage++;
+    case OTHER:
+        if (mp.i < moves.size)
+        {
+            sortMoves(moves, mp.i);
+            const Move move = moves.list[mp.i];
+            mp.i++;
+            return move;
+        }
+        else
+            return NO_MOVE;
+
+    default:
+        return NO_MOVE;
+    }
+}
+
 template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td)
 {
     if (exitEarly(td->nodes, td->id))
@@ -351,12 +400,6 @@ moves:
     if (ml.size == 0)
         return inCheck ? mated_in(ss->ply) : 0;
 
-    // assign a value to each move
-    for (int i = 0; i < ml.size; i++)
-    {
-        ml.values[i] = scoreMove(ml.list[i], ss->ply, ttHit, td);
-    }
-
     // set root node move list size
     if (RootNode && td->id == 0)
         rootSize = ml.size;
@@ -368,12 +411,13 @@ moves:
 
     bool doFullSearch = false;
 
-    for (int i = 0; i < ml.size; i++)
-    {
-        // sort the moves
-        sortMoves(ml, i);
+    Movepicker mp;
+    mp.stage = TT_MOVE;
 
-        Move move = ml.list[i];
+    Move move;
+
+    while((move = Nextmove(ml, mp, ttHit, td, ss)) != NO_MOVE)
+    {
         bool capture = td->board.pieceAtB(to(move)) != None;
 
         int newDepth = depth - 1;
