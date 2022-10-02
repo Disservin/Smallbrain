@@ -149,7 +149,7 @@ class Search
     // utility functions
     Move Nextmove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss);
 
-    std::string get_pv();
+    std::string getPV();
     long long elapsed();
     bool exitEarly(uint64_t nodes, int ThreadId);
     uint64_t getNodes();
