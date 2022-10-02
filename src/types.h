@@ -102,8 +102,25 @@ enum CastlingRight : uint8_t
     bq = 8
 };
 
-enum Direction : int8_t {
-    NORTH = 8, WEST = -1, SOUTH = -8, EAST = 1, NORTH_EAST = 9, NORTH_WEST = 7, SOUTH_WEST = -9, SOUTH_EAST = -7
+enum Direction : int8_t
+{
+    NORTH = 8,
+    WEST = -1,
+    SOUTH = -8,
+    EAST = 1,
+    NORTH_EAST = 9,
+    NORTH_WEST = 7,
+    SOUTH_WEST = -9,
+    SOUTH_EAST = -7
+};
+
+enum MoveScores : int
+{
+    TT_MOVE_SCORE = 10'000'000,
+    PROMOTION_SCORE = 9'000'000,
+    CAPTURE_SCORE = 7'000'000,
+    KILLER_ONE_SCORE = 6'000'000,
+    KILLER_TWO_SCORE = 5'000'000
 };
 
 // clang-format off

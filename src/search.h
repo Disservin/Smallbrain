@@ -50,7 +50,7 @@ struct Movepicker
 {
     Staging stage;
     int i;
-    int ttIndex;
+    int ttMoveIndex;
 };
 
 inline void operator++(Staging &s, int)
@@ -148,14 +148,15 @@ class Search
 
     // utility functions
     Move Nextmove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss);
+    void sortMoves(Movelist &moves, int sorted);
+
+    bool exitEarly(uint64_t nodes, int ThreadId);
 
     std::string getPV();
-    long long elapsed();
-    bool exitEarly(uint64_t nodes, int ThreadId);
+    long long getTime();
     uint64_t getNodes();
     uint64_t getTbHits();
 
-    void sortMoves(Movelist &moves, int sorted);
     Score probeTB(ThreadData *td);
     Move probeDTZ(ThreadData *td);
 };

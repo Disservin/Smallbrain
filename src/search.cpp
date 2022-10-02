@@ -356,16 +356,15 @@ moves:
         rootSize = ml.size;
 
     Movelist quietMoves;
-    Move bestMove = NO_MOVE;
     Score score = VALUE_NONE;
+    Move bestMove = NO_MOVE;
+    Move move;
     uint8_t madeMoves = 0;
 
     bool doFullSearch = false;
 
     Movepicker mp;
     mp.stage = TT_MOVE;
-
-    Move move;
 
     while ((move = Nextmove(ml, mp, ttHit, td, ss)) != NO_MOVE)
     {
@@ -389,7 +388,7 @@ moves:
         td->nodes++;
         madeMoves++;
 
-        if (td->id == 0 && RootNode && !stopped && elapsed() > 10000 && td->allowPrint)
+        if (td->id == 0 && RootNode && !stopped && getTime() > 10000 && td->allowPrint)
             std::cout << "info depth " << depth - inCheck << " currmove " << printMove(move) << " currmovenumber "
                       << signed(madeMoves) << "\n";
 
@@ -517,7 +516,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
     }
 
     if (td->allowPrint && td->id == 0)
-        uciOutput(result, depth, td->seldepth, getNodes(), getTbHits(), elapsed(), getPV());
+        uciOutput(result, depth, td->seldepth, getNodes(), getTbHits(), getTime(), getPV());
 
     return result;
 }
@@ -577,7 +576,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / td->nodes;
-            if (searchTime * (110 - std::min(effort, 90)) / 100 < elapsed())
+            if (searchTime * (110 - std::min(effort, 90)) / 100 < getTime())
                 break;
         }
     }
@@ -705,23 +704,23 @@ int Search::scoreMove(Move move, int ply, bool ttMove, ThreadData *td)
 {
     if (ttMove && move == TTable[ttIndex(td->board.hashKey)].move)
     {
-        return 10'000'000;
+        return TT_MOVE_SCORE;
     }
     else if (promoted(move))
     {
-        return 9'000'000 + piece(move);
+        return PROMOTION_SCORE + piece(move);
     }
     else if (td->board.pieceAtB(to(move)) != None)
     {
-        return see(move, 0, td->board) ? 7'000'000 + mmlva(move, td->board) : mmlva(move, td->board);
+        return see(move, 0, td->board) ? CAPTURE_SCORE + mmlva(move, td->board) : mmlva(move, td->board);
     }
     else if (td->killerMoves[0][ply] == move)
     {
-        return killerscore1;
+        return KILLER_ONE_SCORE;
     }
     else if (td->killerMoves[1][ply] == move)
     {
-        return killerscore2;
+        return KILLER_TWO_SCORE;
     }
     else
     {
@@ -733,23 +732,23 @@ int Search::scoreqMove(Move move, int ply, bool ttMove, ThreadData *td)
 {
     if (ttMove && move == TTable[ttIndex(td->board.hashKey)].move)
     {
-        return 10'000'000;
+        return TT_MOVE_SCORE;
     }
     else if (promoted(move))
     {
-        return 9'000'000 + piece(move);
+        return PROMOTION_SCORE + piece(move);
     }
     else if (td->board.pieceAtB(to(move)) != None)
     {
-        return see(move, 0, td->board) ? 7'000'000 + mmlva(move, td->board) : -50'000;
+        return see(move, 0, td->board) ? CAPTURE_SCORE + mmlva(move, td->board) : -50'000;
     }
     else if (td->killerMoves[0][ply] == move)
     {
-        return killerscore1;
+        return KILLER_ONE_SCORE;
     }
     else if (td->killerMoves[1][ply] == move)
     {
-        return killerscore2;
+        return KILLER_TWO_SCORE;
     }
     else
     {
@@ -763,14 +762,14 @@ Move Search::Nextmove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *t
     {
     case TT_MOVE:
         mp.stage++;
-        mp.ttIndex = -1;
+        mp.ttMoveIndex = -1;
         for (mp.i = 0; mp.i < moves.size; mp.i++)
         {
             const Move move = moves.list[mp.i];
             moves.values[mp.i] = scoreMove(move, ss->ply, ttHit, td);
-            if (moves.values[mp.i] == 10'000'000)
+            if (moves.values[mp.i] == TT_MOVE_SCORE)
             {
-                mp.ttIndex = mp.i;
+                mp.ttMoveIndex = mp.i;
                 mp.i++;
                 return move;
             }
@@ -780,10 +779,10 @@ Move Search::Nextmove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *t
         {
             moves.values[mp.i] = scoreMove(moves.list[mp.i], ss->ply, false, td);
         }
-        if (mp.ttIndex != -1)
+        if (mp.ttMoveIndex != -1)
         {
-            std::swap(moves.list[0], moves.list[mp.ttIndex]);
-            std::swap(moves.values[0], moves.values[mp.ttIndex]);
+            std::swap(moves.list[0], moves.list[mp.ttMoveIndex]);
+            std::swap(moves.values[0], moves.values[mp.ttMoveIndex]);
             mp.i = 1;
         }
         else
@@ -806,21 +805,16 @@ Move Search::Nextmove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *t
     }
 }
 
-std::string Search::getPV()
+void Search::sortMoves(Movelist &moves, int sorted)
 {
-    std::string line = "";
-    for (int i = 0; i < tds[0].pvLength[0]; i++)
+    int index = 0 + sorted;
+    for (int i = 1 + sorted; i < moves.size; i++)
     {
-        line += " ";
-        line += printMove(tds[0].pvTable[0][i]);
+        if (moves.values[i] > moves.values[index])
+            index = i;
     }
-    return line;
-}
-
-long long Search::elapsed()
-{
-    auto t1 = TimePoint::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+    std::swap(moves.list[index], moves.list[0 + sorted]);
+    std::swap(moves.values[index], moves.values[0 + sorted]);
 }
 
 bool Search::exitEarly(uint64_t nodes, int ThreadId)
@@ -838,7 +832,7 @@ bool Search::exitEarly(uint64_t nodes, int ThreadId)
 
     if (searchTime != 0)
     {
-        auto ms = elapsed();
+        auto ms = getTime();
         if (ms >= searchTime || ms >= maxTime)
         {
             stopped = true;
@@ -846,6 +840,23 @@ bool Search::exitEarly(uint64_t nodes, int ThreadId)
         }
     }
     return false;
+}
+
+std::string Search::getPV()
+{
+    std::stringstream ss;
+
+    for (int i = 0; i < tds[0].pvLength[0]; i++)
+    {
+        ss << " " << printMove(tds[0].pvTable[0][i]);
+    }
+    return ss.str();
+}
+
+long long Search::getTime()
+{
+    auto t1 = TimePoint::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 }
 
 uint64_t Search::getNodes()
@@ -864,18 +875,6 @@ uint64_t Search::getTbHits()
         nodes += tds[i].tbhits;
     }
     return nodes;
-}
-
-void Search::sortMoves(Movelist &moves, int sorted)
-{
-    int index = 0 + sorted;
-    for (int i = 1 + sorted; i < moves.size; i++)
-    {
-        if (moves.values[i] > moves.values[index])
-            index = i;
-    }
-    std::swap(moves.list[index], moves.list[0 + sorted]);
-    std::swap(moves.values[index], moves.values[0 + sorted]);
 }
 
 Score Search::probeTB(ThreadData *td)
@@ -969,7 +968,7 @@ Move Search::probeDTZ(ThreadData *td)
             if ((promoTranslation[promo] == NONETYPE && !promoted(move)) ||
                 (promo < 5 && promoTranslation[promo] == piece(move) && promoted(move)))
             {
-                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), elapsed(), " " + printMove(move));
+                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(), " " + printMove(move));
                 return move;
             }
         }

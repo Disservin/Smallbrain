@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -49,3 +50,9 @@ void prefetch(void *addr);
 
 // prints a move in uci format
 std::string printMove(Move move);
+
+static std::atomic<int64_t> means[2];
+
+void mean_of(int v);
+
+void print_mean();

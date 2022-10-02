@@ -177,3 +177,15 @@ std::string printMove(Move move)
         m += PieceTypeToPromPiece[piece(move)];
     return m;
 }
+
+void mean_of(int v)
+{
+    means[0]++;
+    means[1] += v;
+}
+
+void print_mean()
+{
+    if (means[0])
+        std::cout << "Total " << means[0] << " Mean " << (double)means[1] / means[0] << std::endl;
+}
