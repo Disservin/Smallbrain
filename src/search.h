@@ -39,6 +39,25 @@ struct Stack
     int eval;
 };
 
+enum Staging
+{
+    TT_MOVE,
+    EVAL_OTHER,
+    OTHER
+};
+
+struct Movepicker
+{
+    Staging stage;
+    int i;
+    int ttIndex;
+};
+
+inline void operator++(Staging &s, int)
+{
+    s = Staging((int)s + 1);
+}
+
 struct ThreadData
 {
     Board board;
@@ -128,6 +147,7 @@ class Search
     int scoreMove(Move move, int ply, bool ttMove, ThreadData *td);
 
     // utility functions
+    Move Nextmove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss);
 
     std::string get_pv();
     long long elapsed();

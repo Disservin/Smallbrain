@@ -158,7 +158,234 @@ template <Color c> U64 PawnPushBoth(U64 occAll, Square sq)
     }
 }
 
-template <Color c> U64 LegalPawnMoves(const Board &board, Square sq)
+template <Direction direction> constexpr U64 shift(U64 b)
+{
+    switch (direction)
+    {
+    case NORTH:
+        return b << 8;
+    case SOUTH:
+        return b >> 8;
+    case NORTH_WEST:
+        return (b & ~MASK_FILE[0]) << 7;
+    case WEST:
+        return (b & ~MASK_FILE[0]) >> 1;
+    case SOUTH_WEST:
+        return (b & ~MASK_FILE[0]) >> 9;
+    case NORTH_EAST:
+        return (b & ~MASK_FILE[7]) << 9;
+    case EAST:
+        return (b & ~MASK_FILE[7]) << 1;
+    case SOUTH_EAST:
+        return (b & ~MASK_FILE[7]) >> 7;
+    }
+}
+
+template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
+{
+    U64 pawns_mask = board.Pawns<c>();
+    U64 empty = ~board.occAll;
+    U64 enemy = board.Enemy<c>();
+    U64 moveD = ~board.pinD;
+    U64 moveHV = ~board.pinHV;
+
+    constexpr Direction UP = c == White ? NORTH : SOUTH;
+    constexpr Direction UP_LEFT = c == White ? NORTH_WEST : SOUTH_EAST;
+    constexpr Direction UP_RIGHT = c == White ? NORTH_EAST : SOUTH_WEST;
+    constexpr Direction DOWN = c == Black ? NORTH : SOUTH;
+    constexpr Direction DOWN_LEFT = c == Black ? NORTH_EAST : SOUTH_WEST;
+    constexpr Direction DOWN_RIGHT = c == Black ? NORTH_WEST : SOUTH_EAST;
+    constexpr U64 RANK_BEFORE_PROMO = c == White ? MASK_RANK[6] : MASK_RANK[1];
+    constexpr U64 doublePushRank = c == White ? MASK_RANK[2] : MASK_RANK[5];
+    const bool EP = board.enPassantSquare != NO_SQ;
+
+    U64 singlePush = shift<UP>(pawns_mask & moveHV & moveD & ~RANK_BEFORE_PROMO) & empty;
+    U64 doublePush = shift<UP>(singlePush & doublePushRank) & empty;
+    U64 captureRight = shift<UP_RIGHT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
+    U64 captureLeft = shift<UP_LEFT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
+    singlePush &= board.checkMask;
+    doublePush &= board.checkMask;
+
+    U64 promotionPawns = pawns_mask & RANK_BEFORE_PROMO;
+
+    while (promotionPawns)
+    {
+        Square from = poplsb(promotionPawns);
+        U64 moves = LegalPawnMovesSingle<c>(board, from);
+        while (moves)
+        {
+            Square to = poplsb(moves);
+            movelist.Add(make(QUEEN, from, to, true));
+            movelist.Add(make(ROOK, from, to, true));
+            movelist.Add(make(KNIGHT, from, to, true));
+            movelist.Add(make(BISHOP, from, to, true));
+        }
+    }
+
+    if (EP)
+    {
+        Square ep = board.enPassantSquare;
+        U64 left = shift<UP_LEFT>(pawns_mask & ~RANK_BEFORE_PROMO) & (1ULL << ep);
+        U64 right = shift<UP_RIGHT>(pawns_mask & ~RANK_BEFORE_PROMO) & (1ULL << ep);
+
+        while (left || right)
+        {
+            Square to;
+            Square from;
+            if (left)
+            {
+                to = poplsb(left);
+                from = Square(to + DOWN_RIGHT);
+            }
+            else
+            {
+                to = poplsb(right);
+                from = Square(to + DOWN_LEFT);
+            }
+
+            if ((1ULL << from) & board.pinHV)
+                continue;
+            if ((1ULL << from) & board.pinD)
+                continue;
+            if (board.checkMask != DEFAULT_CHECKMASK)
+            {
+                // If we are in check and the en passant square lies on our attackmask and the en passant piece gives
+                // check return the ep mask as a move square
+                if (board.checkMask & (1ULL << (ep - (c * -2 + 1) * 8)))
+                    movelist.Add(make(PAWN, from, to, false));
+                continue;
+            }
+            Square tP = c == White ? Square((int)ep - 8) : Square((int)ep + 8);
+            Square kSQ = board.KingSQ<c>();
+            U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
+            if (enemyQueenRook & MASK_RANK[square_rank(kSQ)])
+            {
+                Piece ourPawn = board.makePiece(PAWN, c);
+                Piece theirPawn = board.makePiece(PAWN, ~c);
+                board.removePiece<false>(ourPawn, from);
+                board.removePiece<false>(theirPawn, tP);
+                board.placePiece<false>(ourPawn, ep);
+                if (!((RookAttacks(kSQ, board.All()) & (enemyQueenRook))))
+                    movelist.Add(make(PAWN, from, to, false));
+                board.placePiece<false>(ourPawn, from);
+                board.placePiece<false>(theirPawn, tP);
+                board.removePiece<false>(ourPawn, ep);
+            }
+            else
+            {
+                movelist.Add(make(PAWN, from, to, false));
+            }
+        }
+    }
+
+    U64 pinnedPawns = pawns_mask & ~moveD;
+    while (pinnedPawns)
+    {
+        Square from = poplsb(pinnedPawns);
+        U64 moves = PawnAttacks(from, c) & board.pinD & board.checkMask & board.occEnemy;
+        while (moves)
+        {
+            Square to = poplsb(moves);
+            movelist.Add(make(PAWN, from, to, false));
+        }
+    }
+
+    pinnedPawns = pawns_mask & ~moveHV;
+    while (pinnedPawns)
+    {
+        Square from = poplsb(pinnedPawns);
+        U64 moves = PawnPushBoth<c>(board.occAll, from) & board.pinHV & board.checkMask;
+        while (moves)
+        {
+            Square to = poplsb(moves);
+            movelist.Add(make(PAWN, from, to, false));
+        }
+    }
+
+    while (singlePush)
+    {
+        Square to = poplsb(singlePush);
+        movelist.Add(make(PAWN, Square(to + DOWN), to, false));
+    }
+
+    while (doublePush)
+    {
+        Square to = poplsb(doublePush);
+        movelist.Add(make(PAWN, Square(to + DOWN + DOWN), to, false));
+    }
+
+    while (captureRight)
+    {
+        Square to = poplsb(captureRight);
+        movelist.Add(make(PAWN, Square(to + DOWN_LEFT), to, false));
+    }
+
+    while (captureLeft)
+    {
+        Square to = poplsb(captureLeft);
+        movelist.Add(make(PAWN, Square(to + DOWN_RIGHT), to, false));
+    }
+}
+
+template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
+{
+    U64 pawns_mask = board.Pawns<c>();
+    U64 enemy = board.Enemy<c>();
+    U64 moveD = ~board.pinD;
+    U64 moveHV = ~board.pinHV;
+
+    constexpr Direction UP_LEFT = c == White ? NORTH_WEST : SOUTH_EAST;
+    constexpr Direction UP_RIGHT = c == White ? NORTH_EAST : SOUTH_WEST;
+    constexpr Direction DOWN_LEFT = c == Black ? NORTH_EAST : SOUTH_WEST;
+    constexpr Direction DOWN_RIGHT = c == Black ? NORTH_WEST : SOUTH_EAST;
+
+    constexpr U64 RANK_BEFORE_PROMO = c == White ? MASK_RANK[6] : MASK_RANK[1];
+
+    U64 captureRight = shift<UP_RIGHT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
+    U64 captureLeft = shift<UP_LEFT>(pawns_mask & ~RANK_BEFORE_PROMO & moveD & moveHV) & enemy & board.checkMask;
+
+    U64 promotionPawns = pawns_mask & RANK_BEFORE_PROMO;
+
+    while (promotionPawns)
+    {
+        Square from = poplsb(promotionPawns);
+        U64 moves = LegalPawnMovesSingle<c>(board, from);
+        while (moves)
+        {
+            Square to = poplsb(moves);
+            movelist.Add(make(QUEEN, from, to, true));
+            movelist.Add(make(ROOK, from, to, true));
+            movelist.Add(make(KNIGHT, from, to, true));
+            movelist.Add(make(BISHOP, from, to, true));
+        }
+    }
+
+    U64 pinnedPawns = pawns_mask & ~moveD;
+    while (pinnedPawns)
+    {
+        Square from = poplsb(pinnedPawns);
+        U64 moves = PawnAttacks(from, c) & board.pinD & board.checkMask & board.occEnemy;
+        while (moves)
+        {
+            Square to = poplsb(moves);
+            movelist.Add(make(PAWN, from, to, false));
+        }
+    }
+
+    while (captureRight)
+    {
+        Square to = poplsb(captureRight);
+        movelist.Add(make(PAWN, Square(to + DOWN_LEFT), to, false));
+    }
+
+    while (captureLeft)
+    {
+        Square to = poplsb(captureLeft);
+        movelist.Add(make(PAWN, Square(to + DOWN_RIGHT), to, false));
+    }
+}
+
+template <Color c> U64 LegalPawnMovesSingle(const Board &board, Square sq)
 {
     // If we are pinned diagonally we can only do captures which are on the pin_dg and on the board.checkMask
     if (board.pinD & (1ULL << sq))
@@ -170,7 +397,7 @@ template <Color c> U64 LegalPawnMoves(const Board &board, Square sq)
     return ((PawnAttacks(sq, c) & board.occEnemy) | PawnPushBoth<c>(board.occAll, sq)) & board.checkMask;
 }
 
-template <Color c> U64 LegalPawnMovesEP(Board &board, Square sq, Square ep)
+template <Color c> U64 LegalPawnMovesEPSingle(Board &board, Square sq, Square ep)
 {
     // If we are pinned diagonally we can only do captures which are on the pin_dg and on the board.checkMask
     if (board.pinD & (1ULL << sq))
@@ -289,24 +516,6 @@ template <Color c> U64 LegalKingMovesCastling(const Board &board, Square sq)
     return moves;
 }
 
-template <Color c> U64 LegalPawnCaptures(Board &board, Square sq, Square ep)
-{
-    U64 enemy = board.occEnemy;
-    // If we are pinned diagonally we can only do captures which are on the pin_dg and on the board.checkMask
-    if (board.pinD & (1ULL << sq))
-        return PawnAttacks(sq, c) & board.pinD & board.checkMask & (enemy | (1ULL << ep));
-    // If we are pinned horizontally/vertically we can do no captures
-    if (board.pinHV & (1ULL << sq))
-        return 0ULL;
-    U64 attacks = PawnAttacks(sq, c);
-    U64 pawnPromote = 0ULL;
-    if ((square_rank(sq) == 1 && c == Black) || (square_rank(sq) == 6 && c == White))
-    {
-        pawnPromote = PawnPushSingle<c>(board.occAll, sq) & ~board.occAll;
-    }
-    return ((attacks & enemy) | pawnPromote) & board.checkMask;
-}
-
 U64 LegalKnightCaptures(const Board &board, Square sq)
 {
     if (board.pinD & (1ULL << sq) || board.pinHV & (1ULL << sq))
@@ -361,34 +570,13 @@ template <Color c> Movelist legalmoves(Board &board)
     if (board.doubleCheck == 2)
         return movelist;
 
-    U64 pawns_mask = board.Pawns<c>();
     U64 knights_mask = board.Knights<c>();
     U64 bishops_mask = board.Bishops<c>();
     U64 rooks_mask = board.Rooks<c>();
     U64 queens_mask = board.Queens<c>();
 
-    const bool noEP = board.enPassantSquare == NO_SQ;
+    LegalPawnMovesAll<c>(board, movelist);
 
-    while (pawns_mask)
-    {
-        Square from = poplsb(pawns_mask);
-        U64 moves = noEP ? LegalPawnMoves<c>(board, from) : LegalPawnMovesEP<c>(board, from, board.enPassantSquare);
-        while (moves)
-        {
-            Square to = poplsb(moves);
-            if (square_rank(to) == 7 || square_rank(to) == 0)
-            {
-                movelist.Add(make(QUEEN, from, to, true));
-                movelist.Add(make(ROOK, from, to, true));
-                movelist.Add(make(KNIGHT, from, to, true));
-                movelist.Add(make(BISHOP, from, to, true));
-            }
-            else
-            {
-                movelist.Add(make(PAWN, from, to, false));
-            }
-        }
-    }
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
@@ -451,31 +639,12 @@ template <Color c> Movelist capturemoves(Board &board)
     if (board.doubleCheck == 2)
         return movelist;
 
-    U64 pawns_mask = board.Pawns<c>();
+    LegalPawnMovesCapture<c>(board, movelist);
+
     U64 knights_mask = board.Knights<c>();
     U64 bishops_mask = board.Bishops<c>();
     U64 rooks_mask = board.Rooks<c>();
     U64 queens_mask = board.Queens<c>();
-    while (pawns_mask)
-    {
-        Square from = poplsb(pawns_mask);
-        U64 moves = LegalPawnCaptures<c>(board, from, board.enPassantSquare);
-        while (moves)
-        {
-            Square to = poplsb(moves);
-            if (square_rank(to) == 7 || square_rank(to) == 0)
-            {
-                movelist.Add(make(QUEEN, from, to, true));
-                movelist.Add(make(ROOK, from, to, true));
-                movelist.Add(make(KNIGHT, from, to, true));
-                movelist.Add(make(BISHOP, from, to, true));
-            }
-            else
-            {
-                movelist.Add(make(PAWN, from, to, false));
-            }
-        }
-    }
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
@@ -582,7 +751,8 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (pawns_mask)
     {
         Square from = poplsb(pawns_mask);
-        U64 moves = noEP ? LegalPawnMoves<c>(board, from) : LegalPawnMovesEP<c>(board, from, board.enPassantSquare);
+        U64 moves =
+            noEP ? LegalPawnMovesSingle<c>(board, from) : LegalPawnMovesEPSingle<c>(board, from, board.enPassantSquare);
         while (moves)
         {
             return true;

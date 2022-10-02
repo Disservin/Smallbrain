@@ -102,6 +102,10 @@ enum CastlingRight : uint8_t
     bq = 8
 };
 
+enum Direction : int8_t {
+    NORTH = 8, WEST = -1, SOUTH = -8, EAST = 1, NORTH_EAST = 9, NORTH_WEST = 7, SOUTH_WEST = -9, SOUTH_EAST = -7
+};
+
 // clang-format off
 const std::string squareToString[64] = {
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
@@ -255,5 +259,12 @@ static std::unordered_map<PieceType, char> PieceTypeToPromPiece(
 static std::unordered_map<char, PieceType> pieceToInt(
     {{'n', KNIGHT}, {'b', BISHOP}, {'r', ROOK}, {'q', QUEEN}, {'N', KNIGHT}, {'B', BISHOP}, {'R', ROOK}, {'Q', QUEEN}});
 
-static std::unordered_map<Square, CastlingRight> castlingMap(
+static std::unordered_map<Square, CastlingRight> castlingMapRook(
     {{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});
+
+static std::unordered_map<Square, CastlingRight> castlingMapKing(
+    {{SQ_C1, wq}, {SQ_G1, wk}, {SQ_C8, bq}, {SQ_G8, bk}});
+
+static std::unordered_map<Square, U64> castlingPath(
+    {{SQ_G1, WK_CASTLE_MASK}, {SQ_C1, WQ_CASTLE_MASK},
+     {SQ_G8, BK_CASTLE_MASK}, {SQ_C8, BQ_CASTLE_MASK}});
