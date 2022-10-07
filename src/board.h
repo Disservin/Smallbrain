@@ -1,14 +1,13 @@
 #pragma once
+
 #include <array>
 #include <bitset>
 #include <iostream>
-#include <map>
 #include <string>
 
 #include "attacks.h"
 #include "helper.h"
 #include "nnue.h"
-#include "scores.h"
 #include "tt.h"
 #include "types.h"
 #include "zobrist.h"
@@ -35,82 +34,93 @@ struct State
     }
 };
 
-struct States
-{
-    std::vector<State> list;
-
-    void Add(State s)
-    {
-        list.push_back(s);
-    }
-
-    State Get()
-    {
-        State s = list.back();
-        list.pop_back();
-        return s;
-    }
-};
-
 class Board
 {
   public:
-    uint8_t castlingRights{};
-    Square enPassantSquare{};
-    uint8_t halfMoveClock{};
-    uint16_t fullMoveNumber{};
-    Color sideToMove = White;
+    Color sideToMove;
 
-    Piece board[MAX_SQ]{None};
-    U64 Bitboards[12]{};
-    U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ]{};
+    // NO_SQ when enpassant is not possible
+    Square enPassantSquare;
 
-    // all bits set
+    // castling right is encoded in 8bit
+    // wk = 1
+    // wq = 2
+    // bk = 4
+    // bq = 8
+    // 0  0  0  0  0  0  0  0
+    // wk wq bk bq
+    uint8_t castlingRights;
+
+    // halfmoves start at 0
+    uint8_t halfMoveClock;
+
+    // full moves start at 1
+    uint16_t fullMoveNumber;
+
+    // keeps track of previous hashes, used for
+    // repetition detection
+    std::vector<U64> hashHistory;
+
+    // keeps track on how many checks there currently are
+    // 2 = only king moves are valid
+    // 1 = king move, block/capture
+    uint8_t doubleCheck;
+
+    // the path between horizontal/vertical pinners and
+    // the pinned is set
+    U64 pinHV;
+
+    // the path between diagonal pinners and
+    // the pinned is set
+    U64 pinD;
+
+    // all bits set if we are not in check
+    // otherwise the path between the king and the checker
+    // in case of knights giving check only the knight square
+    // is checked
     U64 checkMask = DEFAULT_CHECKMASK;
 
-    U64 pinHV{};
-    U64 pinD{};
-    uint8_t doubleCheck{};
-    U64 hashKey{};
-    U64 occUs;
+    // all squares that are seen by an enemy piece
+    U64 seen;
+
+    // Occupation Bitboards
     U64 occEnemy;
-    U64 occAll{};
-    U64 enemyEmptyBB{};
-    U64 seen{};
+    U64 occUs;
+    U64 occAll;
+    U64 enemyEmptyBB;
 
-    std::vector<U64> hashHistory;
-    States prevStates;
+    // current hashkey
+    U64 hashKey;
 
-    std::array<int16_t, HIDDEN_BIAS> accumulator;
-    std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
+    U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ];
 
-    void accumulate();
+    std::vector<State> prevStates;
+
+    U64 Bitboards[12] = {};
+    Piece board[MAX_SQ];
 
     Board();
-    U64 zobristHash();
 
-    void initializeLookupTables();
+    // load all weights and inputs from scratch
+    void accumulate();
 
-    // Finds what piece are on the square using the bitboards
+    // Finds what piece is on the square using the bitboards
     Piece pieceAtBB(Square sq);
 
-    // Finds what piece are on the square using the board (more performant)
+    // Finds what piece is on the square using the board (more performant)
     Piece pieceAtB(Square sq);
 
-    // aplys a new Fen to the board
+    // applys a new Fen to the board
     void applyFen(std::string fen, bool updateAcc = true);
 
     // returns a Fen string of the current board
     std::string getFen();
 
-    // prints any bitboard passed to it
+    // prints any bitboard
     void printBitboard(U64 bb);
 
-    // prints the board
+    // prints the current board
     void print();
-
-    // makes a Piece from only the piece type and color
-    Piece makePiece(PieceType type, Color c);
 
     // detects if the position is a repetition by default 2, fide would be 3
     bool isRepetition(int draw = 1);
@@ -118,7 +128,32 @@ class Board
     // only pawns + king = true else false
     bool nonPawnMat(Color c);
 
+    // returns the King Square of the specified color
+    Square KingSQ(Color c);
+
+    // returns the King Square of the specified color
+    template <Color c> Square KingSQ();
+
+    // returns all pieces of the other color
+    U64 Enemy(Color c);
+
+    // returns all pieces of the other color
+    template <Color c> U64 Enemy();
+
+    // returns a bitboard of our pieces
+    U64 Us(Color c);
+
+    // returns a bitboard of our pieces
+    template <Color c> U64 Us();
+
+    // returns all empty squares or squares with an enemy on them
+    U64 EnemyEmpty(Color c);
+
+    // returns all pieces color
+    U64 All();
+
     // Gets the piece of the specified color
+
     U64 Pawns(Color c);
     U64 Knights(Color c);
     U64 Bishops(Color c);
@@ -132,106 +167,107 @@ class Board
     template <Color c> U64 Queens();
     template <Color c> U64 Kings();
 
-    // can also updates accumulator
-    template <bool update> void removePiece(Piece piece, Square sq);
-    template <bool update> void placePiece(Piece piece, Square sq);
+    // Is square attacked by color c
+    bool isSquareAttacked(Color c, Square sq);
+
+    // attackers used for SEE
+    U64 allAttackers(Square sq, U64 occupiedBB);
+    U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
+
+    /// @brief plays the move on the internal board
+    /// @tparam updateNNUE update true = update nnue
+    /// @param move
+    template <bool updateNNUE> void makeMove(Move move);
+
+    /// @brief unmake a move played on the internal board
+    /// @tparam updateNNUE update true = update nnue
+    /// @param move
+    template <bool updateNNUE> void unmakeMove(Move move);
+
+    // make a nullmove
+    void makeNullMove();
+
+    // unmake a nullmove
+    void unmakeNullMove();
+
+    std::array<int16_t, HIDDEN_BIAS> &getAccumulator();
+
+    // update the internal board representation
+
+    /// @brief Remove a Piece from the board
+    /// @tparam update true = update nnue
+    /// @param piece
+    /// @param sq
+    template <bool updateNNUE> void removePiece(Piece piece, Square sq);
+
+    /// @brief Place a Piece on the board
+    /// @tparam update
+    /// @param piece
+    /// @param sq
+    template <bool updateNNUE> void placePiece(Piece piece, Square sq);
+
+  private:
+    std::array<int16_t, HIDDEN_BIAS> accumulator;
+    std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
+
+    // calculate the current zobrist hash from scratch
+    U64 zobristHash();
+
+    // initialize SQUARES_BETWEEN_BB array
+    void initializeLookupTables();
+
+    // update the hash
 
     U64 updateKeyPiece(Piece piece, Square sq);
     U64 updateKeyCastling();
     U64 updateKeyEnPassant(Square sq);
     U64 updateKeySideToMove();
-
-    // returns the King Square of the specified color
-    Square KingSQ(Color c);
-    template <Color c> Square KingSQ();
-    // returns all pieces of color
-    U64 Us(Color c);
-    template <Color c> U64 Us();
-
-    // returns all pieces of the other color
-    U64 Enemy(Color c);
-    template <Color c> U64 Enemy();
-
-    // returns all pieces color
-    U64 All();
-
-    // returns all empty squares or squares with an enemy on them
-    U64 EnemyEmpty(Color c);
-
-    // Is square attacked by color c
-    bool isSquareAttacked(Color c, Square sq);
-    U64 allAttackers(Square sq, U64 occupiedBB);
-    U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
-
-    // plays the move on the internal board
-    template <bool updateNNUE> void makeMove(Move move);
-    template <bool updateNNUE> void unmakeMove(Move move);
-    void makeNullMove();
-    void unmakeNullMove();
 };
 
-template <bool update> void Board::removePiece(Piece piece, Square sq)
+template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq)
 {
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
-    if constexpr (update)
+    if constexpr (updateNNUE)
         NNUE::deactivate(accumulator, sq + piece * 64);
 }
 
-template <bool update> void Board::placePiece(Piece piece, Square sq)
+template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq)
 {
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
-    if constexpr (update)
+    if constexpr (updateNNUE)
         NNUE::activate(accumulator, sq + piece * 64);
 }
 
 template <Color c> U64 Board::Pawns()
 {
-    if (c == White)
-        return Bitboards[WhitePawn];
-    else
-        return Bitboards[BlackPawn];
+    return Bitboards[c == White ? WhitePawn : BlackPawn];
 }
 
 template <Color c> U64 Board::Knights()
 {
-    if (c == White)
-        return Bitboards[WhiteKnight];
-    else
-        return Bitboards[BlackKnight];
+    return Bitboards[c == White ? WhiteKnight : BlackKnight];
 }
 
 template <Color c> U64 Board::Bishops()
 {
-    if (c == White)
-        return Bitboards[WhiteBishop];
-    else
-        return Bitboards[BlackBishop];
+    return Bitboards[c == White ? WhiteBishop : BlackBishop];
 }
 
 template <Color c> U64 Board::Rooks()
 {
-    if (c == White)
-        return Bitboards[WhiteRook];
-    else
-        return Bitboards[BlackRook];
+    return Bitboards[c == White ? WhiteRook : BlackRook];
 }
 
 template <Color c> U64 Board::Queens()
 {
-    if (c == White)
-        return Bitboards[WhiteQueen];
-    else
-        return Bitboards[BlackQueen];
+    return Bitboards[c == White ? WhiteQueen : BlackQueen];
 }
 
 template <Color c> U64 Board::Kings()
 {
-    if (c == White)
-        return Bitboards[WhiteKing];
-    else
-        return Bitboards[BlackKing];
+    return Bitboards[c == White ? WhiteKing : BlackKing];
 }
 
 template <Color c> U64 Board::Us()

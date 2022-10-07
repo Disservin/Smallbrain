@@ -1,15 +1,9 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
-#include <cmath>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <stdio.h>
-#include <string>
-#include <vector>
+#include <cstdint> // int32_t
+#include <cstdio>  // file reading
+#include <cstring> // memcpy
 
 #define INPUT_WEIGHTS 64 * 12
 #define HIDDEN_BIAS 512
@@ -26,8 +20,16 @@ extern int32_t outputBias[OUTPUT_BIAS];
 namespace NNUE
 {
 int16_t relu(int16_t x);
+
+// load the weights and bias
 void init(const char *filename);
+
+// activate a certain input and update the accumulator
 void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
+
+// deactivate a certain input and update the accumulator
 void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
+
+// return the nnue evaluation
 int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator);
 } // namespace NNUE

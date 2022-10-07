@@ -1,5 +1,4 @@
 #pragma once
-#include "board.h"
 #include "types.h"
 
 static constexpr U64 RANDOM_ARRAY[781] = {

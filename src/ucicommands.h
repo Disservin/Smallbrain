@@ -6,7 +6,7 @@
 #include "evaluation.h"
 #include "nnue.h"
 #include "perft.h"
-#include "scores.h"
+
 #include "search.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 #include "timemanager.h"
@@ -22,16 +22,14 @@ namespace uciCommand
 
 void uciInput(uciOptions options);
 void isreadyInput();
-void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen &dg);
+void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen::TrainingData &dg);
 
 // we parse the uci input and call the corresponding function
-void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg);
+void parseInput(std::string input, Search &searcher, Board &board, Datagen::TrainingData &dg);
 
-void stopThreads(Search &searcher, Datagen &dg);
+void stopThreads(Search &searcher, Datagen::TrainingData &dg);
 
-void signalCallbackHandler(Search &searcher, Datagen &dg, int signum);
-
-void quit(Search &searcher, Datagen &dg);
+void quit(Search &searcher, Datagen::TrainingData &dg);
 
 // elementInVector searches el in the tokens and returns false if not found
 bool elementInVector(std::string el, std::vector<std::string> tokens);
@@ -41,6 +39,9 @@ int findElement(std::string param, std::vector<std::string> tokens);
 
 // findElementString returns the next (string) value after a param
 std::string findElementString(std::string param, std::vector<std::string> tokens);
+
+// test if string contains string
+bool stringContain(std::string s, std::string origin);
 
 // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
 const std::string currentDateTime();

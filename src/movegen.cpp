@@ -260,8 +260,8 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
             U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
             if (enemyQueenRook & MASK_RANK[square_rank(kSQ)])
             {
-                Piece ourPawn = board.makePiece(PAWN, c);
-                Piece theirPawn = board.makePiece(PAWN, ~c);
+                Piece ourPawn = makePiece(PAWN, c);
+                Piece theirPawn = makePiece(PAWN, ~c);
                 board.removePiece<false>(ourPawn, from);
                 board.removePiece<false>(theirPawn, tP);
                 board.placePiece<false>(ourPawn, ep);
@@ -429,8 +429,8 @@ template <Color c> U64 LegalPawnMovesEPSingle(Board &board, Square sq, Square ep
         U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
         if ((enemyQueenRook)&MASK_RANK[square_rank(kSQ)])
         {
-            Piece ourPawn = board.makePiece(PAWN, c);
-            Piece theirPawn = board.makePiece(PAWN, ~c);
+            Piece ourPawn = makePiece(PAWN, c);
+            Piece theirPawn = makePiece(PAWN, ~c);
             board.removePiece<false>(ourPawn, sq);
             board.removePiece<false>(theirPawn, tP);
             board.placePiece<false>(ourPawn, ep);

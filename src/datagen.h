@@ -7,15 +7,15 @@
 #include "syzygy/Fathom/src/tbprobe.h"
 #include "types.h"
 
-#include <algorithm>
-#include <atomic>
 #include <cstring>
 #include <iomanip> // std::setprecision
 #include <random>
-#include <thread>
-#include <vector>
 
 extern std::atomic<bool> useTB;
+extern std::atomic<bool> UCI_FORCE_STOP;
+
+namespace Datagen
+{
 
 struct fenData
 {
@@ -25,9 +25,9 @@ struct fenData
     bool use;
 };
 
-extern std::atomic<bool> UCI_FORCE_STOP;
+std::string stringFenData(fenData fenData, double score);
 
-class Datagen
+class TrainingData
 {
   public:
     void generate(int workers = 4, std::string book = "", int depth = 7);
@@ -36,4 +36,4 @@ class Datagen
     std::vector<std::thread> threads;
 };
 
-std::string stringFenData(fenData fenData, double score);
+} // namespace Datagen

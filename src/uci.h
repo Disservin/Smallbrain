@@ -1,22 +1,12 @@
 #pragma once
 
-#include <algorithm>
-#include <atomic>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <math.h>
-#include <signal.h>
-#include <sstream>
-#include <thread>
-
 #include "benchmark.h"
 #include "board.h"
 #include "datagen.h"
 #include "evaluation.h"
+#include "helper.h"
 #include "nnue.h"
 #include "perft.h"
-#include "scores.h"
 #include "search.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 #include "timemanager.h"
@@ -43,17 +33,27 @@ extern TEntry *TTable;
         options.addDoubleTuneOption(#x, "spin", x, min, max);                                                          \
     } while (0);
 
-int uciLoop(int argc, char **argv);
+class UCI
+{
+  public:
+    UCI();
 
-void signalCallbackHandler(int signum);
+    int uciLoop(int argc, char **argv);
 
-std::vector<std::string> splitInput(std::string fen);
+  private:
+    Search searcher;
+    Board board;
+    uciOptions options;
+    Datagen::TrainingData genData;
 
-void stopThreads();
+    int threadCount;
 
-void quit();
+    void stopThreads();
 
-// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
-const std::string currentDateTime();
+    void quit();
 
-void parseArgs(int argc, char **argv, uciOptions options, Board board);
+    // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+    const std::string currentDateTime();
+
+    void parseArgs(int argc, char **argv, uciOptions options, Board board);
+};

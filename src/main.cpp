@@ -1,7 +1,13 @@
-#include "uci.h"
 
-U64 TT_SIZE = 16 * 1024 * 1024 / sizeof(TEntry); // initialise to 16 MB
-TEntry *TTable;                                  // TEntry size is 14 bytes
+#include "uci.h"
+#include <signal.h>
+
+// initialise to 16 MB
+U64 TT_SIZE = 16 * 1024 * 1024 / sizeof(TEntry);
+
+// Transposition Table
+// Each entry is 14 bytes large
+TEntry *TTable;
 
 std::atomic<bool> stopped;
 std::atomic<bool> UCI_FORCE_STOP;
@@ -21,14 +27,6 @@ int main(int argc, char **argv)
     // with.
     NNUE::init("default.nnue");
 
-    // Initialize reductions used in search
-    init_reductions();
-
-    signal(SIGINT, signalCallbackHandler);
-    signal(SIGTERM, signalCallbackHandler);
-#ifdef SIGBREAK
-    signal(SIGBREAK, signalCallbackHandler);
-#endif
-
-    uciLoop(argc, argv);
+    UCI communication = UCI();
+    communication.uciLoop(argc, argv);
 }

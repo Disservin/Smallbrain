@@ -1,6 +1,8 @@
 #pragma once
+#include <chrono>
 #include <iostream>
 #include <unordered_map>
+
 #define U64 unsigned long long
 #define Score int16_t
 #define TimePoint std::chrono::high_resolution_clock
@@ -21,6 +23,12 @@ constexpr Color operator~(Color C)
 {
     return Color(C ^ Black);
 }
+
+enum Phase : int
+{
+    MG,
+    EG
+};
 
 enum Piece : uint8_t
 {
@@ -80,12 +88,6 @@ enum Value : int16_t
     VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY
 };
 
-enum Phase : int
-{
-    MG,
-    EG
-};
-
 enum Flag : uint8_t
 {
     UPPERBOUND,
@@ -135,40 +137,56 @@ const std::string squareToString[64] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
 };
 
+// clang-format on
+
 static constexpr PieceType PieceToPieceType[12] = {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
                                                    PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
 
-//file masks
+// file masks
 static constexpr U64 MASK_FILE[8] = {
-    0x101010101010101, 0x202020202020202, 0x404040404040404, 0x808080808080808,
+    0x101010101010101,  0x202020202020202,  0x404040404040404,  0x808080808080808,
     0x1010101010101010, 0x2020202020202020, 0x4040404040404040, 0x8080808080808080,
 };
 
-//rank masks
-static constexpr U64 MASK_RANK[8] = {
-    0xff, 0xff00, 0xff0000, 0xff000000,
-    0xff00000000, 0xff0000000000, 0xff000000000000, 0xff00000000000000
-};
+// rank masks
+static constexpr U64 MASK_RANK[8] = {0xff,         0xff00,         0xff0000,         0xff000000,
+                                     0xff00000000, 0xff0000000000, 0xff000000000000, 0xff00000000000000};
 
-//diagonal masks
+// diagonal masks
 static constexpr U64 MASK_DIAGONAL[15] = {
-    0x80, 0x8040, 0x804020,
-    0x80402010, 0x8040201008, 0x804020100804,
-    0x80402010080402, 0x8040201008040201, 0x4020100804020100,
-    0x2010080402010000, 0x1008040201000000, 0x804020100000000,
-    0x402010000000000, 0x201000000000000, 0x100000000000000,
+    0x80,
+    0x8040,
+    0x804020,
+    0x80402010,
+    0x8040201008,
+    0x804020100804,
+    0x80402010080402,
+    0x8040201008040201,
+    0x4020100804020100,
+    0x2010080402010000,
+    0x1008040201000000,
+    0x804020100000000,
+    0x402010000000000,
+    0x201000000000000,
+    0x100000000000000,
 };
 
-//anti-diagonal masks
-static constexpr U64 MASK_ANTI_DIAGONAL[15] = {
-    0x1, 0x102, 0x10204,
-    0x1020408, 0x102040810, 0x10204081020,
-    0x1020408102040, 0x102040810204080, 0x204081020408000,
-    0x408102040800000, 0x810204080000000, 0x1020408000000000,
-    0x2040800000000000, 0x4080000000000000, 0x8000000000000000
-};
-
-// clang-format off
+// anti-diagonal masks
+static constexpr U64 MASK_ANTI_DIAGONAL[15] = {0x1,
+                                               0x102,
+                                               0x10204,
+                                               0x1020408,
+                                               0x102040810,
+                                               0x10204081020,
+                                               0x1020408102040,
+                                               0x102040810204080,
+                                               0x204081020408000,
+                                               0x408102040800000,
+                                               0x810204080000000,
+                                               0x1020408000000000,
+                                               0x2040800000000000,
+                                               0x4080000000000000,
+                                               0x8000000000000000};
 
 enum Move : uint16_t
 {
@@ -217,9 +235,9 @@ struct Time
 
 struct Limits
 {
-    int depth;
     Time time;
-    U64 nodes;
+    U64 nodes = 0;
+    int depth = MAX_PLY;
 };
 
 inline Score mate_in(int ply)
@@ -276,12 +294,4 @@ static std::unordered_map<PieceType, char> PieceTypeToPromPiece(
 static std::unordered_map<char, PieceType> pieceToInt(
     {{'n', KNIGHT}, {'b', BISHOP}, {'r', ROOK}, {'q', QUEEN}, {'N', KNIGHT}, {'B', BISHOP}, {'R', ROOK}, {'Q', QUEEN}});
 
-static std::unordered_map<Square, CastlingRight> castlingMapRook(
-    {{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});
-
-static std::unordered_map<Square, CastlingRight> castlingMapKing(
-    {{SQ_C1, wq}, {SQ_G1, wk}, {SQ_C8, bq}, {SQ_G8, bk}});
-
-static std::unordered_map<Square, U64> castlingPath(
-    {{SQ_G1, WK_CASTLE_MASK}, {SQ_C1, WQ_CASTLE_MASK},
-     {SQ_G8, BK_CASTLE_MASK}, {SQ_C8, BQ_CASTLE_MASK}});
+static std::unordered_map<Square, CastlingRight> castlingMapRook({{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});

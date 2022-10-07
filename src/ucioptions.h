@@ -1,10 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <atomic>
-#include <cstring>
-#include <iostream>
-#include <vector>
 
 #include "board.h"
 #include "nnue.h"
