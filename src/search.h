@@ -50,9 +50,9 @@ inline void operator++(Staging &s, int)
 
 struct Movepicker
 {
-    Staging stage;
-    int i;
     int ttMoveIndex;
+    int i;
+    Staging stage;
 };
 
 struct ThreadData
@@ -150,13 +150,13 @@ class Search
 
     // utility functions
 
-    /// @brief returns the next move to play, requires a clean Movepicker to start with
+    /// @brief requires a clean Movepicker to start with
     /// @param moves
     /// @param mp
     /// @param ttHit
     /// @param td
     /// @param ss
-    /// @return
+    /// @return next move
     Move nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss);
 
     // sorts the next bestmove to the front

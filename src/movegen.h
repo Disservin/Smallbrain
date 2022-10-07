@@ -4,18 +4,38 @@
 #include "helper.h"
 #include "types.h"
 
+PACK(struct ExtMove {
+    int value = -10 * VALUE_INFINITE;
+    Move move;
+});
+
 struct Movelist
 {
-    Move list[MAX_MOVES]{};
-    int values[MAX_MOVES]{};
+    ExtMove list[MAX_MOVES] = {};
     uint8_t size{};
 
     void Add(Move move)
     {
-        list[size] = move;
+        list[size].move = move;
+        list[size].value = 0;
         size++;
     }
+
+    inline constexpr ExtMove &operator[](int i)
+    {
+        return list[i];
+    }
 };
+
+inline constexpr bool operator>(const ExtMove &a, const ExtMove &b)
+{
+    return a.value > b.value;
+}
+
+inline constexpr bool operator<(const ExtMove &a, const ExtMove &b)
+{
+    return a.value < b.value;
+}
 
 namespace Movegen
 {
@@ -35,7 +55,7 @@ template <Color c> void init(const Board &board, Square sq);
 // returns a pawn push (only 1 square)
 template <Color c> U64 PawnPushSingle(U64 occAll, Square sq);
 template <Color c> U64 PawnPushBoth(U64 occAll, Square sq);
-template<Direction direction> constexpr U64 shift(U64 b);
+template <Direction direction> constexpr U64 shift(U64 b);
 
 // all legal moves for each piece
 template <Color c> U64 LegalPawnMovesSingle(const Board &board, Square sq);

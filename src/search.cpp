@@ -40,7 +40,7 @@ void Search::updateHistory(Move bestmove, int bonus, int depth, Movelist &moveli
 
     for (int i = 0; i < movelist.size; i++)
     {
-        const Move move = movelist.list[i];
+        const Move move = movelist[i].move;
         if (move == bestmove)
             continue;
 
@@ -114,21 +114,21 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     }
 
     // generate all legalmoves in case we are in check
-    Movelist ml = inCheck ? Movegen::legalmoves(td->board) : Movegen::capturemoves(td->board);
+    Movelist moves = inCheck ? Movegen::legalmoves(td->board) : Movegen::capturemoves(td->board);
 
     // assign a value to each move
-    for (int i = 0; i < ml.size; i++)
-        ml.values[i] = scoreqMove(ml.list[i], ss->ply, ttHit, td);
+    for (int i = 0; i < moves.size; i++)
+        moves[i].value = scoreqMove(moves[i].move, ss->ply, ttHit, td);
 
     // search the moves
-    for (int i = 0; i < (int)ml.size; i++)
+    for (int i = 0; i < (int)moves.size; i++)
     {
         // sort the best move to the front
         // we dont need to sort the whole list, since we might have a cutoff
         // and return before we checked all moves
-        sortMoves(ml, i);
+        sortMoves(moves, i);
 
-        Move move = ml.list[i];
+        Move move = moves[i].move;
 
         PieceType captured = type_of_piece(td->board.pieceAtB(to(move)));
 
@@ -138,7 +138,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
             continue;
 
         // see based capture pruning
-        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && ml.values[i] == -50'000)
+        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && moves[i].value == -50'000)
             continue;
 
         td->nodes++;
@@ -160,7 +160,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         }
     }
 
-    if (ml.size == 0)
+    if (moves.size == 0)
     {
         if (inCheck)
             return mated_in(ss->ply);
@@ -359,15 +359,15 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         return qsearch<PV>(alpha, beta, ss, td);
 
 moves:
-    Movelist ml = Movegen::legalmoves(td->board);
+    Movelist moves = Movegen::legalmoves(td->board);
 
     // if the move list is empty, we are in checkmate or stalemate
-    if (ml.size == 0)
+    if (moves.size == 0)
         return inCheck ? mated_in(ss->ply) : 0;
 
     // set root node move list size
     if (RootNode && td->id == 0)
-        rootSize = ml.size;
+        rootSize = moves.size;
 
     Movelist quietMoves;
     Score score = VALUE_NONE;
@@ -380,7 +380,7 @@ moves:
     Movepicker mp;
     mp.stage = TT_MOVE;
 
-    while ((move = nextMove(ml, mp, ttHit, td, ss)) != NO_MOVE)
+    while ((move = nextMove(moves, mp, ttHit, td, ss)) != NO_MOVE)
     {
         bool capture = td->board.pieceAtB(to(move)) != None;
 
@@ -785,9 +785,9 @@ Move Search::nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *t
         mp.ttMoveIndex = -1;
         for (mp.i = 0; mp.i < moves.size; mp.i++)
         {
-            const Move move = moves.list[mp.i];
-            moves.values[mp.i] = scoreMove(move, ss->ply, ttHit, td);
-            if (moves.values[mp.i] == TT_MOVE_SCORE)
+            const Move move = moves[mp.i].move;
+            moves[mp.i].value = scoreMove(move, ss->ply, ttHit, td);
+            if (moves[mp.i].value == TT_MOVE_SCORE)
             {
                 mp.ttMoveIndex = mp.i;
                 mp.i++;
@@ -797,12 +797,11 @@ Move Search::nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *t
     case EVAL_OTHER:
         for (; mp.i < moves.size; mp.i++)
         {
-            moves.values[mp.i] = scoreMove(moves.list[mp.i], ss->ply, false, td);
+            moves[mp.i].value = scoreMove(moves[mp.i].move, ss->ply, false, td);
         }
         if (mp.ttMoveIndex != -1)
         {
-            std::swap(moves.list[0], moves.list[mp.ttMoveIndex]);
-            std::swap(moves.values[0], moves.values[mp.ttMoveIndex]);
+            std::swap(moves[0], moves[mp.ttMoveIndex]);
             mp.i = 1;
         }
         else
@@ -813,7 +812,7 @@ Move Search::nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *t
         if (mp.i < moves.size)
         {
             sortMoves(moves, mp.i);
-            const Move move = moves.list[mp.i];
+            const Move move = moves[mp.i].move;
             mp.i++;
             return move;
         }
@@ -830,11 +829,10 @@ void Search::sortMoves(Movelist &moves, int sorted)
     int index = 0 + sorted;
     for (int i = 1 + sorted; i < moves.size; i++)
     {
-        if (moves.values[i] > moves.values[index])
+        if (moves[i] > moves[index])
             index = i;
     }
-    std::swap(moves.list[index], moves.list[0 + sorted]);
-    std::swap(moves.values[index], moves.values[0 + sorted]);
+    std::swap(moves[index], moves[0 + sorted]);
 }
 
 bool Search::exitEarly(uint64_t nodes, int ThreadId)
@@ -982,7 +980,7 @@ Move Search::probeDTZ(ThreadData *td)
 
     for (int i = 0; i < legalmoves.size; i++)
     {
-        Move move = legalmoves.list[i];
+        Move move = legalmoves[i].move;
         if (from(move) == sqFrom && to(move) == sqTo)
         {
             if ((promoTranslation[promo] == NONETYPE && !promoted(move)) ||

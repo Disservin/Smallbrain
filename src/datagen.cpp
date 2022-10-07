@@ -111,7 +111,7 @@ void TrainingData::randomPlayout(std::ofstream &file, int threadId, std::string 
             0, static_cast<std::mt19937::result_type>(movelist.size - 1)};
         int index = randomNum(e);
 
-        Move move = movelist.list[index];
+        Move move = movelist[index].move;
         board.makeMove<true>(move);
         ply++;
     }
