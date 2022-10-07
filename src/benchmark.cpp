@@ -1,5 +1,7 @@
-#include "board.h"
-#include "search.h"
+#include "benchmark.h"
+
+namespace Bench
+{
 
 // Benchmarks from Bitgenie
 std::string benchmarkfens[50] = {"r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
@@ -58,7 +60,6 @@ int startBench()
     U64 totalNodes = 0;
     Search searcher = Search();
     Time t;
-    int depth = 12;
 
     ThreadData td;
     td.id = 0;
@@ -69,11 +70,11 @@ int startBench()
 
     for (int positions = 0; positions < 50; positions++)
     {
-        stopped = false;
         std::cout << "\nPosition: " << positions + 1 << "/50 " << benchmarkfens[positions] << std::endl;
 
+        stopped = false;
         searcher.tds[0].board.applyFen(benchmarkfens[positions]);
-        searcher.iterativeDeepening(depth, 0, t, 0);
+        searcher.iterativeDeepening(12, 0, t, 0);
 
         totalNodes += searcher.tds[0].nodes;
     }
@@ -86,3 +87,5 @@ int startBench()
 
     return 0;
 }
+
+} // namespace Bench

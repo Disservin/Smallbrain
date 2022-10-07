@@ -1,25 +1,30 @@
 #include "datagen.h"
 
+#include <fstream>
+
 // random number generator
 std::random_device rd;
-std::mt19937 e(rd()); // or std::default_random_engine e{rd()};
+std::mt19937 e(rd());
 
-void Datagen::generate(int workers, std::string book, int depth)
+namespace Datagen
 {
-    for (std::thread &th : threads)
-    {
-        if (th.joinable())
-            th.join();
-    }
-    threads.clear();
 
+std::string stringFenData(fenData fenData, double score)
+{
+    std::ostringstream sstream;
+    sstream << std::fixed << std::setprecision(1) << score;
+    return std::string{fenData.fen + " [" + sstream.str() + "] " + std::to_string(fenData.score)};
+}
+
+void TrainingData::generate(int workers, std::string book, int depth)
+{
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&Datagen::infinitePlay, this, i, book, depth);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, book, depth);
     }
 }
 
-void Datagen::infinitePlay(int threadId, std::string book, int depth)
+void TrainingData::infinitePlay(int threadId, std::string book, int depth)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
@@ -47,7 +52,7 @@ void Datagen::infinitePlay(int threadId, std::string book, int depth)
     file.close();
 }
 
-void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book, int depth, int numLines)
+void TrainingData::randomPlayout(std::ofstream &file, int threadId, std::string &book, int depth, int numLines)
 {
     Board board;
 
@@ -246,9 +251,4 @@ void Datagen::randomPlayout(std::ofstream &file, int threadId, std::string &book
     }
 }
 
-std::string stringFenData(fenData fenData, double score)
-{
-    std::ostringstream sstream;
-    sstream << std::fixed << std::setprecision(1) << score;
-    return std::string{fenData.fen + " [" + sstream.str() + "] " + std::to_string(fenData.score)};
-}
+} // namespace Datagen

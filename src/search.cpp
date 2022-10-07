@@ -1,5 +1,19 @@
 #include "search.h"
 
+#include <algorithm> // clamp
+#include <cmath>
+
+// Initialize reduction table
+int reductions[MAX_PLY][MAX_MOVES];
+void init_reductions()
+{
+    for (int depth = 0; depth < MAX_PLY; depth++)
+    {
+        for (int moves = 0; moves < MAX_MOVES; moves++)
+            reductions[depth][moves] = 1 + log(depth) * log(moves) / 1.75;
+    }
+}
+
 int bonus(int depth)
 {
     return std::min(2000, depth * 150);
@@ -366,7 +380,7 @@ moves:
     Movepicker mp;
     mp.stage = TT_MOVE;
 
-    while ((move = Nextmove(ml, mp, ttHit, td, ss)) != NO_MOVE)
+    while ((move = nextMove(ml, mp, ttHit, td, ss)) != NO_MOVE)
     {
         bool capture = td->board.pieceAtB(to(move)) != None;
 
@@ -389,7 +403,7 @@ moves:
         madeMoves++;
 
         if (td->id == 0 && RootNode && !stopped && getTime() > 10000 && td->allowPrint)
-            std::cout << "info depth " << depth - inCheck << " currmove " << printMove(move) << " currmovenumber "
+            std::cout << "info depth " << depth - inCheck << " currmove " << uciRep(move) << " currmovenumber "
                       << signed(madeMoves) << "\n";
 
         td->board.makeMove<true>(move);
@@ -581,6 +595,12 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         }
     }
 
+    // dont stop analysis in infinite mode when max depth is reached
+    // wait for uci stop or quit
+    while (depth == MAX_PLY + 1 && searchTime == 0 && !stopped)
+    {
+    }
+
     // in case its depth we use current pv table move since it might be
     // that search was interrupted before search finished properly
     if (depth == 1)
@@ -590,7 +610,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     // allowprint is disabled in data generation
     if (threadId == 0 && td->allowPrint)
     {
-        std::cout << "bestmove " << printMove(bestmove) << std::endl;
+        std::cout << "bestmove " << uciRep(bestmove) << std::endl;
         stopped = true;
     }
     sr.move = bestmove;
@@ -626,7 +646,7 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
         Move dtzMove = probeDTZ(&this->tds[0]);
         if (dtzMove != NO_MOVE)
         {
-            std::cout << "bestmove " << printMove(dtzMove) << std::endl;
+            std::cout << "bestmove " << uciRep(dtzMove) << std::endl;
             stopped = true;
             return;
         }
@@ -647,10 +667,10 @@ bool Search::see(Move move, int threshold, Board &board)
     Square to_sq = to(move);
     PieceType attacker = type_of_piece(board.pieceAtB(from_sq));
     PieceType victim = type_of_piece(board.pieceAtB(to_sq));
-    int swap = piece_values_default[victim] - threshold;
+    int swap = pieceValuesDefault[victim] - threshold;
     if (swap < 0)
         return false;
-    swap -= piece_values_default[attacker];
+    swap -= pieceValuesDefault[attacker];
     if (swap >= 0)
         return true;
     U64 occ = (board.All() ^ (1ULL << from_sq)) | (1ULL << to_sq);
@@ -693,11 +713,11 @@ bool Search::see(Move move, int threshold, Board &board)
     return sT != Color((board.pieceAtB(from_sq) / 6));
 }
 
-int Search::mmlva(Move move, Board &board)
+int Search::mvvlva(Move move, Board &board)
 {
     int attacker = type_of_piece(board.pieceAtB(from(move))) + 1;
     int victim = type_of_piece(board.pieceAtB(to(move))) + 1;
-    return mvvlva[victim][attacker];
+    return mvvlvaArray[victim][attacker];
 }
 
 int Search::scoreMove(Move move, int ply, bool ttMove, ThreadData *td)
@@ -712,7 +732,7 @@ int Search::scoreMove(Move move, int ply, bool ttMove, ThreadData *td)
     }
     else if (td->board.pieceAtB(to(move)) != None)
     {
-        return see(move, 0, td->board) ? CAPTURE_SCORE + mmlva(move, td->board) : mmlva(move, td->board);
+        return see(move, 0, td->board) ? CAPTURE_SCORE + mvvlva(move, td->board) : mvvlva(move, td->board);
     }
     else if (td->killerMoves[0][ply] == move)
     {
@@ -740,7 +760,7 @@ int Search::scoreqMove(Move move, int ply, bool ttMove, ThreadData *td)
     }
     else if (td->board.pieceAtB(to(move)) != None)
     {
-        return see(move, 0, td->board) ? CAPTURE_SCORE + mmlva(move, td->board) : -50'000;
+        return see(move, 0, td->board) ? CAPTURE_SCORE + mvvlva(move, td->board) : -50'000;
     }
     else if (td->killerMoves[0][ply] == move)
     {
@@ -756,7 +776,7 @@ int Search::scoreqMove(Move move, int ply, bool ttMove, ThreadData *td)
     }
 }
 
-Move Search::Nextmove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss)
+Move Search::nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss)
 {
     switch (mp.stage)
     {
@@ -848,7 +868,7 @@ std::string Search::getPV()
 
     for (int i = 0; i < tds[0].pvLength[0]; i++)
     {
-        ss << " " << printMove(tds[0].pvTable[0][i]);
+        ss << " " << uciRep(tds[0].pvTable[0][i]);
     }
     return ss.str();
 }
@@ -968,7 +988,7 @@ Move Search::probeDTZ(ThreadData *td)
             if ((promoTranslation[promo] == NONETYPE && !promoted(move)) ||
                 (promo < 5 && promoTranslation[promo] == piece(move) && promoted(move)))
             {
-                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(), " " + printMove(move));
+                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(), " " + uciRep(move));
                 return move;
             }
         }
@@ -979,34 +999,3 @@ Move Search::probeDTZ(ThreadData *td)
 
     return NO_MOVE;
 }
-
-std::string outputScore(int score)
-{
-    if (std::abs(score) <= 4)
-        score = 0;
-
-    if (score >= VALUE_MATE_IN_PLY)
-        return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
-    else if (score <= VALUE_MATED_IN_PLY)
-        return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
-    else
-        return "cp " + std::to_string(score);
-}
-
-// clang-format off
-void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv)
-{
-    std::stringstream ss;
-
-    ss  << "info depth " << signed(depth) 
-        << " seldepth "  << signed(seldepth) 
-        << " score "     << outputScore(score)
-        << " tbhits "    << tbHits 
-        << " nodes "     << nodes 
-        << " nps "       << signed((nodes / (time + 1)) * 1000)
-        << " time "      << time 
-        << " pv"         << pv;
-
-    std::cout << ss.str() << std::endl;        
-}
-// clang-format on

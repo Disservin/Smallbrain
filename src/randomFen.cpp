@@ -1,59 +1,7 @@
 #include "randomFen.h"
 
-// random number generator
-// std::random_device rd;
-// std::mt19937 e{rd()}; // or std::default_random_engine e{rd()};
-std::uniform_int_distribution<int> distPieceCount{4, 32};
-std::uniform_int_distribution<int> distPiece{0, 30};
-std::uniform_int_distribution<int> distSquare{0, 63};
-std::uniform_int_distribution<int> distStm{0, 1};
+#include <cstring> //memset
 
-// Gets the file index of the square where 0 is the a-file
-uint8_t square_file(int sq)
-{
-    return sq & 7;
-}
-
-// Gets the rank index of the square where 0 is the first rank."""
-uint8_t square_rank(int sq)
-{
-    return sq >> 3;
-}
-
-class randomFenBoard
-{
-  public:
-    std::string generateRandomFen();
-
-  private:
-    Piece board[64];
-    int piece_count[12];
-    U64 bitboards[12];
-
-    U64 Pawns(Color color);
-    U64 Knights(Color color);
-    U64 Bishops(Color color);
-    U64 Rooks(Color color);
-    U64 Queens(Color color);
-    U64 Kings(Color color);
-
-    U64 All();
-
-    bool isAttacked(int sq, Color c);
-
-    void printBoard();
-};
-
-void randomFenBoard::printBoard()
-{
-    for (int i = 63; i >= 0; i -= 8)
-    {
-        std::cout << " " << piece_to_char[board[i - 7]] << " " << piece_to_char[board[i - 6]] << " "
-                  << piece_to_char[board[i - 5]] << " " << piece_to_char[board[i - 4]] << " "
-                  << piece_to_char[board[i - 3]] << " " << piece_to_char[board[i - 2]] << " "
-                  << piece_to_char[board[i - 1]] << " " << piece_to_char[board[i]] << " " << std::endl;
-    }
-}
 U64 randomFenBoard::Pawns(Color color)
 {
     return bitboards[color == Black ? BlackPawn : WhitePawn];
@@ -93,9 +41,9 @@ U64 randomFenBoard::All()
 
 bool randomFenBoard::isAttacked(int sq, Color c)
 {
-    if (Pawns(c) & PAWN_ATTACKS_TABLE[~c][sq])
+    if (Pawns(c) & PawnAttacks(sq, ~c))
         return true;
-    if (Knights(c) & KNIGHT_ATTACKS_TABLE[sq])
+    if (Knights(c) & KnightAttacks(sq))
         return true;
     if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, All()))
         return true;
@@ -111,6 +59,11 @@ std::string randomFenBoard::generateRandomFen()
     std::memset(piece_count, 0, sizeof(piece_count));
     std::memset(board, 0, sizeof(board));
     std::memset(bitboards, 0, sizeof(bitboards));
+
+    std::uniform_int_distribution<int> distPieceCount{4, 32};
+    std::uniform_int_distribution<int> distPiece{0, 30};
+    std::uniform_int_distribution<int> distSquare{0, 63};
+    std::uniform_int_distribution<int> distStm{0, 1};
 
     std::string fen = "";
     int placedPieces = 0;
@@ -180,7 +133,7 @@ std::string randomFenBoard::generateRandomFen()
         }
 
     skip:
-        if (square_file(i) == 7)
+        if (square_file(Square(i)) == 7)
         {
             if (emptySquares != 0)
                 fen += std::to_string(emptySquares);
@@ -226,18 +179,3 @@ std::string getRandomfen()
     }
     return "";
 }
-
-// int main()
-// {
-//     Board b;
-//     std::ofstream fenFile;
-//     fenFile.open("fens/data.epd", std::ios::app);
-//     while (true)
-//     {
-//         std::string fen = b.generateRandomFen();
-//         if (fen != "")
-//             fenFile << fen << std::endl;
-//     }
-//     fenFile.close();
-// }
-// g++ -O3 main.cpp -o randomfengen.exe

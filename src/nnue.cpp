@@ -16,12 +16,14 @@ namespace NNUE
 void init(const char *filename)
 {
     FILE *f = fopen(filename, "rb");
+
+    uint64_t readElements = 0;
     if (f != NULL)
     {
-        fread(inputWeights, sizeof(int16_t), INPUT_WEIGHTS * HIDDEN_WEIGHTS, f);
-        fread(hiddenBias, sizeof(int16_t), HIDDEN_BIAS, f);
-        fread(hiddenWeights, sizeof(int16_t), HIDDEN_WEIGHTS, f);
-        fread(outputBias, sizeof(int32_t), OUTPUT_BIAS, f);
+        readElements += fread(inputWeights, sizeof(int16_t), INPUT_WEIGHTS * HIDDEN_WEIGHTS, f);
+        readElements += fread(hiddenBias, sizeof(int16_t), HIDDEN_BIAS, f);
+        readElements += fread(hiddenWeights, sizeof(int16_t), HIDDEN_WEIGHTS, f);
+        readElements += fread(outputBias, sizeof(int32_t), OUTPUT_BIAS, f);
 
         fclose(f);
     }

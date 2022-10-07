@@ -1,37 +1,38 @@
 #include "uci.h"
 
-// global because of signal
-Search searcher = Search();
-Datagen dg = Datagen();
-
-int uciLoop(int argc, char **argv)
+UCI::UCI()
 {
-    Board board = Board();
-    uciOptions options = uciOptions();
-    int threads = 1;
+    searcher = Search();
+    board = Board();
+    options = uciOptions();
+    genData = Datagen::TrainingData();
+
+    threadCount = 1;
 
     // load default position
     options.uciPosition(board);
 
-    // making sure threads and tds are really clear
-    searcher.threads.clear();
-    searcher.tds.clear();
+    // Initialize reductions used in search
+    init_reductions();
+}
 
+int UCI::uciLoop(int argc, char **argv)
+{
     std::vector<std::string> allArgs(argv + 1, argv + argc);
 
     if (uciCommand::elementInVector("bench", allArgs))
     {
-        startBench();
-        uciCommand::quit(searcher, dg);
+        Bench::startBench();
+        uciCommand::quit(searcher, genData);
         return 0;
     }
     else if (uciCommand::elementInVector("perft", allArgs))
     {
-        uciCommand::parseInput(allArgs[0], searcher, board, dg);
-        uciCommand::quit(searcher, dg);
+        uciCommand::parseInput(allArgs[0], searcher, board, genData);
+        uciCommand::quit(searcher, genData);
         return 0;
     }
-    else
+    else if (argc > 1)
     {
         parseArgs(argc, argv, options, board);
     }
@@ -46,29 +47,27 @@ int uciLoop(int argc, char **argv)
     {
         // catching inputs
         std::string input;
-        std::getline(std::cin, input);
-        std::vector<std::string> tokens = splitInput(input);
 
         // UCI COMMANDS
-        if (input == "uci")
-            uciCommand::uciInput(options);
+        if (argc == 1 && !std::getline(std::cin, input))
+            input = "quit";
 
-        if (input == "isready")
-            uciCommand::isreadyInput();
-
-        if (input == "ucinewgame")
-            uciCommand::ucinewgameInput(options, board, searcher, dg);
+        std::vector<std::string> tokens = splitInput(input);
 
         if (input == "quit")
         {
-            uciCommand::quit(searcher, dg);
+            uciCommand::quit(searcher, genData);
             return 0;
         }
-
-        if (input == "stop")
-            uciCommand::stopThreads(searcher, dg);
-
-        if (input.find("setoption name") != std::string::npos)
+        else if (input == "uci")
+            uciCommand::uciInput(options);
+        else if (input == "isready")
+            uciCommand::isreadyInput();
+        else if (input == "ucinewgame")
+            uciCommand::ucinewgameInput(options, board, searcher, genData);
+        else if (input == "stop")
+            uciCommand::stopThreads(searcher, genData);
+        else if (uciCommand::stringContain("setoption name", input))
         {
             std::string option = tokens[2];
             std::string value = tokens[4];
@@ -77,7 +76,7 @@ int uciLoop(int argc, char **argv)
             else if (option == "EvalFile")
                 options.uciEvalFile(value);
             else if (option == "Threads")
-                threads = options.uciThreads(std::stoi(value));
+                threadCount = options.uciThreads(std::stoi(value));
             else if (option == "SyzygyPath")
                 options.uciSyzygy(value);
 
@@ -86,8 +85,7 @@ int uciLoop(int argc, char **argv)
             // double
             // else if (option == "") = std::stod(value);
         }
-
-        if (input.find("position") != std::string::npos)
+        else if (uciCommand::stringContain("position", input))
         {
             bool hasMoves = uciCommand::elementInVector("moves", tokens);
             if (tokens[1] == "fen")
@@ -98,34 +96,30 @@ int uciLoop(int argc, char **argv)
             if (hasMoves)
                 options.uciMoves(board, tokens);
 
-            board.prevStates.list.clear();
+            // clear previous states that might be left
+            board.prevStates.clear();
+
+            // setup accumulator with the correct board
             board.accumulate();
         }
-
-        if (input.find("go") != std::string::npos)
+        else if (uciCommand::stringContain("go perft", input))
         {
-            uciCommand::stopThreads(searcher, dg);
+            int depth = uciCommand::findElement("perft", tokens);
+            Perft perft = Perft();
+            perft.board = board;
+            perft.perfTest(depth, depth);
+        }
+        else if (uciCommand::stringContain("go", input))
+        {
+            uciCommand::stopThreads(searcher, genData);
 
-            stopped = false;
             Limits info;
-            info.depth = MAX_PLY;
-            info.nodes = 0;
 
             std::string limit;
             if (tokens.size() == 1)
                 limit = "";
             else
                 limit = tokens[1];
-
-            if (limit == "perft")
-            {
-                int depth = uciCommand::findElement("perft", tokens);
-                Perft perft = Perft();
-                perft.board = board;
-                perft.perfTest(depth, depth);
-                uciCommand::quit(searcher, dg);
-                return 0;
-            }
 
             info.depth = (limit == "depth") ? uciCommand::findElement("depth", tokens) : MAX_PLY;
             info.depth = (limit == "infinite" || input == "go") ? MAX_PLY : info.depth;
@@ -155,55 +149,45 @@ int uciLoop(int argc, char **argv)
             }
 
             // start search
-            searcher.startThinking(board, threads, info.depth, info.nodes, info.time);
+            searcher.startThinking(board, threadCount, info.depth, info.nodes, info.time);
         }
         // ENGINE SPECIFIC
-        uciCommand::parseInput(input, searcher, board, dg);
+        uciCommand::parseInput(input, searcher, board, genData);
     }
 }
 
-void signalCallbackHandler(int signum)
-{
-    uciCommand::stopThreads(searcher, dg);
-    free(TTable);
-    exit(signum);
-}
-
 // ./smallbrain bench
-void parseArgs(int argc, char **argv, uciOptions options, Board board)
+void UCI::parseArgs(int argc, char **argv, uciOptions options, Board board)
 {
-    if (argc > 1)
+    std::vector<std::string> allArgs(argv + 1, argv + argc);
+
+    if (uciCommand::elementInVector("-gen", allArgs))
     {
-        std::vector<std::string> allArgs(argv + 1, argv + argc);
+        int workers = 1;
+        int depth = 7;
+        std::string bookPath = "";
+        std::string tbPath = "";
 
-        if (uciCommand::elementInVector("-gen", allArgs))
+        if (uciCommand::elementInVector("-threads", allArgs))
         {
-            int workers = 1;
-            int depth = 7;
-            std::string bookPath = "";
-            std::string tbPath = "";
-
-            if (uciCommand::elementInVector("-threads", allArgs))
-            {
-                workers = uciCommand::findElement("-threads", allArgs);
-            }
-
-            if (uciCommand::elementInVector("-book", allArgs))
-            {
-                bookPath = uciCommand::findElementString("-book", allArgs);
-            }
-
-            if (uciCommand::elementInVector("-tb", allArgs))
-            {
-                options.uciSyzygy(uciCommand::findElementString("-tb", allArgs));
-            }
-
-            if (uciCommand::elementInVector("-depth", allArgs))
-            {
-                depth = uciCommand::findElement("-depth", allArgs);
-            }
-
-            dg.generate(workers, bookPath, depth);
+            workers = uciCommand::findElement("-threads", allArgs);
         }
+
+        if (uciCommand::elementInVector("-book", allArgs))
+        {
+            bookPath = uciCommand::findElementString("-book", allArgs);
+        }
+
+        if (uciCommand::elementInVector("-tb", allArgs))
+        {
+            options.uciSyzygy(uciCommand::findElementString("-tb", allArgs));
+        }
+
+        if (uciCommand::elementInVector("-depth", allArgs))
+        {
+            depth = uciCommand::findElement("-depth", allArgs);
+        }
+
+        genData.generate(workers, bookPath, depth);
     }
 }
