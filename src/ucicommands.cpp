@@ -16,14 +16,14 @@ void isreadyInput()
     std::cout << "readyok" << std::endl;
 }
 
-void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen &dg)
+void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen::TrainingData &dg)
 {
     options.uciPosition(board);
     stopThreads(searcher, dg);
     searcher.tds.clear();
 }
 
-void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
+void parseInput(std::string input, Search &searcher, Board &board, Datagen::TrainingData &dg)
 {
     if (input == "print")
     {
@@ -34,7 +34,7 @@ void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
     {
         Movelist ml = Movegen::capturemoves(board);
         for (int i = 0; i < ml.size; i++)
-            std::cout << printMove(ml.list[i]) << std::endl;
+            std::cout << uciRep(ml.list[i]) << std::endl;
         std::cout << "count: " << signed(ml.size) << std::endl;
     }
 
@@ -42,7 +42,7 @@ void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
     {
         Movelist ml = Movegen::legalmoves(board);
         for (int i = 0; i < ml.size; i++)
-            std::cout << printMove(ml.list[i]) << std::endl;
+            std::cout << uciRep(ml.list[i]) << std::endl;
         std::cout << "count: " << signed(ml.size) << std::endl;
     }
 
@@ -66,7 +66,7 @@ void parseInput(std::string input, Search &searcher, Board &board, Datagen &dg)
     }
 }
 
-void stopThreads(Search &searcher, Datagen &dg)
+void stopThreads(Search &searcher, Datagen::TrainingData &dg)
 {
     stopped = true;
     UCI_FORCE_STOP = true;
@@ -85,9 +85,11 @@ void stopThreads(Search &searcher, Datagen &dg)
 
     searcher.threads.clear();
     dg.threads.clear();
+
+    stopped = false;
 }
 
-void quit(Search &searcher, Datagen &dg)
+void quit(Search &searcher, Datagen::TrainingData &dg)
 {
     stopThreads(searcher, dg);
     free(TTable);
@@ -109,6 +111,11 @@ std::string findElementString(std::string param, std::vector<std::string> tokens
 {
     int index = find(tokens.begin(), tokens.end(), param) - tokens.begin();
     return tokens[index + 1];
+}
+
+bool stringContain(std::string s, std::string origin)
+{
+    return origin.find(s) != std::string::npos;
 }
 
 // Get current date/time, format is YYYY-MM-DD.HH:mm:ss

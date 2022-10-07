@@ -57,7 +57,6 @@ $(TARGET): $(OBJS)
 	$(CC) -c $(CFLAGS) -funroll-loops $(NATIVE) $(CO) -DEVALFILE=\"$(EVALFILE)\" -flto -Wall $< $(CXFLAGS)
 clean:
 	rm -rf $(TARGET) *.o
-	rm *.exe
 	rm $(EXE)
 	
 .PHONY: all clean

@@ -1,5 +1,7 @@
 #include "timemanager.h"
 
+#include <algorithm>
+
 Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
 {
     Time time;

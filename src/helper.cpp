@@ -13,13 +13,11 @@ std::vector<std::string> splitInput(std::string fen)
     return seglist;
 }
 
-// Gets the file index of the square where 0 is the a-file
 uint8_t square_file(Square sq)
 {
     return sq & 7;
 }
 
-// Gets the rank index of the square where 0 is the first rank."""
 uint8_t square_rank(Square sq)
 {
     return sq >> 3;
@@ -168,7 +166,7 @@ void prefetch(void *addr)
 #endif
 }
 
-std::string printMove(Move move)
+std::string uciRep(Move move)
 {
     std::string m = "";
     m += squareToString[from(move)];
@@ -188,4 +186,42 @@ void print_mean()
 {
     if (means[0])
         std::cout << "Total " << means[0] << " Mean " << (double)means[1] / means[0] << std::endl;
+}
+
+std::string outputScore(int score)
+{
+    if (std::abs(score) <= 4)
+        score = 0;
+
+    if (score >= VALUE_MATE_IN_PLY)
+        return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
+    else if (score <= VALUE_MATED_IN_PLY)
+        return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+    else
+        return "cp " + std::to_string(score);
+}
+
+// clang-format off
+void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv)
+{
+    std::stringstream ss;
+
+    ss  << "info depth " << signed(depth) 
+        << " seldepth "  << signed(seldepth) 
+        << " score "     << outputScore(score)
+        << " tbhits "    << tbHits 
+        << " nodes "     << nodes 
+        << " nps "       << signed((nodes / (time + 1)) * 1000)
+        << " time "      << time 
+        << " pv"         << pv;
+
+    std::cout << ss.str() << std::endl;        
+}
+// clang-format on
+
+Piece makePiece(PieceType type, Color c)
+{
+    if (type == NONETYPE)
+        return None;
+    return Piece(type + 6 * c);
 }
