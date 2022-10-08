@@ -9,6 +9,21 @@ PACK(struct ExtMove {
     Move move;
 });
 
+inline constexpr bool operator==(const ExtMove &a, const ExtMove &b)
+{
+    return a.move == b.move;
+}
+
+inline constexpr bool operator>(const ExtMove &a, const ExtMove &b)
+{
+    return a.value > b.value;
+}
+
+inline constexpr bool operator<(const ExtMove &a, const ExtMove &b)
+{
+    return a.value < b.value;
+}
+
 struct Movelist
 {
     ExtMove list[MAX_MOVES] = {};
@@ -26,16 +41,6 @@ struct Movelist
         return list[i];
     }
 };
-
-inline constexpr bool operator>(const ExtMove &a, const ExtMove &b)
-{
-    return a.value > b.value;
-}
-
-inline constexpr bool operator<(const ExtMove &a, const ExtMove &b)
-{
-    return a.value < b.value;
-}
 
 namespace Movegen
 {
