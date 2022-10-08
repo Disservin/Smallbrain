@@ -121,7 +121,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         moves[i].value = scoreqMove(moves[i].move, ss->ply, ttHit, td);
 
     // search the moves
-    for (int i = 0; i < (int)moves.size; i++)
+    for (int i = 0; i < static_cast<int>(moves.size); i++)
     {
         // sort the best move to the front
         // we dont need to sort the whole list, since we might have a cutoff
@@ -515,12 +515,12 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
         if (result <= alpha)
         {
             beta = (alpha + beta) / 2;
-            alpha = std::max(alpha - delta, -((int)VALUE_INFINITE));
+            alpha = std::max(alpha - delta, -(static_cast<int>(VALUE_INFINITE)));
             delta += delta / 2;
         }
         else if (result >= beta)
         {
-            beta = std::min(beta + delta, (int)VALUE_INFINITE);
+            beta = std::min(beta + delta, static_cast<int>(VALUE_INFINITE));
             delta += delta / 2;
         }
         else

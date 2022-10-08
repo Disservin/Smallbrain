@@ -219,6 +219,11 @@ inline Move make(PieceType piece = NONETYPE, Square source = NO_SQ, Square targe
     return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
 }
 
+template <PieceType piece, bool promoted> Move make(Square source = NO_SQ, Square target = NO_SQ)
+{
+    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
+}
+
 static constexpr U64 WK_CASTLE_MASK = (1ULL << SQ_F1) | (1ULL << SQ_G1);
 static constexpr U64 WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL << SQ_B1);
 

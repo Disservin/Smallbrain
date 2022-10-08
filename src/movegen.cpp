@@ -215,10 +215,10 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(QUEEN, from, to, true));
-            movelist.Add(make(ROOK, from, to, true));
-            movelist.Add(make(KNIGHT, from, to, true));
-            movelist.Add(make(BISHOP, from, to, true));
+            movelist.Add(make<QUEEN, true>(from, to));
+            movelist.Add(make<ROOK, true>(from, to));
+            movelist.Add(make<KNIGHT, true>(from, to));
+            movelist.Add(make<BISHOP, true>(from, to));
         }
     }
 
@@ -252,10 +252,10 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
                 // If we are in check and the en passant square lies on our attackmask and the en passant piece gives
                 // check return the ep mask as a move square
                 if (board.checkMask & (1ULL << (ep - (c * -2 + 1) * 8)))
-                    movelist.Add(make(PAWN, from, to, false));
+                    movelist.Add(make<PAWN, false>(from, to));
                 continue;
             }
-            Square tP = c == White ? Square((int)ep - 8) : Square((int)ep + 8);
+            Square tP = c == White ? Square(static_cast<int>(ep) - 8) : Square(static_cast<int>(ep) + 8);
             Square kSQ = board.KingSQ<c>();
             U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
             if (enemyQueenRook & MASK_RANK[square_rank(kSQ)])
@@ -266,14 +266,14 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
                 board.removePiece<false>(theirPawn, tP);
                 board.placePiece<false>(ourPawn, ep);
                 if (!((RookAttacks(kSQ, board.All()) & (enemyQueenRook))))
-                    movelist.Add(make(PAWN, from, to, false));
+                    movelist.Add(make<PAWN, false>(from, to));
                 board.placePiece<false>(ourPawn, from);
                 board.placePiece<false>(theirPawn, tP);
                 board.removePiece<false>(ourPawn, ep);
             }
             else
             {
-                movelist.Add(make(PAWN, from, to, false));
+                movelist.Add(make<PAWN, false>(from, to));
             }
         }
     }
@@ -286,7 +286,7 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(PAWN, from, to, false));
+            movelist.Add(make<PAWN, false>(from, to));
         }
     }
 
@@ -298,32 +298,32 @@ template <Color c> void LegalPawnMovesAll(Board &board, Movelist &movelist)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(PAWN, from, to, false));
+            movelist.Add(make<PAWN, false>(from, to));
         }
     }
 
     while (singlePush)
     {
         Square to = poplsb(singlePush);
-        movelist.Add(make(PAWN, Square(to + DOWN), to, false));
+        movelist.Add(make<PAWN, false>(Square(to + DOWN), to));
     }
 
     while (doublePush)
     {
         Square to = poplsb(doublePush);
-        movelist.Add(make(PAWN, Square(to + DOWN + DOWN), to, false));
+        movelist.Add(make<PAWN, false>(Square(to + DOWN + DOWN), to));
     }
 
     while (captureRight)
     {
         Square to = poplsb(captureRight);
-        movelist.Add(make(PAWN, Square(to + DOWN_LEFT), to, false));
+        movelist.Add(make<PAWN, false>(Square(to + DOWN_LEFT), to));
     }
 
     while (captureLeft)
     {
         Square to = poplsb(captureLeft);
-        movelist.Add(make(PAWN, Square(to + DOWN_RIGHT), to, false));
+        movelist.Add(make<PAWN, false>(Square(to + DOWN_RIGHT), to));
     }
 }
 
@@ -353,10 +353,10 @@ template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(QUEEN, from, to, true));
-            movelist.Add(make(ROOK, from, to, true));
-            movelist.Add(make(KNIGHT, from, to, true));
-            movelist.Add(make(BISHOP, from, to, true));
+            movelist.Add(make<QUEEN, true>(from, to));
+            movelist.Add(make<ROOK, true>(from, to));
+            movelist.Add(make<KNIGHT, true>(from, to));
+            movelist.Add(make<BISHOP, true>(from, to));
         }
     }
 
@@ -368,20 +368,20 @@ template <Color c> void LegalPawnMovesCapture(Board &board, Movelist &movelist)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(PAWN, from, to, false));
+            movelist.Add(make<PAWN, false>(from, to));
         }
     }
 
     while (captureRight)
     {
         Square to = poplsb(captureRight);
-        movelist.Add(make(PAWN, Square(to + DOWN_LEFT), to, false));
+        movelist.Add(make<PAWN, false>(Square(to + DOWN_LEFT), to));
     }
 
     while (captureLeft)
     {
         Square to = poplsb(captureLeft);
-        movelist.Add(make(PAWN, Square(to + DOWN_RIGHT), to, false));
+        movelist.Add(make<PAWN, false>(Square(to + DOWN_RIGHT), to));
     }
 }
 
@@ -424,7 +424,7 @@ template <Color c> U64 LegalPawnMovesEPSingle(Board &board, Square sq, Square ep
     // remove both the pawn that made the push and our pawn that could take in theory and check if that would give check
     if ((1ULL << ep) & attacks)
     {
-        Square tP = c == White ? Square((int)ep - 8) : Square((int)ep + 8);
+        Square tP = c == White ? Square(static_cast<int>(ep) - 8) : Square(static_cast<int>(ep) + 8);
         Square kSQ = board.KingSQ<c>();
         U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
         if ((enemyQueenRook)&MASK_RANK[square_rank(kSQ)])
@@ -564,7 +564,7 @@ template <Color c> Movelist legalmoves(Board &board)
     while (moves)
     {
         Square to = poplsb(moves);
-        movelist.Add(make(KING, from, to, false));
+        movelist.Add(make<KING, false>(from, to));
     }
 
     if (board.doubleCheck == 2)
@@ -584,7 +584,7 @@ template <Color c> Movelist legalmoves(Board &board)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(KNIGHT, from, to, false));
+            movelist.Add(make<KNIGHT, false>(from, to));
         }
     }
     while (bishops_mask)
@@ -594,7 +594,7 @@ template <Color c> Movelist legalmoves(Board &board)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(BISHOP, from, to, false));
+            movelist.Add(make<BISHOP, false>(from, to));
         }
     }
     while (rooks_mask)
@@ -604,7 +604,7 @@ template <Color c> Movelist legalmoves(Board &board)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(ROOK, from, to, false));
+            movelist.Add(make<ROOK, false>(from, to));
         }
     }
     while (queens_mask)
@@ -614,7 +614,7 @@ template <Color c> Movelist legalmoves(Board &board)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(QUEEN, from, to, false));
+            movelist.Add(make<QUEEN, false>(from, to));
         }
     }
 
@@ -633,7 +633,7 @@ template <Color c> Movelist capturemoves(Board &board)
     while (moves)
     {
         Square to = poplsb(moves);
-        movelist.Add(make(KING, from, to, false));
+        movelist.Add(make<KING, false>(from, to));
     }
 
     if (board.doubleCheck == 2)
@@ -652,7 +652,7 @@ template <Color c> Movelist capturemoves(Board &board)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(KNIGHT, from, to, false));
+            movelist.Add(make<KNIGHT, false>(from, to));
         }
     }
     while (bishops_mask)
@@ -662,7 +662,7 @@ template <Color c> Movelist capturemoves(Board &board)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(BISHOP, from, to, false));
+            movelist.Add(make<BISHOP, false>(from, to));
         }
     }
     while (rooks_mask)
@@ -672,7 +672,7 @@ template <Color c> Movelist capturemoves(Board &board)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(ROOK, from, to, false));
+            movelist.Add(make<ROOK, false>(from, to));
         }
     }
     while (queens_mask)
@@ -682,7 +682,7 @@ template <Color c> Movelist capturemoves(Board &board)
         while (moves)
         {
             Square to = poplsb(moves);
-            movelist.Add(make(QUEEN, from, to, false));
+            movelist.Add(make<QUEEN, false>(from, to));
         }
     }
 

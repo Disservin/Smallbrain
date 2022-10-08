@@ -31,5 +31,5 @@ void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
 void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
 
 // return the nnue evaluation
-int32_t output(std::array<int16_t, HIDDEN_BIAS> &accumulator);
+int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator);
 } // namespace NNUE

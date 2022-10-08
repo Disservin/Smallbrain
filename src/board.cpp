@@ -110,7 +110,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
     }
 
     Square square = Square(56);
-    for (int index = 0; index < (int)position.size(); index++)
+    for (int index = 0; index < static_cast<int>(position.size()); index++)
     {
         char curr = position[index];
         if (charToPiece.find(curr) != charToPiece.end())
@@ -126,7 +126,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
             square = Square(square - 16);
         else if (isdigit(curr))
         {
-            for (int i = 0; i < (int)curr - '0'; i++)
+            for (int i = 0; i < static_cast<int>(curr - '0'); i++)
             {
                 board[square + i] = None;
             }
@@ -259,11 +259,11 @@ void Board::print()
     }
     std::cout << '\n' << std::endl;
     std::cout << "Fen: " << getFen() << std::endl;
-    std::cout << "Side to move: " << (int)sideToMove << std::endl;
-    std::cout << "Castling rights: " << (int)castlingRights << std::endl;
-    std::cout << "Halfmoves: " << (int)halfMoveClock << std::endl;
-    std::cout << "Fullmoves: " << (int)fullMoveNumber / 2 << std::endl;
-    std::cout << "EP: " << (int)enPassantSquare << std::endl;
+    std::cout << "Side to move: " << static_cast<int>(sideToMove) << std::endl;
+    std::cout << "Castling rights: " << static_cast<int>(castlingRights) << std::endl;
+    std::cout << "Halfmoves: " << static_cast<int>(halfMoveClock) << std::endl;
+    std::cout << "Fullmoves: " << static_cast<int>(fullMoveNumber) / 2 << std::endl;
+    std::cout << "EP: " << static_cast<int>(enPassantSquare) << std::endl;
     std::cout << "Hash: " << hashKey << std::endl;
 }
 
