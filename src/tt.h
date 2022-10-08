@@ -1,14 +1,13 @@
 #pragma once
 #include "types.h"
 
-struct TEntry
-{
+PACK(struct TEntry {
     U64 key;
     Score score;
     uint16_t move;
     uint8_t depth;
     Flag flag;
-} __attribute__((packed));
+});
 
 extern TEntry *TTable;
 extern U64 TT_SIZE;

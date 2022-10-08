@@ -10,7 +10,7 @@
 #define DEFAULT_POS std::string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
 static constexpr int MAX_PLY = 120;
-static constexpr int MAX_MOVES = 256;
+static constexpr int MAX_MOVES = 128;
 
 enum Color : uint8_t
 {
@@ -295,3 +295,11 @@ static std::unordered_map<char, PieceType> pieceToInt(
     {{'n', KNIGHT}, {'b', BISHOP}, {'r', ROOK}, {'q', QUEEN}, {'N', KNIGHT}, {'B', BISHOP}, {'R', ROOK}, {'Q', QUEEN}});
 
 static std::unordered_map<Square, CastlingRight> castlingMapRook({{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});
+
+#ifdef __GNUC__
+#define PACK(__Declaration__) __Declaration__ __attribute__((__packed__))
+#endif
+
+#ifdef _MSC_VER
+#define PACK(__Declaration__) __pragma(pack(push, 1)) __Declaration__ __pragma(pack(pop))
+#endif
