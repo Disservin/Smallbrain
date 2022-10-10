@@ -114,7 +114,11 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     }
 
     // generate all legalmoves in case we are in check
-    Movelist moves = inCheck ? Movegen::legalmoves(td->board) : Movegen::capturemoves(td->board);
+    Movelist moves;
+    if (inCheck)
+        Movegen::legalmoves<ALL>(td->board, moves);
+    else
+        Movegen::legalmoves<CAPTURE>(td->board, moves);
 
     // assign a value to each move
     for (int i = 0; i < moves.size; i++)
@@ -359,7 +363,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         return qsearch<PV>(alpha, beta, ss, td);
 
 moves:
-    Movelist moves = Movegen::legalmoves(td->board);
+    Movelist moves;
+    Movegen::legalmoves<ALL>(td->board, moves);
 
     // if the move list is empty, we are in checkmate or stalemate
     if (moves.size == 0)
@@ -976,7 +981,8 @@ Move Search::probeDTZ(ThreadData *td)
     Square sqFrom = Square(TB_GET_FROM(TBresult));
     Square sqTo = Square(TB_GET_TO(TBresult));
 
-    Movelist legalmoves = Movegen::legalmoves(td->board);
+    Movelist legalmoves;
+    Movegen::legalmoves<ALL>(td->board, legalmoves);
 
     for (int i = 0; i < legalmoves.size; i++)
     {

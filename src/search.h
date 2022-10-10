@@ -16,12 +16,6 @@ extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
-enum Movetype : uint8_t
-{
-    QUIET,
-    CAPTURE
-};
-
 enum Node
 {
     NonPV,
