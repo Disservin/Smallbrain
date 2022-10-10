@@ -1,6 +1,6 @@
 #include "tt.h"
 
-void storeEntry(int depth, Score bestvalue, Flag b, U64 key, uint16_t move)
+void storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
 {
     U64 index = ttIndex(key);
     TEntry tte = TTable[index];

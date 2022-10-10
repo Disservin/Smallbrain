@@ -358,7 +358,11 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             if ((1ULL << from) & board.pinHV)
                 continue;
             if ((1ULL << from) & board.pinD)
-                continue;
+            {
+                if (!(board.pinD & (1ULL << ep)))
+                    continue;
+            }
+
             if (board.checkMask != DEFAULT_CHECKMASK)
             {
                 // If we are in check and the en passant square lies on our attackmask and the en passant piece gives
