@@ -12,6 +12,13 @@
 static constexpr int MAX_PLY = 120;
 static constexpr int MAX_MOVES = 128;
 
+enum Movetype : uint8_t
+{
+    ALL,
+    CAPTURE,
+    QUIET
+};
+
 enum Color : uint8_t
 {
     White,
