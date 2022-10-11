@@ -222,6 +222,9 @@ class Board
     U64 updateKeyCastling();
     U64 updateKeyEnPassant(Square sq);
     U64 updateKeySideToMove();
+
+    void removeCastlingRightsAll(Color c);
+    void removeCastlingRightsRook(Color c, Square sq);
 };
 
 template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq)
