@@ -214,9 +214,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         if (td->board.halfMoveClock >= 100)
         {
             if (inCheck)
-            {
                 return !Movegen::hasLegalMoves(td->board) ? mated_in(ss->ply) : 0;
-            }
             return 0;
         }
 
@@ -366,14 +364,6 @@ moves:
     Movelist moves;
     Movegen::legalmoves<ALL>(td->board, moves);
 
-    // if the move list is empty, we are in checkmate or stalemate
-    if (moves.size == 0)
-        return inCheck ? mated_in(ss->ply) : 0;
-
-    // set root node move list size
-    if (RootNode && td->id == 0)
-        rootSize = moves.size;
-
     Movelist quietMoves;
     Score score = VALUE_NONE;
     Move bestMove = NO_MOVE;
@@ -387,6 +377,8 @@ moves:
 
     while ((move = nextMove(moves, mp, ttHit, td, ss)) != NO_MOVE)
     {
+        madeMoves++;
+
         bool capture = td->board.pieceAtB(to(move)) != None;
 
         int newDepth = depth - 1;
@@ -405,7 +397,6 @@ moves:
         }
 
         td->nodes++;
-        madeMoves++;
 
         if (td->id == 0 && RootNode && !stopped && getTime() > 10000 && td->allowPrint)
             std::cout << "info depth " << depth - inCheck << " currmove " << uciRep(move) << " currmovenumber "
@@ -480,6 +471,10 @@ moves:
             quietMoves.Add(move);
     }
 
+    // if the move list is empty, we are in checkmate or stalemate
+    if (madeMoves == 0)
+        return inCheck ? mated_in(ss->ply) : 0;
+
     best = std::min(best, maxValue);
 
     // Store position in TT
@@ -552,15 +547,10 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         checkTime = 0;
     }
 
-    ThreadData *td = &this->tds[threadId];
-    td->nodes = 0;
-    td->tbhits = 0;
-    td->seldepth = 0;
-
     Move bestmove;
     SearchResult sr;
 
-    int result = -VALUE_INFINITE;
+    Score result = -VALUE_INFINITE;
     int depth = 1;
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
@@ -569,6 +559,15 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
     for (int i = -2; i <= MAX_PLY + 1; ++i)
         (ss + i)->ply = i;
+
+    ThreadData *td = &this->tds[threadId];
+    td->nodes = 0;
+    td->tbhits = 0;
+    td->seldepth = 0;
+
+    Movelist moves;
+    Movegen::legalmoves<ALL>(td->board, moves);
+    rootSize = moves.size;
 
     for (depth = 1; depth <= search_depth; depth++)
     {
@@ -624,15 +623,6 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
 void Search::startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)
 {
-    stopped = true;
-    for (std::thread &th : threads)
-    {
-        if (th.joinable())
-            th.join();
-    }
-    threads.clear();
-    stopped = false;
-
     // If we dont have previous data create default data
     for (int i = tds.size(); i < workers; i++)
     {
@@ -642,6 +632,8 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
         this->tds.push_back(td);
     }
 
+    // set the right board for the main thread
+    // important that this is done before probing the DTZ
     this->tds[0].board = board;
     this->tds[0].id = 0;
 
@@ -657,7 +649,10 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
         }
     }
 
+    // start main thread right away
     this->threads.emplace_back(&Search::iterativeDeepening, this, search_depth, maxN, time, 0);
+
+    // launch helper threads
     for (int i = 1; i < workers; i++)
     {
         this->tds[i].board = board;
