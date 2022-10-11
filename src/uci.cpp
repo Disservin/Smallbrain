@@ -96,9 +96,6 @@ int UCI::uciLoop(int argc, char **argv)
             if (hasMoves)
                 options.uciMoves(board, tokens);
 
-            // clear previous states that might be left
-            board.prevStates.clear();
-
             // setup accumulator with the correct board
             board.accumulate();
         }
