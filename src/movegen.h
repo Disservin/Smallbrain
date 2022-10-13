@@ -45,6 +45,16 @@ struct Movelist
 namespace Movegen
 {
 
+template <Color c> U64 pawnLeftAttacks(const U64 pawns)
+{
+    return c == White ? (pawns << 7) & ~MASK_FILE[7] : (pawns >> 7) & ~MASK_FILE[0];
+}
+
+template <Color c> U64 pawnRightAttacks(const U64 pawns)
+{
+    return c == White ? (pawns << 9) & ~MASK_FILE[0] : (pawns >> 9) & ~MASK_FILE[7];
+}
+
 // creates the checkmask
 template <Color c> U64 DoCheckmask(Board &board, Square sq)
 {
@@ -125,16 +135,8 @@ template <Color c> void seenSquares(Board &board)
     Square kSq = board.KingSQ<~c>();
     board.occAll &= ~(1ULL << kSq);
 
-    if (c == White)
-    {
-        board.seen |= pawns << 9 & ~MASK_FILE[0];
-        board.seen |= pawns << 7 & ~MASK_FILE[7];
-    }
-    else
-    {
-        board.seen |= pawns >> 7 & ~MASK_FILE[0];
-        board.seen |= pawns >> 9 & ~MASK_FILE[7];
-    }
+    board.seen |= pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
+
     while (knights)
     {
         Square index = poplsb(knights);
@@ -175,16 +177,6 @@ template <Color c> void init(Board &board, Square sq)
     U64 newMask = DoCheckmask<c>(board, sq);
     board.checkMask = newMask ? newMask : DEFAULT_CHECKMASK;
     DoPinMask<c>(board, sq);
-}
-
-template <Color c> U64 pawnLeftAttacks(const U64 pawns)
-{
-    return c == White ? (pawns << 7) & ~MASK_FILE[7] : (pawns >> 7) & ~MASK_FILE[0];
-}
-
-template <Color c> U64 pawnRightAttacks(const U64 pawns)
-{
-    return c == White ? (pawns << 9) & ~MASK_FILE[0] : (pawns >> 9) & ~MASK_FILE[7];
 }
 
 // returns a pawn push (only 1 square)
