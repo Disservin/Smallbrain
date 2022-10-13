@@ -23,9 +23,11 @@ void Perft::testAllPos()
                            "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
                            "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
                            "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ",
-                           "4r3/bpk5/5n2/2P1P3/8/4K3/8/8 w - - 0 1"};
-    int depths[] = {6, 5, 7, 6, 5, 5, 7};
-    std::vector<U64> expected = {119060324, 193690690, 178633661, 706045033, 89941194, 164075551, 71441619};
+                           "4r3/bpk5/5n2/2P1P3/8/4K3/8/8 w - - 0 1",
+                           "b2r4/2q3k1/p5p1/P1r1pp2/R1pnP2p/4NP1P/1PP2RPK/Q4B2 w - - 2 29"};
+    int depths[] = {6, 5, 7, 6, 5, 5, 7, 6};
+    std::vector<U64> expected = {119060324, 193690690, 178633661, 706045033,
+                                 89941194,  164075551, 71441619,  2261050076ULL};
     for (size_t i = 0; i < expected.size(); i++)
     {
         board.applyFen(tests[i]);
@@ -48,8 +50,6 @@ void Perft::testAllPos()
     std::cout << "Nodes searched     : " << total << std::endl;
     std::cout << "Nodes/second       : " << ((total * 1000) / ms) << std::endl;
     std::cout << "Correct Positions  : " << passed << "/" << expected.size() << std::endl;
-    if (passed != expected.size())
-        exit(1);
 }
 
 U64 Perft::perftFunction(int depth, int max)

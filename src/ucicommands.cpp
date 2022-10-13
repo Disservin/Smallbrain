@@ -63,8 +63,6 @@ void parseInput(std::string input, Search &searcher, Board &board, Datagen::Trai
         Perft perft = Perft();
         perft.board = board;
         perft.testAllPos();
-        quit(searcher, dg);
-        exit(0);
     }
 }
 
