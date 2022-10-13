@@ -59,6 +59,20 @@ int UCI::uciLoop(int argc, char **argv)
             uciCommand::quit(searcher, genData);
             return 0;
         }
+        else if (input == "pawn")
+        {
+            Movelist moves;
+            if (board.sideToMove == White)
+            {
+                Movegen::init<White>(board, board.KingSQ<White>());
+                Movegen::LegalPawnMovesAll<White, ALL>(board, moves);
+            }
+            else
+            {
+                Movegen::init<Black>(board, board.KingSQ<Black>());
+                Movegen::LegalPawnMovesAll<Black, ALL>(board, moves);
+            }
+        }
         else if (input == "uci")
             uciCommand::uciInput(options);
         else if (input == "isready")
