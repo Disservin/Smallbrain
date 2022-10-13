@@ -54,28 +54,22 @@ template <Color c> bool hasLegalMoves(Board &board)
     if (board.doubleCheck == 2)
         return false;
 
-    U64 pawns_mask = board.Pawns<c>();
-    U64 knights_mask = board.Knights<c>();
-    U64 bishops_mask = board.Bishops<c>();
-    U64 rooks_mask = board.Rooks<c>();
+    U64 knights_mask = board.Knights<c>() & ~(board.pinD | board.pinHV);
+    U64 bishops_mask = board.Bishops<c>() & ~board.pinHV;
+    U64 rooks_mask = board.Rooks<c>() & ~board.pinD;
     U64 queens_mask = board.Queens<c>();
 
-    const bool noEP = board.enPassantSquare == NO_SQ;
+    Movelist m;
+    LegalPawnMovesAll<c, ALL>(board, m);
+    if (m.size > 0)
+        return true;
 
-    while (pawns_mask)
-    {
-        Square from = poplsb(pawns_mask);
-        U64 moves =
-            noEP ? LegalPawnMovesSingle<c>(board, from) : LegalPawnMovesEPSingle<c>(board, from, board.enPassantSquare);
-        while (moves)
-        {
-            return true;
-        }
-    }
+    U64 movableSquare = board.checkMask & board.enemyEmptyBB;
+
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
-        U64 moves = LegalKnightMoves<ALL>(board, from);
+        U64 moves = LegalKnightMoves(board, from, movableSquare);
         while (moves)
         {
             return true;
@@ -84,7 +78,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (bishops_mask)
     {
         Square from = poplsb(bishops_mask);
-        U64 moves = LegalBishopMoves<ALL>(board, from);
+        U64 moves = LegalBishopMoves(board, from, movableSquare);
         while (moves)
         {
             return true;
@@ -93,7 +87,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (rooks_mask)
     {
         Square from = poplsb(rooks_mask);
-        U64 moves = LegalRookMoves<ALL>(board, from);
+        U64 moves = LegalRookMoves(board, from, movableSquare);
         while (moves)
         {
             return true;
@@ -102,7 +96,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (queens_mask)
     {
         Square from = poplsb(queens_mask);
-        U64 moves = LegalQueenMoves<ALL>(board, from);
+        U64 moves = LegalQueenMoves(board, from, movableSquare);
         while (moves)
         {
             return true;
