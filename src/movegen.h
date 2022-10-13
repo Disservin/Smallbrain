@@ -469,8 +469,6 @@ inline U64 LegalKnightMoves(const Board &board, Square sq, U64 movableSquare)
 
 inline U64 LegalBishopMoves(const Board &board, Square sq, U64 movableSquare)
 {
-    if (board.pinHV & (1ULL << sq))
-        return 0ULL;
     if (board.pinD & (1ULL << sq))
         return BishopAttacks(sq, board.occAll) & movableSquare & board.pinD;
     return BishopAttacks(sq, board.occAll) & movableSquare;
@@ -478,8 +476,6 @@ inline U64 LegalBishopMoves(const Board &board, Square sq, U64 movableSquare)
 
 inline U64 LegalRookMoves(const Board &board, Square sq, U64 movableSquare)
 {
-    if (board.pinD & (1ULL << sq))
-        return 0ULL;
     if (board.pinHV & (1ULL << sq))
         return RookAttacks(sq, board.occAll) & movableSquare & board.pinHV;
     return RookAttacks(sq, board.occAll) & movableSquare;
@@ -487,7 +483,18 @@ inline U64 LegalRookMoves(const Board &board, Square sq, U64 movableSquare)
 
 inline U64 LegalQueenMoves(const Board &board, Square sq, U64 movableSquare)
 {
-    return LegalRookMoves(board, sq, movableSquare) | LegalBishopMoves(board, sq, movableSquare);
+    U64 moves = 0ULL;
+    if (board.pinD & (1ULL << sq))
+        moves |= BishopAttacks(sq, board.occAll) & movableSquare & board.pinD;
+    else if (board.pinHV & (1ULL << sq))
+        moves |= RookAttacks(sq, board.occAll) & movableSquare & board.pinHV;
+    else
+    {
+        moves |= RookAttacks(sq, board.occAll) & movableSquare;
+        moves |= BishopAttacks(sq, board.occAll) & movableSquare;
+    }
+
+    return moves;
 }
 
 template <Movetype mt> U64 LegalKingMoves(const Board &board, Square sq)
