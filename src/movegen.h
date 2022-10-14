@@ -171,97 +171,6 @@ template <Color c> void init(Board &board, Square sq)
     DoPinMask<c>(board, sq);
 }
 
-// returns a pawn push (only 1 square)
-template <Color c> U64 PawnPushSingle(U64 occAll, Square sq)
-{
-    if (c == White)
-    {
-        return ((1ULL << sq) << 8) & ~occAll;
-    }
-    else
-    {
-        return ((1ULL << sq) >> 8) & ~occAll;
-    }
-}
-
-template <Color c> U64 PawnPushBoth(U64 occAll, Square sq)
-{
-    U64 push = (1ULL << sq);
-    if (c == White)
-    {
-        push = (push << 8) & ~occAll;
-        return square_rank(sq) == 1 ? push | ((push << 8) & ~occAll) : push;
-    }
-    else
-    {
-        push = (push >> 8) & ~occAll;
-        return square_rank(sq) == 6 ? push | ((push >> 8) & ~occAll) : push;
-    }
-}
-
-template <Color c> U64 LegalPawnMovesSingle(const Board &board, Square sq)
-{
-    // If we are pinned diagonally we can only do captures which are on the pin_dg and on the board.checkMask
-    if (board.pinD & (1ULL << sq))
-        return PawnAttacks(sq, c) & board.pinD & board.checkMask & board.occEnemy;
-
-    // If we are pinned horizontally we can do no moves but if we are pinned vertically we can only do pawn pushs
-    if (board.pinHV & (1ULL << sq))
-        return PawnPushBoth<c>(board.occAll, sq) & board.pinHV & board.checkMask;
-    return ((PawnAttacks(sq, c) & board.occEnemy) | PawnPushBoth<c>(board.occAll, sq)) & board.checkMask;
-}
-
-template <Color c> U64 LegalPawnMovesEPSingle(Board &board, Square sq, Square ep)
-{
-    // If we are pinned diagonally we can only do captures which are on the pin_dg and on the board.checkMask
-    if (board.pinD & (1ULL << sq))
-        return PawnAttacks(sq, c) & board.pinD & board.checkMask & (board.occEnemy | (1ULL << ep));
-
-    // If we are pinned horizontally we can do no moves but if we are pinned vertically we can only do pawn pushs
-    if (board.pinHV & (1ULL << sq))
-        return PawnPushBoth<c>(board.occAll, sq) & board.pinHV & board.checkMask;
-    U64 attacks = PawnAttacks(sq, c);
-    if (board.checkMask != DEFAULT_CHECKMASK)
-    {
-        // If we are in check and the en passant square lies on our attackmask and the en passant piece gives check
-        // return the ep mask as a move square
-        if (attacks & (1ULL << ep) && board.checkMask & (1ULL << (ep - (c * -2 + 1) * 8)))
-            return 1ULL << ep;
-        // If we are in check we can do all moves that are on the board.checkMask
-        return ((attacks & board.occEnemy) | PawnPushBoth<c>(board.occAll, sq)) & board.checkMask;
-    }
-
-    U64 moves = ((attacks & board.occEnemy) | PawnPushBoth<c>(board.occAll, sq)) & board.checkMask;
-    // We need to make extra sure that ep moves dont leave the king in check
-    // 7k/8/8/K1Pp3r/8/8/8/8 w - d6 0 1
-    // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant
-    // remove both the pawn that made the push and our pawn that could take in theory and check if that would give check
-    if ((1ULL << ep) & attacks)
-    {
-        Square tP = c == White ? Square(static_cast<int>(ep) - 8) : Square(static_cast<int>(ep) + 8);
-        Square kSQ = board.KingSQ<c>();
-        U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
-        if ((enemyQueenRook)&MASK_RANK[square_rank(kSQ)])
-        {
-            Piece ourPawn = makePiece(PAWN, c);
-            Piece theirPawn = makePiece(PAWN, ~c);
-            board.removePiece<false>(ourPawn, sq);
-            board.removePiece<false>(theirPawn, tP);
-            board.placePiece<false>(ourPawn, ep);
-            if (!((RookAttacks(kSQ, board.All()) & (enemyQueenRook))))
-                moves |= (1ULL << ep);
-            board.placePiece<false>(ourPawn, sq);
-            board.placePiece<false>(theirPawn, tP);
-            board.removePiece<false>(ourPawn, ep);
-        }
-        else
-        {
-            moves |= (1ULL << ep);
-        }
-    }
-    return moves;
-}
-
 template <Direction direction> constexpr U64 shift(const U64 b)
 {
     switch (direction)
@@ -400,6 +309,10 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
                 continue;
             }
 
+            // We need to make extra sure that ep moves dont leave the king in check
+            // 7k/8/8/K1Pp3r/8/8/8/8 w - d6 0 1
+            // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant
+            // remove both the pawn that made the push and our pawn that could take in theory and check if that would give check
             const Square tP = c == White ? Square(static_cast<int>(ep) - 8) : Square(static_cast<int>(ep) + 8);
             const Square kSQ = board.KingSQ<c>();
             const U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
