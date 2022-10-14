@@ -288,6 +288,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
             if (flag == EXACT || (flag == LOWERBOUND && tbRes >= beta) || (flag == UPPERBOUND && tbRes <= alpha))
             {
+                storeEntry(depth + 6, scoreToTT(tbRes, ss->ply), flag, td->board.hashKey, NO_MOVE);
                 return tbRes;
             }
 
