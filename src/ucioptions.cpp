@@ -40,8 +40,10 @@ int uciOptions::uciThreads(int value)
     return std::clamp(value, 1, 512);
 }
 
-void uciOptions::uciSyzygy(std::string path)
+void uciOptions::uciSyzygy(std::string input)
 {
+    std::string path = input.substr(input.find("value ") + 6);
+
     tb_init(path.c_str());
     if (TB_LARGEST == 0)
     {
