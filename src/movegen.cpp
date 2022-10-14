@@ -6,16 +6,12 @@ namespace Movegen
 template <Color c> int pseudoLegalMovesNumber(Board &board)
 {
     int total = 0;
-    U64 pawns_mask = board.Pawns<c>();
+    
     U64 knights_mask = board.Knights<c>();
     U64 bishops_mask = board.Bishops<c>();
     U64 rooks_mask = board.Rooks<c>();
     U64 queens_mask = board.Queens<c>();
-    while (pawns_mask)
-    {
-        Square from = poplsb(pawns_mask);
-        total += popcount(PawnPushBoth<c>(board.occAll, from) | PawnAttacks(c, c));
-    }
+    
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
