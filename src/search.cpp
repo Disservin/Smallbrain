@@ -325,12 +325,12 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     // Razoring
     if (!PvNode && depth < 3 && staticEval + 120 < alpha)
         return qsearch<NonPV>(alpha, beta, ss, td);
-
+/*
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY)
         if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta)
             return beta;
-
+*/
     // Null move pruning
     if (!PvNode && td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 &&
         staticEval >= beta)
