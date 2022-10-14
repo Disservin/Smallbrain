@@ -50,7 +50,7 @@ class uciOptions
     void uciHash(int value);
     void uciEvalFile(std::string name);
     int uciThreads(int value);
-    void uciSyzygy(std::string path);
+    void uciSyzygy(std::string input);
     void uciPosition(Board &board, std::string fen = DEFAULT_POS, bool update = true);
     void uciMoves(Board &board, std::vector<std::string> &tokens);
     void addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max);

@@ -78,7 +78,7 @@ int UCI::uciLoop(int argc, char **argv)
             else if (option == "Threads")
                 threadCount = options.uciThreads(std::stoi(value));
             else if (option == "SyzygyPath")
-                options.uciSyzygy(value);
+                options.uciSyzygy(input);
 
             // ADD TUNES BY HAND AND DO `extern int x;` IN uci.h
             // else if (option == "")  = std::stoi(value);
