@@ -441,7 +441,9 @@ moves:
         }
 
         td->board.unmakeMove<false>(move);
-        spentEffort[from(move)][to(move)] += td->nodes - nodeCount;
+
+        if (td->id == 0)
+            spentEffort[from(move)][to(move)] += td->nodes - nodeCount;
 
         if (score > best)
         {
@@ -502,15 +504,16 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
 
     while (true)
     {
-        if (stopped)
-            return 0;
         if (alpha < -3500)
             alpha = -VALUE_INFINITE;
         if (beta > 3500)
             beta = VALUE_INFINITE;
         result = absearch<Root>(depth, alpha, beta, ss, td);
 
-        if (stopped || (td->id == 0 && maxNodes != 0 && td->nodes >= maxNodes))
+        if (stopped)
+            return 0;
+
+        if (td->id == 0 && maxNodes != 0 && td->nodes >= maxNodes)
             return 0;
 
         if (result <= alpha)
@@ -530,7 +533,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
         }
     }
 
-    if (td->allowPrint && td->id == 0)
+    if (td->id == 0 && td->allowPrint)
         uciOutput(result, depth, td->seldepth, getNodes(), getTbHits(), getTime(), getPV());
 
     return result;
@@ -566,10 +569,6 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     td->tbhits = 0;
     td->seldepth = 0;
 
-    Movelist moves;
-    Movegen::legalmoves<Movetype::ALL>(td->board, moves);
-    rootSize = moves.size;
-
     for (depth = 1; depth <= search_depth; depth++)
     {
         td->seldepth = 0;
@@ -589,10 +588,6 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         // limit type time
         if (searchTime != 0)
         {
-            // 1 legal move
-            if (rootSize == 1)
-                searchTime = std::min((int64_t)50, searchTime);
-
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / td->nodes;
             if (searchTime * (110 - std::min(effort, 90)) / 100 < getTime())
