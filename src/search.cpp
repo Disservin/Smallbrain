@@ -588,7 +588,6 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         // limit type time
         if (searchTime != 0)
         {
-
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / td->nodes;
             if (searchTime * (110 - std::min(effort, 90)) / 100 < getTime())
