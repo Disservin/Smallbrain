@@ -10,15 +10,14 @@ My first try was [cppsmallbrain](https://github.com/Disservin/cppsmallbrain), th
 So I started [Smallbrain](https://github.com/Disservin/Smallbrain) from scratch, during that time, I also joined Stockfish development. <br>
 
 After some time I began implementing a NNUE into Smallbrain, with the help of Luecx from [Koivisto](https://github.com/Luecx/Koivisto).<br>
-As of now Smallbrain has a NNUE trained on data given to me by Luecx, while using his [trainer](https://github.com/Luecx/CudAD).
-In the future I plan to generate my own data.
+As of now Smallbrain has a NNUE trained on 500m depth 9 fens generated with the built in data generator and using [CudAD trainer](https://github.com/Luecx/CudAD) to ultimately train the network.
 
 ## Compile
 
-Compile it using the Makefile in ./src or use the VS Solution (which is only maintained from time to time)<br>
+Compile it using the Makefile in ./src <br>
 ```
 make
-.\smallbrain_5.0.exe bench
+.\smallbrain5.0.exe bench
 ```
 compare the Bench with the Bench in the commit messages,
 they should be the same.
@@ -35,7 +34,7 @@ they should be the same.
   currently only default.nnue exist.
   
 ## Engine specific commands
-* go perft *depth*<br>
+* go perft \<depth> <br>
   calculates perft from a set position up to *depth*.
   
 * print<br>
@@ -61,31 +60,36 @@ CCRL 40/15
 
 ```
   Name                  Elo      +       -
-  Smallbrain 5.0 4CPU   3214	+23	−23
-  Smallbrain 5.0        3134	+21	−21
-  Smallbrain 4.0        2979	+25	−25	
+  Smallbrain 5.0 4CPU   3211	+23	−23
+  Smallbrain 5.0        3137	+20	−20
+  Smallbrain 4.0        2978	+25	−25	
   Smallbrain 2.0        2277	+28	−29	
   Smallbrain 1.1        2224	+29	−30
 ```
  CCRL Blitz 2'+1" (Blitz)
 ```
   Name                  Elo      +       -
-  Smallbrain 5.0      	3200	+18	−19
+  Smallbrain 5.0      	3199	+18	−18
   Smallbrain 4.0      	3005	+18	−18
-  Smallbrain 3.0        2921	+19	−20
-  Smallbrain 1.1        2173	+20	−20
+  Smallbrain 3.0        2921	+20	−20
+  Smallbrain 1.1        2174	+20	−20
 ```
 
 ## Features
-* Engine
-  * Bitboard representation
 * Evaluation
-  * NNUE 768 Input -> 512 hidden neurons -> 1 output
+  * NNUE was trained using normal selfplay games + random 8 piece endgames.
 
 ## Datageneration
+```
 * .\smallbrain5.0.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int>
+```
 
 * Example: 
-  .\smallbrain5.0.exe -gen -threads 4 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
-  .\smallbrain5.0.exe -gen -threads 30 -tb E:/Chess/345
+```
+.\smallbrain5.0.exe -gen -threads 4 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
+```
+```
+.\smallbrain5.0.exe -gen -threads 30 -tb E:/Chess/345
+```
+
 * Book reading isnt fully optimized, very large books will slowdown the generation.
