@@ -5,7 +5,7 @@ namespace uciCommand
 
 void uciInput(uciOptions options)
 {
-    std::cout << "id name Smallbrain dev " << uciCommand::currentDateTime() << std::endl;
+    std::cout << "id name Smallbrain 6.0 " << uciCommand::currentDateTime() << std::endl;
     std::cout << "id author Disservin\n" << std::endl;
     options.printOptions();
     std::cout << "uciok" << std::endl;

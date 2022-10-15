@@ -17,7 +17,7 @@ As of now Smallbrain has a NNUE trained on 500m depth 9 fens generated with the 
 Compile it using the Makefile in ./src <br>
 ```
 make
-.\smallbrain5.0.exe bench
+.\smallbrain6.0.exe bench
 ```
 compare the Bench with the Bench in the commit messages,
 they should be the same.
@@ -32,6 +32,9 @@ they should be the same.
 * EvalFile<br>
   The neural net used for the evaluation,<br>
   currently only default.nnue exist.
+
+* SyzygyPath<br>
+  Path to the syzygy files.
   
 ## Engine specific commands
 * go perft \<depth> <br>
@@ -81,15 +84,15 @@ CCRL 40/15
 
 ## Datageneration
 ```
-* .\smallbrain5.0.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int>
+* .\smallbrain6.0.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int>
 ```
 
 * Example: 
 ```
-.\smallbrain5.0.exe -gen -threads 4 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
+.\smallbrain6.0.exe -gen -threads 4 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
 ```
 ```
-.\smallbrain5.0.exe -gen -threads 30 -tb E:/Chess/345
+.\smallbrain6.0.exe -gen -threads 30 -tb E:/Chess/345
 ```
 
 * Book reading isnt fully optimized, very large books will slowdown the generation.
