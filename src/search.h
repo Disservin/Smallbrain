@@ -105,9 +105,6 @@ class Search
     // node count logic
     U64 spentEffort[MAX_SQ][MAX_SQ];
 
-    // number of legal moves at the root
-    int rootSize;
-
     // timepoint when we entered search
     TimePoint::time_point t0;
 
