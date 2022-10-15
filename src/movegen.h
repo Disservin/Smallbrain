@@ -241,7 +241,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
         U64 Promote_Right = Rpawns & RANK_PROMO;
         U64 Promote_Move = singlePush & RANK_PROMO;
 
-        while (Promote_Move && (mt == ALL || mt == CAPTURE))
+        while (Promote_Move && (mt == Movetype::ALL || mt == Movetype::CAPTURE))
         {
             Square to = poplsb(Promote_Move);
             movelist.Add(make<QUEEN, true>(Square(to + DOWN), to));
@@ -250,7 +250,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             movelist.Add(make<BISHOP, true>(Square(to + DOWN), to));
         }
 
-        while (Promote_Right && (mt == ALL || mt == CAPTURE))
+        while (Promote_Right && (mt == Movetype::ALL || mt == Movetype::CAPTURE))
         {
             Square to = poplsb(Promote_Right);
             movelist.Add(make<QUEEN, true>(Square(to + DOWN_LEFT), to));
@@ -259,7 +259,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             movelist.Add(make<BISHOP, true>(Square(to + DOWN_LEFT), to));
         }
 
-        while (Promote_Left && (mt == ALL || mt == CAPTURE))
+        while (Promote_Left && (mt == Movetype::ALL || mt == Movetype::CAPTURE))
         {
             Square to = poplsb(Promote_Left);
             movelist.Add(make<QUEEN, true>(Square(to + DOWN_RIGHT), to));
@@ -273,7 +273,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
         Rpawns &= ~RANK_PROMO;
     }
 
-    if (board.enPassantSquare != NO_SQ && (mt == ALL || mt == CAPTURE))
+    if (board.enPassantSquare != NO_SQ && (mt == Movetype::ALL || mt == Movetype::CAPTURE))
     {
         const Square ep = board.enPassantSquare;
         const U64 epBB = (1ULL << ep);
@@ -312,7 +312,8 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             // We need to make extra sure that ep moves dont leave the king in check
             // 7k/8/8/K1Pp3r/8/8/8/8 w - d6 0 1
             // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant
-            // remove both the pawn that made the push and our pawn that could take in theory and check if that would give check
+            // remove both the pawn that made the push and our pawn that could take in theory and check if that would
+            // give check
             const Square tP = c == White ? Square(static_cast<int>(ep) - 8) : Square(static_cast<int>(ep) + 8);
             const Square kSQ = board.KingSQ<c>();
             const U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
@@ -334,25 +335,25 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
         }
     }
 
-    while (singlePush && (mt == ALL || mt == QUIET))
+    while (singlePush && (mt == Movetype::ALL || mt == Movetype::QUIET))
     {
         Square to = poplsb(singlePush);
         movelist.Add(make<PAWN, false>(Square(to + DOWN), to));
     }
 
-    while (doublePush && (mt == ALL || mt == QUIET))
+    while (doublePush && (mt == Movetype::ALL || mt == Movetype::QUIET))
     {
         Square to = poplsb(doublePush);
         movelist.Add(make<PAWN, false>(Square(to + DOWN + DOWN), to));
     }
 
-    while (Rpawns && (mt == ALL || mt == CAPTURE))
+    while (Rpawns && (mt == Movetype::ALL || mt == Movetype::CAPTURE))
     {
         Square to = poplsb(Rpawns);
         movelist.Add(make<PAWN, false>(Square(to + DOWN_LEFT), to));
     }
 
-    while (Lpawns && (mt == ALL || mt == CAPTURE))
+    while (Lpawns && (mt == Movetype::ALL || mt == Movetype::CAPTURE))
     {
         Square to = poplsb(Lpawns);
         movelist.Add(make<PAWN, false>(Square(to + DOWN_RIGHT), to));
@@ -398,9 +399,9 @@ template <Movetype mt> U64 LegalKingMoves(const Board &board, Square sq)
 {
     U64 bb;
 
-    if (mt == ALL)
+    if (mt == Movetype::ALL)
         bb = board.enemyEmptyBB;
-    else if (mt == CAPTURE)
+    else if (mt == Movetype::CAPTURE)
         bb = board.occEnemy;
     else
         bb = ~board.occAll;
@@ -448,7 +449,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
 
     Square from = board.KingSQ<c>();
     U64 moves;
-    if (!board.castlingRights || board.checkMask != DEFAULT_CHECKMASK || mt == CAPTURE)
+    if (!board.castlingRights || board.checkMask != DEFAULT_CHECKMASK || mt == Movetype::CAPTURE)
         moves = LegalKingMoves<mt>(board, from);
     else
         moves = LegalKingMovesCastling<c>(board, from);
@@ -464,9 +465,9 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
 
     U64 movableSquare = board.checkMask;
 
-    if (mt == ALL)
+    if (mt == Movetype::ALL)
         movableSquare &= board.enemyEmptyBB;
-    else if (mt == CAPTURE)
+    else if (mt == Movetype::CAPTURE)
         movableSquare &= board.occEnemy;
     else
         movableSquare &= ~board.occAll;

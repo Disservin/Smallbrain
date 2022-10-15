@@ -21,14 +21,14 @@ int bonus(int depth)
 
 template <Movetype type> int Search::getHistory(Move move, ThreadData *td)
 {
-    if constexpr (type == QUIET)
+    if constexpr (type == Movetype::QUIET)
         return td->historyTable[td->board.sideToMove][from(move)][to(move)];
 }
 
 template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus, ThreadData *td)
 {
     int hhBonus = bonus - getHistory<type>(move, td) * std::abs(bonus) / 16384;
-    if constexpr (type == QUIET)
+    if constexpr (type == Movetype::QUIET)
         td->historyTable[td->board.sideToMove][from(move)][to(move)] += hhBonus;
 }
 
@@ -61,7 +61,7 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
         td->killerMoves[1][ss->ply] = td->killerMoves[0][ss->ply];
         td->killerMoves[0][ss->ply] = bestMove;
 
-        updateHistory<QUIET>(bestMove, depthBonus, depth, quietMoves, td);
+        updateHistory<Movetype::QUIET>(bestMove, depthBonus, depth, quietMoves, td);
     }
 }
 
@@ -116,9 +116,9 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     // generate all legalmoves in case we are in check
     Movelist moves;
     if (inCheck)
-        Movegen::legalmoves<ALL>(td->board, moves);
+        Movegen::legalmoves<Movetype::ALL>(td->board, moves);
     else
-        Movegen::legalmoves<CAPTURE>(td->board, moves);
+        Movegen::legalmoves<Movetype::CAPTURE>(td->board, moves);
 
     // assign a value to each move
     for (int i = 0; i < moves.size; i++)
@@ -363,7 +363,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
 moves:
     Movelist moves;
-    Movegen::legalmoves<ALL>(td->board, moves);
+    Movegen::legalmoves<Movetype::ALL>(td->board, moves);
 
     Movelist quietMoves;
     Score score = VALUE_NONE;
@@ -567,7 +567,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     td->seldepth = 0;
 
     Movelist moves;
-    Movegen::legalmoves<ALL>(td->board, moves);
+    Movegen::legalmoves<Movetype::ALL>(td->board, moves);
     rootSize = moves.size;
 
     for (depth = 1; depth <= search_depth; depth++)
@@ -745,7 +745,7 @@ int Search::scoreMove(Move move, int ply, bool ttMove, ThreadData *td)
     }
     else
     {
-        return getHistory<QUIET>(move, td);
+        return getHistory<Movetype::QUIET>(move, td);
     }
 }
 
@@ -773,7 +773,7 @@ int Search::scoreqMove(Move move, int ply, bool ttMove, ThreadData *td)
     }
     else
     {
-        return getHistory<QUIET>(move, td);
+        return getHistory<Movetype::QUIET>(move, td);
     }
 }
 
@@ -978,7 +978,7 @@ Move Search::probeDTZ(ThreadData *td)
     Square sqTo = Square(TB_GET_TO(TBresult));
 
     Movelist legalmoves;
-    Movegen::legalmoves<ALL>(td->board, legalmoves);
+    Movegen::legalmoves<Movetype::ALL>(td->board, legalmoves);
 
     for (int i = 0; i < legalmoves.size; i++)
     {

@@ -6,12 +6,12 @@ namespace Movegen
 template <Color c> int pseudoLegalMovesNumber(Board &board)
 {
     int total = 0;
-    
+
     U64 knights_mask = board.Knights<c>();
     U64 bishops_mask = board.Bishops<c>();
     U64 rooks_mask = board.Rooks<c>();
     U64 queens_mask = board.Queens<c>();
-    
+
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
@@ -42,8 +42,9 @@ template <Color c> bool hasLegalMoves(Board &board)
     init<c>(board, board.KingSQ<c>());
 
     Square from = board.KingSQ<c>();
-    U64 moves = !board.castlingRights || board.checkMask != DEFAULT_CHECKMASK ? LegalKingMoves<ALL>(board, from)
-                                                                              : LegalKingMovesCastling<c>(board, from);
+    U64 moves = !board.castlingRights || board.checkMask != DEFAULT_CHECKMASK
+                    ? LegalKingMoves<Movetype::ALL>(board, from)
+                    : LegalKingMovesCastling<c>(board, from);
     if (moves)
         return true;
 
@@ -56,7 +57,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     U64 queens_mask = board.Queens<c>();
 
     Movelist m;
-    LegalPawnMovesAll<c, ALL>(board, m);
+    LegalPawnMovesAll<c, Movetype::ALL>(board, m);
     if (m.size > 0)
         return true;
 

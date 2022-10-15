@@ -12,7 +12,7 @@
 static constexpr int MAX_PLY = 120;
 static constexpr int MAX_MOVES = 128;
 
-enum Movetype : uint8_t
+enum class Movetype : uint8_t
 {
     ALL,
     CAPTURE,
