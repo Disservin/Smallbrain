@@ -98,7 +98,7 @@ class Search
   private:
     // Mainthread limits
     uint64_t maxNodes{};
-    int64_t searchTime{};
+    int64_t optimumTime{};
     int64_t maxTime{};
     int checkTime;
 
