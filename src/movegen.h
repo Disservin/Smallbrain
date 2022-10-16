@@ -56,6 +56,9 @@ template <Color c> U64 pawnRightAttacks(const U64 pawns)
 }
 
 // creates the checkmask
+// Checkmask is the path from the enemy checker to the king,
+// knight and pawns get themselves added to the checkmask.
+// When there is no check at all all bits are set (DEFAULT_CHECKMASK)
 template <Color c> U64 DoCheckmask(Board &board, Square sq)
 {
     U64 Occ = board.occAll;
@@ -101,6 +104,14 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
 }
 
 // creates the pinmask
+// We define the pin mask as the path from the enemy pinner through the pinned piece
+// to our king.
+// First we check if we send out xray attacks from the king and check if they
+// hit an enemy (possible) pinner
+// We need to confirm the pin because there could be 2 pieces from use between
+// the possible pinner and our king. We do this by simply using the popcount
+// of our pieces that lay on the pin mask, if it is only 1 piece then that piece
+// is pinned.
 template <Color c> void DoPinMask(Board &board, Square sq)
 {
     U64 them = board.occEnemy;
@@ -126,6 +137,8 @@ template <Color c> void DoPinMask(Board &board, Square sq)
 }
 
 // seen squares
+// We keep track of all attacked squares by the enemy
+// this is used for king move generation.
 template <Color c> void seenSquares(Board &board)
 {
     U64 pawns = board.Pawns<c>();
@@ -163,6 +176,7 @@ template <Color c> void seenSquares(Board &board)
 }
 
 // creates the pinmask and checkmask
+// setup important variables that we use for move generation
 template <Color c> void init(Board &board, Square sq)
 {
     board.occUs = board.Us<c>();
