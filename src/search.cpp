@@ -545,7 +545,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     if (threadId == 0)
     {
         t0 = TimePoint::now();
-        searchTime = time.optimum;
+        optimumTime = time.optimum;
         maxTime = time.maximum;
         maxNodes = maxN;
         checkTime = 0;
@@ -586,18 +586,24 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         bestmove = td->pvTable[0][0];
 
         // limit type time
-        if (searchTime != 0)
+        if (optimumTime != 0)
         {
+            auto now = getTime();
+
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / td->nodes;
-            if (searchTime * (110 - std::min(effort, 90)) / 100 < getTime())
+            if (optimumTime * (110 - std::min(effort, 90)) / 100 < now)
+                break;
+
+            // stop if we have searched for more than 60% of out time
+            if (now * 10 > optimumTime * 6)
                 break;
         }
     }
 
     // dont stop analysis in infinite mode when max depth is reached
     // wait for uci stop or quit
-    while (depth == MAX_PLY + 1 && searchTime == 0 && !stopped)
+    while (depth == MAX_PLY + 1 && optimumTime == 0 && !stopped)
     {
     }
 
@@ -844,10 +850,10 @@ bool Search::exitEarly(uint64_t nodes, int ThreadId)
         return false;
     checkTime = 2047;
 
-    if (searchTime != 0)
+    if (optimumTime != 0)
     {
         auto ms = getTime();
-        if (ms >= searchTime || ms >= maxTime)
+        if (ms >= optimumTime || ms >= maxTime)
         {
             stopped = true;
             return true;

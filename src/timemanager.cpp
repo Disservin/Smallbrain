@@ -27,7 +27,7 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
         time.optimum = (int64_t)std::max(1.0, avaiableTime / 20.0);
     }
 
-    time.maximum = (int64_t)(time.optimum * 1.05);
+    time.maximum = (int64_t)(time.optimum * 2);
     if (time.maximum >= avaiableTime)
     {
         time.maximum = time.optimum;
