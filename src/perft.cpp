@@ -9,7 +9,7 @@ void Perft::perfTest(int depth, int max)
     auto t2 = TimePoint::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     std::cout << "\ntime: " << ms << "ms" << std::endl;
-    std::cout << "Nodes: " << nodes << " nps " << ((nodes * 1000) / ms) << std::endl;
+    std::cout << "Nodes: " << nodes << " nps " << ((nodes * 1000) / (ms + 1)) << std::endl;
 }
 
 void Perft::testAllPos()
@@ -24,10 +24,11 @@ void Perft::testAllPos()
                            "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
                            "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ",
                            "4r3/bpk5/5n2/2P1P3/8/4K3/8/8 w - - 0 1",
-                           "b2r4/2q3k1/p5p1/P1r1pp2/R1pnP2p/4NP1P/1PP2RPK/Q4B2 w - - 2 29"};
-    int depths[] = {6, 5, 7, 6, 5, 5, 7, 6};
-    std::vector<U64> expected = {119060324, 193690690, 178633661, 706045033,
-                                 89941194,  164075551, 71441619,  2261050076ULL};
+                           "b2r4/2q3k1/p5p1/P1r1pp2/R1pnP2p/4NP1P/1PP2RPK/Q4B2 w - - 2 29",
+                           "3n1k2/8/4P3/8/8/8/8/2K1R3 w - - 0 1"};
+    int depths[] = {6, 5, 7, 6, 5, 5, 7, 6, 8};
+    std::vector<U64> expected = {119060324ull, 193690690ull, 178633661ull,  706045033ull, 89941194ull,
+                                 164075551ull, 71441619ull,  2261050076ull, 437319625ull};
     for (size_t i = 0; i < expected.size(); i++)
     {
         board.applyFen(tests[i]);
