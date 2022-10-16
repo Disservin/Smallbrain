@@ -853,7 +853,7 @@ bool Search::exitEarly(uint64_t nodes, int ThreadId)
     if (optimumTime != 0)
     {
         auto ms = getTime();
-        if (ms >= optimumTime || ms >= maxTime)
+        if (ms >= maxTime)
         {
             stopped = true;
             return true;
