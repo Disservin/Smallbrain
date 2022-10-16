@@ -5,7 +5,7 @@ namespace uciCommand
 
 void uciInput(uciOptions options)
 {
-    std::cout << "id name Smallbrain 6.0 " << uciCommand::currentDateTime() << std::endl;
+    std::cout << "id name Smallbrain dev " << uciCommand::currentDateTime() << std::endl;
     std::cout << "id author Disservin\n" << std::endl;
     options.printOptions();
     std::cout << "uciok" << std::endl;
@@ -118,18 +118,30 @@ bool stringContain(std::string s, std::string origin)
     return origin.find(s) != std::string::npos;
 }
 
-// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
 const std::string currentDateTime()
 {
-    time_t now = time(0);
-    struct tm tstruct;
-    char buf[80];
-    tstruct = *localtime(&now);
-    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
-    // for more information about date/time format
-    strftime(buf, sizeof(buf), "%d%m%Y", &tstruct);
+    std::unordered_map<std::string, std::string> months({{"Jan", "01"},
+                                                         {"Feb", "02"},
+                                                         {"Mar", "03"},
+                                                         {"Apr", "04"},
+                                                         {"May", "05"},
+                                                         {"Jun", "06"},
+                                                         {"Jul", "07"},
+                                                         {"Aug", "08"},
+                                                         {"Sep", "09"},
+                                                         {"Oct", "10"},
+                                                         {"Nov", "11"},
+                                                         {"Dec", "12"}});
 
-    return buf;
+    std::string month, day, year;
+    std::stringstream ss, date(__DATE__); // {month} {date} {year}
+
+    date >> month >> day >> year;
+    if (day.length() == 1)
+        day = "0" + day;
+    ss << day << months[month] << year.substr(2);
+
+    return ss.str();
 }
 
 } // namespace uciCommand
