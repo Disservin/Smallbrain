@@ -77,17 +77,21 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
     }
     if (bishop_mask)
     {
-        if (popcount(bishop_mask) > 1)
-            board.doubleCheck++;
-
         int8_t index = bsf(bishop_mask);
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         board.doubleCheck++;
     }
     if (rook_mask)
     {
+        // 3nk3/4P3/8/8/8/8/8/2K1R3 w - - 0 1, pawn promotes to queen or rook and
+        // suddenly the same piecetype gives check two times
+        // in that case we have a double check and can return early
+        // because king moves dont require the exact pinmask
         if (popcount(rook_mask) > 1)
-            board.doubleCheck++;
+        {
+            board.doubleCheck = 2;
+            return checks;
+        }
 
         int8_t index = bsf(rook_mask);
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
