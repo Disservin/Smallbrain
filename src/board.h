@@ -83,6 +83,12 @@ class Board
     // all squares that are seen by an enemy piece
     U64 seen;
 
+    // King's Super Piece Attacks
+    U64 kingHV;
+    U64 kingD;
+    U64 kingFFD;
+    U64 kingP;
+
     // Occupation Bitboards
     U64 occEnemy;
     U64 occUs;

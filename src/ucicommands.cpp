@@ -38,7 +38,14 @@ void parseInput(std::string input, Search &searcher, Board &board, Datagen::Trai
             std::cout << uciRep(moves[i].move) << std::endl;
         std::cout << "count: " << signed(moves.size) << std::endl;
     }
-
+    else if (input == "checks")
+    {
+        Movelist moves;
+        Movegen::legalmoves<Movetype::CHECK>(board, moves);
+        for (int i = 0; i < moves.size; i++)
+            std::cout << uciRep(moves[i].move) << std::endl;
+        std::cout << "count: " << signed(moves.size) << std::endl;
+    }
     else if (input == "moves")
     {
         Movelist moves;
