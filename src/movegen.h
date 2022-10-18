@@ -499,6 +499,8 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
 {
     init<c>(board, board.KingSQ<c>());
 
+    // Movetype::CHECK is used in qsearch to calculate possible capture moves
+    // and moves that give check. Discovery checks are not calculated.
     if (mt == Movetype::CHECK)
     {
         Square enemyKing = board.KingSQ<~c>();
