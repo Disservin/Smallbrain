@@ -124,7 +124,7 @@ class Search
 
     // main search functions
 
-    template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
+    template <Node node> Score qsearch(Score alpha, Score beta, int depth, Stack *ss, ThreadData *td);
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
 

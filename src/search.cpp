@@ -65,7 +65,7 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
     }
 }
 
-template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td)
+template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, Stack *ss, ThreadData *td)
 {
     if (exitEarly(td->nodes, td->id))
         return VALUE_NONE;
@@ -117,6 +117,8 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     Movelist moves;
     if (inCheck)
         Movegen::legalmoves<Movetype::ALL>(td->board, moves);
+    else if (depth == 0)
+        Movegen::legalmoves<Movetype::CHECK>(td->board, moves);
     else
         Movegen::legalmoves<Movetype::CAPTURE>(td->board, moves);
 
@@ -142,12 +144,13 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
             continue;
 
         // see based capture pruning
-        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && moves[i].value == -50'000)
+        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && moves[i].value == 50'000)
             continue;
 
         td->nodes++;
         td->board.makeMove<true>(move);
-        Score score = -qsearch<node>(-beta, -alpha, ss + 1, td);
+
+        Score score = -qsearch<node>(-beta, -alpha, depth + 1, ss + 1, td);
         td->board.unmakeMove<false>(move);
 
         // update the best score
@@ -233,7 +236,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     // Enter qsearch
     if (depth <= 0)
-        return qsearch<node>(alpha, beta, ss, td);
+        return qsearch<node>(alpha, beta, 0, ss, td);
 
     // Selective depth (heighest depth we have ever reached)
     if (ss->ply > td->seldepth)
@@ -325,7 +328,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     // Razoring
     if (!PvNode && depth < 3 && staticEval + 120 < alpha)
-        return qsearch<NonPV>(alpha, beta, ss, td);
+        return qsearch<NonPV>(alpha, beta, 0, ss, td);
 
     // Reverse futility pruning
     if (std::abs(beta) < VALUE_MATE_IN_PLY)
@@ -359,7 +362,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         depth--;
 
     if (depth <= 0)
-        return qsearch<PV>(alpha, beta, ss, td);
+        return qsearch<PV>(alpha, beta, 0, ss, td);
 
 moves:
     Movelist moves;
@@ -762,15 +765,15 @@ int Search::scoreqMove(Move move, int ply, bool ttMove, ThreadData *td)
     }
     else if (td->board.pieceAtB(to(move)) != None)
     {
-        return see(move, 0, td->board) ? CAPTURE_SCORE + mvvlva(move, td->board) : -50'000;
+        return see(move, 0, td->board) ? CAPTURE_SCORE + mvvlva(move, td->board) : 50'000;
     }
     else if (td->killerMoves[0][ply] == move)
     {
-        return KILLER_ONE_SCORE;
+        return 40'000;
     }
     else if (td->killerMoves[1][ply] == move)
     {
-        return KILLER_TWO_SCORE;
+        return 30'000;
     }
     else
     {

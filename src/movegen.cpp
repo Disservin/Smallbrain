@@ -44,7 +44,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     Square from = board.KingSQ<c>();
     U64 moves = !board.castlingRights || board.checkMask != DEFAULT_CHECKMASK
                     ? LegalKingMoves<Movetype::ALL>(board, from)
-                    : LegalKingMovesCastling<c>(board, from);
+                    : LegalKingMovesCastling<c, Movetype::ALL>(board, from);
     if (moves)
         return true;
 
@@ -66,7 +66,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
-        U64 moves = LegalKnightMoves(board, from, movableSquare);
+        U64 moves = LegalKnightMoves<Movetype::ALL>(board, from, movableSquare);
         while (moves)
         {
             return true;
@@ -75,7 +75,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (bishops_mask)
     {
         Square from = poplsb(bishops_mask);
-        U64 moves = LegalBishopMoves(board, from, movableSquare);
+        U64 moves = LegalBishopMoves<Movetype::ALL>(board, from, movableSquare);
         while (moves)
         {
             return true;
@@ -84,7 +84,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (rooks_mask)
     {
         Square from = poplsb(rooks_mask);
-        U64 moves = LegalRookMoves(board, from, movableSquare);
+        U64 moves = LegalRookMoves<Movetype::ALL>(board, from, movableSquare);
         while (moves)
         {
             return true;
@@ -93,7 +93,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (queens_mask)
     {
         Square from = poplsb(queens_mask);
-        U64 moves = LegalQueenMoves(board, from, movableSquare);
+        U64 moves = LegalQueenMoves<Movetype::ALL>(board, from, movableSquare);
         while (moves)
         {
             return true;
