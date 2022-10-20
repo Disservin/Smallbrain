@@ -177,7 +177,8 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options, Board board)
 
         if (uciCommand::elementInVector("-tb", allArgs))
         {
-            options.uciSyzygy(uciCommand::findElementString("-tb", allArgs));
+            std::string s = "setoption name SyzygyPath value " + uciCommand::findElementString("-tb", allArgs);
+            options.uciSyzygy(s);
         }
 
         if (uciCommand::elementInVector("-depth", allArgs))
@@ -185,6 +186,7 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options, Board board)
             depth = uciCommand::findElement("-depth", allArgs);
         }
 
+        std::cout << "workers" << workers << "book" << bookPath << "depth " << depth << std::endl;
         genData.generate(workers, bookPath, depth);
     }
 }

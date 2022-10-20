@@ -89,7 +89,7 @@ CCRL 40/15
 
 * Example: 
 ```
-.\smallbrain6.0.exe -gen -threads 4 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
+.\smallbrain6.0.exe -gen -threads 304 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
 ```
 ```
 .\smallbrain6.0.exe -gen -threads 30 -tb E:/Chess/345
