@@ -186,7 +186,6 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options, Board board)
             depth = uciCommand::findElement("-depth", allArgs);
         }
 
-        std::cout << "workers" << workers << "book" << bookPath << "depth " << depth << std::endl;
         genData.generate(workers, bookPath, depth);
     }
 }

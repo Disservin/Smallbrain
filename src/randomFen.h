@@ -12,7 +12,7 @@ extern std::random_device rd;
 extern std::mt19937 e;
 
 inline constexpr char piece_to_char[] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '-'};
-inline constexpr int max_pieces[] = {1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 1};
+inline constexpr int max_pieces[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 inline constexpr int piece_values_random[] = {100, 320, 330, 500, 900, 20000, -100, -320, -330, -500, -900, -20000, 0};
 
