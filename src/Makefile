@@ -138,7 +138,6 @@ OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 EXE  := $(NAME)$(MAJOR).$(MINOR)$(ARCH)$(SUFFIX)
 
 all: $(TARGET)
-	rm -rf *.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(CXXFLAGS) -o $(EXE) $^ $(FLAGS)

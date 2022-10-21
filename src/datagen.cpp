@@ -58,10 +58,17 @@ void TrainingData::randomPlayout(std::ofstream &file, int threadId, std::string 
 
     std::vector<fenData> fens;
     Movelist movelist;
+    movelist.size = 0;
     int ply = 0;
-    int randomMoves = 8;
+    int randomMoves = 10;
 
-    if (book != "")
+    std::uniform_int_distribution<std::mt19937::result_type> maxLines{0, static_cast<std::mt19937::result_type>(15)};
+    if (maxLines(e) == 1)
+    {
+        ply = randomMoves;
+        board.applyFen(getRandomfen());
+    }
+    else if (maxLines(e) % 5 == 0 && book != "")
     {
         std::ifstream openingFile;
         openingFile.open(book);
@@ -86,23 +93,12 @@ void TrainingData::randomPlayout(std::ofstream &file, int threadId, std::string 
     }
     else
     {
-        std::uniform_int_distribution<std::mt19937::result_type> maxLines{0,
-                                                                          static_cast<std::mt19937::result_type>(20)};
-
-        if (maxLines(e) == 1)
-        {
-            ply = 8;
-            randomMoves = 8;
-            board.applyFen(getRandomfen());
-        }
-        else
-        {
-            board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        }
+        board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
 
     while (ply < randomMoves)
     {
+        movelist.size = 0;
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
         if (movelist.size == 0 || UCI_FORCE_STOP)
             return;
@@ -116,6 +112,7 @@ void TrainingData::randomPlayout(std::ofstream &file, int threadId, std::string 
         ply++;
     }
 
+    movelist.size = 0;
     board.hashHistory.clear();
 
     Movegen::legalmoves<Movetype::ALL>(board, movelist);
@@ -142,6 +139,7 @@ void TrainingData::randomPlayout(std::ofstream &file, int threadId, std::string 
     while (true)
     {
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
+        movelist.size = 0;
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
         if (movelist.size == 0)
         {

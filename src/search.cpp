@@ -606,7 +606,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
     // dont stop analysis in infinite mode when max depth is reached
     // wait for uci stop or quit
-    while (depth == MAX_PLY + 1 && optimumTime == 0 && !stopped)
+    while (td->allowPrint && depth == MAX_PLY + 1 && optimumTime == 0 && !stopped)
     {
     }
 
