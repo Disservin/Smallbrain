@@ -68,7 +68,7 @@ void TrainingData::randomPlayout(std::ofstream &file, int threadId, std::string 
         ply = randomMoves;
         board.applyFen(getRandomfen());
     }
-    if (maxLines(e) % 5 == 0 && book != "")
+    else if (maxLines(e) % 5 == 0 && book != "")
     {
         std::ifstream openingFile;
         openingFile.open(book);
