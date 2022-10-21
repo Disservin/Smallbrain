@@ -572,6 +572,8 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     td->tbhits = 0;
     td->seldepth = 0;
 
+    int bestmoveChanges = 0;
+
     for (depth = 1; depth <= search_depth; depth++)
     {
         td->seldepth = 0;
@@ -586,6 +588,9 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
         sr.score = result;
 
+        if (bestmove != td->pvTable[0][0])
+            bestmoveChanges++;
+
         bestmove = td->pvTable[0][0];
 
         // limit type time
@@ -599,7 +604,9 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
                 break;
 
             // stop if we have searched for more than 60% of out time
-            if (now * 10 > optimumTime * 6)
+            if (bestmoveChanges > 4)
+                optimumTime = maxTime * 0.75;
+            else if (now * 10 > optimumTime * 6)
                 break;
         }
     }
