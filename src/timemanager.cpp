@@ -9,7 +9,7 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
 
     if (mtg == 0)
     {
-        mtg = 20;
+        mtg = 50;
         overhead = std::max(10 * (50 - ply / 2), 0);
     }
     else
