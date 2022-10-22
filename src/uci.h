@@ -48,12 +48,10 @@ class UCI
 
     int threadCount;
 
-    void stopThreads();
-
-    void quit();
-
-    // Get current date/time, format is YYYY-MM-DD.HH:mm:ss
-    const std::string currentDateTime();
-
+    /// @brief parse custom engine commands
+    /// @param argc
+    /// @param argv
+    /// @param options
+    /// @param board
     void parseArgs(int argc, char **argv, uciOptions options, Board board);
 };

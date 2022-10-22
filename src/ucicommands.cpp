@@ -108,18 +108,6 @@ bool elementInVector(std::string el, std::vector<std::string> tokens)
     return std::find(tokens.begin(), tokens.end(), el) != tokens.end();
 }
 
-int findElement(std::string param, std::vector<std::string> tokens)
-{
-    int index = find(tokens.begin(), tokens.end(), param) - tokens.begin();
-    return std::stoi(tokens[index + 1]);
-}
-
-std::string findElementString(std::string param, std::vector<std::string> tokens)
-{
-    int index = find(tokens.begin(), tokens.end(), param) - tokens.begin();
-    return tokens[index + 1];
-}
-
 bool stringContain(std::string s, std::string origin)
 {
     return origin.find(s) != std::string::npos;

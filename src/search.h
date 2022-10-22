@@ -108,17 +108,38 @@ class Search
     // timepoint when we entered search
     TimePoint::time_point t0;
 
-    // return the history of the move
+    /// @brief return the history of the move
+    /// @tparam type
+    /// @param move
+    /// @param td
+    /// @return
     template <Movetype type> int getHistory(Move move, ThreadData *td);
 
-    // update move history
+    /// @brief update move history
+    /// @tparam type
+    /// @param move
+    /// @param bonus
+    /// @param td
     template <Movetype type> void updateHistoryBonus(Move move, int bonus, ThreadData *td);
 
-    // update history for all moves
+    /// @brief update history for all moves
+    /// @tparam type
+    /// @param bestmove
+    /// @param bonus
+    /// @param depth
+    /// @param movelist movelist of moves to update
+    /// @param td
     template <Movetype type>
     void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td);
 
-    // update all history + other move ordering
+    /// @brief  update all history + other move ordering
+    /// @param bestMove
+    /// @param best best score
+    /// @param beta
+    /// @param depth
+    /// @param quietMoves
+    /// @param td
+    /// @param ss
     void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td,
                             Stack *ss);
 
@@ -128,25 +149,43 @@ class Search
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
 
-    // Static Exchange Evaluation
+    /// @brief Static Exchange Evaluation
+    /// @param move
+    /// @param threshold
+    /// @param board
+    /// @return
     bool see(Move move, int threshold, Board &board);
 
-    // Most Valuable Victim - Least Valuable Aggressor
+    /// @brief Most Valuable Victim - Least Valuable Aggressor
+    /// @param move
+    /// @param board
+    /// @return
     int mvvlva(Move move, Board &board);
 
-    // score moves from qsearch
+    /// @brief score moves from qsearch
+    /// @param move
+    /// @param ply
+    /// @param ttMove
+    /// @param td
+    /// @return
     int scoreqMove(Move move, int ply, bool ttMove, ThreadData *td);
-    // score main search moves
+
+    /// @brief score main search moves
+    /// @param move
+    /// @param ply
+    /// @param ttMove
+    /// @param td
+    /// @return
     int scoreMove(Move move, int ply, bool ttMove, ThreadData *td);
 
     // utility functions
 
     /// @brief requires a clean Movepicker to start with
-    /// @param moves
-    /// @param mp
+    /// @param moves legal movelist
+    /// @param mp Movepicker object
     /// @param ttHit
-    /// @param td
-    /// @param ss
+    /// @param td ThreadData
+    /// @param ss Stack
     /// @return next move
     Move nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss);
 
@@ -161,7 +200,14 @@ class Search
     uint64_t getNodes();
     uint64_t getTbHits();
 
+    /// @brief check TB evaluation
+    /// @param td ThreadData
+    /// @return TB Score
     Score probeTB(ThreadData *td);
+
+    /// @brief find the DTZ Move
+    /// @param td ThreadData
+    /// @return return DTZ Move
     Move probeDTZ(ThreadData *td);
 };
 

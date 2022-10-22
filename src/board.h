@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <bitset>
 #include <iostream>
 #include <string>
 
@@ -105,60 +104,84 @@ class Board
     U64 Bitboards[12] = {};
     Piece board[MAX_SQ];
 
+    /// @brief constructor for the board, loads startpos and initializes SQUARES_BETWEEN_BB array
     Board();
 
-    // load all weights and inputs from scratch
+    /// @brief reload the entire nnue
     void accumulate();
 
-    // Finds what piece is on the square using the bitboards
+    /// @brief Finds what piece is on the square using bitboards (slow)
+    /// @param sq
+    /// @return found piece otherwise None
     Piece pieceAtBB(Square sq);
 
-    // Finds what piece is on the square using the board (more performant)
+    /// @brief Finds what piece is on the square using the board (more performant)
+    /// @param sq
+    /// @return found piece otherwise None
     Piece pieceAtB(Square sq);
 
-    // applys a new Fen to the board
+    /// @brief applys a new Fen to the board and also reload the entire nnue
+    /// @param fen
+    /// @param updateAcc
     void applyFen(std::string fen, bool updateAcc = true);
 
-    // returns a Fen string of the current board
+    /// @brief returns a Fen string of the current board
+    /// @return fen string
     std::string getFen();
 
-    // prints any bitboard
-    void printBitboard(U64 bb);
-
-    // prints the current board
+    /// @brief prints the current board
     void print();
 
-    // detects if the position is a repetition by default 2, fide would be 3
+    /// @brief detects if the position is a repetition by default 1, fide would be 3
+    /// @param draw
+    /// @return true for repetition otherwise false
     bool isRepetition(int draw = 1);
 
-    // only pawns + king = true else false
+    /// @brief only pawns + king = true else false
+    /// @param c
+    /// @return
     bool nonPawnMat(Color c);
 
-    // returns the King Square of the specified color
+    /// @brief returns the King Square of the specified color
+    /// @param c
+    /// @return
     Square KingSQ(Color c);
 
-    // returns the King Square of the specified color
+    /// @brief returns the King Square of the specified color
+    /// @tparam c
+    /// @return
     template <Color c> Square KingSQ();
 
-    // returns all pieces of the other color
+    /// @brief returns all pieces of the other color
+    /// @param c
+    /// @return
     U64 Enemy(Color c);
 
-    // returns all pieces of the other color
+    /// @brief returns all pieces of the other color
+    /// @tparam c
+    /// @return
     template <Color c> U64 Enemy();
 
-    // returns a bitboard of our pieces
+    /// @brief returns a bitboard of our pieces
+    /// @param c
+    /// @return
     U64 Us(Color c);
 
-    // returns a bitboard of our pieces
+    /// @brief returns a bitboard of our pieces
+    /// @tparam c
+    /// @return
     template <Color c> U64 Us();
 
-    // returns all empty squares or squares with an enemy on them
+    /// @brief returns all empty squares or squares with an enemy on them
+    /// @param c
+    /// @return
     U64 EnemyEmpty(Color c);
 
-    // returns all pieces color
+    /// @brief returns all pieces
+    /// @return
     U64 All();
 
-    // Gets the piece of the specified color
+    // Gets individual bitboards
 
     U64 Pawns(Color c);
     U64 Knights(Color c);
@@ -173,7 +196,10 @@ class Board
     template <Color c> U64 Queens();
     template <Color c> U64 Kings();
 
-    // Is square attacked by color c
+    /// @brief is square attacked by color c
+    /// @param c
+    /// @param sq
+    /// @return
     bool isSquareAttacked(Color c, Square sq);
 
     // attackers used for SEE
@@ -190,10 +216,10 @@ class Board
     /// @param move
     template <bool updateNNUE> void unmakeMove(Move move);
 
-    // make a nullmove
+    /// @brief make a nullmove
     void makeNullMove();
 
-    // unmake a nullmove
+    /// @brief unmake a nullmove
     void unmakeNullMove();
 
     std::array<int16_t, HIDDEN_BIAS> &getAccumulator();
@@ -213,13 +239,17 @@ class Board
     template <bool updateNNUE> void placePiece(Piece piece, Square sq);
 
   private:
+    /// @brief current accumulator
     std::array<int16_t, HIDDEN_BIAS> accumulator;
+
+    /// @brief previous accumulators
     std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
 
-    // calculate the current zobrist hash from scratch
+    /// @brief calculate the current zobrist hash from scratch
+    /// @return
     U64 zobristHash();
 
-    // initialize SQUARES_BETWEEN_BB array
+    /// @brief initialize SQUARES_BETWEEN_BB array
     void initializeLookupTables();
 
     // update the hash

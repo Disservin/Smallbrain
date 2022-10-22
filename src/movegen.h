@@ -55,9 +55,9 @@ template <Color c> U64 pawnRightAttacks(const U64 pawns)
     return c == White ? (pawns << 9) & ~MASK_FILE[0] : (pawns >> 9) & ~MASK_FILE[7];
 }
 
-// creates the checkmask
-// Checkmask is the path from the enemy checker to the king,
-// knight and pawns get themselves added to the checkmask.
+// Creates the checkmask.
+// A checkmask is the path from the enemy checker to our king.
+// Knight and pawns get themselves added to the checkmask, otherwise the path is added.
 // When there is no check at all all bits are set (DEFAULT_CHECKMASK)
 template <Color c> U64 DoCheckmask(Board &board, Square sq)
 {
@@ -68,6 +68,8 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
     U64 bishop_mask = (board.Bishops<~c>() | board.Queens<~c>()) & BishopAttacks(sq, Occ);
     U64 rook_mask = (board.Rooks<~c>() | board.Queens<~c>()) & RookAttacks(sq, Occ);
 
+    // we keep track of the amount of checks, in case there are
+    // two checks on the board only the king can move!
     board.doubleCheck = 0;
 
     if (pawn_mask)
@@ -83,6 +85,7 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
     if (bishop_mask)
     {
         int8_t index = bsf(bishop_mask);
+        // path is added
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         board.doubleCheck++;
     }
@@ -91,7 +94,7 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
         // 3nk3/4P3/8/8/8/8/8/2K1R3 w - - 0 1, pawn promotes to queen or rook and
         // suddenly the same piecetype gives check two times
         // in that case we have a double check and can return early
-        // because king moves dont require the exact pinmask
+        // because king moves dont require the checkmask
         if (popcount(rook_mask) > 1)
         {
             board.doubleCheck = 2;
@@ -105,15 +108,14 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
     return checks;
 }
 
-// creates the pinmask
+// Create the pinmask
 // We define the pin mask as the path from the enemy pinner through the pinned piece
 // to our king.
-// First we check if we send out xray attacks from the king and check if they
-// hit an enemy (possible) pinner
-// We need to confirm the pin because there could be 2 pieces from use between
-// the possible pinner and our king. We do this by simply using the popcount
-// of our pieces that lay on the pin mask, if it is only 1 piece then that piece
-// is pinned.
+// We assume that the king can do rook and bishop moves and generate the attacks
+// for these in case we hit an enemy rook/bishop/queen we might have a possible pin.
+// We need to confirm the pin because there could be 2 or more pieces from our king to
+// the possible pinner. We do this by simply using the popcount
+// of our pieces that lay on the pin mask, if it is only 1 piece then that piece is pinned.
 template <Color c> void DoPinMask(Board &board, Square sq)
 {
     U64 them = board.occEnemy;
@@ -193,6 +195,10 @@ template <Color c> void init(Board &board, Square sq)
     DoPinMask<c>(board, sq);
 }
 
+/// @brief shift a mask in a direction
+/// @tparam direction
+/// @param b
+/// @return
 template <Direction direction> constexpr U64 shift(const U64 b)
 {
     switch (direction)
@@ -218,6 +224,11 @@ template <Direction direction> constexpr U64 shift(const U64 b)
 
 // all legal moves for each piece
 
+/// @brief all legal pawn moves, generated at once
+/// @tparam c
+/// @tparam mt
+/// @param board
+/// @param movelist
 template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &movelist)
 {
     const U64 pawns_mask = board.Pawns<c>();
@@ -318,12 +329,13 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
                 from = Square(to + DOWN_LEFT);
             }
 
-            // if pinned but ep square is not on the pinmask then we cant move there
+            // If the pawn is pinned but the ep square is not on the pinmask then we cant move there.
             if ((1ULL << from) & board.pinD && !(board.pinD & epBB))
                 continue;
 
-            // If we are in check and the en passant square lies on our attackmask and the en passant piece gives
-            // check return the ep mask as a move square
+            // If we are in check and the en passant piece is on our checkmask then it currently gives
+            // check thus we can capture it en passant
+            // 6k1/2p5/8/3P4/1K6/8/8/8 w - - 0 1
             if (board.checkMask != DEFAULT_CHECKMASK)
             {
                 if (board.checkMask & (1ULL << (ep + DOWN)))
@@ -334,8 +346,8 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             // We need to make extra sure that ep moves dont leave the king in check
             // 7k/8/8/K1Pp3r/8/8/8/8 w - d6 0 1
             // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant
-            // remove both the pawn that made the push and our pawn that could take in theory and check if that would
-            // give check
+            // remove both the pawn that made the push and our pawn that could take in theory
+            // and check if our king would be attacked.
             const Square kSQ = board.KingSQ<c>();
             const U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
             if (enemyQueenRook & MASK_RANK[square_rank(kSQ)])
@@ -493,7 +505,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
     init<c>(board, board.KingSQ<c>());
 
     // Movetype::CHECK is used in qsearch to calculate possible capture moves
-    // and moves that give check. Discovery checks are not calculated.
+    // and moves that give check. Discovery checks are not calculated or castling checks.
     if (mt == Movetype::CHECK)
     {
         Square enemyKing = board.KingSQ<~c>();
@@ -517,11 +529,14 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
         movelist.Add(make<KING, false>(from, to));
     }
 
+    // early return for double check as described earlier
     if (board.doubleCheck == 2)
         return;
 
+    // Moves have to be on the checkmask
     U64 movableSquare = board.checkMask;
 
+    // Slider and Knight moves can only go to enemy or empty squares.
     if (mt == Movetype::ALL || mt == Movetype::CHECK)
         movableSquare &= board.enemyEmptyBB;
     else if (mt == Movetype::CAPTURE)
@@ -529,8 +544,11 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
     else
         movableSquare &= ~board.occAll;
 
+    // prune knights that are pinned since these cannot move
     U64 knights_mask = board.Knights<c>() & ~(board.pinD | board.pinHV);
+    // prune horizontally pinned bishops
     U64 bishops_mask = board.Bishops<c>() & ~board.pinHV;
+    // prune diagonally pinned rooks
     U64 rooks_mask = board.Rooks<c>() & ~board.pinD;
     U64 queens_mask = board.Queens<c>();
 

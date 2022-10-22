@@ -30,8 +30,24 @@ std::string stringFenData(fenData fenData, double score);
 class TrainingData
 {
   public:
+    /// @brief entry function
+    /// @param workers
+    /// @param book
+    /// @param depth
     void generate(int workers = 4, std::string book = "", int depth = 7);
+
+    /// @brief repeats infinite random playouts
+    /// @param threadId
+    /// @param book
+    /// @param depth
     void infinitePlay(int threadId, std::string book, int depth);
+
+    /// @brief starts one selfplay game
+    /// @param file
+    /// @param threadId
+    /// @param bookm
+    /// @param depth
+    /// @param numLines
     void randomPlayout(std::ofstream &file, int threadId, std::string &bookm, int depth, int numLines);
     std::vector<std::thread> threads;
 };

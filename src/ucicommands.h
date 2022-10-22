@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits> // for is_same_v
+
 #include "benchmark.h"
 #include "board.h"
 #include "datagen.h"
@@ -24,26 +26,49 @@ void uciInput(uciOptions options);
 void isreadyInput();
 void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen::TrainingData &dg);
 
-// we parse the uci input and call the corresponding function
+/// @brief we parse the uci input and call the corresponding function
+/// @param input
+/// @param searcher
+/// @param board
+/// @param dg
 void parseInput(std::string input, Search &searcher, Board &board, Datagen::TrainingData &dg);
 
+/// @brief stop all threads
+/// @param searcher
+/// @param dg
 void stopThreads(Search &searcher, Datagen::TrainingData &dg);
 
+/// @brief quit program
+/// @param searcher
+/// @param dg
 void quit(Search &searcher, Datagen::TrainingData &dg);
 
-// elementInVector searches el in the tokens and returns false if not found
+/// @brief elementInVector searches el in the tokens
+/// @param el
+/// @param tokens
+/// @return returns false if not found
 bool elementInVector(std::string el, std::vector<std::string> tokens);
 
-// findElement returns the next (int) value after a param
-int findElement(std::string param, std::vector<std::string> tokens);
+/// @brief findElement returns the next value after a param
+/// @param param
+/// @param tokens
+/// @return
+template <typename T> T findElement(std::string param, std::vector<std::string> tokens)
+{
+    int index = find(tokens.begin(), tokens.end(), param) - tokens.begin();
+    if constexpr (std::is_same_v<T, int>)
+        return std::stoi(tokens[index + 1]);
+    else
+        return tokens[index + 1];
+}
 
-// findElementString returns the next (string) value after a param
-std::string findElementString(std::string param, std::vector<std::string> tokens);
-
-// test if string contains string
+/// @brief test if string contains string
+/// @param s test
+/// @param origin
+/// @return
 bool stringContain(std::string s, std::string origin);
 
-// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+// Get current date/time
 const std::string currentDateTime();
 
 } // namespace uciCommand

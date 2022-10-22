@@ -1,7 +1,5 @@
 #include "board.h"
 
-#include <algorithm> // reverse
-
 Board::Board()
 {
     initializeLookupTables();
@@ -234,19 +232,6 @@ std::string Board::getFen()
     fen += std::to_string(halfMoveClock);
     fen += " " + std::to_string(fullMoveNumber / 2);
     return fen;
-}
-
-void Board::printBitboard(U64 bb)
-{
-    std::bitset<64> b(bb);
-    std::string str_bitset = b.to_string();
-    for (int i = 0; i < MAX_SQ; i += 8)
-    {
-        std::string x = str_bitset.substr(i, 8);
-        reverse(x.begin(), x.end());
-        std::cout << x << std::endl;
-    }
-    std::cout << '\n' << std::endl;
 }
 
 void Board::print()

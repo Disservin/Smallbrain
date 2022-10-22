@@ -1,5 +1,8 @@
 #include "helper.h"
 
+#include <algorithm> // reverse
+#include <bitset>
+
 std::vector<std::string> splitInput(std::string fen)
 {
     std::stringstream fen_stream(fen);
@@ -224,4 +227,17 @@ Piece makePiece(PieceType type, Color c)
     if (type == NONETYPE)
         return None;
     return Piece(type + 6 * c);
+}
+
+void printBitboard(U64 bb)
+{
+    std::bitset<64> b(bb);
+    std::string str_bitset = b.to_string();
+    for (int i = 0; i < MAX_SQ; i += 8)
+    {
+        std::string x = str_bitset.substr(i, 8);
+        reverse(x.begin(), x.end());
+        std::cout << x << std::endl;
+    }
+    std::cout << '\n' << std::endl;
 }

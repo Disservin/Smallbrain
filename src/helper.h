@@ -104,3 +104,7 @@ void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, in
 /// @param c
 /// @return new Piece
 Piece makePiece(PieceType type, Color c);
+
+/// @brief prints any bitboard
+/// @param bb
+void printBitboard(U64 bb);

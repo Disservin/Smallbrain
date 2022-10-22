@@ -2,6 +2,11 @@
 
 #include <cstring> //memset
 
+/*
+This was written very poorly but it does the job.
+I actually have no idea how the random_device behaves when multiple threads access
+it...
+*/
 U64 randomFenBoard::Pawns(Color color)
 {
     return bitboards[color == Black ? BlackPawn : WhitePawn];
@@ -67,7 +72,6 @@ std::string randomFenBoard::generateRandomFen()
 
     std::string fen = "";
     int placedPieces = 0;
-    // int allowedPieces = distPieceCount(e);
     int allowedPieces = 6;
 
     int emptySquares = 0;

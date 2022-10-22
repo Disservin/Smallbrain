@@ -101,7 +101,7 @@ int UCI::uciLoop(int argc, char **argv)
         }
         else if (uciCommand::stringContain("go perft", input))
         {
-            int depth = uciCommand::findElement("perft", tokens);
+            int depth = uciCommand::findElement<int>("perft", tokens);
             Perft perft = Perft();
             perft.board = board;
             perft.perfTest(depth, depth);
@@ -118,28 +118,28 @@ int UCI::uciLoop(int argc, char **argv)
             else
                 limit = tokens[1];
 
-            info.depth = (limit == "depth") ? uciCommand::findElement("depth", tokens) : MAX_PLY;
+            info.depth = (limit == "depth") ? uciCommand::findElement<int>("depth", tokens) : MAX_PLY;
             info.depth = (limit == "infinite" || input == "go") ? MAX_PLY : info.depth;
-            info.nodes = (limit == "nodes") ? uciCommand::findElement("nodes", tokens) : 0;
+            info.nodes = (limit == "nodes") ? uciCommand::findElement<int>("nodes", tokens) : 0;
             info.time.maximum = info.time.optimum =
-                (limit == "movetime") ? uciCommand::findElement("movetime", tokens) : 0;
+                (limit == "movetime") ? uciCommand::findElement<int>("movetime", tokens) : 0;
 
             std::string side = board.sideToMove == White ? "wtime" : "btime";
             if (uciCommand::elementInVector(side, tokens))
             {
                 // go wtime 100 btime 100 winc 100 binc 100
                 std::string inc_str = board.sideToMove == White ? "winc" : "binc";
-                int64_t timegiven = uciCommand::findElement(side, tokens);
+                int64_t timegiven = uciCommand::findElement<int>(side, tokens);
                 int64_t inc = 0;
                 int64_t mtg = 0;
 
                 // Increment
                 if (uciCommand::elementInVector(inc_str, tokens))
-                    inc = uciCommand::findElement(inc_str, tokens);
+                    inc = uciCommand::findElement<int>(inc_str, tokens);
 
                 // Moves to next time control
                 if (uciCommand::elementInVector("movestogo", tokens))
-                    inc = uciCommand::findElement("movestogo", tokens);
+                    inc = uciCommand::findElement<int>("movestogo", tokens);
 
                 // Calculate search time
                 info.time = optimumTime(timegiven, inc, board.fullMoveNumber, mtg);
@@ -167,23 +167,23 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options, Board board)
 
         if (uciCommand::elementInVector("-threads", allArgs))
         {
-            workers = uciCommand::findElement("-threads", allArgs);
+            workers = uciCommand::findElement<int>("-threads", allArgs);
         }
 
         if (uciCommand::elementInVector("-book", allArgs))
         {
-            bookPath = uciCommand::findElementString("-book", allArgs);
+            bookPath = uciCommand::findElement<std::string>("-book", allArgs);
         }
 
         if (uciCommand::elementInVector("-tb", allArgs))
         {
-            std::string s = "setoption name SyzygyPath value " + uciCommand::findElementString("-tb", allArgs);
+            std::string s = "setoption name SyzygyPath value " + uciCommand::findElement<std::string>("-tb", allArgs);
             options.uciSyzygy(s);
         }
 
         if (uciCommand::elementInVector("-depth", allArgs))
         {
-            depth = uciCommand::findElement("-depth", allArgs);
+            depth = uciCommand::findElement<int>("-depth", allArgs);
         }
 
         genData.generate(workers, bookPath, depth);
