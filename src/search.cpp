@@ -579,11 +579,12 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     td->seldepth = 0;
 
     int bestmoveChanges = 0;
-
+    int evalAverage = 0;
     for (depth = 1; depth <= search_depth; depth++)
     {
         td->seldepth = 0;
         result = aspirationSearch(depth, result, ss, td);
+        evalAverage += result;
 
         if (exitEarly(td->nodes, td->id))
             break;
@@ -608,6 +609,9 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
             int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / td->nodes;
             if (optimumTime * (110 - std::min(effort, 90)) / 100 < now)
                 break;
+
+            if (result + 30 < evalAverage / depth)
+                optimumTime *= 1.10;
 
             // stop if we have searched for more than 60% of out time
             if (bestmoveChanges > 4)
