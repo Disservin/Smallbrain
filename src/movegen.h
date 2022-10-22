@@ -326,7 +326,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             // check return the ep mask as a move square
             if (board.checkMask != DEFAULT_CHECKMASK)
             {
-                if (board.checkMask & (1ULL << (ep - (c * -2 + 1) * 8)))
+                if (board.checkMask & (1ULL << (ep + DOWN)))
                     movelist.Add(make<PAWN, false>(from, to));
                 continue;
             }
@@ -336,21 +336,14 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant
             // remove both the pawn that made the push and our pawn that could take in theory and check if that would
             // give check
-            const Square tP = c == White ? Square(static_cast<int>(ep) - 8) : Square(static_cast<int>(ep) + 8);
             const Square kSQ = board.KingSQ<c>();
             const U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
             if (enemyQueenRook & MASK_RANK[square_rank(kSQ)])
             {
-                Piece ourPawn = makePiece(PAWN, c);
-                Piece theirPawn = makePiece(PAWN, ~c);
-                board.removePiece<false>(ourPawn, from);
-                board.removePiece<false>(theirPawn, tP);
-                board.placePiece<false>(ourPawn, ep);
-                if (!((RookAttacks(kSQ, board.All()) & (enemyQueenRook))))
+                const Square tP = Square(static_cast<int>(ep) + DOWN);
+                const U64 connectingPawns = (1ull << tP) | (1ull << from);
+                if (!(RookAttacks(kSQ, board.occAll & ~connectingPawns) & enemyQueenRook))
                     movelist.Add(make<PAWN, false>(from, to));
-                board.placePiece<false>(ourPawn, from);
-                board.placePiece<false>(theirPawn, tP);
-                board.removePiece<false>(ourPawn, ep);
             }
             else
                 movelist.Add(make<PAWN, false>(from, to));
