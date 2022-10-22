@@ -341,7 +341,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             if (enemyQueenRook & MASK_RANK[square_rank(kSQ)])
             {
                 const Square tP = Square(static_cast<int>(ep) + DOWN);
-                U64 connectingPawns = (1ull << tP) | (1ull << from);
+                const U64 connectingPawns = (1ull << tP) | (1ull << from);
                 if (!(RookAttacks(kSQ, board.occAll & ~connectingPawns) & enemyQueenRook))
                     movelist.Add(make<PAWN, false>(from, to));
             }
