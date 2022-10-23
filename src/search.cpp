@@ -365,8 +365,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         return qsearch<PV>(alpha, beta, 0, ss, td);
 
 moves:
-    Movelist moves;
-    Movegen::legalmoves<Movetype::ALL>(td->board, moves);
+    ss->moves.size = 0;
+    Movegen::legalmoves<Movetype::ALL>(td->board, ss->moves);
 
     Movelist quietMoves;
     Score score = VALUE_NONE;
@@ -379,7 +379,7 @@ moves:
     Movepicker mp;
     mp.stage = TT_MOVE;
 
-    while ((move = nextMove(moves, mp, ttHit, td, ss)) != NO_MOVE)
+    while ((move = nextMove(ss->moves, mp, ttHit, td, ss)) != NO_MOVE)
     {
         madeMoves++;
 
@@ -561,11 +561,16 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     int depth = 1;
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
-    std::memset(ss - 2, 0, 4 * sizeof(Stack));
+    // std::memset(ss - 2, 0, 4 * sizeof(Stack));
     std::memset(spentEffort, 0, 64 * 64 * sizeof(U64));
 
     for (int i = -2; i <= MAX_PLY + 1; ++i)
+    {
         (ss + i)->ply = i;
+        (ss + i)->moves.size = 0;
+        (ss + i)->currentmove = Move(0);
+        (ss + i)->eval = 0;
+    }
 
     ThreadData *td = &this->tds[threadId];
     td->nodes = 0;
