@@ -28,7 +28,13 @@ int UCI::uciLoop(int argc, char **argv)
     }
     else if (uciCommand::elementInVector("perft", allArgs))
     {
-        uciCommand::parseInput(allArgs[0], searcher, board, genData);
+        int n = 1;
+        if (uciCommand::elementInVector("-n", allArgs))
+            n = uciCommand::findElement<int>("-n", allArgs);
+
+        Perft perft = Perft();
+        perft.board = board;
+        perft.testAllPos(n);
         uciCommand::quit(searcher, genData);
         return 0;
     }

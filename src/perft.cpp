@@ -12,10 +12,9 @@ void Perft::perfTest(int depth, int max)
     std::cout << "Nodes: " << nodes << " nps " << ((nodes * 1000) / (ms + 1)) << std::endl;
 }
 
-void Perft::testAllPos()
+void Perft::testAllPos(int n)
 {
     U64 mnps = 0;
-    int n = 10;
     for (int runs = 0; runs < n; runs++)
     {
         auto t1 = TimePoint::now();
