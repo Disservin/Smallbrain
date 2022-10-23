@@ -25,6 +25,8 @@ enum Node
 
 struct Stack
 {
+    Movelist moves;
+    Movelist quietMoves;
     Move currentmove;
     uint16_t ply;
     int eval;

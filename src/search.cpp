@@ -114,27 +114,27 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     }
 
     // generate all legalmoves in case we are in check
-    Movelist moves;
+    ss->moves.size = 0;
     if (inCheck)
-        Movegen::legalmoves<Movetype::ALL>(td->board, moves);
+        Movegen::legalmoves<Movetype::ALL>(td->board, ss->moves);
     else if (depth == 0)
-        Movegen::legalmoves<Movetype::CHECK>(td->board, moves);
+        Movegen::legalmoves<Movetype::CHECK>(td->board, ss->moves);
     else
-        Movegen::legalmoves<Movetype::CAPTURE>(td->board, moves);
+        Movegen::legalmoves<Movetype::CAPTURE>(td->board, ss->moves);
 
     // assign a value to each move
-    for (int i = 0; i < moves.size; i++)
-        moves[i].value = scoreqMove(moves[i].move, ss->ply, ttHit, td);
+    for (int i = 0; i < ss->moves.size; i++)
+        ss->moves[i].value = scoreqMove(ss->moves[i].move, ss->ply, ttHit, td);
 
     // search the moves
-    for (int i = 0; i < static_cast<int>(moves.size); i++)
+    for (int i = 0; i < static_cast<int>(ss->moves.size); i++)
     {
         // sort the best move to the front
         // we dont need to sort the whole list, since we might have a cutoff
         // and return before we checked all moves
-        sortMoves(moves, i);
+        sortMoves(ss->moves, i);
 
-        Move move = moves[i].move;
+        Move move = ss->moves[i].move;
 
         PieceType captured = type_of_piece(td->board.pieceAtB(to(move)));
 
@@ -144,7 +144,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
             continue;
 
         // see based capture pruning
-        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && moves[i].value == 50'000)
+        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && ss->moves[i].value == 50'000)
             continue;
 
         td->nodes++;
@@ -167,7 +167,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
         }
     }
 
-    if (moves.size == 0)
+    if (ss->moves.size == 0)
     {
         if (inCheck)
             return mated_in(ss->ply);
@@ -365,10 +365,11 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         return qsearch<PV>(alpha, beta, 0, ss, td);
 
 moves:
-    Movelist moves;
-    Movegen::legalmoves<Movetype::ALL>(td->board, moves);
+    ss->moves.size = 0;
+    ss->quietMoves.size = 0;
 
-    Movelist quietMoves;
+    Movegen::legalmoves<Movetype::ALL>(td->board, ss->moves);
+
     Score score = VALUE_NONE;
     Move bestMove = NO_MOVE;
     Move move;
@@ -379,7 +380,7 @@ moves:
     Movepicker mp;
     mp.stage = TT_MOVE;
 
-    while ((move = nextMove(moves, mp, ttHit, td, ss)) != NO_MOVE)
+    while ((move = nextMove(ss->moves, mp, ttHit, td, ss)) != NO_MOVE)
     {
         madeMoves++;
 
@@ -392,7 +393,7 @@ moves:
         {
             // late move pruning/movecount pruning
             if (!capture && !inCheck && !PvNode && !promoted(move) && depth <= 4 &&
-                quietMoves.size > (4 + depth * depth))
+                ss->quietMoves.size > (4 + depth * depth))
                 continue;
 
             // See pruning
@@ -468,13 +469,13 @@ moves:
                 if (score >= beta)
                 {
                     // update history heuristic
-                    updateAllHistories(bestMove, best, beta, depth, quietMoves, td, ss);
+                    updateAllHistories(bestMove, best, beta, depth, ss->quietMoves, td, ss);
                     break;
                 }
             }
         }
         if (!capture)
-            quietMoves.Add(move);
+            ss->quietMoves.Add(move);
     }
 
     // if the move list is empty, we are in checkmate or stalemate
@@ -561,11 +562,15 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     int depth = 1;
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
-    std::memset(ss - 2, 0, 4 * sizeof(Stack));
     std::memset(spentEffort, 0, 64 * 64 * sizeof(U64));
 
     for (int i = -2; i <= MAX_PLY + 1; ++i)
+    {
         (ss + i)->ply = i;
+        (ss + i)->moves.size = 0;
+        (ss + i)->currentmove = Move(0);
+        (ss + i)->eval = 0;
+    }
 
     ThreadData *td = &this->tds[threadId];
     td->nodes = 0;
