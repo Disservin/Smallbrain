@@ -300,11 +300,10 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             movelist.Add(make<KNIGHT, true>(Square(to + DOWN_RIGHT), to));
             movelist.Add(make<BISHOP, true>(Square(to + DOWN_RIGHT), to));
         }
+        singlePush &= ~RANK_PROMO;
+        Lpawns &= ~RANK_PROMO;
+        Rpawns &= ~RANK_PROMO;
     }
-
-    singlePush &= ~RANK_PROMO;
-    Lpawns &= ~RANK_PROMO;
-    Rpawns &= ~RANK_PROMO;
 
     while (mt != Movetype::CAPTURE && singlePush)
     {
