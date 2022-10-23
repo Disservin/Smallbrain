@@ -300,66 +300,9 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             movelist.Add(make<KNIGHT, true>(Square(to + DOWN_RIGHT), to));
             movelist.Add(make<BISHOP, true>(Square(to + DOWN_RIGHT), to));
         }
-    }
-
-    singlePush &= ~RANK_PROMO;
-    Lpawns &= ~RANK_PROMO;
-    Rpawns &= ~RANK_PROMO;
-
-    if (board.enPassantSquare != NO_SQ && (mt != Movetype::QUIET && mt != Movetype::CHECK))
-    {
-        const Square ep = board.enPassantSquare;
-        const U64 epBB = (1ULL << ep);
-        U64 left = pawnLeftAttacks<c>(pawnsLR) & epBB;
-        U64 right = pawnRightAttacks<c>(pawnsLR) & epBB;
-
-        Square to;
-        Square from;
-
-        while (left || right)
-        {
-            if (left)
-            {
-                to = poplsb(left);
-                from = Square(to + DOWN_RIGHT);
-            }
-            else
-            {
-                to = poplsb(right);
-                from = Square(to + DOWN_LEFT);
-            }
-
-            // If the pawn is pinned but the ep square is not on the pinmask then we cant move there.
-            if ((1ULL << from) & board.pinD && !(board.pinD & epBB))
-                continue;
-
-            // If we are in check and the en passant piece is on our checkmask then it currently gives
-            // check thus we can capture it en passant
-            // 6k1/2p5/8/3P4/1K6/8/8/8 w - - 0 1
-            if (board.checkMask != DEFAULT_CHECKMASK)
-            {
-                if (board.checkMask & (1ULL << (ep + DOWN)))
-                    movelist.Add(make<PAWN, false>(from, to));
-                continue;
-            }
-
-            // We need to make extra sure that ep moves dont leave the king in check
-            // 7k/8/8/K1Pp3r/8/8/8/8 w - d6 0 1
-            // Horizontal rook pins our pawn through another pawn, our pawn can push but not take enpassant
-            // remove both the pawn that made the push and our pawn that could take in theory
-            // and check if our king would be attacked.
-            const Square kSQ = board.KingSQ<c>();
-            const U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
-            if (enemyQueenRook & MASK_RANK[square_rank(kSQ)])
-            {
-                const Square tP = Square(static_cast<int>(ep) + DOWN);
-                const U64 connectingPawns = (1ull << tP) | (1ull << from);
-                if (!(RookAttacks(kSQ, board.occAll & ~connectingPawns) & enemyQueenRook))
-                    movelist.Add(make<PAWN, false>(from, to));
-            }
-            else
-                movelist.Add(make<PAWN, false>(from, to));
-        }
+        singlePush &= ~RANK_PROMO;
+        Lpawns &= ~RANK_PROMO;
+        Rpawns &= ~RANK_PROMO;
     }
 
     while (mt != Movetype::CAPTURE && singlePush)
@@ -396,6 +339,39 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     {
         Square to = poplsb(Lpawns);
         movelist.Add(make<PAWN, false>(Square(to + DOWN_RIGHT), to));
+    }
+
+    if (board.enPassantSquare != NO_SQ && (mt != Movetype::QUIET && mt != Movetype::CHECK))
+    {
+        const Square ep = board.enPassantSquare;
+        const Square epPawn = Square(ep + DOWN);
+
+        U64 epMask = (1ull << epPawn) | (1ull << ep);
+        if ((board.checkMask & epMask) == 0)
+            return;
+
+        const Square kSQ = board.KingSQ<c>();
+        const U64 kingMask = (1ull << kSQ) & MASK_RANK[square_rank(epPawn)];
+        const U64 enemyQueenRook = board.Rooks(~c) | board.Queens(~c);
+
+        const bool isPossiblePin = kingMask && enemyQueenRook;
+        U64 epBB = PawnAttacks(ep, ~c) & pawnsLR;
+
+        while (epBB)
+        {
+            Square from = poplsb(epBB);
+            Square to = ep;
+
+            if ((1ULL << from) & board.pinD && !(board.pinD & (1ull << ep)))
+                continue;
+
+            const U64 connectingPawns = (1ull << epPawn) | (1ull << from);
+
+            if (isPossiblePin && (RookAttacks(kSQ, board.occAll & ~connectingPawns) & enemyQueenRook) != 0)
+                break;
+
+            movelist.Add(make<PAWN, false>(from, to));
+        }
     }
 }
 

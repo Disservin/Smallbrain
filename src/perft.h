@@ -15,5 +15,5 @@ class Perft
     void perfTest(int depth, int max);
 
     /// @brief perfs a test on all test positions
-    void testAllPos();
+    void testAllPos(int n = 1);
 };
