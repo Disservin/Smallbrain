@@ -221,7 +221,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
             return 0;
         }
 
-        if (td->board.isRepetition() && (ss - 1)->currentmove != NULL_MOVE)
+        if (td->board.isRepetition(1 + 2 * (node == PV)) && (ss - 1)->currentmove != NULL_MOVE)
             return -3 + (td->nodes & 7);
 
         alpha = std::max(alpha, mated_in(ss->ply));
