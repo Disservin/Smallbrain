@@ -339,7 +339,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (!PvNode && td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 &&
         staticEval >= beta)
     {
-        int R = 5 + depth / 5 + std::min(3, (staticEval - beta) / 214);
+        int R = 5 + std::min(4, depth / 5) + std::min(3, (staticEval - beta) / 214);
+
         td->board.makeNullMove();
         (ss)->currentmove = NULL_MOVE;
         Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss + 1, td);
