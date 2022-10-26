@@ -179,7 +179,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
 
     // store in the transposition table
-    if (!stopped)
+    if (!stopped.load(std::memory_order_relaxed))
         storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
@@ -404,7 +404,7 @@ moves:
 
         td->nodes++;
 
-        if (td->id == 0 && RootNode && !stopped && getTime() > 10000 && td->allowPrint)
+        if (td->id == 0 && RootNode && !stopped.load(std::memory_order_relaxed) && getTime() > 10000 && td->allowPrint)
             std::cout << "info depth " << depth - inCheck << " currmove " << uciRep(move) << " currmovenumber "
                       << signed(madeMoves) << "\n";
 
@@ -487,7 +487,7 @@ moves:
 
     // Store position in TT
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
-    if (!stopped)
+    if (!stopped.load(std::memory_order_relaxed))
         storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 
     return best;
@@ -515,7 +515,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
             beta = VALUE_INFINITE;
         result = absearch<Root>(depth, alpha, beta, ss, td);
 
-        if (stopped)
+        if (stopped.load(std::memory_order_relaxed))
             return 0;
 
         if (td->id == 0 && maxNodes != 0 && td->nodes >= maxNodes)
@@ -619,7 +619,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
     // dont stop analysis in infinite mode when max depth is reached
     // wait for uci stop or quit
-    while (td->allowPrint && depth == MAX_PLY + 1 && optimumTime == 0 && !stopped)
+    while (td->allowPrint && depth == MAX_PLY + 1 && optimumTime == 0 && !stopped.load(std::memory_order_relaxed))
     {
     }
 
@@ -855,7 +855,7 @@ void Search::sortMoves(Movelist &moves, int sorted)
 
 bool Search::exitEarly(uint64_t nodes, int ThreadId)
 {
-    if (stopped)
+    if (stopped.load(std::memory_order_relaxed))
         return true;
     if (ThreadId != 0)
         return false;
