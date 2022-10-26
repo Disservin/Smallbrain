@@ -12,7 +12,7 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
 
     time.optimum = static_cast<int64_t>((avaiableTime + mtg * inc - mtg * overhead) / 20);
 
-    if (time.optimum >= avaiableTime)
+    if (time.optimum >= avaiableTime || time.optimum <= 0)
         time.optimum = static_cast<int64_t>(std::max(1.0, avaiableTime / 20.0));
 
     time.maximum = static_cast<int64_t>((time.optimum * 2));
@@ -21,9 +21,13 @@ Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
         time.maximum = time.optimum;
     }
 
-    if (time.maximum == 0 || time.optimum == 0)
+    if (time.maximum <= 0 || time.optimum <= 0)
     {
         time.maximum = time.optimum = 1;
+        if (inc >= 2)
+            time.maximum = time.optimum = inc / 2;
     }
+
+    std::cout << time.optimum << " " << time.maximum << std::endl;
     return time;
 }
