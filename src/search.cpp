@@ -549,6 +549,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     // Limits
     if (threadId == 0)
     {
+        t0 = TimePoint::now();
         optimumTime = time.optimum;
         maxTime = time.maximum;
         maxNodes = maxN;
@@ -644,8 +645,6 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
 void Search::startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)
 {
-    t0 = TimePoint::now();
-
     // If we dont have previous data create default data
     for (int i = tds.size(); i < workers; i++)
     {
