@@ -24,7 +24,7 @@ void storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move);
 /// @param tte
 /// @param ttHit
 /// @param key Position hash
-void probeTT(TEntry &tte, bool &ttHit, Move &ttmove, U64 key);
+TEntry *probeTT(bool &ttHit, Move &ttmove, U64 key);
 
 /// @brief calculates the TT index of key
 /// @param key

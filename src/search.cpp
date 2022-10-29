@@ -84,7 +84,6 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     Move bestMove = NO_MOVE;
     Score bestValue;
     Score oldAlpha = alpha;
-    TEntry tte;
 
     /********************
      * Check for repetition or 50 move rule draw
@@ -116,18 +115,17 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
      *******************/
 
     Move ttMove;
-    Score ttScore = VALUE_NONE;
     bool ttHit = false;
 
-    probeTT(tte, ttHit, ttMove, td->board.hashKey);
+    TEntry *tte = probeTT(ttHit, ttMove, td->board.hashKey);
+    Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     if (ttHit && !PvNode)
     {
-        ttScore = scoreFromTT(tte.score, ss->ply);
-        if (tte.flag == EXACT)
+        if (tte->flag == EXACT)
             return ttScore;
-        else if (tte.flag == LOWERBOUND && ttScore >= beta)
+        else if (tte->flag == LOWERBOUND && ttScore >= beta)
             return ttScore;
-        else if (tte.flag == UPPERBOUND && ttScore <= alpha)
+        else if (tte->flag == UPPERBOUND && ttScore <= alpha)
             return ttScore;
     }
 
@@ -228,8 +226,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     Color color = td->board.sideToMove;
 
-    TEntry tte;
-
     Score best = -VALUE_INFINITE;
     Score maxValue = VALUE_MATE;
     Score staticEval;
@@ -237,6 +233,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     bool improving;
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
+
     ss->eval = VALUE_NONE;
 
     if (ss->ply >= MAX_PLY)
@@ -286,26 +283,24 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (ss->ply > td->seldepth)
         td->seldepth = ss->ply;
 
-    bool ttHit = false;
+    // Look up in the TT
     Move ttMove = NO_MOVE;
-    Score ttScore = VALUE_NONE;
+    bool ttHit = false;
 
-    probeTT(tte, ttHit, ttMove, td->board.hashKey);
-
+    TEntry *tte = probeTT(ttHit, ttMove, td->board.hashKey);
+    Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     /********************
      * Look up in the TT
      * Adjust alpha and beta for non PV nodes
      *******************/
 
-    if (!RootNode && !PvNode && ttHit && tte.depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
+    if (!RootNode && !PvNode && ttHit && tte->depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
     {
-        ttScore = scoreFromTT(tte.score, ss->ply);
-
-        if (tte.flag == EXACT)
+        if (tte->flag == EXACT)
             return ttScore;
-        else if (tte.flag == LOWERBOUND)
+        else if (tte->flag == LOWERBOUND)
             alpha = std::max(alpha, ttScore);
-        else if (tte.flag == UPPERBOUND)
+        else if (tte->flag == UPPERBOUND)
             beta = std::min(beta, ttScore);
         if (alpha >= beta)
             return ttScore;
@@ -369,7 +364,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     }
 
     // use tt eval for a better staticEval
-    ss->eval = staticEval = ttHit ? tte.score : Eval::evaluation(td->board);
+    ss->eval = staticEval = ttHit ? tte->score : Eval::evaluation(td->board);
 
     // improving boolean
     improving = (ss - 2)->eval != VALUE_NONE ? staticEval > (ss - 2)->eval : false;
@@ -435,7 +430,6 @@ moves:
     Move bestMove = NO_MOVE;
     Move move;
     uint8_t madeMoves = 0;
-
     bool doFullSearch = false;
 
     Movepicker mp;
@@ -449,9 +443,11 @@ moves:
     {
         madeMoves++;
 
-        bool capture = td->board.pieceAtB(to(move)) != None;
+        int extension = 0;
 
-        int newDepth = depth - 1;
+        const bool capture = td->board.pieceAtB(to(move)) != None;
+
+        int newDepth = depth - 1 + extension;
 
         /********************
          * Various pruning techniques.
@@ -583,7 +579,6 @@ moves:
 
     // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
-
     if (!stopped.load(std::memory_order_relaxed))
         storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 

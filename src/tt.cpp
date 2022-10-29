@@ -17,12 +17,13 @@ void storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
     }
 }
 
-void probeTT(TEntry &tte, bool &ttHit, Move &ttmove, U64 key)
+TEntry *probeTT(bool &ttHit, Move &ttmove, U64 key)
 {
     U64 index = ttIndex(key);
-    tte = TTable[index];
-    ttHit = (tte.key == key);
-    ttmove = tte.move;
+    TEntry *tte = &TTable[index];
+    ttHit = (tte->key == key);
+    ttmove = tte->move;
+    return tte;
 }
 
 uint32_t ttIndex(U64 key)
