@@ -2,32 +2,24 @@
 
 #include <algorithm>
 
-Time optimumTime(int64_t avaiableTime, int inc, int ply, int mtg)
+Time optimumTime(int64_t availableTime, int inc, int ply, int movestogo)
 {
     Time time;
-    int overhead = 5;
+    int overhead = 10;
 
-    if (mtg == 0)
-        mtg = 50;
+    int mtg = movestogo == 0 ? 50 : movestogo;
 
-    time.optimum = static_cast<int64_t>((avaiableTime + mtg * inc - mtg * overhead) / 20);
+    time.optimum =
+        std::max(static_cast<int64_t>(1), static_cast<int64_t>((availableTime + mtg * inc - mtg * overhead)));
 
-    if (time.optimum >= avaiableTime || time.optimum <= 0)
-        time.optimum = static_cast<int64_t>(std::max(1.0, avaiableTime / 20.0));
+    if (movestogo == 0)
+        time.optimum = static_cast<int64_t>(time.optimum / 20);
 
-    time.maximum = static_cast<int64_t>((time.optimum * 2));
-    if (time.maximum >= avaiableTime)
-    {
-        time.maximum = time.optimum;
-    }
+    if (time.optimum <= 0)
+        time.optimum = static_cast<int64_t>(availableTime * 0.02);
 
-    if (time.maximum <= 0 || time.optimum <= 0)
-    {
-        time.maximum = time.optimum = 1;
-        if (inc >= 2)
-            time.maximum = time.optimum = inc / 2;
-    }
+    // dont use more than 50% of total time available
+    time.maximum = static_cast<int64_t>(std::min(2.0 * time.optimum, 0.5 * availableTime));
 
-    std::cout << time.optimum << " " << time.maximum << std::endl;
     return time;
 }
