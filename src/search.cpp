@@ -55,6 +55,10 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
         return;
 
     int depthBonus = bonus(depth);
+
+    /********************
+     * Update Quiet Moves
+     *******************/
     if (td->board.pieceAtB(to(bestMove)) == None)
     {
         // update Killer Moves
@@ -83,14 +87,14 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     TEntry tte;
 
     /********************
-     * check for repetition or 50 move rule draw
+     * Check for repetition or 50 move rule draw
      *******************/
 
     if (td->board.isRepetition() || ss->ply >= MAX_PLY)
         return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(td->board) : 0;
 
     /********************
-     * skip evaluating positions that are in check
+     * Skip evaluating positions that are in check
      *******************/
 
     if (inCheck)
@@ -108,7 +112,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
 
     /********************
      * Look up in the TT
-     * Adjust alpha and beta for non PV nodes
+     * Adjust alpha and beta for non PV Nodes.
      *******************/
 
     Move ttMove;
@@ -128,7 +132,9 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     }
 
     /********************
-     * Generate all legalmoves in case we are in check
+     * Generate all legalmoves in case we are in check,
+     * otherwise generate all capture moves or generate capture + check
+     * giving moves for depth 0.
      *******************/
 
     ss->moves.size = 0;
@@ -373,16 +379,22 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (RootNode)
         goto moves;
 
-    // Razoring
+    /********************
+     * Razoring
+     *******************/
     if (!PvNode && depth < 3 && staticEval + 120 < alpha)
         return qsearch<NonPV>(alpha, beta, 0, ss, td);
 
-    // Reverse futility pruning
+    /********************
+     * Reverse futility pruning
+     *******************/
     if (std::abs(beta) < VALUE_MATE_IN_PLY)
         if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta)
             return beta;
 
-    // Null move pruning
+    /********************
+     * Null move pruning
+     *******************/
     if (!PvNode && td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 &&
         staticEval >= beta)
     {
@@ -402,7 +414,9 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         }
     }
 
-    // IID
+    /********************
+     * Internal Iterative Deepening
+     *******************/
     if (depth >= 4 && !ttHit)
         depth--;
 
@@ -413,6 +427,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         return qsearch<PV>(alpha, beta, 0, ss, td);
 
 moves:
+    // reset movelists
     ss->moves.size = 0;
     ss->quietMoves.size = 0;
 
@@ -428,6 +443,11 @@ moves:
     Movepicker mp;
     mp.stage = TT_MOVE;
 
+    /********************
+     * Movepicker fetches the next move that we should search.
+     * It is very important to return the likely best move first,
+     * since then we get many cut offs.
+     *******************/
     while ((move = nextMove(ss->moves, mp, ttMove, td, ss)) != NO_MOVE)
     {
         madeMoves++;
@@ -436,7 +456,9 @@ moves:
 
         int newDepth = depth - 1;
 
-        // Pruning
+        /********************
+         * Various pruning techniques.
+         *******************/
         if (!RootNode && best > -VALUE_INFINITE)
         {
             // late move pruning/movecount pruning
@@ -444,24 +466,33 @@ moves:
                 ss->quietMoves.size > (4 + depth * depth))
                 continue;
 
-            // See pruning
+            // SEE pruning
             if (depth < 6 && !see(move, -(depth * 97), td->board))
                 continue;
         }
 
         td->nodes++;
 
+        /********************
+         * Print currmove information.
+         *******************/
         if (td->id == 0 && RootNode && !stopped.load(std::memory_order_relaxed) && getTime() > 10000 && td->allowPrint)
             std::cout << "info depth " << depth - inCheck << " currmove " << uciRep(move) << " currmovenumber "
                       << signed(madeMoves) << "\n";
 
+        /********************
+         * Play the move on the internal board.
+         *******************/
         td->board.makeMove<true>(move);
 
         U64 nodeCount = td->nodes;
         ss->currentmove = move;
-        // bool givesCheck = td->board.isSquareAttacked(color, td->board.KingSQ(~color));
 
-        // late move reduction
+        /********************
+         * Late move reduction, later moves will be searched
+         * with a reduced depth, if they beat alpha we search again at
+         * full depth.
+         *******************/
         if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode)
         {
             int rdepth = reductions[depth][madeMoves];
@@ -480,13 +511,19 @@ moves:
         else
             doFullSearch = !PvNode || madeMoves > 1;
 
-        // do a full research if lmr failed or lmr was skipped
+        /********************
+         * Do a full research if lmr failed or lmr was skipped
+         *******************/
         if (doFullSearch)
         {
             score = -absearch<NonPV>(newDepth, -alpha - 1, -alpha, ss + 1, td);
         }
 
-        // PVS search
+        /********************
+         * PVS Search
+         * We search the first move or PV Nodes that are inside the bounds
+         * with a full window at (more or less) full depth.
+         *******************/
         if (PvNode && ((score > alpha && score < beta) || madeMoves == 1))
         {
             score = -absearch<PV>(newDepth, -beta, -alpha, ss + 1, td);
@@ -494,9 +531,15 @@ moves:
 
         td->board.unmakeMove<false>(move);
 
+        /********************
+         * Node count logic used for time control.
+         *******************/
         if (td->id == 0)
             spentEffort[from(move)][to(move)] += td->nodes - nodeCount;
 
+        /********************
+         * Score beat best -> update PV and Bestmove.
+         *******************/
         if (score > best)
         {
             best = score;
@@ -514,6 +557,9 @@ moves:
             {
                 alpha = score;
 
+                /********************
+                 * Score beat beta -> update histories and break.
+                 *******************/
                 if (score >= beta)
                 {
                     // update history heuristic
@@ -527,7 +573,7 @@ moves:
     }
 
     /********************
-     * If the move list is empty, we are in checkmate or stalemate
+     * If the move list is empty, we are in checkmate or stalemate.
      *******************/
     if (madeMoves == 0)
         return inCheck ? mated_in(ss->ply) : 0;
@@ -535,7 +581,7 @@ moves:
     best = std::min(best, maxValue);
 
     /********************
-     * store in the transposition table
+     * Store an TEntry in the Transposition Table.
      *******************/
 
     // Transposition table flag
@@ -555,6 +601,13 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
 
     Score result = 0;
 
+    /********************
+     * We search moves after depth 9 with an aspiration Window.
+     * A small window around the previous evaluation enables us
+     * to have a smaller search tree. We dont do this for the first
+     * few depths because these have quite unstable evaluation which
+     * would lead to many researches.
+     *******************/
     if (depth >= 9)
     {
         alpha = prev_eval - delta;
@@ -575,6 +628,10 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
         if (td->id == 0 && maxNodes != 0 && td->nodes >= maxNodes)
             return 0;
 
+        /********************
+         * Increase the bounds because the score was outside of them or
+         * break in case it was a EXACT result.
+         *******************/
         if (result <= alpha)
         {
             beta = (alpha + beta) / 2;
@@ -600,7 +657,10 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
 
 SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time time, int threadId)
 {
-    // Limits
+    /********************
+     * Various Limits that only the main Thread needs to know
+     * and initialise.
+     *******************/
     if (threadId == 0)
     {
         t0 = TimePoint::now();
@@ -634,6 +694,10 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
     int bestmoveChanges = 0;
     int evalAverage = 0;
+
+    /********************
+     * Iterative Deepening Loop.
+     *******************/
     for (depth = 1; depth <= search_depth; depth++)
     {
         td->seldepth = 0;
@@ -667,7 +731,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
             if (result + 30 < evalAverage / depth)
                 optimumTime *= 1.10;
 
-            // stop if we have searched for more than 60% of out time
+            // stop if we have searched for more than 75% of our max time.
             if (bestmoveChanges > 4)
                 optimumTime = maxTime * 0.75;
             else if (now * 10 > optimumTime * 6)
@@ -675,19 +739,24 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         }
     }
 
-    // dont stop analysis in infinite mode when max depth is reached
-    // wait for uci stop or quit
+    /********************
+     * Dont stop analysis in infinite mode when max depth is reached
+     * wait for uci stop or quit
+     *******************/
     while (td->allowPrint && depth == MAX_PLY + 1 && optimumTime == 0 && !stopped.load(std::memory_order_relaxed))
     {
     }
 
-    // in case its depth we use current pv table move since it might be
-    // that search was interrupted before search finished properly
+    /********************
+     * In case the depth was 1 make sure we have at least a bestmove.
+     *******************/
     if (depth == 1)
         bestmove = td->pvTable[0][0];
 
-    // mainthread prints bestmove
-    // allowprint is disabled in data generation
+    /********************
+     * Mainthread prints bestmove.
+     * Allowprint is disabled in data generation
+     *******************/
     if (threadId == 0 && td->allowPrint)
     {
         std::cout << "bestmove " << uciRep(bestmove) << std::endl;
@@ -699,7 +768,9 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
 
 void Search::startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)
 {
-    // If we dont have previous data create default data
+    /********************
+     * If we dont have previous data create default data
+     *******************/
     for (int i = tds.size(); i < workers; i++)
     {
         ThreadData td;
@@ -708,12 +779,16 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
         this->tds.push_back(td);
     }
 
-    // set the right board for the main thread
-    // important that this is done before probing the DTZ
+    /********************
+     * Set the right board for the main thread
+     * important that this is done before probing the DTZ
+     *******************/
     this->tds[0].board = board;
     this->tds[0].id = 0;
 
-    // play dtz move when time is limited
+    /********************
+     * Play dtz move when time is limited
+     *******************/
     if (time.optimum != 0)
     {
         Move dtzMove = probeDTZ(&this->tds[0]);
@@ -725,10 +800,14 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
         }
     }
 
-    // start main thread right away
+    /********************
+     * Start main thread right away
+     *******************/
     this->threads.emplace_back(&Search::iterativeDeepening, this, search_depth, maxN, time, 0);
 
-    // launch helper threads
+    /********************
+     * Launch helper threads
+     *******************/
     for (int i = 1; i < workers; i++)
     {
         this->tds[i].board = board;
@@ -736,7 +815,9 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
     }
 }
 
-// Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
+/********************
+ * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
+ *******************/
 bool Search::see(Move move, int threshold, Board &board)
 {
     Square from_sq = from(move);
