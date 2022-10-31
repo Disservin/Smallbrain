@@ -70,22 +70,29 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     if (exitEarly(td->nodes, td->id))
         return VALUE_NONE;
 
-    // Initialize various variables
+    /********************
+     * Initialize various variables
+     *******************/
     constexpr bool PvNode = node == PV;
     const Color color = td->board.sideToMove;
     const bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
 
-    bool ttHit = false;
     Move bestMove = NO_MOVE;
     Score bestValue;
     Score oldAlpha = alpha;
     TEntry tte;
 
-    // check for repetition or 50 move rule draw
+    /********************
+     * check for repetition or 50 move rule draw
+     *******************/
+
     if (td->board.isRepetition() || ss->ply >= MAX_PLY)
         return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(td->board) : 0;
 
-    // skip evaluating positions that are in check
+    /********************
+     * skip evaluating positions that are in check
+     *******************/
+
     if (inCheck)
     {
         bestValue = -VALUE_INFINITE;
@@ -99,9 +106,16 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
             alpha = bestValue;
     }
 
-    // probe the transposition table
-    probeTT(tte, ttHit, td->board.hashKey);
+    /********************
+     * Look up in the TT
+     * Adjust alpha and beta for non PV nodes
+     *******************/
+
+    Move ttMove;
     Score ttScore = VALUE_NONE;
+    bool ttHit = false;
+
+    probeTT(tte, ttHit, ttMove, td->board.hashKey);
     if (ttHit && tte.depth >= 0 && !PvNode)
     {
         ttScore = scoreFromTT(tte.score, ss->ply);
@@ -113,7 +127,10 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
             return ttScore;
     }
 
-    // generate all legalmoves in case we are in check
+    /********************
+     * Generate all legalmoves in case we are in check
+     *******************/
+
     ss->moves.size = 0;
     if (inCheck)
         Movegen::legalmoves<Movetype::ALL>(td->board, ss->moves);
@@ -124,9 +141,12 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
 
     // assign a value to each move
     for (int i = 0; i < ss->moves.size; i++)
-        ss->moves[i].value = scoreqMove(ss->moves[i].move, ss->ply, ttHit, td);
+        ss->moves[i].value = scoreqMove(ss->moves[i].move, ss->ply, ttMove, td);
 
-    // search the moves
+    /********************
+     * Search the moves
+     *******************/
+
     for (int i = 0; i < static_cast<int>(ss->moves.size); i++)
     {
         // sort the best move to the front
@@ -167,6 +187,10 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
         }
     }
 
+    /********************
+     * Checkmate Check
+     *******************/
+
     if (ss->moves.size == 0)
     {
         if (inCheck)
@@ -175,10 +199,13 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
             return 0;
     }
 
+    /********************
+     * store in the transposition table
+     *******************/
+
     // Transposition table flag
     Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
 
-    // store in the transposition table
     if (!stopped.load(std::memory_order_relaxed))
         storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
@@ -189,7 +216,9 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (exitEarly(td->nodes, td->id))
         return 0;
 
-    // Initialize various variables
+    /********************
+     * Initialize various variables
+     *******************/
     constexpr bool RootNode = node == Root;
     constexpr bool PvNode = node != NonPV;
 
@@ -202,7 +231,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     Score staticEval;
     Score oldAlpha = alpha;
 
-    bool improving, ttHit;
+    bool improving;
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     ss->eval = VALUE_NONE;
 
@@ -211,7 +240,10 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     td->pvLength[ss->ply] = ss->ply;
 
-    // Draw detection and mate pruning
+    /********************
+     * Draw detection and mate pruning
+     *******************/
+
     if (!RootNode)
     {
         if (td->board.halfMoveClock >= 100)
@@ -230,26 +262,41 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
             return alpha;
     }
 
-    // Check extension
+    /********************
+     * Check extension
+     *******************/
+
     if (inCheck)
         depth++;
 
-    // Enter qsearch
+    /********************
+     * Enter qsearch
+     *******************/
     if (depth <= 0)
         return qsearch<node>(alpha, beta, 0, ss, td);
 
-    // Selective depth (heighest depth we have ever reached)
+    /********************
+     * Selective depth (heighest depth we have ever reached)
+     *******************/
+
     if (ss->ply > td->seldepth)
         td->seldepth = ss->ply;
 
-    // Look up in the TT
-    ttHit = false;
-    probeTT(tte, ttHit, td->board.hashKey);
+    bool ttHit = false;
+    Move ttMove = NO_MOVE;
     Score ttScore = VALUE_NONE;
-    // Adjust alpha and beta for non PV nodes
+
+    probeTT(tte, ttHit, ttMove, td->board.hashKey);
+
+    /********************
+     * Look up in the TT
+     * Adjust alpha and beta for non PV nodes
+     *******************/
+
     if (!RootNode && !PvNode && ttHit && tte.depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
     {
         ttScore = scoreFromTT(tte.score, ss->ply);
+
         if (tte.flag == EXACT)
             return ttScore;
         else if (tte.flag == LOWERBOUND)
@@ -381,7 +428,7 @@ moves:
     Movepicker mp;
     mp.stage = TT_MOVE;
 
-    while ((move = nextMove(ss->moves, mp, ttHit, td, ss)) != NO_MOVE)
+    while ((move = nextMove(ss->moves, mp, ttMove, td, ss)) != NO_MOVE)
     {
         madeMoves++;
 
@@ -479,14 +526,21 @@ moves:
             ss->quietMoves.Add(move);
     }
 
-    // if the move list is empty, we are in checkmate or stalemate
+    /********************
+     * If the move list is empty, we are in checkmate or stalemate
+     *******************/
     if (madeMoves == 0)
         return inCheck ? mated_in(ss->ply) : 0;
 
     best = std::min(best, maxValue);
 
-    // Store position in TT
+    /********************
+     * store in the transposition table
+     *******************/
+
+    // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
+
     if (!stopped.load(std::memory_order_relaxed))
         storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 
@@ -742,9 +796,9 @@ int Search::mvvlva(Move move, Board &board)
     return mvvlvaArray[victim][attacker];
 }
 
-int Search::scoreMove(Move move, int ply, bool ttMove, ThreadData *td)
+int Search::scoreMove(Move move, int ply, Move ttMove, ThreadData *td)
 {
-    if (ttMove && move == TTable[ttIndex(td->board.hashKey)].move)
+    if (move == ttMove)
     {
         return TT_MOVE_SCORE;
     }
@@ -770,9 +824,9 @@ int Search::scoreMove(Move move, int ply, bool ttMove, ThreadData *td)
     }
 }
 
-int Search::scoreqMove(Move move, int ply, bool ttMove, ThreadData *td)
+int Search::scoreqMove(Move move, int ply, Move ttMove, ThreadData *td)
 {
-    if (ttMove && move == TTable[ttIndex(td->board.hashKey)].move)
+    if (move == ttMove)
     {
         return TT_MOVE_SCORE;
     }
@@ -798,7 +852,7 @@ int Search::scoreqMove(Move move, int ply, bool ttMove, ThreadData *td)
     }
 }
 
-Move Search::nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss)
+Move Search::nextMove(Movelist &moves, Movepicker &mp, Move ttMove, ThreadData *td, Stack *ss)
 {
     switch (mp.stage)
     {
@@ -808,7 +862,7 @@ Move Search::nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *t
         for (mp.i = 0; mp.i < moves.size; mp.i++)
         {
             const Move move = moves[mp.i].move;
-            moves[mp.i].value = scoreMove(move, ss->ply, ttHit, td);
+            moves[mp.i].value = scoreMove(move, ss->ply, ttMove, td);
             if (moves[mp.i].value == TT_MOVE_SCORE)
             {
                 mp.ttMoveIndex = mp.i;
@@ -819,7 +873,7 @@ Move Search::nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *t
     case EVAL_OTHER:
         for (; mp.i < moves.size; mp.i++)
         {
-            moves[mp.i].value = scoreMove(moves[mp.i].move, ss->ply, false, td);
+            moves[mp.i].value = scoreMove(moves[mp.i].move, ss->ply, NO_MOVE, td);
         }
         if (mp.ttMoveIndex != -1)
         {

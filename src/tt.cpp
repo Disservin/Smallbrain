@@ -3,26 +3,26 @@
 void storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
 {
     U64 index = ttIndex(key);
-    TEntry tte = TTable[index];
+    TEntry *tte = &TTable[index];
 
-    if (tte.key != key || move)
-        tte.move = move;
+    if (tte->key != key || move)
+        tte->move = move;
 
-    if (tte.key != key || b == EXACT || depth + 4 > tte.depth)
+    if (tte->key != key || b == EXACT || depth + 4 > tte->depth)
     {
-        tte.depth = depth;
-        tte.score = bestvalue;
-        tte.key = key;
-        tte.flag = b;
-        TTable[index] = tte;
+        tte->depth = depth;
+        tte->score = bestvalue;
+        tte->key = key;
+        tte->flag = b;
     }
 }
 
-void probeTT(TEntry &tte, bool &ttHit, U64 key)
+void probeTT(TEntry &tte, bool &ttHit, Move &ttmove, U64 key)
 {
     U64 index = ttIndex(key);
     tte = TTable[index];
     ttHit = (tte.key == key);
+    ttmove = tte.move;
 }
 
 uint32_t ttIndex(U64 key)

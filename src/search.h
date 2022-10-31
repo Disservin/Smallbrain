@@ -170,7 +170,7 @@ class Search
     /// @param ttMove
     /// @param td
     /// @return
-    int scoreqMove(Move move, int ply, bool ttMove, ThreadData *td);
+    int scoreqMove(Move move, int ply, Move ttMove, ThreadData *td);
 
     /// @brief score main search moves
     /// @param move
@@ -178,7 +178,7 @@ class Search
     /// @param ttMove
     /// @param td
     /// @return
-    int scoreMove(Move move, int ply, bool ttMove, ThreadData *td);
+    int scoreMove(Move move, int ply, Move ttMove, ThreadData *td);
 
     // utility functions
 
@@ -189,7 +189,7 @@ class Search
     /// @param td ThreadData
     /// @param ss Stack
     /// @return next move
-    Move nextMove(Movelist &moves, Movepicker &mp, bool ttHit, ThreadData *td, Stack *ss);
+    Move nextMove(Movelist &moves, Movepicker &mp, Move ttMove, ThreadData *td, Stack *ss);
 
     // sorts the next bestmove to the front
     void sortMoves(Movelist &moves, int sorted);
