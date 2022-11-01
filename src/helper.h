@@ -12,12 +12,18 @@ std::vector<std::string> splitInput(std::string fen);
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-uint8_t square_file(Square sq);
+inline constexpr uint8_t square_file(Square sq)
+{
+    return sq & 7;
+}
 
 /// @brief Gets the rank index of the square where 0 is the first rank.
 /// @param sq
 /// @return the rank of the square
-uint8_t square_rank(Square sq);
+inline constexpr uint8_t square_rank(Square sq)
+{
+    return sq >> 3;
+}
 
 /// @brief  distance between two squares
 /// @param a
@@ -46,10 +52,16 @@ uint8_t popcount(U64 mask);
 Square poplsb(U64 &mask);
 
 // returns diagonal of given square
-uint8_t diagonal_of(Square sq);
+inline constexpr uint8_t diagonal_of(Square sq)
+{
+    return 7 + square_rank(sq) - square_file(sq);
+}
 
 // returns anti diagonal of given square
-uint8_t anti_diagonal_of(Square sq);
+inline constexpr uint8_t anti_diagonal_of(Square sq)
+{
+    return square_rank(sq) + square_file(sq);
+}
 
 uint8_t manhatten_distance(Square sq1, Square sq2);
 

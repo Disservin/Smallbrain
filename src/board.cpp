@@ -1,8 +1,9 @@
 #include "board.h"
+#include <stdint.h>
 
 Board::Board()
 {
-    initializeLookupTables();
+    initializeSquareBetweenTable();
     prevStates.reserve(MAX_PLY);
     hashHistory.reserve(512);
     accumulatorStack.reserve(MAX_PLY);
@@ -653,22 +654,30 @@ U64 Board::zobristHash()
     return hash ^ cast_hash ^ turn_hash ^ ep_hash;
 }
 
-void Board::initializeLookupTables()
+constexpr auto squareBetweenTable()
 {
-    // initialize squares between table
-    U64 sqs;
+    std::array<std::array<uint64_t, 64>, 64> squaresBetween = {};
+
     for (Square sq1 = SQ_A1; sq1 <= SQ_H8; ++sq1)
     {
         for (Square sq2 = SQ_A1; sq2 <= SQ_H8; ++sq2)
         {
-            sqs = (1ULL << sq1) | (1ULL << sq2);
+            const U64 sqs = (1ULL << sq1) | (1ULL << sq2);
             if (square_file(sq1) == square_file(sq2) || square_rank(sq1) == square_rank(sq2))
-                SQUARES_BETWEEN_BB[sq1][sq2] = RookAttacks(sq1, sqs) & RookAttacks(sq2, sqs);
+                squaresBetween[sq1][sq2] = RookAttacks(sq1, sqs) & RookAttacks(sq2, sqs);
 
             else if (diagonal_of(sq1) == diagonal_of(sq2) || anti_diagonal_of(sq1) == anti_diagonal_of(sq2))
-                SQUARES_BETWEEN_BB[sq1][sq2] = BishopAttacks(sq1, sqs) & BishopAttacks(sq2, sqs);
+                squaresBetween[sq1][sq2] = BishopAttacks(sq1, sqs) & BishopAttacks(sq2, sqs);
         }
     }
+    return squaresBetween;
+}
+
+void Board::initializeSquareBetweenTable()
+{
+    constexpr auto table = squareBetweenTable();
+
+    SQUARES_BETWEEN_BB = table;
 }
 
 U64 Board::updateKeyPiece(Piece piece, Square sq)

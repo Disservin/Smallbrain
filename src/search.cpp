@@ -655,7 +655,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
     return result;
 }
 
-SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time time, int threadId)
+SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time time, int threadId)
 {
     /********************
      * Various Limits that only the main Thread needs to know
@@ -670,7 +670,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
         checkTime = 0;
     }
 
-    Move bestmove;
+    Move bestmove = NO_MOVE;
     SearchResult sr;
 
     Score result = -VALUE_INFINITE;
@@ -698,7 +698,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     /********************
      * Iterative Deepening Loop.
      *******************/
-    for (depth = 1; depth <= search_depth; depth++)
+    for (depth = 1; depth <= searchDepth; depth++)
     {
         td->seldepth = 0;
         result = aspirationSearch(depth, result, ss, td);
@@ -766,7 +766,7 @@ SearchResult Search::iterativeDeepening(int search_depth, uint64_t maxN, Time ti
     return sr;
 }
 
-void Search::startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time)
+void Search::startThinking(Board board, int workers, int searchDepth, uint64_t maxN, Time time)
 {
     /********************
      * If we dont have previous data create default data
@@ -803,7 +803,7 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
     /********************
      * Start main thread right away
      *******************/
-    this->threads.emplace_back(&Search::iterativeDeepening, this, search_depth, maxN, time, 0);
+    this->threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, 0);
 
     /********************
      * Launch helper threads
@@ -811,7 +811,7 @@ void Search::startThinking(Board board, int workers, int search_depth, uint64_t 
     for (int i = 1; i < workers; i++)
     {
         this->tds[i].board = board;
-        this->threads.emplace_back(&Search::iterativeDeepening, this, search_depth, maxN, time, i);
+        this->threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, i);
     }
 }
 
