@@ -21,6 +21,7 @@ void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datage
     options.uciPosition(board);
     stopThreads(searcher, dg);
     searcher.tds.clear();
+    clearTT(TT_SIZE);
 }
 
 void parseInput(std::string input, Search &searcher, Board &board, Datagen::TrainingData &dg)

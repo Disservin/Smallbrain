@@ -87,6 +87,10 @@ void allocateTT();
 /// @param elements
 void reallocateTT(U64 elements);
 
+/// @brief clear the TT
+/// @param elements
+void clearTT(U64 elements);
+
 /// @brief convert console input to move
 /// @param board
 /// @param input
