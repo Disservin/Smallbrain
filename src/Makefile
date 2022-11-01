@@ -140,9 +140,9 @@ EXE  := $(NAME)$(MAJOR).$(MINOR)$(ARCH)$(SUFFIX)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CXXFLAGS) -o $(EXE) $^ $(FLAGS)
+	$(CC) $(CXXFLAGS) -o $(EXE) -flto -flto-partition=one $^ $(FLAGS)
 %.o: %.cpp
-	$(CC) -c $(CXXFLAGS) -funroll-loops $(NATIVE) $(INSTRUCTIONS) -O3 -std=c++17 -DEVALFILE=\"$(EVALFILE)\" -flto -Wall $< $(FLAGS)
+	$(CC) -c $(CXXFLAGS) -funroll-loops $(NATIVE) $(INSTRUCTIONS) -O3 -std=c++17 -DEVALFILE=\"$(EVALFILE)\" -Wall -flto -flto-partition=one $< $(FLAGS)
 clean:
 	rm -rf $(TARGET) *.o
 	rm $(NAME)$(MAJOR).$(MINOR)$(SUFFIX)

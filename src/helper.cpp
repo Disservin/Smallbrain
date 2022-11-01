@@ -16,16 +16,6 @@ std::vector<std::string> splitInput(std::string fen)
     return seglist;
 }
 
-uint8_t square_file(Square sq)
-{
-    return sq & 7;
-}
-
-uint8_t square_rank(Square sq)
-{
-    return sq >> 3;
-}
-
 uint8_t square_distance(Square a, Square b)
 {
     return std::max(std::abs(square_file(a) - square_file(b)), std::abs(square_rank(a) - square_rank(b)));
@@ -127,16 +117,6 @@ Square poplsb(U64 &mask)
     mask &= mask - 1;
     // mask = _blsr_u64(mask);
     return Square(s);
-}
-
-uint8_t diagonal_of(Square sq)
-{
-    return 7 + square_rank(sq) - square_file(sq);
-}
-
-uint8_t anti_diagonal_of(Square sq)
-{
-    return square_rank(sq) + square_file(sq);
 }
 
 uint8_t manhatten_distance(Square sq1, Square sq2)

@@ -132,6 +132,20 @@ enum MoveScores : int
     KILLER_TWO_SCORE = 5'000'000
 };
 
+enum Staging
+{
+    TT_MOVE,
+    EVAL_OTHER,
+    OTHER
+};
+
+enum Node
+{
+    NonPV,
+    PV,
+    Root
+};
+
 /********************
  * Overloading of operators
  *******************/
@@ -156,23 +170,24 @@ constexpr Color operator~(Color C)
 INCR_OP_ON(Piece)
 INCR_OP_ON(Square)
 INCR_OP_ON(PieceType)
+INCR_OP_ON(Staging)
 
 #undef INCR_OP_ON
 
 #define BASE_OP_ON(T)                                                                                                  \
-    constexpr inline Square operator+(Square s, T d)                                                                   \
+    inline constexpr Square operator+(Square s, T d)                                                                   \
     {                                                                                                                  \
         return Square(int(s) + int(d));                                                                                \
     }                                                                                                                  \
-    constexpr inline Square operator-(Square s, T d)                                                                   \
+    inline constexpr Square operator-(Square s, T d)                                                                   \
     {                                                                                                                  \
         return Square(int(s) - int(d));                                                                                \
     }                                                                                                                  \
-    constexpr inline Square &operator+=(Square &s, T d)                                                                \
+    inline constexpr Square &operator+=(Square &s, T d)                                                                \
     {                                                                                                                  \
         return s = s + d;                                                                                              \
     }                                                                                                                  \
-    constexpr inline Square &operator-=(Square &s, T d)                                                                \
+    inline constexpr Square &operator-=(Square &s, T d)                                                                \
     {                                                                                                                  \
         return s = s - d;                                                                                              \
     }

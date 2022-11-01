@@ -78,11 +78,36 @@ static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
       }
 };
 
-U64 PawnAttacks(uint8_t sq, Color c);
-U64 KnightAttacks(uint8_t sq);
-U64 BishopAttacks(uint8_t sq, U64 occupied);
-U64 RookAttacks(uint8_t sq, U64 occupied);
-U64 QueenAttacks(uint8_t sq, U64 occupied);
-U64 KingAttacks(uint8_t sq);
+using namespace Chess_Lookup::Fancy;
+
+inline constexpr U64 PawnAttacks(uint8_t sq, Color c)
+{
+    return PAWN_ATTACKS_TABLE[c][sq];
+}
+
+inline constexpr U64 KnightAttacks(uint8_t sq)
+{
+    return KNIGHT_ATTACKS_TABLE[sq];
+}
+
+inline constexpr U64 BishopAttacks(uint8_t sq, U64 occupied)
+{
+    return GetBishopAttacks(sq, occupied);
+}
+
+inline constexpr U64 RookAttacks(uint8_t sq, U64 occupied)
+{
+    return GetRookAttacks(sq, occupied);
+}
+
+inline constexpr U64 QueenAttacks(uint8_t sq, U64 occupied)
+{
+    return GetQueenAttacks(sq, occupied);
+}
+
+inline constexpr U64 KingAttacks(uint8_t sq)
+{
+    return KING_ATTACKS_TABLE[sq];
+}
 
 // clang-format on

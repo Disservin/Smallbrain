@@ -16,11 +16,11 @@ extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
-enum Node
+struct Movepicker
 {
-    NonPV,
-    PV,
-    Root
+    int ttMoveIndex;
+    int i;
+    Staging stage;
 };
 
 struct Stack
@@ -32,23 +32,10 @@ struct Stack
     int eval;
 };
 
-enum Staging
+struct SearchResult
 {
-    TT_MOVE,
-    EVAL_OTHER,
-    OTHER
-};
-
-inline void operator++(Staging &s, int)
-{
-    s = Staging(static_cast<int>(s) + 1);
-}
-
-struct Movepicker
-{
-    int ttMoveIndex;
-    int i;
-    Staging stage;
+    Move move;
+    Score score;
 };
 
 struct ThreadData
@@ -79,20 +66,14 @@ struct ThreadData
     bool allowPrint = true;
 };
 
-struct SearchResult
-{
-    Move move;
-    Score score;
-};
-
 class Search
 {
   public:
     // data generation entry function
-    SearchResult iterativeDeepening(int search_depth, uint64_t maxN, Time time, int threadId);
+    SearchResult iterativeDeepening(int searchDepth, uint64_t maxN, Time time, int threadId);
 
     // search entry function
-    void startThinking(Board board, int workers, int search_depth, uint64_t maxN, Time time);
+    void startThinking(Board board, int workers, int searchDepth, uint64_t maxN, Time time);
 
     std::vector<ThreadData> tds;
     std::vector<std::thread> threads;
