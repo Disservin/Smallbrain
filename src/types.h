@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unordered_map>
 
-#define U64 unsigned long long
+#define U64 uint64_t
 #define Score int16_t
 #define TimePoint std::chrono::high_resolution_clock
 #define MAX_SQ 64
@@ -11,6 +11,10 @@
 
 static constexpr int MAX_PLY = 120;
 static constexpr int MAX_MOVES = 128;
+
+/********************
+ * Enum Definitions
+ *******************/
 
 enum class Movetype : uint8_t
 {
@@ -26,11 +30,6 @@ enum Color : uint8_t
     Black,
     NO_COLOR
 };
-
-constexpr Color operator~(Color C)
-{
-    return Color(C ^ Black);
-}
 
 enum Phase : int
 {
@@ -133,6 +132,59 @@ enum MoveScores : int
     KILLER_TWO_SCORE = 5'000'000
 };
 
+/********************
+ * Overloading of operators
+ *******************/
+
+constexpr Color operator~(Color C)
+{
+    return Color(C ^ Black);
+}
+
+#define INCR_OP_ON(T)                                                                                                  \
+    constexpr inline T &operator++(T &p)                                                                               \
+    {                                                                                                                  \
+        return p = static_cast<T>(static_cast<int>(p) + 1);                                                            \
+    }                                                                                                                  \
+    constexpr inline T operator++(T &p, int)                                                                           \
+    {                                                                                                                  \
+        auto old = p;                                                                                                  \
+        ++p;                                                                                                           \
+        return old;                                                                                                    \
+    }
+
+INCR_OP_ON(Piece)
+INCR_OP_ON(Square)
+INCR_OP_ON(PieceType)
+
+#undef INCR_OP_ON
+
+#define BASE_OP_ON(T)                                                                                                  \
+    constexpr inline Square operator+(Square s, T d)                                                                   \
+    {                                                                                                                  \
+        return Square(int(s) + int(d));                                                                                \
+    }                                                                                                                  \
+    constexpr inline Square operator-(Square s, T d)                                                                   \
+    {                                                                                                                  \
+        return Square(int(s) - int(d));                                                                                \
+    }                                                                                                                  \
+    constexpr inline Square &operator+=(Square &s, T d)                                                                \
+    {                                                                                                                  \
+        return s = s + d;                                                                                              \
+    }                                                                                                                  \
+    constexpr inline Square &operator-=(Square &s, T d)                                                                \
+    {                                                                                                                  \
+        return s = s - d;                                                                                              \
+    }
+
+BASE_OP_ON(Direction)
+
+#undef BASE_OP_ON
+
+/********************
+ * Constant definitions
+ *******************/
+
 // clang-format off
 const std::string squareToString[64] = {
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
@@ -196,42 +248,6 @@ static constexpr U64 MASK_ANTI_DIAGONAL[15] = {0x1,
                                                0x4080000000000000,
                                                0x8000000000000000};
 
-enum Move : uint16_t
-{
-    NO_MOVE = 0,
-    NULL_MOVE = 65
-};
-
-inline Square from(Move move)
-{
-    return Square(move & 0b111111);
-}
-
-inline Square to(Move move)
-{
-    return Square((move & 0b111111000000) >> 6);
-}
-
-inline PieceType piece(Move move)
-{
-    return PieceType((move & 0b111000000000000) >> 12);
-}
-
-inline bool promoted(Move move)
-{
-    return bool((move & 0b1000000000000000) >> 15);
-}
-
-inline Move make(PieceType piece = NONETYPE, Square source = NO_SQ, Square target = NO_SQ, bool promoted = false)
-{
-    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
-}
-
-template <PieceType piece, bool promoted> Move make(Square source = NO_SQ, Square target = NO_SQ)
-{
-    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
-}
-
 static constexpr U64 WK_CASTLE_MASK = (1ULL << SQ_F1) | (1ULL << SQ_G1);
 static constexpr U64 WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL << SQ_B1);
 
@@ -239,6 +255,10 @@ static constexpr U64 BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
 static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);
 
 static constexpr U64 DEFAULT_CHECKMASK = 18446744073709551615ULL;
+
+/********************
+ * Various other definitions
+ *******************/
 
 struct Time
 {
@@ -272,6 +292,10 @@ inline Score scoreFromTT(Score s, int plies)
 {
     return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s - plies : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies : s);
 }
+
+/********************
+ * Maps
+ *******************/
 
 static std::unordered_map<Piece, char> pieceToChar({{WhitePawn, 'P'},
                                                     {WhiteKnight, 'N'},
@@ -309,6 +333,10 @@ static std::unordered_map<char, PieceType> pieceToInt(
 
 static std::unordered_map<Square, CastlingRight> castlingMapRook({{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});
 
+/********************
+ * Packed structures
+ *******************/
+
 #ifdef __GNUC__
 #define PACK(__Declaration__) __Declaration__ __attribute__((__packed__))
 #endif
@@ -316,3 +344,44 @@ static std::unordered_map<Square, CastlingRight> castlingMapRook({{SQ_A1, wq}, {
 #ifdef _MSC_VER
 #define PACK(__Declaration__) __pragma(pack(push, 1)) __Declaration__ __pragma(pack(pop))
 #endif
+
+/********************
+ * Move Logic
+ *******************/
+
+enum Move : uint16_t
+{
+    NO_MOVE = 0,
+    NULL_MOVE = 65
+};
+
+constexpr inline Square from(Move move)
+{
+    return Square(move & 0b111111);
+}
+
+constexpr inline Square to(Move move)
+{
+    return Square((move & 0b111111000000) >> 6);
+}
+
+constexpr inline PieceType piece(Move move)
+{
+    return PieceType((move & 0b111000000000000) >> 12);
+}
+
+constexpr inline bool promoted(Move move)
+{
+    return bool((move & 0b1000000000000000) >> 15);
+}
+
+constexpr inline Move make(PieceType piece = NONETYPE, Square source = NO_SQ, Square target = NO_SQ,
+                           bool promoted = false)
+{
+    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
+}
+
+template <PieceType piece, bool promoted> Move make(Square source = NO_SQ, Square target = NO_SQ)
+{
+    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
+}

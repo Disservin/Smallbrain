@@ -277,28 +277,28 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
         while (Promote_Move)
         {
             Square to = poplsb(Promote_Move);
-            movelist.Add(make<QUEEN, true>(Square(to + DOWN), to));
-            movelist.Add(make<ROOK, true>(Square(to + DOWN), to));
-            movelist.Add(make<KNIGHT, true>(Square(to + DOWN), to));
-            movelist.Add(make<BISHOP, true>(Square(to + DOWN), to));
+            movelist.Add(make<QUEEN, true>(to + DOWN, to));
+            movelist.Add(make<ROOK, true>(to + DOWN, to));
+            movelist.Add(make<KNIGHT, true>(to + DOWN, to));
+            movelist.Add(make<BISHOP, true>(to + DOWN, to));
         }
 
         while (Promote_Right)
         {
             Square to = poplsb(Promote_Right);
-            movelist.Add(make<QUEEN, true>(Square(to + DOWN_LEFT), to));
-            movelist.Add(make<ROOK, true>(Square(to + DOWN_LEFT), to));
-            movelist.Add(make<KNIGHT, true>(Square(to + DOWN_LEFT), to));
-            movelist.Add(make<BISHOP, true>(Square(to + DOWN_LEFT), to));
+            movelist.Add(make<QUEEN, true>(to + DOWN_LEFT, to));
+            movelist.Add(make<ROOK, true>(to + DOWN_LEFT, to));
+            movelist.Add(make<KNIGHT, true>(to + DOWN_LEFT, to));
+            movelist.Add(make<BISHOP, true>(to + DOWN_LEFT, to));
         }
 
         while (Promote_Left)
         {
             Square to = poplsb(Promote_Left);
-            movelist.Add(make<QUEEN, true>(Square(to + DOWN_RIGHT), to));
-            movelist.Add(make<ROOK, true>(Square(to + DOWN_RIGHT), to));
-            movelist.Add(make<KNIGHT, true>(Square(to + DOWN_RIGHT), to));
-            movelist.Add(make<BISHOP, true>(Square(to + DOWN_RIGHT), to));
+            movelist.Add(make<QUEEN, true>(to + DOWN_RIGHT, to));
+            movelist.Add(make<ROOK, true>(to + DOWN_RIGHT, to));
+            movelist.Add(make<KNIGHT, true>(to + DOWN_RIGHT, to));
+            movelist.Add(make<BISHOP, true>(to + DOWN_RIGHT, to));
         }
         singlePush &= ~RANK_PROMO;
         Lpawns &= ~RANK_PROMO;
@@ -311,10 +311,10 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
         if (mt == Movetype::CHECK)
         {
             if ((1ull << to) & board.kingP)
-                movelist.Add(make<PAWN, false>(Square(to + DOWN), to));
+                movelist.Add(make<PAWN, false>(to + DOWN, to));
         }
         else
-            movelist.Add(make<PAWN, false>(Square(to + DOWN), to));
+            movelist.Add(make<PAWN, false>(to + DOWN, to));
     }
 
     while (mt != Movetype::CAPTURE && doublePush)
@@ -323,28 +323,28 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
         if (mt == Movetype::CHECK)
         {
             if ((1ull << to) & board.kingP)
-                movelist.Add(make<PAWN, false>(Square(to + DOWN + DOWN), to));
+                movelist.Add(make<PAWN, false>(to + DOWN + DOWN, to));
         }
         else
-            movelist.Add(make<PAWN, false>(Square(to + DOWN + DOWN), to));
+            movelist.Add(make<PAWN, false>(to + DOWN + DOWN, to));
     }
 
     while (mt != Movetype::QUIET && Rpawns)
     {
         Square to = poplsb(Rpawns);
-        movelist.Add(make<PAWN, false>(Square(to + DOWN_LEFT), to));
+        movelist.Add(make<PAWN, false>(to + DOWN_LEFT, to));
     }
 
     while (mt != Movetype::QUIET && Lpawns)
     {
         Square to = poplsb(Lpawns);
-        movelist.Add(make<PAWN, false>(Square(to + DOWN_RIGHT), to));
+        movelist.Add(make<PAWN, false>(to + DOWN_RIGHT, to));
     }
 
     if (board.enPassantSquare != NO_SQ && (mt != Movetype::QUIET && mt != Movetype::CHECK))
     {
         const Square ep = board.enPassantSquare;
-        const Square epPawn = Square(ep + DOWN);
+        const Square epPawn = ep + DOWN;
 
         U64 epMask = (1ull << epPawn) | (1ull << ep);
         if ((board.checkMask & epMask) == 0)
