@@ -36,43 +36,24 @@ void Board::accumulate()
     for (int i = 0; i < HIDDEN_BIAS; i++)
         accumulator[i] = hiddenBias[i];
 
-    for (int i = 0; i < 64; i++)
+    for (Square i = SQ_A1; i < NO_SQ; i++)
     {
         Piece p = board[i];
         bool input = p != None;
         if (!input)
             continue;
-        int j = Square(i) + (p)*64;
+        int j = i + p * 64;
         NNUE::activate(accumulator, j);
     }
 }
 
 Piece Board::pieceAtBB(Square sq)
 {
-    if (Bitboards[WhitePawn] & (1ULL << sq))
-        return WhitePawn;
-    if (Bitboards[WhiteKnight] & (1ULL << sq))
-        return WhiteKnight;
-    if (Bitboards[WhiteBishop] & (1ULL << sq))
-        return WhiteBishop;
-    if (Bitboards[WhiteRook] & (1ULL << sq))
-        return WhiteRook;
-    if (Bitboards[WhiteQueen] & (1ULL << sq))
-        return WhiteQueen;
-    if (Bitboards[WhiteKing] & (1ULL << sq))
-        return WhiteKing;
-    if (Bitboards[BlackPawn] & (1ULL << sq))
-        return BlackPawn;
-    if (Bitboards[BlackKnight] & (1ULL << sq))
-        return BlackKnight;
-    if (Bitboards[BlackBishop] & (1ULL << sq))
-        return BlackBishop;
-    if (Bitboards[BlackRook] & (1ULL << sq))
-        return BlackRook;
-    if (Bitboards[BlackQueen] & (1ULL << sq))
-        return BlackQueen;
-    if (Bitboards[BlackKing] & (1ULL << sq))
-        return BlackKing;
+    for (Piece p = WhitePawn; p < None; p++)
+    {
+        if (Bitboards[p] & (1ULL << sq))
+            return p;
+    }
     return None;
 }
 
@@ -676,19 +657,16 @@ void Board::initializeLookupTables()
 {
     // initialize squares between table
     U64 sqs;
-    for (int sq1 = 0; sq1 <= 63; ++sq1)
+    for (Square sq1 = SQ_A1; sq1 <= SQ_H8; ++sq1)
     {
-        for (int sq2 = 0; sq2 <= 63; ++sq2)
+        for (Square sq2 = SQ_A1; sq2 <= SQ_H8; ++sq2)
         {
             sqs = (1ULL << sq1) | (1ULL << sq2);
-            if (square_file(Square(sq1)) == square_file(Square(sq2)) ||
-                square_rank(Square(sq1)) == square_rank(Square(sq2)))
-                SQUARES_BETWEEN_BB[sq1][sq2] = RookAttacks(Square(sq1), sqs) & RookAttacks(Square(sq2), sqs);
+            if (square_file(sq1) == square_file(sq2) || square_rank(sq1) == square_rank(sq2))
+                SQUARES_BETWEEN_BB[sq1][sq2] = RookAttacks(sq1, sqs) & RookAttacks(sq2, sqs);
 
-            else if (diagonal_of(Square(sq1)) == diagonal_of(Square(sq2)) ||
-                     anti_diagonal_of(Square(sq1)) == anti_diagonal_of(Square(sq2)))
-                SQUARES_BETWEEN_BB[Square(sq1)][sq2] =
-                    BishopAttacks(Square(sq1), sqs) & BishopAttacks(Square(sq2), sqs);
+            else if (diagonal_of(sq1) == diagonal_of(sq2) || anti_diagonal_of(sq1) == anti_diagonal_of(sq2))
+                SQUARES_BETWEEN_BB[sq1][sq2] = BishopAttacks(sq1, sqs) & BishopAttacks(sq2, sqs);
         }
     }
 }

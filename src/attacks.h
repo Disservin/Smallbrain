@@ -7,7 +7,7 @@
 // clang-format off
 
 // pre calculated lookup table for knight attacks
-static constexpr uint64_t KNIGHT_ATTACKS_TABLE[64] = {
+static constexpr U64 KNIGHT_ATTACKS_TABLE[64] = {
     0x0000000000020400, 0x0000000000050800, 0x00000000000A1100, 0x0000000000142200, 0x0000000000284400,
     0x0000000000508800, 0x0000000000A01000, 0x0000000000402000, 0x0000000002040004, 0x0000000005080008,
     0x000000000A110011, 0x0000000014220022, 0x0000000028440044, 0x0000000050880088, 0x00000000A0100010,
@@ -23,7 +23,7 @@ static constexpr uint64_t KNIGHT_ATTACKS_TABLE[64] = {
     0x0044280000000000, 0x0088500000000000, 0x0010A00000000000, 0x0020400000000000};
 
 // pre calculated lookup table for king attacks
-static constexpr uint64_t KING_ATTACKS_TABLE[64] = {
+static constexpr U64 KING_ATTACKS_TABLE[64] = {
     0x0000000000000302, 0x0000000000000705, 0x0000000000000E0A, 0x0000000000001C14, 0x0000000000003828,
     0x0000000000007050, 0x000000000000E0A0, 0x000000000000C040, 0x0000000000030203, 0x0000000000070507,
     0x00000000000E0A0E, 0x00000000001C141C, 0x0000000000382838, 0x0000000000705070, 0x0000000000E0A0E0,
@@ -39,7 +39,7 @@ static constexpr uint64_t KING_ATTACKS_TABLE[64] = {
     0x2838000000000000, 0x5070000000000000, 0xA0E0000000000000, 0x40C0000000000000};
 
 // pre calculated lookup table for pawn attacks
-static constexpr uint64_t PAWN_ATTACKS_TABLE[2][64] = {
+static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
     // white pawn attacks
     { 0x200, 0x500, 0xa00, 0x1400,
       0x2800, 0x5000, 0xa000, 0x4000,
@@ -78,11 +78,11 @@ static constexpr uint64_t PAWN_ATTACKS_TABLE[2][64] = {
       }
 };
 
-uint64_t PawnAttacks(uint8_t sq, Color c);
-uint64_t KnightAttacks(uint8_t sq);
-uint64_t BishopAttacks(uint8_t sq, uint64_t occupied);
-uint64_t RookAttacks(uint8_t sq, uint64_t occupied);
-uint64_t QueenAttacks(uint8_t sq, uint64_t occupied);
-uint64_t KingAttacks(uint8_t sq);
+U64 PawnAttacks(uint8_t sq, Color c);
+U64 KnightAttacks(uint8_t sq);
+U64 BishopAttacks(uint8_t sq, U64 occupied);
+U64 RookAttacks(uint8_t sq, U64 occupied);
+U64 QueenAttacks(uint8_t sq, U64 occupied);
+U64 KingAttacks(uint8_t sq);
 
 // clang-format on
