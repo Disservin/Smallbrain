@@ -77,4 +77,4 @@ jobs:
         if: runner.os == 'Windows' && github.event_name == 'push'
         with:
           name: builds
-          path: src/smallbrain5.0.exe
+          path: src/smallbrain6.0.exe

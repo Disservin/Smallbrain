@@ -108,6 +108,11 @@ void reallocateTT(U64 elements)
     std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
 }
 
+void clearTT(U64 elements)
+{
+    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
+}
+
 Move convertUciToMove(Board &board, std::string input)
 {
     std::string from = input.substr(0, 2);
