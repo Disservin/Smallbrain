@@ -5,7 +5,7 @@ namespace uciCommand
 
 void uciInput(uciOptions options)
 {
-    std::cout << "id name Smallbrain dev " << uciCommand::currentDateTime() << std::endl;
+    std::cout << "id name " << uciCommand::getVersion() << std::endl;
     std::cout << "id author Disservin\n" << std::endl;
     options.printOptions();
     std::cout << "uciok" << std::endl;
@@ -114,7 +114,7 @@ bool stringContain(std::string s, std::string origin)
     return origin.find(s) != std::string::npos;
 }
 
-const std::string currentDateTime()
+const std::string getVersion()
 {
     std::unordered_map<std::string, std::string> months({{"Jan", "01"},
                                                          {"Feb", "02"},
@@ -132,10 +132,18 @@ const std::string currentDateTime()
     std::string month, day, year;
     std::stringstream ss, date(__DATE__); // {month} {date} {year}
 
+    const std::string version = "dev";
+
+    ss << "Smallbrain " << version << " ";
+
     date >> month >> day >> year;
     if (day.length() == 1)
         day = "0" + day;
-    ss << day << months[month] << year.substr(2);
+    ss << year.substr(2) << months[month] << day;
+
+#ifdef SHA
+    ss << "-" << SHA;
+#endif
 
     return ss.str();
 }

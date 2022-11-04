@@ -14,13 +14,21 @@ As of now Smallbrain has a NNUE trained on 500m depth 9 fens generated with the 
 
 ## Compile
 
-Compile it using the Makefile in ./src <br>
+Compile it using the Makefile in ./src 
+
 ```
 make
-.\smallbrain6.0.exe bench
+.\smallbrain.exe bench
 ```
 compare the Bench with the Bench in the commit messages,
 they should be the same.
+
+or download the latest the latest executable directly over Github. <br>
+At the bottom you should be able to find multiple different compiles, choose one that doesnt crash.
+
+Ordered by performance you should try x86-64-avx2 first then x86-64-modern and at last x86-64.
+
+
 
 ## UCI settings
 * Hash<br>
@@ -63,6 +71,7 @@ CCRL 40/15
 
 ```
   Name                  Elo      +       -
+  Smallbrain 6.0      	3229	+24	−25	
   Smallbrain 5.0 4CPU   3211	+23	−23
   Smallbrain 5.0        3137	+20	−20
   Smallbrain 4.0        2978	+25	−25	
@@ -72,6 +81,7 @@ CCRL 40/15
  CCRL Blitz 2'+1" (Blitz)
 ```
   Name                  Elo      +       -
+  Smallbrain 6.0        3335	+23	−23
   Smallbrain 5.0      	3199	+18	−18
   Smallbrain 4.0      	3005	+18	−18
   Smallbrain 3.0        2921	+20	−20
@@ -84,15 +94,15 @@ CCRL 40/15
 
 ## Datageneration
 ```
-* .\smallbrain6.0.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int>
+* .\smallbrain.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int>
 ```
 
 * Example: 
 ```
-.\smallbrain6.0.exe -gen -threads 30 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
+.\smallbrain.exe -gen -threads 30 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
 ```
 ```
-.\smallbrain6.0.exe -gen -threads 30 -tb E:/Chess/345
+.\smallbrain.exe -gen -threads 30 -tb E:/Chess/345
 ```
 
 * Book reading isnt fully optimized, very large books will slowdown the generation.

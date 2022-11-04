@@ -69,6 +69,6 @@ template <typename T> T findElement(std::string param, std::vector<std::string> 
 bool stringContain(std::string s, std::string origin);
 
 // Get current date/time
-const std::string currentDateTime();
+const std::string getVersion();
 
 } // namespace uciCommand
