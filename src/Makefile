@@ -3,16 +3,13 @@ _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/default.nnue
 CC        := g++
 TARGET    := smallbrain
-NATIVE     = -march=native
 
 # name and version
 NAME      := smallbrain
-MINOR     := 0
-MAJOR     := 6
 
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
-	FLAGS  = -pthread -lstdc++
+	FLAGS  = -pthread -lstdc++ -static
 	SUFFIX  := .exe
 else
 	FLAGS  = -lpthread -lstdc++
@@ -25,107 +22,37 @@ ifeq ($(uname_S), Darwin)
 	FLAGS = 
 else
 ifeq ($(uname_S), Linux)
-	CXXFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	CXXFLAGS = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
 ifeq ($(OS), Windows_NT)
-	CXXFLAGS = -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	CXXFLAGS = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 endif
 endif
 endif
 
 ifeq ($(build), release-native)
-	CXXFLAGS = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 	NATIVE   = -march=native
-	FLAGS    = -pthread -lstdc++ -static
 	ARCH     = -x86-64-native
 endif
 
 ifeq ($(build), release-x86-64)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=x86-64
 	INSTRUCTIONS = -msse -msse2 -mpopcnt
-	FLAGS        = -pthread -lstdc++ -static
 	ARCH         = -x86-64
 endif
 
-ifeq ($(build), release-x86-64-sse3)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=x86-64
-	INSTRUCTIONS = -m64 -msse -msse2 -mpopcnt -msse3 -mssse3 -mlzcnt
-	FLAGS        = -pthread -lstdc++ -static
-	ARCH         = -x86-64-sse3
-endif
-
 ifeq ($(build), release-x86-64-modern)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=x86-64
-	INSTRUCTIONS = -m64 -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mcx16 -mbmi -mavx -mlzcnt -mpclmul
-	FLAGS        = -pthread -lstdc++ -static
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt
 	ARCH         = -x86-64-modern
 endif
 
 ifeq ($(build), release-x86-64-avx2)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=x86-64
-	INSTRUCTIONS = -m64 -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mcx16 -mbmi -mavx -mlzcnt -mpclmul -mavx2
-	FLAGS        = -pthread -lstdc++ -static
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4 -mavx -mavx2
 	ARCH         = -x86-64-avx2
 endif
 
 ifeq ($(build), release-x86-64-bmi2)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=x86-64
-	INSTRUCTIONS = -m64 -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt -mcx16 -mbmi -mavx -mlzcnt -mpclmul -mavx2 -mbmi2
-	FLAGS        = -pthread -lstdc++ -static
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 
 	ARCH         = -x86-64-bmi2
-endif
-
-ifeq ($(build), release-x86-64-zen2)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=znver2
-	INSTRUCTIONS = 
-	FLAGS        = -pthread -lstdc++ -static
-	ARCH         = -x86-64-zen2
-endif
-
-ifeq ($(build), release-x86-64-zen3)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=znver3
-	INSTRUCTIONS = 
-	FLAGS        = -pthread -lstdc++ -static
-	ARCH         = -x86-64-zen3
-endif
-
-ifeq ($(build), release-x86-64-haswell)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=haswell
-	INSTRUCTIONS = 
-	FLAGS        = -pthread -lstdc++ -static
-	ARCH         = -x86-64-haswell
-endif
-
-ifeq ($(build), release-x86-64-skylake)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=skylake
-	INSTRUCTIONS = 
-	FLAGS        = -pthread -lstdc++ -static
-	ARCH         = -x86-64-skylake
-endif
-
-ifeq ($(build), release-x86-64-sandybridge)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=sandybridge
-	INSTRUCTIONS = 
-	FLAGS        = -pthread -lstdc++ -static
-	ARCH         = -x86-64-sandybridge
-endif
-
-ifeq ($(build), release-x86-64-alderlake)
-	CXXFLAGS     = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	NATIVE       = -march=alderlake
-	INSTRUCTIONS = 
-	FLAGS        = -pthread -lstdc++ -static
-	ARCH         = -x86-64-alderlake
 endif
 
 ifeq ($(build), debug)
@@ -133,9 +60,14 @@ ifeq ($(build), debug)
 	NATIVE   = -msse -msse3 -mpopcnt
 endif
 
+#Include github sha
+ifdef sha
+	CXXFLAGS += -DSHA=\"$(sha)\"
+endif
+
 SRCS := $(wildcard *.cpp) ./syzygy/Fathom/src/tbprobe.c
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
-EXE  := $(NAME)$(MAJOR).$(MINOR)$(ARCH)$(SUFFIX)
+EXE  := $(NAME)$(ARCH)$(SUFFIX)
 
 all: $(TARGET)
 
@@ -144,9 +76,6 @@ $(TARGET): $(OBJS)
 %.o: %.cpp
 	$(CC) -c $(CXXFLAGS) -funroll-loops $(NATIVE) $(INSTRUCTIONS) -O3 -std=c++17 -DEVALFILE=\"$(EVALFILE)\" -Wall -flto $< $(FLAGS)
 clean:
-	rm -rf $(TARGET) *.o
-	rm $(NAME)$(MAJOR).$(MINOR)$(SUFFIX)
-
-
+	rm -rf *.o $(EXE)
 
 .PHONY: all clean

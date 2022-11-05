@@ -1,13 +1,17 @@
-name: Test bench
+name: Smallbrain
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  Binaries:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    uses: ./.github/workflows/smallbrain_binaries.yml
+  Smallbrain:
     # The type of runner that the job will run on
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
@@ -20,11 +24,10 @@ jobs:
             os: ubuntu-20.04,
             compiler: g++,
             comp: gcc,
-            shell: 'bash {0}',
-            ext: ""
+            shell: 'bash {0}'
           }
         - {
-            name: "Windows 2022 Mingw-w64 GCC x86_64",
+            name: "Windows 2022 GCC",
             os: windows-2022,
             compiler: g++,
             comp: mingw,
@@ -37,7 +40,7 @@ jobs:
         working-directory: ./src
         shell: ${{ matrix.config.shell }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -67,14 +70,11 @@ jobs:
         run: |
           ./smallbrain* perft
 
+      - name: Bench
+        run: |
+          ./smallbrain* bench
+
       - name: Valgrind
         if: runner.os == 'Linux'
         run: |
           valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain* bench
-
-      - name: Archive executable
-        uses: actions/upload-artifact@v3
-        if: runner.os == 'Windows' && github.event_name == 'push'
-        with:
-          name: builds
-          path: src/smallbrain*
