@@ -5,43 +5,32 @@ CC        := g++
 TARGET    := smallbrain
 CXXFLAGS  :=
 NATIVE     = -march=native
+FLAGS     := -lstdc++ 
+SUFFIX    :=
 
 # name and version
 NAME      := smallbrain
-
-ifeq ($(OS), Windows_NT)
-	uname_S := Windows
-	FLAGS  = -lstdc++ -static
-	SUFFIX  := .exe
-else
-ifeq ($(COMP), mingw)
-	uname_S := Windows
-	FLAGS  = -lstdc++ -static
-	SUFFIX  := .exe
-else
-	FLAGS  = -lstdc++
-	SUFFIX  :=
-	uname_S := $(shell uname -s)
-endif
-endif
 
 KERNEL = $(shell uname -s)
 ifeq ($(KERNEL),Linux)
 	OS = $(shell uname -o)
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	FLAGS  = -lpthread -static
 endif
 
 ifeq ($(OS), Windows_NT)
+	FLAGS   += -static
 	SUFFIX  := .exe
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
 ifeq ($(COMP), mingw)
-	SUFFIX  := .exe
+	FLAGS   += -static
+	SUFFIX  := .ex
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-else
-	SUFFIX  :=
 endif
 endif
+
+
 
 ifdef build
 	NATIVE =
