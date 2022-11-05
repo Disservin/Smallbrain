@@ -3,6 +3,8 @@ _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/default.nnue
 CC        := g++
 TARGET    := smallbrain
+CXXFLAGS  :=
+NATIVE     = -march=native
 
 # name and version
 NAME      := smallbrain
@@ -17,17 +19,21 @@ else
 	uname_S := $(shell uname -s)
 endif
 
-ifeq ($(uname_S), Darwin)
-	NATIVE = -mcpu=apple-a14	
-	FLAGS = 
-else
-ifeq ($(uname_S), Linux)
-	CXXFLAGS = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-else
+KERNEL = $(shell uname -s)
+ifeq ($(KERNEL),Linux)
+	OS = $(shell uname -o)
+	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+endif
+
 ifeq ($(OS), Windows_NT)
-	CXXFLAGS = -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	SUFFIX  := .exe
+	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+else
+	SUFFIX  :=
 endif
-endif
+
+ifdef build
+	NATIVE =
 endif
 
 ifeq ($(build), release-native)
@@ -53,6 +59,21 @@ endif
 ifeq ($(build), release-x86-64-bmi2)
 	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 
 	ARCH         = -x86-64-bmi2
+endif
+
+ifeq ($(build), release-x86-64-avx512)
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 -mavx512f -mavx512bw
+	ARCH         = -x86-64-avx512
+endif
+
+ifeq ($(build), release-x86-64-vnni256)
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl -mprefer-vector-width=256
+	ARCH         = -x86-64-vnni256
+endif
+
+ifeq ($(build), release-x86-64-vnni512)
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 -mavx512vnni -mavx512dq -mavx512vl
+	ARCH         = -x86-64-vnni512
 endif
 
 ifeq ($(build), debug)

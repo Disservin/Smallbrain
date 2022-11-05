@@ -3,7 +3,7 @@ on:
   workflow_call:
 jobs:
   Archive:
-    name: ${{ matrix.config.name }}
+    name: ${{ matrix.config.name }} ${{ matrix.binaries }}
     runs-on: ${{ matrix.config.os }}
     env:
       COMPILER: ${{ matrix.config.compiler }}
@@ -90,7 +90,7 @@ jobs:
       - name: Archive binaries
         uses: actions/upload-artifact@v3
         with:
-          name: stockfish-${{ matrix.config.os }}-${{ matrix.binaries }}
+          name: smallbrain-${{ matrix.config.os }}-${{ matrix.binaries }}
           path: |
             src
             README.md
