@@ -11,12 +11,18 @@ NAME      := smallbrain
 
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
-	FLAGS  = -pthread -lstdc++ -static
+	FLAGS  = -lstdc++ -static
 	SUFFIX  := .exe
 else
-	FLAGS  = -lpthread -lstdc++
+ifeq ($(COMP), mingw)
+	uname_S := Windows
+	FLAGS  = -lstdc++ -static
+	SUFFIX  := .exe
+else
+	FLAGS  = -lstdc++
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
+endif
 endif
 
 KERNEL = $(shell uname -s)
