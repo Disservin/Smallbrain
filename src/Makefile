@@ -27,7 +27,7 @@ ifeq ($(OS), Windows_NT)
 else
 ifeq ($(COMP), mingw)
 	FLAGS   += -static
-	SUFFIX  := .ex
+	SUFFIX  := .exe
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
 ifeq ($(uname_S), Darwin)
