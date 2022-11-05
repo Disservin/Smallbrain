@@ -16,6 +16,8 @@ ifeq ($(KERNEL),Linux)
 	OS = $(shell uname -o)
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 	FLAGS  = -lpthread -static
+else
+	uname_S := $(shell uname -s)
 endif
 
 ifeq ($(OS), Windows_NT)
@@ -27,6 +29,11 @@ ifeq ($(COMP), mingw)
 	FLAGS   += -static
 	SUFFIX  := .ex
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+else
+ifeq ($(uname_S), Darwin)
+	NATIVE = -mcpu=apple-a14	
+	FLAGS = 
+else
 endif
 endif
 

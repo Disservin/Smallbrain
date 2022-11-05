@@ -17,7 +17,7 @@ void init(const char *filename)
 {
     FILE *f = fopen(filename, "rb");
 
-    uint64_t readElements = 0;
+    [[maybe_unused]] uint64_t readElements = 0;
     if (f != NULL)
     {
         readElements += fread(inputWeights, sizeof(int16_t), INPUT_WEIGHTS * HIDDEN_WEIGHTS, f);
