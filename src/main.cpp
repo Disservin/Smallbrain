@@ -15,6 +15,8 @@ std::atomic<bool> useTB;
 
 int main(int argc, char **argv)
 {
+    std::cout << uciCommand::getVersion() << std::endl;
+
     UCI_FORCE_STOP = false;
     stopped = false;
     useTB = false;
