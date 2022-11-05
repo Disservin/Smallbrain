@@ -29,7 +29,12 @@ ifeq ($(OS), Windows_NT)
 	SUFFIX  := .exe
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
+ifeq ($(COMP), mingw)
+	SUFFIX  := .exe
+	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+else
 	SUFFIX  :=
+endif
 endif
 
 ifdef build
@@ -81,9 +86,10 @@ ifeq ($(build), debug)
 	NATIVE   = -msse -msse3 -mpopcnt
 endif
 
-#Include github sha
-ifdef sha
-	CXXFLAGS += -DSHA=\"$(sha)\"
+# Include sha for versioning 
+SHA = $(shell git rev-parse --short HEAD 2>/dev/null)
+ifneq ($(SHA), )
+	CXXFLAGS += -DSHA=\"$(SHA)\"
 endif
 
 SRCS := $(wildcard *.cpp) ./syzygy/Fathom/src/tbprobe.c
