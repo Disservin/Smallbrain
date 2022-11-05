@@ -36,8 +36,7 @@ ifeq ($(uname_S), Darwin)
 else
 endif
 endif
-
-
+endif
 
 ifdef build
 	NATIVE =
