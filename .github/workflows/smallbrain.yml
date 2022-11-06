@@ -3,14 +3,13 @@ on:
   push:
     branches:
       - main
-      - compiles
   pull_request:
     branches:
       - main
 
 jobs:
   Binaries:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/compiles'
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/smallbrain_binaries.yml
   Smallbrain:
     # The type of runner that the job will run on
