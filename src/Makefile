@@ -32,6 +32,11 @@ else
 	SUFFIX  :=
 endif
 
+ifeq ($(uname_S), Darwin)
+	NATIVE = -mcpu=apple-a14	
+	FLAGS = 
+endif
+
 ifdef build
 	NATIVE =
 endif
