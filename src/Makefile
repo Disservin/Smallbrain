@@ -101,7 +101,7 @@ $(TARGET): $(OBJS)
 	$(CC) -o $(EXE) $^ $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) -flto
 
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -Ofast -DEVALFILE=\"$(EVALFILE)\" -flto -c $< $(FLAGS)
+	$(CC) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -DEVALFILE=\"$(EVALFILE)\" -flto -c $< $(FLAGS)
 clean:
 	rm -rf *.o $(DEPENDS)
 
