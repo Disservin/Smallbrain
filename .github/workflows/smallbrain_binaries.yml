@@ -66,6 +66,13 @@ jobs:
           msystem: ${{matrix.config.msys_sys}}
           install: mingw-w64-${{matrix.config.msys_env}} make git expect
 
+      - name: Switch to gcc-10 on linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install gcc-10 g++-10
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10 --slave /usr/bin/gcov gcov /usr/bin/gcov-10
+          sudo update-alternatives --set gcc /usr/bin/gcc-10
+
       - name: Extract the commit sha
         run: |
           git rev-parse --short "$GITHUB_SHA" > sha && echo "git_sha=$(cat sha)" >> $GITHUB_ENV && echo "Git sha:" $(cat sha)
