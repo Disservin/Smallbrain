@@ -120,7 +120,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     bool ttHit = false;
 
     probeTT(tte, ttHit, ttMove, td->board.hashKey);
-    if (ttHit && tte.depth >= 0 && !PvNode)
+    if (ttHit && tte.depth == 0 && !PvNode)
     {
         ttScore = scoreFromTT(tte.score, ss->ply);
         if (tte.flag == EXACT)
@@ -441,7 +441,6 @@ moves:
     bool doFullSearch = false;
 
     Movepicker mp;
-    mp.stage = TT_MOVE;
 
     /********************
      * Movepicker fetches the next move that we should search.

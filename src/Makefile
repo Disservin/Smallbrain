@@ -34,43 +34,50 @@ ifdef build
 	NATIVE =
 endif
 
-ifeq ($(build), release-native)
+ifeq ($(build), native)
 	NATIVE   = -march=native
 	ARCH     = -x86-64-native
 endif
 
-ifeq ($(build), release-x86-64)
+ifeq ($(build), x86-64)
+	NATIVE       = -mtune=znver1
 	INSTRUCTIONS = -msse -msse2 -mpopcnt
 	ARCH         = -x86-64
 endif
 
-ifeq ($(build), release-x86-64-modern)
+ifeq ($(build), x86-64-modern)
+	NATIVE       = -mtune=znver2
 	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt
 	ARCH         = -x86-64-modern
 endif
 
-ifeq ($(build), release-x86-64-avx2)
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4 -mavx -mavx2
+ifeq ($(build), x86-64-avx2)
+	NATIVE       = -mtune=znver3
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -mssse3 -msse2
 	ARCH         = -x86-64-avx2
 endif
 
-ifeq ($(build), release-x86-64-bmi2)
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
+ifeq ($(build), x86-64-bmi2)
+	NATIVE       = -mtune=znver3
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
 	ARCH         = -x86-64-bmi2
 endif
 
-ifeq ($(build), release-x86-64-avx512)
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 -mavx512f -mavx512bw
+ifeq ($(build), x86-64-avx512)
+	NATIVE       = -mtune=alderlake
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2 -mavx512f -mavx512bw
 	ARCH         = -x86-64-avx512
 endif
 
-ifeq ($(build), release-x86-64-vnni256)
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl -mprefer-vector-width=256
+ifeq ($(build), x86-64-vnni256)
+	NATIVE       = -mtune=alderlake
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2 -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl -mprefer-vector-width=256
 	ARCH         = -x86-64-vnni256
 endif
 
-ifeq ($(build), release-x86-64-vnni512)
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 -mavx512vnni -mavx512dq -mavx512vl
+ifeq ($(build), x86-64-vnni512)
+	NATIVE       = -mtune=alderlake
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2 -mavx512vnni -mavx512dq -mavx512vl
 	ARCH         = -x86-64-vnni512
 endif
 
