@@ -13,6 +13,7 @@ ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	SUFFIX  := .exe
 	FLAGS    = -static
+	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
 	FLAGS      = -lpthread -lm
 	SUFFIX  :=
@@ -22,6 +23,7 @@ endif
 KERNEL = $(shell uname -s)
 ifeq ($(KERNEL),Linux)
 	OS = $(shell uname -o)
+	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 endif
 
 ifeq ($(OS), Windows_NT)
