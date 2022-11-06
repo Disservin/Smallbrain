@@ -120,7 +120,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     bool ttHit = false;
 
     probeTT(tte, ttHit, ttMove, td->board.hashKey);
-    if (ttHit && tte.depth == 0 && !PvNode)
+    if (ttHit && !PvNode)
     {
         ttScore = scoreFromTT(tte.score, ss->ply);
         if (tte.flag == EXACT)
