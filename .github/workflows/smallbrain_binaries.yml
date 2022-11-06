@@ -79,7 +79,7 @@ jobs:
       - name: Compile ${{ matrix.binaries }} build
         run: |
           make clean
-          make build=release-$BINARY sha=$git_sha
+          make build=$BINARY sha=$git_sha
           strip ./smallbrain-$BINARY$EXT
           mv ./smallbrain-$BINARY$EXT ../smallbrain-$OS-$BINARY$EXT
 
