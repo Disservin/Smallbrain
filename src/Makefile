@@ -12,10 +12,10 @@ NAME      := smallbrain
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	SUFFIX  := .exe
-	FLAGS    = -static
+	FLAGS    = -pthread -lstdc++ -static
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
-	FLAGS      = -lpthread -lm
+	FLAGS   = -lpthread -lstdc++ -static
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
 endif
