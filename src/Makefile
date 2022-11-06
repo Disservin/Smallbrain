@@ -82,7 +82,7 @@ ifeq ($(build), x86-64-vnni512)
 endif
 
 ifeq ($(build), debug)
-	CXXFLAGS = -g3 -fno-omit-frame-pointer
+	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++17
 	NATIVE   = -msse -msse3 -mpopcnt
 endif
 
