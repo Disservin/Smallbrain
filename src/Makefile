@@ -86,6 +86,7 @@ endif
 ifeq ($(build), debug)
 	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++17
 	NATIVE   = -msse -msse3 -mpopcnt
+	FLAGS    = lpthread -lstdc++
 endif
 
 #Include github sha
