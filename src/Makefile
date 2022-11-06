@@ -57,7 +57,8 @@ ifeq ($(build), release-x86-64-avx2)
 endif
 
 ifeq ($(build), release-x86-64-bmi2)
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -msse4.1 -mavx -mavx2 -mbmi -mbmi2 
+	INSTRUCTIONS = -m128bit-long-double -m64 -m80387 -mabm -madx -maes -malign-stringops -mavx -mavx2 -mbmi -mbmi2 -mclflushopt -mclwb -mclzero -mcx16 -mf16c -mfancy-math-387 -mfma -mfp-ret-in-387 -mfsgsbase -mfxsr -mhard-float -mieee-fp -mlong-double-80 -mlzcnt -mmmx -mmovbe -mpclmul -mpopcnt -mprfchw -mpush-args -mrdpid -mrdrnd -mrdseed -mred-zone -msahf -msha -mshstk -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -msse4a -mssse3 -mstv -mtls-direct-seg-refs -mvaes -mvpclmulqdq -mvzeroupper -mxsave -mxsavec -mxsaveopt -mxsaves
+	NATIVE       = -march=x86-64
 	ARCH         = -x86-64-bmi2
 endif
 
