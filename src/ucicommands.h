@@ -30,8 +30,7 @@ void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datage
 /// @param input
 /// @param searcher
 /// @param board
-/// @param dg
-void parseInput(std::string input, Search &searcher, Board &board, Datagen::TrainingData &dg);
+void parseInput(std::string input, Board &board);
 
 /// @brief stop all threads
 /// @param searcher

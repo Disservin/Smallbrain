@@ -108,7 +108,7 @@ void reallocateTT(U64 elements)
     std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
 }
 
-void clearTT(U64 elements)
+void clearTT()
 {
     std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
 }

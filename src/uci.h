@@ -52,6 +52,5 @@ class UCI
     /// @param argc
     /// @param argv
     /// @param options
-    /// @param board
-    void parseArgs(int argc, char **argv, uciOptions options, Board board);
+    void parseArgs(int argc, char **argv, uciOptions options);
 };

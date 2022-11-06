@@ -18,9 +18,9 @@ extern U64 TT_SIZE;
 
 struct Movepicker
 {
-    int ttMoveIndex;
-    int i;
-    Staging stage;
+    int ttMoveIndex = -1;
+    int i = 0;
+    Staging stage = TT_MOVE;
 };
 
 struct Stack
