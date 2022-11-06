@@ -40,7 +40,7 @@ int UCI::uciLoop(int argc, char **argv)
     }
     else if (argc > 1)
     {
-        parseArgs(argc, argv, options, board);
+        parseArgs(argc, argv, options);
     }
 
     // START OF TUNE
@@ -148,19 +148,19 @@ int UCI::uciLoop(int argc, char **argv)
                     inc = uciCommand::findElement<int>("movestogo", tokens);
 
                 // Calculate search time
-                info.time = optimumTime(timegiven, inc, board.fullMoveNumber, mtg);
+                info.time = optimumTime(timegiven, inc, mtg);
             }
 
             // start search
             searcher.startThinking(board, threadCount, info.depth, info.nodes, info.time);
         }
         // ENGINE SPECIFIC
-        uciCommand::parseInput(input, searcher, board, genData);
+        uciCommand::parseInput(input, board);
     }
 }
 
 // ./smallbrain bench
-void UCI::parseArgs(int argc, char **argv, uciOptions options, Board board)
+void UCI::parseArgs(int argc, char **argv, uciOptions options)
 {
     std::vector<std::string> allArgs(argv + 1, argv + argc);
 

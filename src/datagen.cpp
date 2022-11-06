@@ -47,12 +47,12 @@ void TrainingData::infinitePlay(int threadId, std::string book, int depth)
     while (!UCI_FORCE_STOP)
     {
         games++;
-        randomPlayout(file, threadId, book, depth, number_of_lines);
+        randomPlayout(file, book, depth, number_of_lines);
     }
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, int threadId, std::string &book, int depth, int numLines)
+void TrainingData::randomPlayout(std::ofstream &file, std::string &book, int depth, int numLines)
 {
     Board board;
 

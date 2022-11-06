@@ -951,6 +951,8 @@ Move Search::nextMove(Movelist &moves, Movepicker &mp, Move ttMove, ThreadData *
                 return move;
             }
         }
+
+        [[fallthrough]];
     case EVAL_OTHER:
         for (; mp.i < moves.size; mp.i++)
         {
@@ -965,6 +967,7 @@ Move Search::nextMove(Movelist &moves, Movepicker &mp, Move ttMove, ThreadData *
             mp.i = 0;
 
         mp.stage++;
+        [[fallthrough]];
     case OTHER:
         if (mp.i < moves.size)
         {

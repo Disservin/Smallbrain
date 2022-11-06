@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-Time optimumTime(int64_t availableTime, int inc, int ply, int movestogo)
+Time optimumTime(int64_t availableTime, int inc, int movestogo)
 {
     Time time;
     int overhead = 10;

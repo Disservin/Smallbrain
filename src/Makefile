@@ -3,7 +3,7 @@ _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/default.nnue
 CC        := g++
 TARGET    := smallbrain
-CXXFLAGS  :=
+CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra
 NATIVE     = -march=native
 
 # name and version
@@ -11,10 +11,10 @@ NAME      := smallbrain
 
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
-	FLAGS  = -pthread -lstdc++ -static
 	SUFFIX  := .exe
+	FLAGS    = -static
 else
-	FLAGS  = -lpthread -lstdc++
+	FLAGS      = -lpthread -lm
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
 endif
@@ -22,12 +22,10 @@ endif
 KERNEL = $(shell uname -s)
 ifeq ($(KERNEL),Linux)
 	OS = $(shell uname -o)
-	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 endif
 
 ifeq ($(OS), Windows_NT)
 	SUFFIX  := .exe
-	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
 	SUFFIX  :=
 endif
@@ -57,8 +55,7 @@ ifeq ($(build), release-x86-64-avx2)
 endif
 
 ifeq ($(build), release-x86-64-bmi2)
-	INSTRUCTIONS = -m128bit-long-double -m64 -m80387 -mabm -madx -maes -malign-stringops -mavx -mavx2 -mbmi -mbmi2 -mclflushopt -mclwb -mclzero -mcx16 -mf16c -mfancy-math-387 -mfma -mfp-ret-in-387 -mfsgsbase -mfxsr -mhard-float -mieee-fp -mlong-double-80 -mlzcnt -mmmx -mmovbe -mpclmul -mpopcnt -mprfchw -mpush-args -mrdpid -mrdrnd -mrdseed -mred-zone -msahf -msha -mshstk -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -msse4a -mssse3 -mstv -mtls-direct-seg-refs -mvaes -mvpclmulqdq -mvzeroupper -mxsave -mxsavec -mxsaveopt -mxsaves
-	NATIVE       = -march=x86-64
+	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
 	ARCH         = -x86-64-bmi2
 endif
 
@@ -94,10 +91,11 @@ EXE  := $(NAME)$(ARCH)$(SUFFIX)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CXXFLAGS) -o $(EXE) -flto $^ $(FLAGS)
+	$(CC) -o $(EXE) $^ $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) -flto
+
 %.o: %.cpp
-	$(CC) -c $(CXXFLAGS) -funroll-loops $(NATIVE) $(INSTRUCTIONS) -O3 -std=c++17 -DEVALFILE=\"$(EVALFILE)\" -Wall -flto $< $(FLAGS)
+	$(CC) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -Ofast -DEVALFILE=\"$(EVALFILE)\" -flto -c $< $(FLAGS)
 clean:
-	rm -rf *.o $(EXE)
+	rm -rf *.o $(DEPENDS)
 
 .PHONY: all clean
