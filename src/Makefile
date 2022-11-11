@@ -16,7 +16,7 @@ ifeq ($(OS), Windows_NT)
 	FLAGS    = -pthread -lstdc++ -static
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 else
-	FLAGS   = -lpthread -lstdc++ -static
+	FLAGS   = -lpthread -lstdc++
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
 endif
