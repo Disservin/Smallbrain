@@ -134,15 +134,20 @@ const std::string getVersion()
 
     const std::string version = "dev";
 
-    ss << "Smallbrain " << version << " ";
+    ss << "Smallbrain " << version;
+    ss << "-";
+#ifdef GIT_DATE
+    ss << GIT_DATE;
+#else
 
     date >> month >> day >> year;
     if (day.length() == 1)
         day = "0" + day;
     ss << year.substr(2) << months[month] << day;
+#endif
 
-#ifdef SHA
-    ss << "-" << SHA;
+#ifdef GIT_SHA
+    ss << "-" << GIT_SHA;
 #endif
 
     return ss.str();

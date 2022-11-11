@@ -6,9 +6,10 @@ TARGET    := smallbrain
 CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra
 NATIVE     = -march=native
 
-# name and version
+# engine name
 NAME      := smallbrain
 
+# Detect Windows
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	SUFFIX  := .exe
@@ -20,26 +21,19 @@ else
 	uname_S := $(shell uname -s)
 endif
 
-KERNEL = $(shell uname -s)
-ifeq ($(KERNEL),Linux)
-	OS = $(shell uname -o)
-	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-endif
-
-ifeq ($(OS), Windows_NT)
-	SUFFIX  := .exe
-else
-	SUFFIX  :=
-endif
-
+# Different native flag for macOS
 ifeq ($(uname_S), Darwin)
 	NATIVE = -mcpu=apple-a14	
 	FLAGS = 
 endif
 
+# Remove native for distributed builds
 ifdef build
 	NATIVE =
 endif
+
+# all bmi2 instructions
+INSTRUCTIONS_BMI2 = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
 
 ifeq ($(build), native)
 	NATIVE   = -march=native
@@ -66,25 +60,25 @@ endif
 
 ifeq ($(build), x86-64-bmi2)
 	NATIVE       = -mtune=znver3
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
+	INSTRUCTIONS = $(INSTRUCTIONS_BMI2)
 	ARCH         = -x86-64-bmi2
 endif
 
 ifeq ($(build), x86-64-avx512)
 	NATIVE       = -mtune=alderlake
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2 -mavx512f -mavx512bw
+	INSTRUCTIONS = $(INSTRUCTIONS_BMI2) -mavx512f -mavx512bw
 	ARCH         = -x86-64-avx512
 endif
 
 ifeq ($(build), x86-64-vnni256)
 	NATIVE       = -mtune=alderlake
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2 -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl -mprefer-vector-width=256
+	INSTRUCTIONS = $(INSTRUCTIONS_BMI2) -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl -mprefer-vector-width=256
 	ARCH         = -x86-64-vnni256
 endif
 
 ifeq ($(build), x86-64-vnni512)
 	NATIVE       = -mtune=alderlake
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2 -mavx512vnni -mavx512dq -mavx512vl
+	INSTRUCTIONS = $(INSTRUCTIONS_BMI2) -mavx512vnni -mavx512dq -mavx512vl
 	ARCH         = -x86-64-vnni512
 endif
 
@@ -94,9 +88,16 @@ ifeq ($(build), debug)
 	FLAGS    = -lpthread -lstdc++
 endif
 
-#Include github sha
-ifdef sha
-	CXXFLAGS += -DSHA=\"$(sha)\"
+# Try to include git commit sha for versioning
+GIT_SHA = $(shell git rev-parse --short HEAD 2>/dev/null)
+ifneq ($(GIT_SHA), )
+	CXXFLAGS += -DGIT_SHA=\"$(GIT_SHA)\"
+endif
+
+# Try to include git commit date for versioning
+GIT_DATE = $(shell git show -s --date=format:'%Y%m%d' --format=%cd HEAD 2>/dev/null)
+ifneq ($(GIT_DATE), )
+	CXXFLAGS += -DGIT_DATE=\"$(GIT_DATE)\"
 endif
 
 SRCS := $(wildcard *.cpp) ./syzygy/Fathom/src/tbprobe.c
