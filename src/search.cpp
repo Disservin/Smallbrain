@@ -466,7 +466,8 @@ moves:
             if (depth < 6 && !see(move, -(depth * 97), td->board))
                 continue;
 
-            if (ss->ply > 4 && depth > 7 && (ss - 3)->inCheck && (ss - 1)->inCheck)
+            // Check extension
+            if (ss->ply > 5 && depth > 7 && (ss - 3)->inCheck && (ss - 1)->inCheck)
                 extension = 1;
         }
 
