@@ -238,7 +238,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     Score oldAlpha = alpha;
 
     bool improving;
-    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
+    bool inCheck = ss->inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     ss->eval = VALUE_NONE;
 
     if (ss->ply >= MAX_PLY)
@@ -467,7 +467,7 @@ moves:
                 continue;
 
             // Check extension
-            if (ss->ply > 5 && depth > 7 && (ss - 3)->inCheck && (ss - 1)->inCheck)
+            if (ss->ply > 4 && depth > 7 && (ss - 3)->inCheck && (ss - 1)->inCheck)
                 extension = 1;
         }
 
