@@ -449,11 +449,8 @@ moves:
      *******************/
     while ((move = nextMove(ss->moves, mp, ttMove, td, ss)) != NO_MOVE)
     {
-        madeMoves++;
-
+        int extension = 0;
         bool capture = td->board.pieceAtB(to(move)) != None;
-
-        int newDepth = depth - 1;
 
         /********************
          * Various pruning techniques.
@@ -468,9 +465,13 @@ moves:
             // SEE pruning
             if (depth < 6 && !see(move, -(depth * 97), td->board))
                 continue;
+
+            if (ss->ply > 4 && ss->inCheck && (ss - 2)->inCheck)
+                extension = 1;
         }
 
         td->nodes++;
+        madeMoves++;
 
         /********************
          * Print currmove information.
@@ -486,6 +487,8 @@ moves:
 
         U64 nodeCount = td->nodes;
         ss->currentmove = move;
+
+        int newDepth = depth - 1 + extension;
 
         /********************
          * Late move reduction, later moves will be searched
