@@ -9,6 +9,7 @@ class Perft
     Board board;
     int depth;
     uint64_t nodes;
+    Movelist movelists[MAX_PLY];
 
     U64 perftFunction(int depth, int max);
 
