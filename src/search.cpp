@@ -140,8 +140,6 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     ss->moves.size = 0;
     if (inCheck)
         Movegen::legalmoves<Movetype::ALL>(td->board, ss->moves);
-    else if (depth == 0)
-        Movegen::legalmoves<Movetype::CHECK>(td->board, ss->moves);
     else
         Movegen::legalmoves<Movetype::CAPTURE>(td->board, ss->moves);
 

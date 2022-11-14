@@ -338,13 +338,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     while (mt != Movetype::CAPTURE && singlePush)
     {
         Square to = poplsb(singlePush);
-        if (mt == Movetype::CHECK)
-        {
-            if ((1ull << to) & board.kingP)
-                movelist.Add(make<PAWN, false>(to + DOWN, to));
-        }
-        else
-            movelist.Add(make<PAWN, false>(to + DOWN, to));
+        movelist.Add(make<PAWN, false>(to + DOWN, to));
     }
 
     /********************
@@ -353,13 +347,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     while (mt != Movetype::CAPTURE && doublePush)
     {
         Square to = poplsb(doublePush);
-        if (mt == Movetype::CHECK)
-        {
-            if ((1ull << to) & board.kingP)
-                movelist.Add(make<PAWN, false>(to + DOWN + DOWN, to));
-        }
-        else
-            movelist.Add(make<PAWN, false>(to + DOWN + DOWN, to));
+        movelist.Add(make<PAWN, false>(to + DOWN + DOWN, to));
     }
 
     /********************
@@ -383,7 +371,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     /********************
      * Add en passant captures.
      *******************/
-    if (board.enPassantSquare != NO_SQ && (mt != Movetype::QUIET && mt != Movetype::CHECK))
+    if (board.enPassantSquare != NO_SQ && mt != Movetype::QUIET)
     {
         const Square ep = board.enPassantSquare;
         const Square epPawn = ep + DOWN;
@@ -438,19 +426,13 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     }
 }
 
-template <Movetype mt> U64 LegalKnightMoves(const Board &board, Square sq, U64 movableSquare)
+template <Movetype mt> U64 LegalKnightMoves(Square sq, U64 movableSquare)
 {
-    if (mt == Movetype::CHECK)
-        movableSquare &= (board.occEnemy | board.kingFFD);
-
     return KnightAttacks(sq) & movableSquare;
 }
 
 template <Movetype mt> U64 LegalBishopMoves(const Board &board, Square sq, U64 movableSquare)
 {
-    if (mt == Movetype::CHECK)
-        movableSquare &= (board.occEnemy | board.kingD);
-
     // The Bishop is pinned diagonally thus can only move diagonally.
     if (board.pinD & (1ULL << sq))
         return BishopAttacks(sq, board.occAll) & movableSquare & board.pinD;
@@ -459,9 +441,6 @@ template <Movetype mt> U64 LegalBishopMoves(const Board &board, Square sq, U64 m
 
 template <Movetype mt> U64 LegalRookMoves(const Board &board, Square sq, U64 movableSquare)
 {
-    if (mt == Movetype::CHECK)
-        movableSquare &= (board.occEnemy | board.kingHV);
-
     // The Rook is pinned horizontally thus can only move horizontally.
     if (board.pinHV & (1ULL << sq))
         return RookAttacks(sq, board.occAll) & movableSquare & board.pinHV;
@@ -470,9 +449,6 @@ template <Movetype mt> U64 LegalRookMoves(const Board &board, Square sq, U64 mov
 
 template <Movetype mt> U64 LegalQueenMoves(const Board &board, Square sq, U64 movableSquare)
 {
-    if (mt == Movetype::CHECK)
-        movableSquare &= (board.kingHV | board.kingD | board.occEnemy);
-
     U64 moves = 0ULL;
     if (board.pinD & (1ULL << sq))
         moves |= BishopAttacks(sq, board.occAll) & movableSquare & board.pinD;
@@ -495,8 +471,6 @@ template <Movetype mt> U64 LegalKingMoves(const Board &board, Square sq)
         bb = board.enemyEmptyBB;
     else if (mt == Movetype::CAPTURE)
         bb = board.occEnemy;
-    else if (mt == Movetype::CHECK)
-        bb = board.occEnemy;
     else
         bb = ~board.occAll;
 
@@ -506,10 +480,8 @@ template <Movetype mt> U64 LegalKingMoves(const Board &board, Square sq)
 template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, Square sq)
 {
     U64 moves;
-    if (mt == Movetype::CHECK)
-        moves = KingAttacks(sq) & board.occEnemy & ~board.seen;
-    else
-        moves = KingAttacks(sq) & board.enemyEmptyBB & ~board.seen;
+
+    moves = KingAttacks(sq) & board.enemyEmptyBB & ~board.seen;
 
     if (c == White)
     {
@@ -551,19 +523,6 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
 
     init<c>(board, board.KingSQ<c>());
 
-    /********************
-     * Movetype::CHECK is used in qsearch to calculate possible capture moves
-     * and moves that give check. Discovery checks are not calculated or castling checks.
-     *******************/
-    if (mt == Movetype::CHECK)
-    {
-        Square enemyKing = board.KingSQ<~c>();
-        board.kingP = PawnAttacks(enemyKing, ~c);
-        board.kingFFD = KnightAttacks(enemyKing);
-        board.kingD = BishopAttacks(enemyKing, board.occAll);
-        board.kingHV = RookAttacks(enemyKing, board.occAll);
-    }
-
     Square from = board.KingSQ<c>();
     U64 moves;
 
@@ -592,7 +551,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
     /********************
      * Slider and Knight moves can only go to enemy or empty squares.
      *******************/
-    if (mt == Movetype::ALL || mt == Movetype::CHECK)
+    if (mt == Movetype::ALL)
         movableSquare &= board.enemyEmptyBB;
     else if (mt == Movetype::CAPTURE)
         movableSquare &= board.occEnemy;
@@ -623,7 +582,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
-        U64 moves = LegalKnightMoves<mt>(board, from, movableSquare);
+        U64 moves = LegalKnightMoves<mt>(from, movableSquare);
         while (moves)
         {
             Square to = poplsb(moves);

@@ -66,7 +66,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
-        U64 moves = LegalKnightMoves<Movetype::ALL>(board, from, movableSquare);
+        U64 moves = LegalKnightMoves<Movetype::ALL>(from, movableSquare);
         while (moves)
         {
             return true;
