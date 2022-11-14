@@ -28,7 +28,42 @@ At the bottom you should be able to find multiple different compiles, choose one
 
 Ordered by performance you should try x86-64-avx2 first then x86-64-modern and at last x86-64.
 
+## Elo
+#### [CCRL 40/15](http://ccrl.chessdom.com/ccrl/4040/) 
 
+| Name  	              | Elo  	  | +    	| -  	  |
+|---	                  |---	    |---	  |---	  |
+| Smallbrain 6.0 4CPU  	| 3309  	| +24  	| −23  	|
+| Smallbrain 6.0  	    | 3227  	| +23  	| −23  	|
+| Smallbrain 5.0 4CPU  	| 3211  	| +23  	| −23  	|
+| Smallbrain 5.0  	    | 3137  	| +20  	| −20  	|
+| Smallbrain 4.0  	    | 2978  	| +25  	| −25  	|
+| Smallbrain 2.0  	    | 2277  	| +28  	| −29  	|
+| Smallbrain 1.1  	    | 2224  	| +29  	| −30  	|
+
+
+#### [CCRL Blitz 2'+1" (Blitz)](http://ccrl.chessdom.com/ccrl/404/)
+| Name  	          | Elo  	  | +    	| -  	  |
+|---	              |---	    |---	  |---	  |
+| Smallbrain 6.0  	| 3336  	| +18  	| −18  	|
+| Smallbrain 5.0  	| 3199  	| +18  	| −18  	|
+| Smallbrain 4.0  	| 3005  	| +18  	| −18  	|
+| Smallbrain 3.0  	| 2921  	| +20  	| −20  	|
+| Smallbrain 1.1  	| 2174  	| +20  	| −20  	|
+
+#### [Stefan Pohl Computer Chess](https://www.sp-cc.de/)
+
+
+| no  | Program             | Elo   | +  | -  | Games | Score | Av.Op. | Draws |
+| --- | ------------------- | ----- | -- | -- | ----- | ----- | ------ | ----- |
+| 34  | Smallbrain 6.0 avx2 | 3345  | 7  | 7  | 9000  | 52.1% |  3331  | 49.9% |
+
+
+#### [CEGT](http://www.cegt.net/40_40%20Rating%20List/40_40%20All%20Versions/rangliste.html)
+
+| no  | Program             | Elo   | +  | -  | Games | Score | Av.Op. | Draws |
+| --- | ------------------- | ----- | -- | -- | ----- | ----- | ------ | ----- |
+| 271 | Smallbrain 6.0NN x64 1CPU | 3203  | 16  | 16  | 1300  | 42.8%	 |  3258  | 51.2% |
 
 ## UCI settings
 * Hash<br>
@@ -43,7 +78,7 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 
 * SyzygyPath<br>
   Path to the syzygy files.
-  
+
 ## Engine specific commands
 * go perft \<depth> <br>
   calculates perft from a set position up to *depth*.
@@ -66,31 +101,11 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 * perft<br>
   tests all perft position.
 
-## Elo
-CCRL 40/15
 
-```
-  Name                  Elo      +       -
-  Smallbrain 6.0      	3229	+24	−25	
-  Smallbrain 5.0 4CPU   3211	+23	−23
-  Smallbrain 5.0        3137	+20	−20
-  Smallbrain 4.0        2978	+25	−25	
-  Smallbrain 2.0        2277	+28	−29	
-  Smallbrain 1.1        2224	+29	−30
-```
- CCRL Blitz 2'+1" (Blitz)
-```
-  Name                  Elo      +       -
-  Smallbrain 6.0        3335	+23	−23
-  Smallbrain 5.0      	3199	+18	−18
-  Smallbrain 4.0      	3005	+18	−18
-  Smallbrain 3.0        2921	+20	−20
-  Smallbrain 1.1        2174	+20	−20
-```
 
 ## Features
 * Evaluation
-  * NNUE was trained using normal selfplay games + random 8 piece endgames.
+  * As of v6.0 the NNUE training dataset was regenerated using depth 9 selfplay games + random 8 piece combinations.
 
 ## Datageneration
 ```
