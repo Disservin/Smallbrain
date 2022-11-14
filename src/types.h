@@ -20,8 +20,7 @@ enum class Movetype : uint8_t
 {
     ALL,
     CAPTURE,
-    QUIET,
-    CHECK
+    QUIET
 };
 
 enum Color : uint8_t
