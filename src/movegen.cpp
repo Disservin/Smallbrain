@@ -40,6 +40,7 @@ template <Color c> int pseudoLegalMovesNumber(Board &board)
 template <Color c> bool hasLegalMoves(Board &board)
 {
     init<c>(board, board.KingSQ<c>());
+    U64 movableSquare = board.checkMask & board.enemyEmptyBB;
 
     Square from = board.KingSQ<c>();
     U64 moves = !board.castlingRights || board.checkMask != DEFAULT_CHECKMASK
@@ -60,8 +61,6 @@ template <Color c> bool hasLegalMoves(Board &board)
     LegalPawnMovesAll<c, Movetype::ALL>(board, m);
     if (m.size > 0)
         return true;
-
-    U64 movableSquare = board.checkMask & board.enemyEmptyBB;
 
     while (knights_mask)
     {

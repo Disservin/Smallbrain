@@ -47,12 +47,12 @@ namespace Movegen
 
 template <Color c> U64 pawnLeftAttacks(const U64 pawns)
 {
-    return c == White ? (pawns << 7) & ~MASK_FILE[7] : (pawns >> 7) & ~MASK_FILE[0];
+    return c == White ? (pawns << 7) & ~MASK_FILE[FILE_H] : (pawns >> 7) & ~MASK_FILE[FILE_A];
 }
 
 template <Color c> U64 pawnRightAttacks(const U64 pawns)
 {
-    return c == White ? (pawns << 9) & ~MASK_FILE[0] : (pawns >> 9) & ~MASK_FILE[7];
+    return c == White ? (pawns << 9) & ~MASK_FILE[FILE_A] : (pawns >> 9) & ~MASK_FILE[FILE_H];
 }
 
 /********************
@@ -255,11 +255,11 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     constexpr Direction DOWN = c == Black ? NORTH : SOUTH;
     constexpr Direction DOWN_LEFT = c == Black ? NORTH_EAST : SOUTH_WEST;
     constexpr Direction DOWN_RIGHT = c == Black ? NORTH_WEST : SOUTH_EAST;
-    constexpr U64 RANK_BEFORE_PROMO = c == White ? MASK_RANK[6] : MASK_RANK[1];
-    constexpr U64 RANK_PROMO = c == White ? MASK_RANK[7] : MASK_RANK[0];
-    constexpr U64 doublePushRank = c == White ? MASK_RANK[2] : MASK_RANK[5];
+    constexpr U64 RANK_BEFORE_PROMO = c == White ? MASK_RANK[RANK_7] : MASK_RANK[RANK_2];
+    constexpr U64 RANK_PROMO = c == White ? MASK_RANK[RANK_8] : MASK_RANK[RANK_1];
+    constexpr U64 doublePushRank = c == White ? MASK_RANK[RANK_3] : MASK_RANK[RANK_6];
 
-    // These pawns can walk L or R
+    // These pawns can maybe take Left or Right
     const U64 pawnsLR = pawns_mask & ~board.pinHV;
 
     const U64 unpinnedpawnsLR = pawnsLR & ~board.pinD;
@@ -371,7 +371,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     /********************
      * Add en passant captures.
      *******************/
-    if (board.enPassantSquare != NO_SQ && mt != Movetype::QUIET)
+    if (mt != Movetype::QUIET && board.enPassantSquare != NO_SQ)
     {
         const Square ep = board.enPassantSquare;
         const Square epPawn = ep + DOWN;
@@ -523,10 +523,25 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
 
     init<c>(board, board.KingSQ<c>());
 
+    /********************
+     * Moves have to be on the checkmask
+     *******************/
+    U64 movableSquare = board.checkMask;
+
+    /********************
+     * Slider, Knights and King moves can only go to enemy or empty squares.
+     *******************/
+    if (mt == Movetype::ALL)
+        movableSquare &= board.enemyEmptyBB;
+    else if (mt == Movetype::CAPTURE)
+        movableSquare &= board.occEnemy;
+    else // QUIET moves
+        movableSquare &= ~board.occAll;
+
     Square from = board.KingSQ<c>();
     U64 moves;
 
-    if (!board.castlingRights || board.checkMask != DEFAULT_CHECKMASK || mt == Movetype::CAPTURE)
+    if (mt == Movetype::CAPTURE || !board.castlingRights || board.checkMask != DEFAULT_CHECKMASK)
         moves = LegalKingMoves<mt>(board, from);
     else
         moves = LegalKingMovesCastling<c, mt>(board, from);
@@ -544,21 +559,6 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
         return;
 
     /********************
-     * Moves have to be on the checkmask
-     *******************/
-    U64 movableSquare = board.checkMask;
-
-    /********************
-     * Slider and Knight moves can only go to enemy or empty squares.
-     *******************/
-    if (mt == Movetype::ALL)
-        movableSquare &= board.enemyEmptyBB;
-    else if (mt == Movetype::CAPTURE)
-        movableSquare &= board.occEnemy;
-    else
-        movableSquare &= ~board.occAll;
-
-    /********************
      * Prune knights that are pinned since these cannot move.
      *******************/
     U64 knights_mask = board.Knights<c>() & ~(board.pinD | board.pinHV);
@@ -572,7 +572,11 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
      * Prune diagonally pinned rooks
      *******************/
     U64 rooks_mask = board.Rooks<c>() & ~board.pinD;
-    U64 queens_mask = board.Queens<c>();
+
+    /********************
+     * Prune double pinned queens
+     *******************/
+    U64 queens_mask = board.Queens<c>() & ~(board.pinD & board.pinHV);
 
     /********************
      * Add the moves to the movelist.
@@ -589,6 +593,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
             movelist.Add(make<KNIGHT, false>(from, to));
         }
     }
+
     while (bishops_mask)
     {
         Square from = poplsb(bishops_mask);
@@ -599,6 +604,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
             movelist.Add(make<BISHOP, false>(from, to));
         }
     }
+
     while (rooks_mask)
     {
         Square from = poplsb(rooks_mask);
@@ -609,6 +615,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
             movelist.Add(make<ROOK, false>(from, to));
         }
     }
+
     while (queens_mask)
     {
         Square from = poplsb(queens_mask);
