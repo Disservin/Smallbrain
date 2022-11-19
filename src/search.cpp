@@ -168,7 +168,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
             continue;
 
         // see based capture pruning
-        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && ss->moves[i].value == 50'000)
+        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && !see(move, 0, td->board))
             continue;
 
         td->nodes++;
@@ -880,10 +880,6 @@ int Search::scoreMove(Move move, int ply, Move ttMove, ThreadData *td)
     {
         return TT_MOVE_SCORE;
     }
-    else if (promoted(move))
-    {
-        return PROMOTION_SCORE + piece(move);
-    }
     else if (td->board.pieceAtB(to(move)) != None)
     {
         return see(move, 0, td->board) ? CAPTURE_SCORE + mvvlva(move, td->board) : mvvlva(move, td->board);
@@ -908,21 +904,17 @@ int Search::scoreqMove(Move move, int ply, Move ttMove, ThreadData *td)
     {
         return TT_MOVE_SCORE;
     }
-    else if (promoted(move))
-    {
-        return PROMOTION_SCORE + piece(move);
-    }
     else if (td->board.pieceAtB(to(move)) != None)
     {
-        return see(move, 0, td->board) ? CAPTURE_SCORE + mvvlva(move, td->board) : 50'000;
+        return CAPTURE_SCORE + mvvlva(move, td->board);
     }
     else if (td->killerMoves[0][ply] == move)
     {
-        return 40'000;
+        return KILLER_ONE_SCORE;
     }
     else if (td->killerMoves[1][ply] == move)
     {
-        return 30'000;
+        return KILLER_TWO_SCORE;
     }
     else
     {
