@@ -90,8 +90,12 @@ void prefetch(void *addr);
 std::string uciRep(Move move);
 
 static std::atomic<int64_t> means[2];
+static std::atomic<int64_t> min[2];
+static std::atomic<int64_t> max[2];
 
 void mean_of(int v);
+void min_of(int v);
+void max_of(int v);
 
 void print_mean();
 
