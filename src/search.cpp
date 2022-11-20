@@ -759,6 +759,8 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
         std::cout << "bestmove " << uciRep(bestmove) << std::endl;
         stopped = true;
     }
+    print_mean();
+
     sr.move = bestmove;
     return sr;
 }

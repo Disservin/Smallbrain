@@ -165,10 +165,28 @@ void mean_of(int v)
     means[1] += v;
 }
 
+void max_of(int v)
+{
+    max[0]++;
+    if (v > max[1])
+        max[1] = v;
+}
+
+void min_of(int v)
+{
+    min[0]++;
+    if (v < min[1])
+        min[1] = v;
+}
+
 void print_mean()
 {
     if (means[0])
         std::cout << "Total " << means[0] << " Mean " << (double)means[1] / means[0] << std::endl;
+    if (min[0])
+        std::cout << "Total " << min[0] << " Min " << min[1] << std::endl;
+    if (max[0])
+        std::cout << "Total " << max[0] << " Max " << max[1] << std::endl;
 }
 
 std::string outputScore(int score)
@@ -198,7 +216,7 @@ void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, in
         << " time "      << time 
         << " pv"         << pv;
 
-    std::cout << ss.str() << std::endl;        
+    std::cout << ss.str() << std::endl;
 }
 // clang-format on
 
