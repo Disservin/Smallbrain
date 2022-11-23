@@ -832,10 +832,10 @@ bool Search::see(Move move, int threshold, Board &board)
     U64 occ = (board.All() ^ (1ULL << from_sq)) | (1ULL << to_sq);
     U64 attackers = board.allAttackers(to_sq, occ) & occ;
 
-    U64 queens = board.Queens(board.sideToMove) | board.Queens(~board.sideToMove);
+    U64 queens = board.Bitboards[WhiteQueen] | board.Bitboards[BlackQueen];
 
-    U64 bishops = board.Bishops(board.sideToMove) | board.Bishops(~board.sideToMove) | queens;
-    U64 rooks = board.Rooks(board.sideToMove) | board.Rooks(~board.sideToMove) | queens;
+    U64 bishops = board.Bitboards[WhiteBishop] | board.Bitboards[BlackBishop] | queens;
+    U64 rooks = board.Bitboards[WhiteRook] | board.Bitboards[BlackRook] | queens;
 
     Color sT = ~board.colorOf(from_sq);
 
