@@ -506,6 +506,48 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, S
     return moves;
 }
 
+template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board, Square sq)
+{
+    U64 moves;
+
+    moves = KingAttacks(sq) & board.enemyEmptyBB & ~board.seen;
+    U64 emptyAndNotAttacked = ~board.seen & ~board.occAll;
+
+    switch (c)
+    {
+    case White: {
+        File leftSide = board.castlingRights[0];
+        File rightSide = board.castlingRights[1];
+        if (board.castlingRights[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][rightSide] & board.occAll) &&
+            !(board.SQUARES_BETWEEN_BB[sq][rightSide] & board.seen))
+            moves |= (1ULL << SQ_G1) & emptyAndNotAttacked;
+        if (board.castlingRights[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][leftSide] & board.occAll) &&
+            !(board.SQUARES_BETWEEN_BB[sq][leftSide] & board.seen))
+            moves |= (1ULL << SQ_C1) & emptyAndNotAttacked;
+        break;
+    }
+
+    case Black: {
+        File leftSide = board.castlingRights[2];
+        File rightSide = board.castlingRights[3];
+
+        if (board.castlingRights[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][56 + rightSide] & board.occAll) &&
+            !(board.SQUARES_BETWEEN_BB[sq][56 + rightSide] & board.seen))
+            moves |= (1ULL << SQ_G8) & emptyAndNotAttacked;
+        if (board.castlingRights[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][56 + leftSide] & board.occAll) &&
+            !(board.SQUARES_BETWEEN_BB[sq][56 + leftSide] & board.seen))
+            moves |= (1ULL << SQ_C8) & emptyAndNotAttacked;
+
+        break;
+    }
+
+    default:
+        return moves;
+    }
+
+    return moves;
+}
+
 // all legal moves for a position
 template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist)
 {

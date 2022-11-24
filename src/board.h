@@ -37,6 +37,7 @@ class Board
 {
   public:
     bool chess960;
+    File castlingRights960[4];
 
     Color sideToMove;
 

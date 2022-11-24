@@ -385,6 +385,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     enPassantSquare = NO_SQ;
 
     hashKey ^= updateKeyCastling();
+
+    // HERE STOPPED Square rookCastleSquare = chess960 ? //
     if (p == WhiteKing && from_sq == SQ_E1 && to_sq == SQ_G1)
     {
         hashKey ^= updateKeyPiece(WhiteRook, SQ_H1);
