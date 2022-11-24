@@ -44,53 +44,76 @@ void TrainingData::infinitePlay(int threadId, std::string book, int depth)
     }
 
     U64 games = 0;
+
+    ThreadData td;
+    Board board = Board();
+    Search search = Search();
+    Movelist movelist;
+
+    td.allowPrint = false;
+
     while (!UCI_FORCE_STOP)
     {
         games++;
-        randomPlayout(file, book, depth, number_of_lines);
+
+        td.nodes = 0;
+        td.tbhits = 0;
+        td.seldepth = 0;
+        td.id = 0;
+
+        search.threads.clear();
+        search.tds.clear();
+
+        std::memset(td.historyTable, 0, 2 * MAX_SQ * MAX_SQ * sizeof(int));
+        std::memset(td.killerMoves, 0, 2 * (MAX_PLY + 1) * sizeof(Move));
+        std::memset(td.pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
+        std::memset(td.pvLength, 0, MAX_PLY * sizeof(uint8_t));
+
+        randomPlayout(file, depth, board, movelist, search, td);
     }
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, std::string &book, int depth, int numLines)
+void TrainingData::randomPlayout(std::ofstream &file, int depth, Board &board, Movelist &movelist, Search &search,
+                                 ThreadData &td)
 {
-    Board board;
-
     std::vector<fenData> fens;
-    Movelist movelist;
+
     movelist.size = 0;
+    board.applyFen(DEFAULT_POS);
+
     int ply = 0;
     int randomMoves = 10;
 
-    std::uniform_int_distribution<std::mt19937::result_type> maxLines{0, static_cast<std::mt19937::result_type>(15)};
+    std::uniform_int_distribution<std::mt19937::result_type> maxLines{0, static_cast<std::mt19937::result_type>(10)};
     if (maxLines(e) == 1)
     {
         ply = randomMoves;
         board.applyFen(getRandomfen());
     }
-    else if (maxLines(e) % 5 == 0 && book != "")
-    {
-        std::ifstream openingFile;
-        openingFile.open(book);
+    // else if (maxLines(e) % 5 == 0 && book != "")
+    // {
+    //     std::ifstream openingFile;
+    //     openingFile.open(book);
 
-        std::string line;
-        uint64_t count = 0;
+    //     std::string line;
+    //     uint64_t count = 0;
 
-        std::uniform_int_distribution<std::mt19937::result_type> maxLines{
-            0, static_cast<std::mt19937::result_type>(numLines)};
+    //     std::uniform_int_distribution<std::mt19937::result_type> maxLines{
+    //         0, static_cast<std::mt19937::result_type>(numLines)};
 
-        uint64_t randLine = maxLines(e);
-        while (std::getline(openingFile, line))
-        {
-            if (count == randLine)
-            {
-                board.applyFen(line);
-                break;
-            }
-            count++;
-        }
-        openingFile.close();
-    }
+    //     uint64_t randLine = maxLines(e);
+    //     while (std::getline(openingFile, line))
+    //     {
+    //         if (count == randLine)
+    //         {
+    //             board.applyFen(line);
+    //             break;
+    //         }
+    //         count++;
+    //     }
+    //     openingFile.close();
+    // }
     else
     {
         board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -119,12 +142,7 @@ void TrainingData::randomPlayout(std::ofstream &file, std::string &book, int dep
     if (movelist.size == 0)
         return;
 
-    Search search = Search();
-
-    ThreadData td;
     td.board = board;
-    td.id = 0;
-    td.allowPrint = false;
     search.tds.push_back(td);
 
     constexpr uint64_t nodes = 0;
