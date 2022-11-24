@@ -3,7 +3,7 @@
 Board::Board()
 {
     initializeLookupTables();
-    prevStates.reserve(MAX_PLY);
+    stateHistory.reserve(MAX_PLY);
     hashHistory.reserve(512);
     accumulatorStack.reserve(MAX_PLY);
 
@@ -154,7 +154,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
     hashHistory.clear();
     hashHistory.push_back(zobristHash());
 
-    prevStates.clear();
+    stateHistory.clear();
     hashKey = zobristHash();
     accumulatorStack.clear();
 }
@@ -303,6 +303,11 @@ U64 Board::Kings(Color c)
     return Bitboards[KING + c * 6];
 }
 
+Color Board::colorOf(Square loc)
+{
+    return Color((pieceAtB(loc) / 6));
+}
+
 bool Board::isSquareAttacked(Color c, Square sq)
 {
     if (Pawns(c) & PawnAttacks(sq, ~c))
@@ -358,7 +363,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     hashHistory.emplace_back(hashKey);
 
     State store = State(enPassantSquare, castlingRights, halfMoveClock, capture);
-    prevStates.push_back(store);
+    stateHistory.push_back(store);
 
     if constexpr (updateNNUE)
         accumulatorStack.emplace_back(accumulator);
@@ -505,8 +510,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
 template <bool updateNNUE> void Board::unmakeMove(Move move)
 {
-    State restore = prevStates.back();
-    prevStates.pop_back();
+    State restore = stateHistory.back();
+    stateHistory.pop_back();
 
     if (accumulatorStack.size())
     {
@@ -585,7 +590,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 void Board::makeNullMove()
 {
     State store = State(enPassantSquare, castlingRights, halfMoveClock, None);
-    prevStates.push_back(store);
+    stateHistory.push_back(store);
     sideToMove = ~sideToMove;
 
     hashKey ^= updateKeySideToMove();
@@ -598,8 +603,8 @@ void Board::makeNullMove()
 
 void Board::unmakeNullMove()
 {
-    State restore = prevStates.back();
-    prevStates.pop_back();
+    State restore = stateHistory.back();
+    stateHistory.pop_back();
 
     enPassantSquare = restore.enPassant;
     castlingRights = restore.castling;

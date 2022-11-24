@@ -82,12 +82,6 @@ class Board
     // all squares that are seen by an enemy piece
     U64 seen;
 
-    // King's Super Piece Attacks
-    U64 kingHV;
-    U64 kingD;
-    U64 kingFFD;
-    U64 kingP;
-
     // Occupation Bitboards
     U64 occEnemy;
     U64 occUs;
@@ -99,7 +93,7 @@ class Board
 
     U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ];
 
-    std::vector<State> prevStates;
+    std::vector<State> stateHistory;
 
     U64 Bitboards[12] = {};
     Piece board[MAX_SQ];
@@ -196,6 +190,10 @@ class Board
     template <Color c> U64 Queens();
     template <Color c> U64 Kings();
 
+    /// @brief returns the color of a piece at a square
+    /// @param loc
+    /// @return
+    Color colorOf(Square loc);
     /// @brief is square attacked by color c
     /// @param c
     /// @param sq
