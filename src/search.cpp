@@ -740,7 +740,8 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
      * Dont stop analysis in infinite mode when max depth is reached
      * wait for uci stop or quit
      *******************/
-    while (td->allowPrint && depth == MAX_PLY + 1 && optimumTime == 0 && !stopped.load(std::memory_order_relaxed))
+    while (td->allowPrint && depth == MAX_PLY + 1 && maxNodes == 0 && optimumTime == 0 &&
+           !stopped.load(std::memory_order_relaxed))
     {
     }
 

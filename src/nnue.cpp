@@ -1,5 +1,7 @@
 #include "nnue.h"
 
+#include <iostream>
+
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
 
@@ -17,13 +19,23 @@ void init(const char *filename)
 {
     FILE *f = fopen(filename, "rb");
 
-    uint64_t readElements = 0;
+    // obtain file size
+    int fileSize = INPUT_WEIGHTS * HIDDEN_WEIGHTS + HIDDEN_BIAS + HIDDEN_WEIGHTS + OUTPUT_BIAS;
+
+    int readElements = 0;
     if (f != NULL)
     {
         readElements += fread(inputWeights, sizeof(int16_t), INPUT_WEIGHTS * HIDDEN_WEIGHTS, f);
         readElements += fread(hiddenBias, sizeof(int16_t), HIDDEN_BIAS, f);
         readElements += fread(hiddenWeights, sizeof(int16_t), HIDDEN_WEIGHTS, f);
         readElements += fread(outputBias, sizeof(int32_t), OUTPUT_BIAS, f);
+
+        if (readElements != fileSize)
+        {
+            std::cout << "The network was not fully loaded"
+                      << " " << readElements << " " << fileSize << std::endl;
+            exit(2);
+        }
 
         fclose(f);
     }
