@@ -159,6 +159,7 @@ enum Rank
 
 enum File
 {
+    NO_FILE = -1,
     FILE_A,
     FILE_B,
     FILE_C,
