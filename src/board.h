@@ -36,6 +36,8 @@ struct State
 class Board
 {
   public:
+    bool chess960;
+
     Color sideToMove;
 
     // NO_SQ when enpassant is not possible
@@ -342,5 +344,5 @@ template <Color c> U64 Board::Enemy()
 
 template <Color c> Square Board::KingSQ()
 {
-    return bsf(Kings<c>());
+    return lsb(Kings<c>());
 }
