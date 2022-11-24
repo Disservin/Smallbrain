@@ -47,7 +47,8 @@ class TrainingData
     /// @param bookm
     /// @param depth
     /// @param numLines
-    void randomPlayout(std::ofstream &file, std::string &bookm, int depth, int numLines);
+    void randomPlayout(std::ofstream &file, std::string &bookm, int depth, int numLines, Board &board,
+                       Movelist &Movelist, Search &search, ThreadData &td);
     std::vector<std::thread> threads;
 };
 
