@@ -61,6 +61,11 @@ void uciOptions::uciPosition(Board &board, std::string fen, bool update)
     board.applyFen(fen, update);
 }
 
+void uciOptions::uciChess960(Board &board, bool isChess960)
+{
+    board.chess960 = isChess960;
+}
+
 void uciOptions::uciMoves(Board &board, std::vector<std::string> &tokens)
 {
     std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();

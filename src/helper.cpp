@@ -24,14 +24,14 @@ uint8_t square_distance(Square a, Square b)
 // Compiler specific functions, taken from Stockfish https://github.com/official-stockfish/Stockfish
 #if defined(__GNUC__) // GCC, Clang, ICC
 
-Square bsf(U64 b)
+Square lsb(U64 b)
 {
     if (!b)
         return NO_SQ;
     return Square(__builtin_ctzll(b));
 }
 
-Square bsr(U64 b)
+Square msb(U64 b)
 {
     if (!b)
         return NO_SQ;
@@ -42,14 +42,14 @@ Square bsr(U64 b)
 
 #ifdef _WIN64 // MSVC, WIN64
 #include <intrin.h>
-Square bsf(U64 b)
+Square lsb(U64 b)
 {
     unsigned long idx;
     _BitScanForward64(&idx, b);
     return (Square)idx;
 }
 
-Square bsr(U64 b)
+Square msb(U64 b)
 {
     unsigned long idx;
     _BitScanReverse64(&idx, b);
@@ -58,7 +58,7 @@ Square bsr(U64 b)
 
 #else // MSVC, WIN32
 #include <intrin.h>
-Square bsf(U64 b)
+Square lsb(U64 b)
 {
     unsigned long idx;
 
@@ -74,7 +74,7 @@ Square bsf(U64 b)
     }
 }
 
-Square bsr(U64 b)
+Square msb(U64 b)
 {
     unsigned long idx;
 
@@ -113,9 +113,8 @@ uint8_t popcount(U64 mask)
 
 Square poplsb(U64 &mask)
 {
-    int8_t s = bsf(mask);
-    mask &= mask - 1;
-    // mask = _blsr_u64(mask);
+    int8_t s = lsb(mask);
+    mask &= mask - 1; // compiler optimizes this to _blsr_u64
     return Square(s);
 }
 
