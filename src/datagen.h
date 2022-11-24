@@ -44,11 +44,13 @@ class TrainingData
 
     /// @brief starts one selfplay game
     /// @param file
-    /// @param bookm
     /// @param depth
-    /// @param numLines
-    void randomPlayout(std::ofstream &file, std::string &bookm, int depth, int numLines, Board &board,
-                       Movelist &Movelist, Search &search, ThreadData &td);
+    /// @param board
+    /// @param Movelist
+    /// @param search
+    /// @param td
+    void randomPlayout(std::ofstream &file, int depth, Board &board, Movelist &Movelist, Search &search,
+                       ThreadData &td);
     std::vector<std::thread> threads;
 };
 

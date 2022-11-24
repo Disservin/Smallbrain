@@ -69,13 +69,13 @@ void TrainingData::infinitePlay(int threadId, std::string book, int depth)
         std::memset(td.pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
         std::memset(td.pvLength, 0, MAX_PLY * sizeof(uint8_t));
 
-        randomPlayout(file, book, depth, number_of_lines, board, movelist, search, td);
+        randomPlayout(file, depth, board, movelist, search, td);
     }
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, std::string &book, int depth, int numLines, Board &board,
-                                 Movelist &movelist, Search &search, ThreadData &td)
+void TrainingData::randomPlayout(std::ofstream &file, int depth, Board &board, Movelist &movelist, Search &search,
+                                 ThreadData &td)
 {
     std::vector<fenData> fens;
 
