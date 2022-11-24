@@ -861,7 +861,7 @@ bool Search::see(Move move, int threshold, Board &board)
             break;
         }
 
-        occ ^= (1ULL << (bsf(myAttackers & (board.Bitboards[pt] | board.Bitboards[pt + 6]))));
+        occ ^= (1ULL << (lsb(myAttackers & (board.Bitboards[pt] | board.Bitboards[pt + 6]))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
             attackers |= BishopAttacks(to_sq, occ) & bishops;

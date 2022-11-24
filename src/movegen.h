@@ -88,7 +88,7 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
     }
     if (bishop_mask)
     {
-        int8_t index = bsf(bishop_mask);
+        int8_t index = lsb(bishop_mask);
 
         // Now we add the path!
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
@@ -108,7 +108,7 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
             return checks;
         }
 
-        int8_t index = bsf(rook_mask);
+        int8_t index = lsb(rook_mask);
 
         // Now we add the path!
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
@@ -188,7 +188,7 @@ template <Color c> void seenSquares(Board &board)
         board.seen |= RookAttacks(index, board.occAll);
     }
 
-    Square index = bsf(board.Kings<c>());
+    Square index = lsb(board.Kings<c>());
     board.seen |= KingAttacks(index);
 
     // Place our King back
@@ -482,33 +482,27 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, S
     U64 moves;
 
     moves = KingAttacks(sq) & board.enemyEmptyBB & ~board.seen;
+    U64 emptyAndNotAttacked = ~board.seen & ~board.occAll;
 
-    if (c == White)
+    switch (c)
     {
-        if (board.castlingRights & wk && !(WK_CASTLE_MASK & board.occAll) && moves & (1ULL << SQ_F1) &&
-            !(board.seen & (1ULL << SQ_G1)))
-        {
-            moves |= (1ULL << SQ_G1);
-        }
-        if (board.castlingRights & wq && !(WQ_CASTLE_MASK & board.occAll) && moves & (1ULL << SQ_D1) &&
-            !(board.seen & (1ULL << SQ_C1)))
-        {
-            moves |= (1ULL << SQ_C1);
-        }
+    case White:
+        if (board.castlingRights & wk && !(WK_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_F1))
+            moves |= (1ULL << SQ_G1) & emptyAndNotAttacked;
+        if (board.castlingRights & wq && !(WQ_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_D1))
+            moves |= (1ULL << SQ_C1) & emptyAndNotAttacked;
+        break;
+    case Black:
+        if (board.castlingRights & bk && !(BK_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_F8))
+            moves |= (1ULL << SQ_G8) & emptyAndNotAttacked;
+        if (board.castlingRights & bq && !(BQ_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_D8))
+            moves |= (1ULL << SQ_C8) & emptyAndNotAttacked;
+
+        break;
+    default:
+        return moves;
     }
-    else
-    {
-        if (board.castlingRights & bk && !(BK_CASTLE_MASK & board.occAll) && moves & (1ULL << SQ_F8) &&
-            !(board.seen & (1ULL << SQ_G8)))
-        {
-            moves |= (1ULL << SQ_G8);
-        }
-        if (board.castlingRights & bq && !(BQ_CASTLE_MASK & board.occAll) && moves & (1ULL << SQ_D8) &&
-            !(board.seen & (1ULL << SQ_C8)))
-        {
-            moves |= (1ULL << SQ_C8);
-        }
-    }
+
     return moves;
 }
 

@@ -255,7 +255,7 @@ bool Board::nonPawnMat(Color c)
 
 Square Board::KingSQ(Color c)
 {
-    return bsf(Kings(c));
+    return lsb(Kings(c));
 }
 
 U64 Board::Enemy(Color c)

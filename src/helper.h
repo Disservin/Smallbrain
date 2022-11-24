@@ -34,21 +34,21 @@ uint8_t square_distance(Square a, Square b);
 /// @brief least significant bit instruction
 /// @param mask
 /// @return the least significant bit as the Square
-Square bsf(U64 mask);
+Square lsb(U64 mask);
 
 /// @brief most significant bit instruction
 /// @param mask
 /// @return the most significant bit as the Square
-Square bsr(U64 mask);
+Square msb(U64 mask);
 
 /// @brief Counts the set bits
 /// @param mask
 /// @return the count
 uint8_t popcount(U64 mask);
 
-/// @brief remove the bsf and return it
+/// @brief remove the lsb and return it
 /// @param mask
-/// @return the bsf
+/// @return the lsb
 Square poplsb(U64 &mask);
 
 // returns diagonal of given square
