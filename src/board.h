@@ -36,8 +36,6 @@ struct State
 class Board
 {
   public:
-    bool chess960;
-
     Color sideToMove;
 
     // NO_SQ when enpassant is not possible

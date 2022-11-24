@@ -71,11 +71,6 @@ class uciOptions
     /// @param update
     void uciPosition(Board &board, std::string fen = DEFAULT_POS, bool update = true);
 
-    /// @brief
-    /// @param board
-    /// @param isChess960
-    void uciChess960(Board &board, bool isChess960);
-
     /// @brief plays all moves in tokens
     /// @param board
     /// @param tokens
