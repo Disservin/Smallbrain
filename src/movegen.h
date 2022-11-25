@@ -520,8 +520,8 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
         for (int i = 0; i < 2; i++)
         {
             int side = board.castlingRights960White[i];
-            Square destRook = side >= FILE_E ? SQ_F1 : SQ_D1;
-            Square destKing = side >= FILE_E ? SQ_G1 : SQ_C1;
+            Square destRook = side >= square_file(sq) ? SQ_F1 : SQ_D1;
+            Square destKing = side >= square_file(sq) ? SQ_G1 : SQ_C1;
             U64 withoutRook = board.occAll & ~(1ull << side);
             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << side));
 
@@ -540,8 +540,8 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
         for (int i = 0; i < 2; i++)
         {
             File side = board.castlingRights960Black[i];
-            Square destRook = side >= FILE_E ? SQ_F8 : SQ_D8;
-            Square destKing = side >= FILE_E ? SQ_G8 : SQ_C8;
+            Square destRook = side >= square_file(sq) ? SQ_F8 : SQ_D8;
+            Square destKing = side >= square_file(sq) ? SQ_G8 : SQ_C8;
             U64 withoutRook = board.occAll & ~(1ull << (56 + side));
             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << (56 + side)));
 

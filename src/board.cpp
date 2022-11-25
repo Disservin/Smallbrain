@@ -404,22 +404,22 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashKey ^= updateKeyCastling();
 
-    if (isCastlingWhite && square_file(to_sq) >= FILE_E)
+    if (isCastlingWhite && to_sq >= from_sq)
     {
         hashKey ^= updateKeyPiece(WhiteRook, to_sq);
         hashKey ^= updateKeyPiece(WhiteRook, SQ_F1);
     }
-    else if (isCastlingWhite && square_file(to_sq) < FILE_E)
+    else if (isCastlingWhite && to_sq < from_sq)
     {
         hashKey ^= updateKeyPiece(WhiteRook, to_sq);
         hashKey ^= updateKeyPiece(WhiteRook, SQ_D1);
     }
-    else if (isCastlingBlack && square_file(to_sq) >= FILE_E)
+    else if (isCastlingBlack && to_sq >= from_sq)
     {
         hashKey ^= updateKeyPiece(BlackRook, to_sq);
         hashKey ^= updateKeyPiece(BlackRook, SQ_F8);
     }
-    else if (isCastlingBlack && square_file(to_sq) < FILE_E)
+    else if (isCastlingBlack && to_sq < from_sq)
     {
         hashKey ^= updateKeyPiece(BlackRook, to_sq);
         hashKey ^= updateKeyPiece(BlackRook, SQ_D8);
@@ -494,28 +494,28 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     {
         Square rookSQ;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        if (isCastlingWhite && square_file(to_sq) >= FILE_E)
+        if (isCastlingWhite && to_sq >= from_sq)
         {
             removePiece<updateNNUE>(WhiteRook, to_sq);
             // placePiece<updateNNUE>(WhiteRook, SQ_F1);
             to_sq = SQ_G1;
             rookSQ = SQ_F1;
         }
-        else if (isCastlingWhite && square_file(to_sq) < FILE_E)
+        else if (isCastlingWhite && to_sq < from_sq)
         {
             removePiece<updateNNUE>(WhiteRook, to_sq);
             // placePiece<updateNNUE>(WhiteRook, SQ_D1);
             to_sq = SQ_C1;
             rookSQ = SQ_D1;
         }
-        else if (isCastlingBlack && square_file(to_sq) >= FILE_E)
+        else if (isCastlingBlack && to_sq >= from_sq)
         {
             removePiece<updateNNUE>(BlackRook, to_sq);
             // placePiece<updateNNUE>(BlackRook, SQ_F8);
             to_sq = SQ_G8;
             rookSQ = SQ_F8;
         }
-        else if (isCastlingBlack && square_file(to_sq) < FILE_E)
+        else if (isCastlingBlack && to_sq < from_sq)
         {
             removePiece<updateNNUE>(BlackRook, to_sq);
             // placePiece<updateNNUE>(BlackRook, SQ_D8);
@@ -590,22 +590,22 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     {
         Square rookSQ = to_sq;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        if (isCastlingWhite && square_file(to_sq) >= FILE_E)
+        if (isCastlingWhite && to_sq >= from_sq)
         {
             removePiece<updateNNUE>(rook, SQ_F1);
             to_sq = SQ_G1;
         }
-        else if (isCastlingWhite && square_file(to_sq) < FILE_E)
+        else if (isCastlingWhite && to_sq < from_sq)
         {
             removePiece<updateNNUE>(rook, SQ_D1);
             to_sq = SQ_C1;
         }
-        else if (isCastlingBlack && square_file(to_sq) >= FILE_E)
+        else if (isCastlingBlack && to_sq >= from_sq)
         {
             removePiece<updateNNUE>(rook, SQ_F8);
             to_sq = SQ_G8;
         }
-        else if (isCastlingBlack && square_file(to_sq) < FILE_E)
+        else if (isCastlingBlack && to_sq < from_sq)
         {
             removePiece<updateNNUE>(rook, SQ_D8);
             to_sq = SQ_C8;
@@ -777,17 +777,21 @@ void Board::removeCastlingRightsRook(Color c, Square sq)
     {
         if (c == White)
         {
-            castlingRights960White[0] =
-                castlingRights960White[0] == square_file(sq) ? NO_FILE : castlingRights960White[0];
-            castlingRights960White[1] =
-                castlingRights960White[1] == square_file(sq) ? NO_FILE : castlingRights960White[1];
+            castlingRights960White[0] = castlingRights960White[0] == square_file(sq) && square_rank(sq) == RANK_1
+                                            ? NO_FILE
+                                            : castlingRights960White[0];
+            castlingRights960White[1] = castlingRights960White[1] == square_file(sq) && square_rank(sq) == RANK_1
+                                            ? NO_FILE
+                                            : castlingRights960White[1];
         }
         else
         {
-            castlingRights960Black[0] =
-                castlingRights960Black[0] == square_file(sq) ? NO_FILE : castlingRights960Black[0];
-            castlingRights960Black[1] =
-                castlingRights960Black[1] == square_file(sq) ? NO_FILE : castlingRights960Black[1];
+            castlingRights960Black[0] = castlingRights960Black[0] == square_file(sq) && square_rank(sq) == RANK_8
+                                            ? NO_FILE
+                                            : castlingRights960Black[0];
+            castlingRights960Black[1] = castlingRights960Black[1] == square_file(sq) && square_rank(sq) == RANK_8
+                                            ? NO_FILE
+                                            : castlingRights960Black[1];
         }
     }
     else
