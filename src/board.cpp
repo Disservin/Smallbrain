@@ -64,6 +64,7 @@ Piece Board::pieceAtB(Square sq)
 
 void Board::applyFen(std::string fen, bool updateAcc)
 {
+    chess960 = true;
     for (int i = 0; i < 12; i++)
     {
         Bitboards[i] = 0ULL;
@@ -115,25 +116,46 @@ void Board::applyFen(std::string fen, bool updateAcc)
     }
 
     castlingRights = 0;
-    for (size_t i = 0; i < castling.size(); i++)
+
+    if (!chess960)
     {
-        if (castling[i] == 'K')
+        for (size_t i = 0; i < castling.size(); i++)
         {
-            castlingRights |= wk;
-        }
-        if (castling[i] == 'Q')
-        {
-            castlingRights |= wq;
-        }
-        if (castling[i] == 'k')
-        {
-            castlingRights |= bk;
-        }
-        if (castling[i] == 'q')
-        {
-            castlingRights |= bq;
+            if (castling[i] == 'K')
+            {
+                castlingRights |= wk;
+            }
+            if (castling[i] == 'Q')
+            {
+                castlingRights |= wq;
+            }
+            if (castling[i] == 'k')
+            {
+                castlingRights |= bk;
+            }
+            if (castling[i] == 'q')
+            {
+                castlingRights |= bq;
+            }
         }
     }
+    else
+    {
+        removeCastlingRightsAll(White);
+        removeCastlingRightsAll(Black);
+        std::fill(std::begin(castlingRights960White), std::end(castlingRights960White), NO_FILE);
+
+        int indexWhite = 0;
+        int indexBlack = 0;
+        for (size_t i = 0; i < castling.size(); i++)
+        {
+            if (isupper(castling[i]))
+                castlingRights960White[indexWhite++] = File(castling[i] - 65);
+            else
+                castlingRights960Black[indexBlack++] = File(castling[i] - 97);
+        }
+    }
+
     if (en_passant == "-")
     {
         enPassantSquare = NO_SQ;
@@ -362,7 +384,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashHistory.emplace_back(hashKey);
 
-    State store = State(enPassantSquare, castlingRights, halfMoveClock, capture);
+    State store =
+        State(enPassantSquare, castlingRights, halfMoveClock, capture, castlingRights960White, castlingRights960Black);
     stateHistory.push_back(store);
 
     if constexpr (updateNNUE)
@@ -385,24 +408,24 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashKey ^= updateKeyCastling();
 
-    if (isCastlingWhite && to_sq == SQ_H1)
+    if (isCastlingWhite && square_file(to_sq) >= FILE_E)
     {
-        hashKey ^= updateKeyPiece(WhiteRook, SQ_H1);
+        hashKey ^= updateKeyPiece(WhiteRook, to_sq);
         hashKey ^= updateKeyPiece(WhiteRook, SQ_F1);
     }
-    else if (isCastlingWhite && to_sq == SQ_A1)
+    else if (isCastlingWhite && square_file(to_sq) < FILE_E)
     {
-        hashKey ^= updateKeyPiece(WhiteRook, SQ_A1);
+        hashKey ^= updateKeyPiece(WhiteRook, to_sq);
         hashKey ^= updateKeyPiece(WhiteRook, SQ_D1);
     }
-    else if (isCastlingBlack && to_sq == SQ_H8)
+    else if (isCastlingBlack && square_file(to_sq) >= FILE_E)
     {
-        hashKey ^= updateKeyPiece(BlackRook, SQ_H8);
+        hashKey ^= updateKeyPiece(BlackRook, to_sq);
         hashKey ^= updateKeyPiece(BlackRook, SQ_F8);
     }
-    else if (isCastlingBlack && to_sq == SQ_A8)
+    else if (isCastlingBlack && square_file(to_sq) < FILE_E)
     {
-        hashKey ^= updateKeyPiece(BlackRook, SQ_A8);
+        hashKey ^= updateKeyPiece(BlackRook, to_sq);
         hashKey ^= updateKeyPiece(BlackRook, SQ_D8);
     }
 
@@ -466,28 +489,27 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     if (pt == KING)
     {
-        if (isCastlingWhite && to_sq == SQ_H1)
+        if (isCastlingWhite && square_file(to_sq) >= FILE_E)
         {
-            removePiece<updateNNUE>(WhiteRook, SQ_H1);
+            removePiece<updateNNUE>(WhiteRook, to_sq);
             placePiece<updateNNUE>(WhiteRook, SQ_F1);
             to_sq = SQ_G1;
         }
-        else if (isCastlingWhite && to_sq == SQ_A1)
+        else if (isCastlingWhite && square_file(to_sq) < FILE_E)
         {
-            removePiece<updateNNUE>(WhiteRook, SQ_A1);
+            removePiece<updateNNUE>(WhiteRook, to_sq);
             placePiece<updateNNUE>(WhiteRook, SQ_D1);
             to_sq = SQ_C1;
         }
-        else if (isCastlingBlack && to_sq == SQ_H8)
+        else if (isCastlingBlack && square_file(to_sq) >= FILE_E)
         {
-            removePiece<updateNNUE>(BlackRook, SQ_H8);
+            removePiece<updateNNUE>(BlackRook, to_sq);
             placePiece<updateNNUE>(BlackRook, SQ_F8);
-
             to_sq = SQ_G8;
         }
-        else if (isCastlingBlack && to_sq == SQ_A8)
+        else if (isCastlingBlack && square_file(to_sq) < FILE_E)
         {
-            removePiece<updateNNUE>(BlackRook, SQ_A8);
+            removePiece<updateNNUE>(BlackRook, to_sq);
             placePiece<updateNNUE>(BlackRook, SQ_D8);
             to_sq = SQ_C8;
         }
@@ -534,6 +556,9 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
     Piece capture = restore.capturedPiece;
+    castlingRights960White = restore.chess960White;
+    castlingRights960Black = restore.chess960Black;
+
     fullMoveNumber--;
 
     Square from_sq = from(move);
@@ -604,7 +629,8 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
 void Board::makeNullMove()
 {
-    State store = State(enPassantSquare, castlingRights, halfMoveClock, None);
+    State store =
+        State(enPassantSquare, castlingRights, halfMoveClock, None, castlingRights960White, castlingRights960Black);
     stateHistory.push_back(store);
     sideToMove = ~sideToMove;
 
@@ -624,6 +650,8 @@ void Board::unmakeNullMove()
     enPassantSquare = restore.enPassant;
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
+    castlingRights960White = restore.chess960White;
+    castlingRights960Black = restore.chess960Black;
 
     hashKey ^= updateKeySideToMove();
     if (enPassantSquare != NO_SQ)
@@ -716,30 +744,54 @@ void Board::removeCastlingRightsAll(Color c)
     if (c == White)
     {
         castlingRights &= ~(wk | wq);
+        castlingRights960White[0] = NO_FILE;
+        castlingRights960White[1] = NO_FILE;
     }
     else if (c == Black)
     {
         castlingRights &= ~(bk | bq);
+        castlingRights960Black[0] = NO_FILE;
+        castlingRights960Black[1] = NO_FILE;
     }
 }
 
 void Board::removeCastlingRightsRook(Color c, Square sq)
 {
-    if (c == White && sq == SQ_A1)
+    if (chess960)
     {
-        castlingRights &= ~wq;
+        if (c == White)
+        {
+            castlingRights960White[0] =
+                castlingRights960White[0] == square_file(sq) ? NO_FILE : castlingRights960White[0];
+            castlingRights960White[1] =
+                castlingRights960White[1] == square_file(sq) ? NO_FILE : castlingRights960White[1];
+        }
+        else
+        {
+            castlingRights960Black[0] =
+                castlingRights960Black[0] == square_file(sq) ? NO_FILE : castlingRights960Black[0];
+            castlingRights960Black[1] =
+                castlingRights960Black[1] == square_file(sq) ? NO_FILE : castlingRights960Black[1];
+        }
     }
-    else if (c == White && sq == SQ_H1)
+    else
     {
-        castlingRights &= ~wk;
-    }
-    else if (c == Black && sq == SQ_A8)
-    {
-        castlingRights &= ~bq;
-    }
-    else if (c == Black && sq == SQ_H8)
-    {
-        castlingRights &= ~bk;
+        if (c == White && sq == SQ_A1)
+        {
+            castlingRights &= ~wq;
+        }
+        else if (c == White && sq == SQ_H1)
+        {
+            castlingRights &= ~wk;
+        }
+        else if (c == Black && sq == SQ_A8)
+        {
+            castlingRights &= ~bq;
+        }
+        else if (c == Black && sq == SQ_H8)
+        {
+            castlingRights &= ~bk;
+        }
     }
 }
 
@@ -752,12 +804,11 @@ std::string uciRep(Board &board, Move move)
     Piece moved = board.pieceAtB(from(move));
     Piece captured = board.pieceAtB(to_sq);
 
-    if ((moved == WhiteKing && captured == WhiteRook) || (moved == BlackKing && captured == BlackRook))
+    if (!board.chess960 &&
+        ((moved == WhiteKing && captured == WhiteRook) || (moved == BlackKing && captured == BlackRook)))
     {
-        if (square_file(to_sq) > FILE_E)
-            to_sq = Square((int)(to_sq)-1);
-        else
-            to_sq = Square((int)(to_sq) + 2);
+        to_sq = Square((int)(to_sq)-1);
+        to_sq = Square((int)(to_sq) + 2);
     }
 
     m += squareToString[to_sq];
