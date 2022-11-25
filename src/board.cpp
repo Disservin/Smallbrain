@@ -816,13 +816,9 @@ std::string uciRep(Board &board, Move move)
     Piece moved = board.pieceAtB(from(move));
     Piece captured = board.pieceAtB(to_sq);
 
-    if (!board.chess960 &&
-        ((moved == WhiteKing && captured == WhiteRook) || (moved == BlackKing && captured == BlackRook)))
+    if (!board.chess960 && piece(move) == KING && square_distance(to_sq, from_sq) == 2)
     {
-        if (square_file(to_sq) >= FILE_E)
-            to_sq = Square(int(to_sq) - 1);
-        else
-            to_sq = Square(int(to_sq) + 2);
+        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
     }
 
     m += squareToString[to_sq];
