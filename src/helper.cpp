@@ -1,6 +1,5 @@
 #include "helper.h"
 
-#include <algorithm> // reverse
 #include <bitset>
 
 std::vector<std::string> splitInput(std::string fen)
@@ -227,4 +226,24 @@ void printBitboard(U64 bb)
         std::cout << x << std::endl;
     }
     std::cout << '\n' << std::endl;
+}
+
+bool elementInVector(std::string el, std::vector<std::string> tokens)
+{
+    return std::find(tokens.begin(), tokens.end(), el) != tokens.end();
+}
+
+bool stringContain(std::string needle, std::string haystack)
+{
+    return haystack.find(needle) != std::string::npos;
+}
+
+bool stringContain(std::vector<std::string> haystack, std::string needle)
+{
+    for (auto &var : haystack)
+    {
+        if (needle.find(var) != std::string::npos)
+            return true;
+    }
+    return false;
 }

@@ -29,9 +29,18 @@ void Perft::testAllPos(int n)
                                "4r3/bpk5/5n2/2P1P3/8/4K3/8/8 w - - 0 1",
                                "b2r4/2q3k1/p5p1/P1r1pp2/R1pnP2p/4NP1P/1PP2RPK/Q4B2 w - - 2 29",
                                "3n1k2/8/4P3/8/8/8/8/2K1R3 w - - 0 1"};
+
+        std::string tests960[] = {DEFAULT_POS, "1rqbkrbn/1ppppp1p/1n6/p1N3p1/8/2P4P/PP1PPPP1/1RQBKRBN w FBfb - 0 9",
+                                  "rbbqn1kr/pp2p1pp/6n1/2pp1p2/2P4P/P7/BP1PPPP1/R1BQNNKR w HAha - 0 9",
+                                  "rqbbknr1/1ppp2pp/p5n1/4pp2/P7/1PP5/1Q1PPPPP/R1BBKNRN w GAga - 0 9"};
+
         int depths[] = {6, 5, 7, 6, 5, 5, 7, 6, 8};
+        int depths960[] = {6, 6, 6, 6};
+
         std::vector<U64> expected = {119060324ull, 193690690ull, 178633661ull,  706045033ull, 89941194ull,
                                      164075551ull, 71441619ull,  2261050076ull, 437319625ull};
+
+        std::vector<U64> expected960 = {119060324ull, 191762235ull, 924181432ull, 308553169ull};
         for (size_t i = 0; i < expected.size(); i++)
         {
             board.applyFen(tests[i]);
@@ -47,6 +56,22 @@ void Perft::testAllPos(int n)
                 std::cout << "Position " << i + 1 << ": failed" << std::endl;
         }
 
+        board.chess960 = true;
+        for (size_t i = 0; i < expected960.size(); i++)
+        {
+            board.applyFen(tests960[i]);
+            nodes = 0;
+            perfTest(depths960[i], depths960[i]);
+            total += nodes;
+            if (nodes == expected960[i])
+            {
+                passed++;
+                std::cout << "Position960 " << i + 1 << ": passed" << std::endl;
+            }
+            else
+                std::cout << "Position960 " << i + 1 << ": failed" << std::endl;
+        }
+
         auto t2 = TimePoint::now();
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         mnps += ((total * 1000) / ms);
@@ -54,7 +79,7 @@ void Perft::testAllPos(int n)
         std::cout << "Total time (ms)    : " << ms << std::endl;
         std::cout << "Nodes searched     : " << total << std::endl;
         std::cout << "Nodes/second       : " << ((total * 1000) / ms) << std::endl;
-        std::cout << "Correct Positions  : " << passed << "/" << expected.size() << std::endl;
+        std::cout << "Correct Positions  : " << passed << "/" << expected.size() + expected960.size() << std::endl;
     }
     std::cout << "Avg Nodes/second   : " << mnps / n << std::endl;
 }

@@ -372,6 +372,7 @@ static std::unordered_map<char, PieceType> pieceToInt(
 
 static std::unordered_map<Square, CastlingRight> castlingMapRook({{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});
 
+static std::unordered_map<char, CastlingRight> readCastleString({{'K', wk}, {'k', bk}, {'Q', wq}, {'q', bq}});
 /********************
  * Packed structures
  *******************/

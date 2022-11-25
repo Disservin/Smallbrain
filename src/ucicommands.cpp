@@ -67,7 +67,7 @@ void parseInput(std::string input, Board &board)
     else if (stringContain("move", input))
     {
         std::vector<std::string> tokens = splitInput(input);
-        bool hasMoves = uciCommand::elementInVector("move", tokens);
+        bool hasMoves = elementInVector("move", tokens);
 
         if (hasMoves)
         {
@@ -110,16 +110,6 @@ void quit(Search &searcher, Datagen::TrainingData &dg)
     stopThreads(searcher, dg);
     free(TTable);
     tb_free();
-}
-
-bool elementInVector(std::string el, std::vector<std::string> tokens)
-{
-    return std::find(tokens.begin(), tokens.end(), el) != tokens.end();
-}
-
-bool stringContain(std::string s, std::string origin)
-{
-    return origin.find(s) != std::string::npos;
 }
 
 const std::string getVersion()

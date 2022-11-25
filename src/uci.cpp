@@ -20,17 +20,17 @@ int UCI::uciLoop(int argc, char **argv)
 {
     std::vector<std::string> allArgs(argv + 1, argv + argc);
 
-    if (uciCommand::elementInVector("bench", allArgs))
+    if (elementInVector("bench", allArgs))
     {
         Bench::startBench();
         uciCommand::quit(searcher, genData);
         return 0;
     }
-    else if (uciCommand::elementInVector("perft", allArgs))
+    else if (elementInVector("perft", allArgs))
     {
         int n = 1;
-        if (uciCommand::elementInVector("-n", allArgs))
-            n = uciCommand::findElement<int>("-n", allArgs);
+        if (elementInVector("-n", allArgs))
+            n = findElement<int>("-n", allArgs);
 
         Perft perft = Perft();
         perft.board = board;
@@ -73,7 +73,7 @@ int UCI::uciLoop(int argc, char **argv)
             uciCommand::ucinewgameInput(options, board, searcher, genData);
         else if (input == "stop")
             uciCommand::stopThreads(searcher, genData);
-        else if (uciCommand::stringContain("setoption name", input))
+        else if (stringContain("setoption name", input))
         {
             std::string option = tokens[2];
             std::string value = tokens[4];
@@ -92,9 +92,9 @@ int UCI::uciLoop(int argc, char **argv)
             // double
             // else if (option == "") = std::stod(value);
         }
-        else if (uciCommand::stringContain("position", input))
+        else if (stringContain("position", input))
         {
-            bool hasMoves = uciCommand::elementInVector("moves", tokens);
+            bool hasMoves = elementInVector("moves", tokens);
             if (tokens[1] == "fen")
                 options.uciPosition(board, input.substr(input.find("fen") + 4), false);
             else
@@ -106,14 +106,14 @@ int UCI::uciLoop(int argc, char **argv)
             // setup accumulator with the correct board
             board.accumulate();
         }
-        else if (uciCommand::stringContain("go perft", input))
+        else if (stringContain("go perft", input))
         {
-            int depth = uciCommand::findElement<int>("perft", tokens);
+            int depth = findElement<int>("perft", tokens);
             Perft perft = Perft();
             perft.board = board;
             perft.perfTest(depth, depth);
         }
-        else if (uciCommand::stringContain("go", input))
+        else if (stringContain("go", input))
         {
             uciCommand::stopThreads(searcher, genData);
 
@@ -125,28 +125,27 @@ int UCI::uciLoop(int argc, char **argv)
             else
                 limit = tokens[1];
 
-            info.depth = (limit == "depth") ? uciCommand::findElement<int>("depth", tokens) : MAX_PLY;
+            info.depth = (limit == "depth") ? findElement<int>("depth", tokens) : MAX_PLY;
             info.depth = (limit == "infinite" || input == "go") ? MAX_PLY : info.depth;
-            info.nodes = (limit == "nodes") ? uciCommand::findElement<int>("nodes", tokens) : 0;
-            info.time.maximum = info.time.optimum =
-                (limit == "movetime") ? uciCommand::findElement<int>("movetime", tokens) : 0;
+            info.nodes = (limit == "nodes") ? findElement<int>("nodes", tokens) : 0;
+            info.time.maximum = info.time.optimum = (limit == "movetime") ? findElement<int>("movetime", tokens) : 0;
 
             std::string side = board.sideToMove == White ? "wtime" : "btime";
-            if (uciCommand::elementInVector(side, tokens))
+            if (elementInVector(side, tokens))
             {
                 // go wtime 100 btime 100 winc 100 binc 100
                 std::string inc_str = board.sideToMove == White ? "winc" : "binc";
-                int64_t timegiven = uciCommand::findElement<int>(side, tokens);
+                int64_t timegiven = findElement<int>(side, tokens);
                 int64_t inc = 0;
                 int64_t mtg = 0;
 
                 // Increment
-                if (uciCommand::elementInVector(inc_str, tokens))
-                    inc = uciCommand::findElement<int>(inc_str, tokens);
+                if (elementInVector(inc_str, tokens))
+                    inc = findElement<int>(inc_str, tokens);
 
                 // Moves to next time control
-                if (uciCommand::elementInVector("movestogo", tokens))
-                    inc = uciCommand::findElement<int>("movestogo", tokens);
+                if (elementInVector("movestogo", tokens))
+                    inc = findElement<int>("movestogo", tokens);
 
                 // Calculate search time
                 info.time = optimumTime(timegiven, inc, mtg);
@@ -165,32 +164,32 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options)
 {
     std::vector<std::string> allArgs(argv + 1, argv + argc);
 
-    if (uciCommand::elementInVector("-gen", allArgs))
+    if (elementInVector("-gen", allArgs))
     {
         int workers = 1;
         int depth = 7;
         std::string bookPath = "";
         std::string tbPath = "";
 
-        if (uciCommand::elementInVector("-threads", allArgs))
+        if (elementInVector("-threads", allArgs))
         {
-            workers = uciCommand::findElement<int>("-threads", allArgs);
+            workers = findElement<int>("-threads", allArgs);
         }
 
-        if (uciCommand::elementInVector("-book", allArgs))
+        if (elementInVector("-book", allArgs))
         {
-            bookPath = uciCommand::findElement<std::string>("-book", allArgs);
+            bookPath = findElement<std::string>("-book", allArgs);
         }
 
-        if (uciCommand::elementInVector("-tb", allArgs))
+        if (elementInVector("-tb", allArgs))
         {
-            std::string s = "setoption name SyzygyPath value " + uciCommand::findElement<std::string>("-tb", allArgs);
+            std::string s = "setoption name SyzygyPath value " + findElement<std::string>("-tb", allArgs);
             options.uciSyzygy(s);
         }
 
-        if (uciCommand::elementInVector("-depth", allArgs))
+        if (elementInVector("-depth", allArgs))
         {
-            depth = uciCommand::findElement<int>("-depth", allArgs);
+            depth = findElement<int>("-depth", allArgs);
         }
 
         genData.generate(workers, bookPath, depth);

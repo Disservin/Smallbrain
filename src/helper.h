@@ -1,8 +1,10 @@
 #pragma once
+#include <algorithm>
 #include <atomic>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <type_traits> // for is_same_v
 #include <vector>
 
 #include "types.h"
@@ -119,3 +121,34 @@ Piece makePiece(PieceType type, Color c);
 /// @brief prints any bitboard
 /// @param bb
 void printBitboard(U64 bb);
+
+/// @brief elementInVector searches el in the tokens
+/// @param el
+/// @param tokens
+/// @return returns false if not found
+bool elementInVector(std::string el, std::vector<std::string> tokens);
+
+/// @brief findElement returns the next value after a param
+/// @param param
+/// @param tokens
+/// @return
+template <typename T> T findElement(std::string param, std::vector<std::string> tokens)
+{
+    int index = std::find(tokens.begin(), tokens.end(), param) - tokens.begin();
+    if constexpr (std::is_same_v<T, int>)
+        return std::stoi(tokens[index + 1]);
+    else
+        return tokens[index + 1];
+}
+
+/// @brief
+/// @param needle
+/// @param haystack the string to search in
+/// @return
+bool stringContain(std::string needle, std::string haystack);
+
+/// @brief
+/// @param needle
+/// @param haystack the vector to search in
+/// @return
+bool stringContain(std::vector<std::string> needle, std::string haystack);
