@@ -142,9 +142,15 @@ void Board::applyFen(std::string fen, bool updateAcc)
         for (size_t i = 0; i < castling.size(); i++)
         {
             if (isupper(castling[i]))
+            {
+                castlingRights |= 1ull << indexWhite;
                 castlingRights960White[indexWhite++] = File(castling[i] - 65);
+            }
             else
+            {
+                castlingRights |= 1ull << (2 + indexBlack);
                 castlingRights960Black[indexBlack++] = File(castling[i] - 97);
+            }
         }
     }
 
@@ -404,25 +410,12 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashKey ^= updateKeyCastling();
 
-    if (isCastlingWhite && to_sq >= from_sq)
+    if (isCastlingWhite || isCastlingBlack)
     {
-        hashKey ^= updateKeyPiece(WhiteRook, to_sq);
-        hashKey ^= updateKeyPiece(WhiteRook, SQ_F1);
-    }
-    else if (isCastlingWhite && to_sq < from_sq)
-    {
-        hashKey ^= updateKeyPiece(WhiteRook, to_sq);
-        hashKey ^= updateKeyPiece(WhiteRook, SQ_D1);
-    }
-    else if (isCastlingBlack && to_sq >= from_sq)
-    {
-        hashKey ^= updateKeyPiece(BlackRook, to_sq);
-        hashKey ^= updateKeyPiece(BlackRook, SQ_F8);
-    }
-    else if (isCastlingBlack && to_sq < from_sq)
-    {
-        hashKey ^= updateKeyPiece(BlackRook, to_sq);
-        hashKey ^= updateKeyPiece(BlackRook, SQ_D8);
+        Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+        Square rookSQ = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        hashKey ^= updateKeyPiece(rook, to_sq);
+        hashKey ^= updateKeyPiece(rook, rookSQ);
     }
 
     if (pt == KING)
@@ -456,16 +449,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
         halfMoveClock = 0;
         hashKey ^= updateKeyPiece(capture, to_sq);
         if (type_of_piece(capture) == ROOK)
-        {
-            if (chess960)
-            {
-                removeCastlingRightsRook(~sideToMove, to_sq);
-            }
-            else if (castlingMapRook.find(to_sq) != castlingMapRook.end())
-            {
-                castlingRights &= ~castlingMapRook[to_sq];
-            }
-        }
+            removeCastlingRightsRook(~sideToMove, to_sq);
     }
 
     if (promoted(move))
@@ -494,36 +478,13 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     {
         Square rookSQ;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        if (isCastlingWhite && to_sq >= from_sq)
-        {
-            removePiece<updateNNUE>(WhiteRook, to_sq);
-            // placePiece<updateNNUE>(WhiteRook, SQ_F1);
-            to_sq = SQ_G1;
-            rookSQ = SQ_F1;
-        }
-        else if (isCastlingWhite && to_sq < from_sq)
-        {
-            removePiece<updateNNUE>(WhiteRook, to_sq);
-            // placePiece<updateNNUE>(WhiteRook, SQ_D1);
-            to_sq = SQ_C1;
-            rookSQ = SQ_D1;
-        }
-        else if (isCastlingBlack && to_sq >= from_sq)
-        {
-            removePiece<updateNNUE>(BlackRook, to_sq);
-            // placePiece<updateNNUE>(BlackRook, SQ_F8);
-            to_sq = SQ_G8;
-            rookSQ = SQ_F8;
-        }
-        else if (isCastlingBlack && to_sq < from_sq)
-        {
-            removePiece<updateNNUE>(BlackRook, to_sq);
-            // placePiece<updateNNUE>(BlackRook, SQ_D8);
-            to_sq = SQ_C8;
-            rookSQ = SQ_D8;
-        }
 
         removePiece<updateNNUE>(p, from_sq);
+        removePiece<updateNNUE>(rook, to_sq);
+
+        rookSQ = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+
         placePiece<updateNNUE>(p, to_sq);
         placePiece<updateNNUE>(rook, rookSQ);
     }
@@ -590,28 +551,12 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     {
         Square rookSQ = to_sq;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        if (isCastlingWhite && to_sq >= from_sq)
-        {
-            removePiece<updateNNUE>(rook, SQ_F1);
-            to_sq = SQ_G1;
-        }
-        else if (isCastlingWhite && to_sq < from_sq)
-        {
-            removePiece<updateNNUE>(rook, SQ_D1);
-            to_sq = SQ_C1;
-        }
-        else if (isCastlingBlack && to_sq >= from_sq)
-        {
-            removePiece<updateNNUE>(rook, SQ_F8);
-            to_sq = SQ_G8;
-        }
-        else if (isCastlingBlack && to_sq < from_sq)
-        {
-            removePiece<updateNNUE>(rook, SQ_D8);
-            to_sq = SQ_C8;
-        }
+        Square rookEnd = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
+        removePiece<updateNNUE>(rook, rookEnd);
         removePiece<updateNNUE>(p, to_sq);
+
         placePiece<updateNNUE>(p, from_sq);
         placePiece<updateNNUE>(rook, rookSQ);
     }
@@ -620,9 +565,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
         removePiece<updateNNUE>(p, to_sq);
         placePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
         if (capture != None)
-        {
             placePiece<updateNNUE>(capture, to_sq);
-        }
         return;
     }
     else
@@ -794,24 +737,22 @@ void Board::removeCastlingRightsRook(Color c, Square sq)
                                             : castlingRights960Black[1];
         }
     }
-    else
+
+    if (c == White && sq == SQ_A1)
     {
-        if (c == White && sq == SQ_A1)
-        {
-            castlingRights &= ~wq;
-        }
-        else if (c == White && sq == SQ_H1)
-        {
-            castlingRights &= ~wk;
-        }
-        else if (c == Black && sq == SQ_A8)
-        {
-            castlingRights &= ~bq;
-        }
-        else if (c == Black && sq == SQ_H8)
-        {
-            castlingRights &= ~bk;
-        }
+        castlingRights &= ~wq;
+    }
+    else if (c == White && sq == SQ_H1)
+    {
+        castlingRights &= ~wk;
+    }
+    else if (c == Black && sq == SQ_A8)
+    {
+        castlingRights &= ~bq;
+    }
+    else if (c == Black && sq == SQ_H8)
+    {
+        castlingRights &= ~bk;
     }
 }
 
