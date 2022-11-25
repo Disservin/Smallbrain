@@ -718,41 +718,23 @@ void Board::removeCastlingRightsRook(Color c, Square sq)
 {
     if (chess960)
     {
-        if (c == White)
-        {
-            castlingRights960White[0] = castlingRights960White[0] == square_file(sq) && square_rank(sq) == RANK_1
-                                            ? NO_FILE
-                                            : castlingRights960White[0];
-            castlingRights960White[1] = castlingRights960White[1] == square_file(sq) && square_rank(sq) == RANK_1
-                                            ? NO_FILE
-                                            : castlingRights960White[1];
-        }
-        else
-        {
-            castlingRights960Black[0] = castlingRights960Black[0] == square_file(sq) && square_rank(sq) == RANK_8
-                                            ? NO_FILE
-                                            : castlingRights960Black[0];
-            castlingRights960Black[1] = castlingRights960Black[1] == square_file(sq) && square_rank(sq) == RANK_8
-                                            ? NO_FILE
-                                            : castlingRights960Black[1];
-        }
+        castlingRights960White[0] = castlingRights960White[0] == square_file(sq) && square_rank(sq) == RANK_1
+                                        ? NO_FILE
+                                        : castlingRights960White[0];
+        castlingRights960White[1] = castlingRights960White[1] == square_file(sq) && square_rank(sq) == RANK_1
+                                        ? NO_FILE
+                                        : castlingRights960White[1];
+        castlingRights960Black[0] = castlingRights960Black[0] == square_file(sq) && square_rank(sq) == RANK_8
+                                        ? NO_FILE
+                                        : castlingRights960Black[0];
+        castlingRights960Black[1] = castlingRights960Black[1] == square_file(sq) && square_rank(sq) == RANK_8
+                                        ? NO_FILE
+                                        : castlingRights960Black[1];
     }
 
-    if (c == White && sq == SQ_A1)
+    if (castlingMapRook.find(sq) != castlingMapRook.end())
     {
-        castlingRights &= ~wq;
-    }
-    else if (c == White && sq == SQ_H1)
-    {
-        castlingRights &= ~wk;
-    }
-    else if (c == Black && sq == SQ_A8)
-    {
-        castlingRights &= ~bq;
-    }
-    else if (c == Black && sq == SQ_H8)
-    {
-        castlingRights &= ~bk;
+        castlingRights &= ~castlingMapRook[sq];
     }
 }
 

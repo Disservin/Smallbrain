@@ -591,11 +591,18 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
     Square from = board.KingSQ<c>();
     U64 moves;
 
-    if ((!board.chess960 && !board.castlingRights) || mt == Movetype::CAPTURE || board.checkMask != DEFAULT_CHECKMASK)
-        moves = LegalKingMoves<mt>(board, from);
+    if (board.chess960)
+        if (mt == Movetype::CAPTURE || board.checkMask != DEFAULT_CHECKMASK)
+            moves = LegalKingMoves<mt>(board, from);
+        else
+            moves = LegalKingMovesCastling960<c, mt>(board, from);
     else
-        moves =
-            board.chess960 ? LegalKingMovesCastling960<c, mt>(board, from) : LegalKingMovesCastling<c, mt>(board, from);
+    {
+        if (mt == Movetype::CAPTURE || !board.castlingRights || board.checkMask != DEFAULT_CHECKMASK)
+            moves = LegalKingMoves<mt>(board, from);
+        else
+            moves = LegalKingMovesCastling<c, mt>(board, from);
+    }
 
     while (moves)
     {
