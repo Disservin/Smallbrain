@@ -39,8 +39,8 @@ class Board
 {
   public:
     bool chess960 = false;
-    std::array<File, 2> castlingRights960White = {};
-    std::array<File, 2> castlingRights960Black = {};
+    std::array<File, 2> castlingRights960White = {NO_FILE};
+    std::array<File, 2> castlingRights960Black = {NO_FILE};
 
     Color sideToMove;
 
