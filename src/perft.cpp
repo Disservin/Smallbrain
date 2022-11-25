@@ -30,18 +30,21 @@ void Perft::testAllPos(int n)
                                "b2r4/2q3k1/p5p1/P1r1pp2/R1pnP2p/4NP1P/1PP2RPK/Q4B2 w - - 2 29",
                                "3n1k2/8/4P3/8/8/8/8/2K1R3 w - - 0 1"};
 
-        std::string tests960[] = {DEFAULT_POS, "1rqbkrbn/1ppppp1p/1n6/p1N3p1/8/2P4P/PP1PPPP1/1RQBKRBN w FBfb - 0 9",
+        std::string tests960[] = {DEFAULT_POS,
+                                  "1rqbkrbn/1ppppp1p/1n6/p1N3p1/8/2P4P/PP1PPPP1/1RQBKRBN w FBfb - 0 9",
                                   "rbbqn1kr/pp2p1pp/6n1/2pp1p2/2P4P/P7/BP1PPPP1/R1BQNNKR w HAha - 0 9",
                                   "rqbbknr1/1ppp2pp/p5n1/4pp2/P7/1PP5/1Q1PPPPP/R1BBKNRN w GAga - 0 9",
-                                  "4rrb1/1kp3b1/1p1p4/pP1Pn2p/5p2/1PR2P2/2P1NB1P/2KR1B2 w D - 0 21"};
+                                  "4rrb1/1kp3b1/1p1p4/pP1Pn2p/5p2/1PR2P2/2P1NB1P/2KR1B2 w D - 0 21",
+                                  "1rkr3b/1ppn3p/3pB1n1/6q1/R2P4/4N1P1/1P5P/2KRQ1B1 b Dbd - 0 14"};
 
         int depths[] = {6, 5, 7, 6, 5, 5, 7, 6, 8};
-        int depths960[] = {6, 6, 6, 6, 6};
+        int depths960[] = {6, 6, 6, 6, 6, 6};
 
         std::vector<U64> expected = {119060324ull, 193690690ull, 178633661ull,  706045033ull, 89941194ull,
                                      164075551ull, 71441619ull,  2261050076ull, 437319625ull};
 
-        std::vector<U64> expected960 = {119060324ull, 191762235ull, 924181432ull, 308553169ull, 872323796ull};
+        std::vector<U64> expected960 = {119060324ull, 191762235ull, 924181432ull,
+                                        308553169ull, 872323796ull, 2678022813ull};
         for (size_t i = 0; i < expected.size(); i++)
         {
             board.applyFen(tests[i]);
