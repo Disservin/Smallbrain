@@ -38,7 +38,7 @@ struct State
 class Board
 {
   public:
-    bool chess960;
+    bool chess960 = false;
     std::array<File, 2> castlingRights960White = {};
     std::array<File, 2> castlingRights960Black = {};
 
