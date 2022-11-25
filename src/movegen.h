@@ -546,10 +546,6 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
             U64 withoutRook = board.occAll & ~(1ull << (56 + side));
             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << (56 + side)));
 
-            // std::cout << ( (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] ) << std::endl;
-            // std::cout << ((board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] ) << std::endl;
-            // std::cout << (!((1ull << destRook) & withoutRook) ) << std::endl;
-            // std::cout << (!((1ull << destKing) & (board.seen | withoutCastlingPieces))) << std::endl;
             if (side != NO_FILE 
                 && (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
                 && (board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] 
