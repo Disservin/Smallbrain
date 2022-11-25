@@ -424,7 +424,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     }
     else if (pt == ROOK)
     {
-        removeCastlingRightsRook(sideToMove, from_sq);
+        removeCastlingRightsRook(from_sq);
     }
     else if (pt == PAWN)
     {
@@ -449,7 +449,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
         halfMoveClock = 0;
         hashKey ^= updateKeyPiece(capture, to_sq);
         if (type_of_piece(capture) == ROOK)
-            removeCastlingRightsRook(~sideToMove, to_sq);
+            removeCastlingRightsRook(to_sq);
     }
 
     if (promoted(move))
@@ -714,7 +714,7 @@ void Board::removeCastlingRightsAll(Color c)
     }
 }
 
-void Board::removeCastlingRightsRook(Color c, Square sq)
+void Board::removeCastlingRightsRook(Square sq)
 {
     if (chess960)
     {
