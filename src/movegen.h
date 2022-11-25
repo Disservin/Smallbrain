@@ -487,16 +487,20 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, S
     switch (c)
     {
     case White:
-        if (board.castlingRights & wk && !(WK_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_F1))
-            moves |= (1ULL << SQ_G1) & emptyAndNotAttacked;
-        if (board.castlingRights & wq && !(WQ_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_D1))
-            moves |= (1ULL << SQ_C1) & emptyAndNotAttacked;
+        if (board.castlingRights & wk && !(WK_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_F1)
+            && emptyAndNotAttacked & (1ull << SQ_G1))
+            moves |= (1ULL << SQ_H1);
+        if (board.castlingRights & wq && !(WQ_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_D1)
+            && emptyAndNotAttacked & (1ull << SQ_C1))
+            moves |= (1ULL << SQ_A1);
         break;
     case Black:
-        if (board.castlingRights & bk && !(BK_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_F8))
-            moves |= (1ULL << SQ_G8) & emptyAndNotAttacked;
-        if (board.castlingRights & bq && !(BQ_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_D8))
-            moves |= (1ULL << SQ_C8) & emptyAndNotAttacked;
+        if (board.castlingRights & bk && !(BK_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_F8)
+            && emptyAndNotAttacked & (1ull << SQ_G8))
+            moves |= (1ULL << SQ_H8);
+        if (board.castlingRights & bq && !(BQ_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_D8)
+            && emptyAndNotAttacked & (1ull << SQ_C8))
+            moves |= (1ULL << SQ_A8);
 
         break;
     default:
@@ -516,25 +520,25 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
     switch (c)
     {
     case White: {
-        File leftSide = board.castlingRights[0];
-        File rightSide = board.castlingRights[1];
-        if (board.castlingRights[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][rightSide] & board.occAll) &&
+        File leftSide = board.castlingRights960[0];
+        File rightSide = board.castlingRights960[1];
+        if (board.castlingRights960[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][rightSide] & board.occAll) &&
             !(board.SQUARES_BETWEEN_BB[sq][rightSide] & board.seen))
             moves |= (1ULL << SQ_G1) & emptyAndNotAttacked;
-        if (board.castlingRights[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][leftSide] & board.occAll) &&
+        if (board.castlingRights960[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][leftSide] & board.occAll) &&
             !(board.SQUARES_BETWEEN_BB[sq][leftSide] & board.seen))
             moves |= (1ULL << SQ_C1) & emptyAndNotAttacked;
         break;
     }
 
     case Black: {
-        File leftSide = board.castlingRights[2];
-        File rightSide = board.castlingRights[3];
+        File leftSide = board.castlingRights960[2];
+        File rightSide = board.castlingRights960[3];
 
-        if (board.castlingRights[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][56 + rightSide] & board.occAll) &&
+        if (board.castlingRights960[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][56 + rightSide] & board.occAll) &&
             !(board.SQUARES_BETWEEN_BB[sq][56 + rightSide] & board.seen))
             moves |= (1ULL << SQ_G8) & emptyAndNotAttacked;
-        if (board.castlingRights[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][56 + leftSide] & board.occAll) &&
+        if (board.castlingRights960[0] != NO_FILE && !(board.SQUARES_BETWEEN_BB[sq][56 + leftSide] & board.occAll) &&
             !(board.SQUARES_BETWEEN_BB[sq][56 + leftSide] & board.seen))
             moves |= (1ULL << SQ_C8) & emptyAndNotAttacked;
 

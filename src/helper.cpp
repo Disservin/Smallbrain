@@ -148,16 +148,6 @@ void prefetch(void *addr)
 #endif
 }
 
-std::string uciRep(Move move)
-{
-    std::string m = "";
-    m += squareToString[from(move)];
-    m += squareToString[to(move)];
-    if (promoted(move))
-        m += PieceTypeToPromPiece[piece(move)];
-    return m;
-}
-
 void mean_of(int v)
 {
     means[0]++;

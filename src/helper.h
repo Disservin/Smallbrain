@@ -12,15 +12,15 @@ std::vector<std::string> splitInput(std::string fen);
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-inline constexpr uint8_t square_file(Square sq)
+inline File square_file(Square sq)
 {
-    return sq & 7;
+    return File(sq & 7);
 }
 
 /// @brief Gets the rank index of the square where 0 is the first rank.
 /// @param sq
 /// @return the rank of the square
-inline constexpr uint8_t square_rank(Square sq)
+inline uint8_t square_rank(Square sq)
 {
     return sq >> 3;
 }
@@ -83,11 +83,6 @@ inline PieceType type_of_piece(Piece piece)
 /// @brief prefetches a memory address
 /// @param addr
 void prefetch(void *addr);
-
-/// @brief get uci representation of a move
-/// @param move
-/// @return uci move
-std::string uciRep(Move move);
 
 static std::atomic<int64_t> means[2];
 static std::atomic<int64_t> min[2];
