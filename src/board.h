@@ -25,10 +25,12 @@ struct State
     uint8_t castling{};
     uint8_t halfMove{};
     Piece capturedPiece = None;
+    std::array<File, 2> chess960White = {};
+    std::array<File, 2> chess960Black = {};
     State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, uint8_t halfMoveCopy = {},
-          Piece capturedPieceCopy = None)
+          Piece capturedPieceCopy = None, std::array<File, 2> c960W = {NO_FILE}, std::array<File, 2> c960B = {NO_FILE})
         : enPassant(enpassantCopy), castling(castlingRightsCopy), halfMove(halfMoveCopy),
-          capturedPiece(capturedPieceCopy)
+          capturedPiece(capturedPieceCopy), chess960White(c960W), chess960Black(c960B)
     {
     }
 };
@@ -36,8 +38,9 @@ struct State
 class Board
 {
   public:
-    bool chess960;
-    File castlingRights960[4];
+    bool chess960 = true;
+    std::array<File, 2> castlingRights960White = {};
+    std::array<File, 2> castlingRights960Black = {};
 
     Color sideToMove;
 
