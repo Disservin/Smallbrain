@@ -36,7 +36,7 @@ void parseInput(std::string input, Board &board)
         Movelist moves;
         Movegen::legalmoves<Movetype::CAPTURE>(board, moves);
         for (int i = 0; i < moves.size; i++)
-            std::cout << uciRep(board,moves[i].move) << std::endl;
+            std::cout << uciRep(board, moves[i].move) << std::endl;
         std::cout << "count: " << signed(moves.size) << std::endl;
     }
     else if (input == "moves")
@@ -63,6 +63,22 @@ void parseInput(std::string input, Board &board)
         Perft perft = Perft();
         perft.board = board;
         perft.testAllPos();
+    }
+    else if (stringContain("move", input))
+    {
+        std::vector<std::string> tokens = splitInput(input);
+        bool hasMoves = uciCommand::elementInVector("move", tokens);
+
+        if (hasMoves)
+        {
+            std::size_t index = std::find(tokens.begin(), tokens.end(), "move") - tokens.begin();
+            index++;
+            for (; index < tokens.size(); index++)
+            {
+                Move move = convertUciToMove(board, tokens[index]);
+                board.makeMove<false>(move);
+            }
+        }
     }
 }
 
