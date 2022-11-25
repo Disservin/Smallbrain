@@ -515,7 +515,6 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
     U64 moves;
 
     moves = KingAttacks(sq) & board.enemyEmptyBB & ~board.seen;
-    U64 emptyAndNotAttacked = ~board.seen & ~board.occAll;
 
     switch (c)
     {
@@ -525,14 +524,15 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
             int side = board.castlingRights960White[i];
             Square destRook = side >= FILE_E ? SQ_F1 : SQ_D1;
             Square destKing = side >= FILE_E ? SQ_G1 : SQ_C1;
+            U64 withoutRook = board.occAll & ~(1ull << side);
+            U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << side));
 
-            if (side != NO_FILE &&
-                (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) ==
-                    board.SQUARES_BETWEEN_BB[sq][destKing] &&
-                !((1ull << destRook) & board.occAll))
-            {
+            if (side != NO_FILE 
+                && (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
+                && (board.SQUARES_BETWEEN_BB[sq][side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][side] 
+                && !((1ull << destRook) & withoutRook) 
+                && !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
                 moves |= (1ULL << side);
-            }
         }
         break;
     }
@@ -543,13 +543,19 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
             File side = board.castlingRights960Black[i];
             Square destRook = side >= FILE_E ? SQ_F8 : SQ_D8;
             Square destKing = side >= FILE_E ? SQ_G8 : SQ_C8;
-            if (side != NO_FILE &&
-                (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) ==
-                    board.SQUARES_BETWEEN_BB[sq][destKing] &&
-                !((1ull << destRook) & board.occAll))
-            {
+            U64 withoutRook = board.occAll & ~(1ull << (56 + side));
+            U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << (56 + side)));
+
+            // std::cout << ( (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] ) << std::endl;
+            // std::cout << ((board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] ) << std::endl;
+            // std::cout << (!((1ull << destRook) & withoutRook) ) << std::endl;
+            // std::cout << (!((1ull << destKing) & (board.seen | withoutCastlingPieces))) << std::endl;
+            if (side != NO_FILE 
+                && (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
+                && (board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] 
+                && !((1ull << destRook) & withoutRook) 
+                && !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
                 moves |= (1ULL << (56 + side));
-            }
         }
         break;
     }

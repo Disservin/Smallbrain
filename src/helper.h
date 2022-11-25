@@ -12,7 +12,7 @@ std::vector<std::string> splitInput(std::string fen);
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-inline File square_file(Square sq)
+inline constexpr File square_file(Square sq)
 {
     return File(sq & 7);
 }
@@ -20,7 +20,7 @@ inline File square_file(Square sq)
 /// @brief Gets the rank index of the square where 0 is the first rank.
 /// @param sq
 /// @return the rank of the square
-inline uint8_t square_rank(Square sq)
+inline constexpr uint8_t square_rank(Square sq)
 {
     return sq >> 3;
 }

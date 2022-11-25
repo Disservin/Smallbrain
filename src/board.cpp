@@ -256,6 +256,10 @@ void Board::print()
     std::cout << "Fullmoves: " << static_cast<int>(fullMoveNumber) / 2 << std::endl;
     std::cout << "EP: " << static_cast<int>(enPassantSquare) << std::endl;
     std::cout << "Hash: " << hashKey << std::endl;
+    std::cout << castlingRights960Black[0] << std::endl;
+    std::cout << castlingRights960Black[1] << std::endl;
+    std::cout << castlingRights960White[0] << std::endl;
+    std::cout << castlingRights960White[1] << std::endl;
 }
 
 bool Board::isRepetition(int draw)
@@ -461,9 +465,16 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     {
         halfMoveClock = 0;
         hashKey ^= updateKeyPiece(capture, to_sq);
-        if (type_of_piece(capture) == ROOK && castlingMapRook.find(to_sq) != castlingMapRook.end())
+        if (type_of_piece(capture) == ROOK)
         {
-            castlingRights &= ~castlingMapRook[to_sq];
+            if (chess960)
+            {
+                removeCastlingRightsRook(~sideToMove, to_sq);
+            }
+            else if (castlingMapRook.find(to_sq) != castlingMapRook.end())
+            {
+                castlingRights &= ~castlingMapRook[to_sq];
+            }
         }
     }
 
@@ -489,32 +500,42 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     // UPDATE PIECES AND NNUE
     // *****************************
 
-    if (pt == KING)
+    if (isCastlingWhite || isCastlingBlack)
     {
+        Square rookSQ;
+        Piece rook = sideToMove == White ? WhiteRook : BlackRook;
         if (isCastlingWhite && square_file(to_sq) >= FILE_E)
         {
             removePiece<updateNNUE>(WhiteRook, to_sq);
-            placePiece<updateNNUE>(WhiteRook, SQ_F1);
+            // placePiece<updateNNUE>(WhiteRook, SQ_F1);
             to_sq = SQ_G1;
+            rookSQ = SQ_F1;
         }
         else if (isCastlingWhite && square_file(to_sq) < FILE_E)
         {
             removePiece<updateNNUE>(WhiteRook, to_sq);
-            placePiece<updateNNUE>(WhiteRook, SQ_D1);
+            // placePiece<updateNNUE>(WhiteRook, SQ_D1);
             to_sq = SQ_C1;
+            rookSQ = SQ_D1;
         }
         else if (isCastlingBlack && square_file(to_sq) >= FILE_E)
         {
             removePiece<updateNNUE>(BlackRook, to_sq);
-            placePiece<updateNNUE>(BlackRook, SQ_F8);
+            // placePiece<updateNNUE>(BlackRook, SQ_F8);
             to_sq = SQ_G8;
+            rookSQ = SQ_F8;
         }
         else if (isCastlingBlack && square_file(to_sq) < FILE_E)
         {
             removePiece<updateNNUE>(BlackRook, to_sq);
-            placePiece<updateNNUE>(BlackRook, SQ_D8);
+            // placePiece<updateNNUE>(BlackRook, SQ_D8);
             to_sq = SQ_C8;
+            rookSQ = SQ_D8;
         }
+
+        removePiece<updateNNUE>(p, from_sq);
+        placePiece<updateNNUE>(p, to_sq);
+        placePiece<updateNNUE>(rook, rookSQ);
     }
     else if (pt == PAWN && ep)
     {
@@ -531,7 +552,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
         removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
         placePiece<updateNNUE>(p, to_sq);
     }
-    else
+    else if (!(isCastlingWhite || isCastlingBlack))
     {
         movePiece<updateNNUE>(p, from_sq, to_sq);
     }
@@ -573,35 +594,35 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     const bool isCastlingWhite = p == WhiteKing && capture == WhiteRook;
     const bool isCastlingBlack = p == BlackKing && capture == BlackRook;
 
-    if (pt == KING)
+    if (pt == KING && (isCastlingWhite || isCastlingBlack))
     {
-        if (isCastlingWhite && to_sq == SQ_H1)
+        Square rookSQ = to_sq;
+        Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+        if (isCastlingWhite && square_file(to_sq) >= FILE_E)
         {
-            removePiece<updateNNUE>(WhiteRook, SQ_F1);
-            placePiece<updateNNUE>(WhiteRook, SQ_H1);
+            removePiece<updateNNUE>(rook, SQ_F1);
             to_sq = SQ_G1;
         }
-        else if (isCastlingWhite && to_sq == SQ_A1)
+        else if (isCastlingWhite && square_file(to_sq) < FILE_E)
         {
-            removePiece<updateNNUE>(WhiteRook, SQ_D1);
-            placePiece<updateNNUE>(WhiteRook, SQ_A1);
+            removePiece<updateNNUE>(rook, SQ_D1);
             to_sq = SQ_C1;
         }
-        else if (isCastlingBlack && to_sq == SQ_H8)
+        else if (isCastlingBlack && square_file(to_sq) >= FILE_E)
         {
-            removePiece<updateNNUE>(BlackRook, SQ_F8);
-            placePiece<updateNNUE>(BlackRook, SQ_H8);
+            removePiece<updateNNUE>(rook, SQ_F8);
             to_sq = SQ_G8;
         }
-        else if (isCastlingBlack && to_sq == SQ_A8)
+        else if (isCastlingBlack && square_file(to_sq) < FILE_E)
         {
-            removePiece<updateNNUE>(BlackRook, SQ_D8);
-            placePiece<updateNNUE>(BlackRook, SQ_A8);
+            removePiece<updateNNUE>(rook, SQ_D8);
             to_sq = SQ_C8;
         }
+        removePiece<updateNNUE>(p, to_sq);
+        placePiece<updateNNUE>(p, from_sq);
+        placePiece<updateNNUE>(rook, rookSQ);
     }
-
-    if (promotion)
+    else if (promotion)
     {
         removePiece<updateNNUE>(p, to_sq);
         placePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
@@ -710,7 +731,9 @@ void Board::initializeLookupTables()
         for (Square sq2 = SQ_A1; sq2 <= SQ_H8; ++sq2)
         {
             sqs = (1ULL << sq1) | (1ULL << sq2);
-            if (square_file(sq1) == square_file(sq2) || square_rank(sq1) == square_rank(sq2))
+            if (sq1 == sq2)
+                SQUARES_BETWEEN_BB[sq1][sq2] = 0ull;
+            else if (square_file(sq1) == square_file(sq2) || square_rank(sq1) == square_rank(sq2))
                 SQUARES_BETWEEN_BB[sq1][sq2] = RookAttacks(sq1, sqs) & RookAttacks(sq2, sqs);
 
             else if (diagonal_of(sq1) == diagonal_of(sq2) || anti_diagonal_of(sq1) == anti_diagonal_of(sq2))
@@ -747,7 +770,7 @@ void Board::removeCastlingRightsAll(Color c)
         castlingRights960White[0] = NO_FILE;
         castlingRights960White[1] = NO_FILE;
     }
-    else if (c == Black)
+    else
     {
         castlingRights &= ~(bk | bq);
         castlingRights960Black[0] = NO_FILE;
