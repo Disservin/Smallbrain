@@ -131,33 +131,33 @@ Piece makePiece(PieceType type, Color c);
 /// @param bb
 void printBitboard(U64 bb);
 
-/// @brief elementInVector searches el in the tokens
-/// @param el
-/// @param tokens
+/// @brief elementInVector searches needle in the tokens
+/// @param needle
+/// @param haystack
 /// @return returns false if not found
-bool elementInVector(std::string el, std::vector<std::string> tokens);
+bool elementInVector(std::string needle, std::vector<std::string> haystack);
 
-/// @brief findElement returns the next value after a param
-/// @param param
-/// @param tokens
+/// @brief findElement returns the next value after a needle
+/// @param needle
+/// @param haystack
 /// @return
-template <typename T> T findElement(std::string param, std::vector<std::string> tokens)
+template <typename T> T findElement(std::string needle, std::vector<std::string> haystack)
 {
-    int index = std::find(tokens.begin(), tokens.end(), param) - tokens.begin();
+    int index = std::find(haystack.begin(), haystack.end(), needle) - haystack.begin();
     if constexpr (std::is_same_v<T, int>)
-        return std::stoi(tokens[index + 1]);
+        return std::stoi(haystack[index + 1]);
     else
-        return tokens[index + 1];
+        return haystack[index + 1];
 }
 
 /// @brief
 /// @param needle
 /// @param haystack the string to search in
 /// @return
-bool stringContain(std::string needle, std::string haystack);
+bool contains(std::string needle, std::string haystack);
 
 /// @brief
 /// @param needle
 /// @param haystack the vector to search in
 /// @return
-bool stringContain(std::vector<std::string> needle, std::string haystack);
+bool contains(std::vector<std::string> needle, std::string haystack);

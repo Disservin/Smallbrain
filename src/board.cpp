@@ -120,7 +120,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
 
     std::vector<std::string> v{"A", "B", "C", "D", "E", "F", "G"};
 
-    chess960 = chess960 ? true : stringContain(v, castling);
+    chess960 = chess960 ? true : contains(v, castling);
 
     castlingRights = 0;
     removeCastlingRightsAll(White);

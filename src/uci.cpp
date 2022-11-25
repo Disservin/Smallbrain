@@ -73,7 +73,7 @@ int UCI::uciLoop(int argc, char **argv)
             uciCommand::ucinewgameInput(options, board, searcher, genData);
         else if (input == "stop")
             uciCommand::stopThreads(searcher, genData);
-        else if (stringContain("setoption name", input))
+        else if (contains("setoption name", input))
         {
             std::string option = tokens[2];
             std::string value = tokens[4];
@@ -92,7 +92,7 @@ int UCI::uciLoop(int argc, char **argv)
             // double
             // else if (option == "") = std::stod(value);
         }
-        else if (stringContain("position", input))
+        else if (contains("position", input))
         {
             bool hasMoves = elementInVector("moves", tokens);
             if (tokens[1] == "fen")
@@ -106,14 +106,14 @@ int UCI::uciLoop(int argc, char **argv)
             // setup accumulator with the correct board
             board.accumulate();
         }
-        else if (stringContain("go perft", input))
+        else if (contains("go perft", input))
         {
             int depth = findElement<int>("perft", tokens);
             Perft perft = Perft();
             perft.board = board;
             perft.perfTest(depth, depth);
         }
-        else if (stringContain("go", input))
+        else if (contains("go", input))
         {
             uciCommand::stopThreads(searcher, genData);
 

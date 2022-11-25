@@ -64,7 +64,7 @@ void parseInput(std::string input, Board &board)
         perft.board = board;
         perft.testAllPos();
     }
-    else if (stringContain("move", input))
+    else if (contains("move", input))
     {
         std::vector<std::string> tokens = splitInput(input);
         bool hasMoves = elementInVector("move", tokens);

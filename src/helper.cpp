@@ -228,21 +228,21 @@ void printBitboard(U64 bb)
     std::cout << '\n' << std::endl;
 }
 
-bool elementInVector(std::string el, std::vector<std::string> tokens)
+bool elementInVector(std::string el, std::vector<std::string> haystack)
 {
-    return std::find(tokens.begin(), tokens.end(), el) != tokens.end();
+    return std::find(haystack.begin(), haystack.end(), el) != haystack.end();
 }
 
-bool stringContain(std::string needle, std::string haystack)
+bool contains(std::string needle, std::string haystack)
 {
     return haystack.find(needle) != std::string::npos;
 }
 
-bool stringContain(std::vector<std::string> haystack, std::string needle)
+bool contains(std::vector<std::string> needle, std::string haystack)
 {
-    for (auto &var : haystack)
+    for (auto &var : needle)
     {
-        if (needle.find(var) != std::string::npos)
+        if (haystack.find(var) != std::string::npos)
             return true;
     }
     return false;
