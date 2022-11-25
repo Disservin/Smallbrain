@@ -140,9 +140,9 @@ Move convertUciToMove(Board &board, std::string input)
         PieceType piece = type_of_piece(board.pieceAtBB(source));
 
         // convert to king captures rook
-        if (!board.chess960 && piece(move) == KING && square_distance(to_sq, from_sq) == 2)
+        if (!board.chess960 && piece == KING && square_distance(target, source) == 2)
         {
-            to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+            target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
         }
 
         return make(piece, source, target, false);

@@ -487,19 +487,17 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, S
     switch (c)
     {
     case White:
-        if (board.castlingRights & wk && !(WK_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_F1) &&
-            emptyAndNotAttacked & (1ull << SQ_G1))
+        if (board.castlingRights & wk && emptyAndNotAttacked & (1ULL << SQ_F1) && emptyAndNotAttacked & (1ull << SQ_G1))
             moves |= (1ULL << SQ_H1);
-        if (board.castlingRights & wq && !(WQ_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_D1) &&
-            emptyAndNotAttacked & (1ull << SQ_C1))
+        if (board.castlingRights & wq && emptyAndNotAttacked & (1ULL << SQ_D1) &&
+            emptyAndNotAttacked & (1ull << SQ_C1) && (1ull << SQ_B1) & ~board.occAll)
             moves |= (1ULL << SQ_A1);
         break;
     case Black:
-        if (board.castlingRights & bk && !(BK_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_F8) &&
-            emptyAndNotAttacked & (1ull << SQ_G8))
+        if (board.castlingRights & bk && emptyAndNotAttacked & (1ULL << SQ_F8) && emptyAndNotAttacked & (1ull << SQ_G8))
             moves |= (1ULL << SQ_H8);
-        if (board.castlingRights & bq && !(BQ_CASTLE_MASK & board.occAll) && emptyAndNotAttacked & (1ULL << SQ_D8) &&
-            emptyAndNotAttacked & (1ull << SQ_C8))
+        if (board.castlingRights & bq && emptyAndNotAttacked & (1ULL << SQ_D8) &&
+            emptyAndNotAttacked & (1ull << SQ_C8) && (1ull << SQ_B8) & ~board.occAll)
             moves |= (1ULL << SQ_A8);
 
         break;

@@ -389,8 +389,10 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     fullMoveNumber++;
 
     bool ep = to_sq == enPassantSquare;
-    const bool isCastlingWhite = p == WhiteKing && capture == WhiteRook;
-    const bool isCastlingBlack = p == BlackKing && capture == BlackRook;
+    const bool isCastlingWhite =
+        (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
+    const bool isCastlingBlack =
+        (p == BlackKing && capture == BlackRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
 
     // *****************************
     // UPDATE HASH
@@ -579,8 +581,10 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     PieceType pt = piece(move);
     Piece p = makePiece(pt, sideToMove);
 
-    const bool isCastlingWhite = p == WhiteKing && capture == WhiteRook;
-    const bool isCastlingBlack = p == BlackKing && capture == BlackRook;
+    const bool isCastlingWhite =
+        (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
+    const bool isCastlingBlack =
+        (p == BlackKing && capture == BlackRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
 
     if ((isCastlingWhite || isCastlingBlack))
     {
@@ -810,17 +814,16 @@ void Board::removeCastlingRightsRook(Color c, Square sq)
 std::string uciRep(Board &board, Move move)
 {
     std::string m = "";
-    m += squareToString[from(move)];
 
+    Square from_sq = from(move);
     Square to_sq = to(move);
-    Piece moved = board.pieceAtB(from(move));
-    Piece captured = board.pieceAtB(to_sq);
 
-    if (!board.chess960 && piece(move) == KING && square_distance(to_sq, from_sq) == 2)
+    if (!board.chess960 && piece(move) == KING && square_distance(to_sq, from_sq) >= 2)
     {
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
     }
 
+    m += squareToString[from_sq];
     m += squareToString[to_sq];
     if (promoted(move))
         m += PieceTypeToPromPiece[piece(move)];
