@@ -122,6 +122,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
 
     chess960 = chess960 ? true : stringContain(v, castling);
 
+    castlingRights = 0;
     removeCastlingRightsAll(White);
     removeCastlingRightsAll(Black);
     std::fill(std::begin(castlingRights960White), std::end(castlingRights960White), NO_FILE);
