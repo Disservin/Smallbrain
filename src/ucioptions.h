@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "board.h"
+#include "helper.h"
 #include "nnue.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 #include "tt.h"

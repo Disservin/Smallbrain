@@ -77,12 +77,13 @@ void Board::applyFen(std::string fen, bool updateAcc)
     // default
     std::string half_move_clock = "0";
     std::string full_move_counter = "1";
+    sideToMove = (move_right == "w") ? White : Black;
+
     if (params.size() > 4)
     {
         half_move_clock = params[4];
         full_move_counter = params[5];
     }
-    sideToMove = (move_right == "w") ? White : Black;
 
     if (updateAcc)
     {
@@ -117,36 +118,24 @@ void Board::applyFen(std::string fen, bool updateAcc)
         }
     }
 
-    castlingRights = 0;
+    std::vector<std::string> v{"A", "B", "C", "D", "E", "F", "G"};
+
+    chess960 = chess960 ? true : stringContain(v, castling);
+
+    removeCastlingRightsAll(White);
+    removeCastlingRightsAll(Black);
+    std::fill(std::begin(castlingRights960White), std::end(castlingRights960White), NO_FILE);
 
     if (!chess960)
     {
         for (size_t i = 0; i < castling.size(); i++)
         {
-            if (castling[i] == 'K')
-            {
-                castlingRights |= wk;
-            }
-            if (castling[i] == 'Q')
-            {
-                castlingRights |= wq;
-            }
-            if (castling[i] == 'k')
-            {
-                castlingRights |= bk;
-            }
-            if (castling[i] == 'q')
-            {
-                castlingRights |= bq;
-            }
+            if (readCastleString.find(castling[i]) != readCastleString.end())
+                castlingRights |= readCastleString[castling[i]];
         }
     }
     else
     {
-        removeCastlingRightsAll(White);
-        removeCastlingRightsAll(Black);
-        std::fill(std::begin(castlingRights960White), std::end(castlingRights960White), NO_FILE);
-
         int indexWhite = 0;
         int indexBlack = 0;
         for (size_t i = 0; i < castling.size(); i++)
@@ -169,6 +158,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
         int rank = en_passant[1] - 48;
         enPassantSquare = Square((rank - 1) * 8 + file - 1);
     }
+
     // half_move_clock
     halfMoveClock = std::stoi(half_move_clock);
 
@@ -256,10 +246,7 @@ void Board::print()
     std::cout << "Fullmoves: " << static_cast<int>(fullMoveNumber) / 2 << std::endl;
     std::cout << "EP: " << static_cast<int>(enPassantSquare) << std::endl;
     std::cout << "Hash: " << hashKey << std::endl;
-    std::cout << castlingRights960Black[0] << std::endl;
-    std::cout << castlingRights960Black[1] << std::endl;
-    std::cout << castlingRights960White[0] << std::endl;
-    std::cout << castlingRights960White[1] << std::endl;
+    std::cout << "Chess960: " << chess960 << std::endl;
 }
 
 bool Board::isRepetition(int draw)
