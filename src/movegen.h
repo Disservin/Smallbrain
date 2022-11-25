@@ -527,11 +527,12 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
             U64 withoutRook = board.occAll & ~(1ull << side);
             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << side));
 
-            if (side != NO_FILE 
-                && (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
-                && (board.SQUARES_BETWEEN_BB[sq][side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][side] 
-                && !((1ull << destRook) & withoutRook) 
-                && !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
+            if (side != NO_FILE &&
+                (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) ==
+                    board.SQUARES_BETWEEN_BB[sq][destKing] &&
+                (board.SQUARES_BETWEEN_BB[sq][side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][side] &&
+                !((1ull << destRook) & withoutRook) &&
+                !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
                 moves |= (1ULL << side);
         }
         break;
@@ -546,11 +547,12 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
             U64 withoutRook = board.occAll & ~(1ull << (56 + side));
             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << (56 + side)));
 
-            if (side != NO_FILE 
-                && (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
-                && (board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] 
-                && !((1ull << destRook) & withoutRook) 
-                && !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
+            if (side != NO_FILE &&
+                (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) ==
+                    board.SQUARES_BETWEEN_BB[sq][destKing] &&
+                (board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] &&
+                !((1ull << destRook) & withoutRook) &&
+                !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
                 moves |= (1ULL << (56 + side));
         }
         break;
