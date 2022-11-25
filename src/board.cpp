@@ -809,10 +809,8 @@ std::string uciRep(Board &board, Move move)
     m += squareToString[from(move)];
 
     Square to_sq = to(move);
-    Piece moved = board.pieceAtB(from(move));
-    Piece captured = board.pieceAtB(to_sq);
 
-    if (!board.chess960 &&)
+    if (!board.chess960)
     {
         if (square_file(to_sq) >= FILE_E)
             to_sq = Square(int(to_sq) - 1);
