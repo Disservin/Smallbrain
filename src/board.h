@@ -324,3 +324,9 @@ template <Color c> Square Board::KingSQ()
 {
     return lsb(Kings<c>());
 }
+
+/// @brief get uci representation of a move
+/// @param board
+/// @param move
+/// @return
+std::string uciRep(Board &board, Move move);

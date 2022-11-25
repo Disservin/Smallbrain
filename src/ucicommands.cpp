@@ -36,7 +36,7 @@ void parseInput(std::string input, Board &board)
         Movelist moves;
         Movegen::legalmoves<Movetype::CAPTURE>(board, moves);
         for (int i = 0; i < moves.size; i++)
-            std::cout << uciRep(moves[i].move) << std::endl;
+            std::cout << uciRep(board,moves[i].move) << std::endl;
         std::cout << "count: " << signed(moves.size) << std::endl;
     }
     else if (input == "moves")
@@ -44,7 +44,7 @@ void parseInput(std::string input, Board &board)
         Movelist moves;
         Movegen::legalmoves<Movetype::ALL>(board, moves);
         for (int i = 0; i < moves.size; i++)
-            std::cout << uciRep(moves[i].move) << std::endl;
+            std::cout << uciRep(board, moves[i].move) << std::endl;
         std::cout << "count: " << signed(moves.size) << std::endl;
     }
 
