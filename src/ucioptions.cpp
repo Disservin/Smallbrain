@@ -138,6 +138,16 @@ Move convertUciToMove(Board &board, std::string input)
         int to_index = (rank - 1) * 8 + file - 1;
         Square target = Square(to_index);
         PieceType piece = type_of_piece(board.pieceAtBB(source));
+
+        // convert to king captures rook
+        if (!board.chess960 && piece == KING && std::abs(target - source) == 2)
+        {
+            if (square_file(target) >= FILE_E)
+                target = Square(int(target) + 1);
+            else
+                target = Square(int(target) - 2);
+        }
+
         return make(piece, source, target, false);
     }
     else if (input.length() == 5)

@@ -582,7 +582,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     const bool isCastlingWhite = p == WhiteKing && capture == WhiteRook;
     const bool isCastlingBlack = p == BlackKing && capture == BlackRook;
 
-    if (pt == KING && (isCastlingWhite || isCastlingBlack))
+    if ((isCastlingWhite || isCastlingBlack))
     {
         Square rookSQ = to_sq;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
@@ -606,6 +606,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
             removePiece<updateNNUE>(rook, SQ_D8);
             to_sq = SQ_C8;
         }
+
         removePiece<updateNNUE>(p, to_sq);
         placePiece<updateNNUE>(p, from_sq);
         placePiece<updateNNUE>(rook, rookSQ);
