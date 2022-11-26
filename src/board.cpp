@@ -229,10 +229,10 @@ std::string Board::getFen()
     if (enPassantSquare == NO_SQ)
         ss << " - ";
     else
-        ss << " " + squareToString[enPassantSquare] + " ";
+        ss << " " << squareToString[enPassantSquare] << " ";
 
     ss << halfMoveClock;
-    ss << " " + fullMoveNumber / 2;
+    ss << " " << fullMoveNumber / 2;
     return ss.str();
 }
 
