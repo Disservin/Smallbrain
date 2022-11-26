@@ -231,8 +231,8 @@ std::string Board::getFen()
     else
         ss << " " << squareToString[enPassantSquare] << " ";
 
-    ss << halfMoveClock;
-    ss << " " << fullMoveNumber / 2;
+    ss << int(halfMoveClock) << " " << int(fullMoveNumber / 2);
+
     return ss.str();
 }
 
