@@ -182,9 +182,10 @@ void Board::applyFen(std::string fen, bool updateAcc)
 
 std::string Board::getFen()
 {
+    std::stringstream ss;
+
     int sq;
-    char letter;
-    std::string fen = "";
+
     for (int rank = 7; rank >= 0; rank--)
     {
         int free_space = 0;
@@ -196,11 +197,10 @@ std::string Board::getFen()
             {
                 if (free_space)
                 {
-                    fen += std::to_string(free_space);
+                    ss << free_space;
                     free_space = 0;
                 }
-                letter = pieceToChar[piece];
-                fen += letter;
+                ss << pieceToChar[piece];
             }
             else
             {
@@ -209,31 +209,31 @@ std::string Board::getFen()
         }
         if (free_space != 0)
         {
-            fen += std::to_string(free_space);
+            ss << free_space;
         }
-        fen += rank > 0 ? "/" : "";
+        ss << (rank > 0 ? "/" : "");
     }
-    fen += sideToMove == White ? " w " : " b ";
+    ss << (sideToMove == White ? " w " : " b ");
 
     if (castlingRights & wk)
-        fen += "K";
+        ss << "K";
     if (castlingRights & wq)
-        fen += "Q";
+        ss << "Q";
     if (castlingRights & bk)
-        fen += "k";
+        ss << "k";
     if (castlingRights & bq)
-        fen += "q";
+        ss << "q";
     if (castlingRights == 0)
-        fen += "-";
+        ss << "-";
 
     if (enPassantSquare == NO_SQ)
-        fen += " - ";
+        ss << " - ";
     else
-        fen += " " + squareToString[enPassantSquare] + " ";
+        ss << " " + squareToString[enPassantSquare] + " ";
 
-    fen += std::to_string(halfMoveClock);
-    fen += " " + std::to_string(fullMoveNumber / 2);
-    return fen;
+    ss << halfMoveClock;
+    ss << " " + fullMoveNumber / 2;
+    return ss.str();
 }
 
 void Board::print()
