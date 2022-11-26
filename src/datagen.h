@@ -42,7 +42,7 @@ class TrainingData
     /// @param threadId
     /// @param book
     /// @param depth
-    void infinitePlay(int threadId, int depth, int number_of_lines);
+    void infinitePlay(int threadId, int depth);
 
     /// @brief starts one selfplay game
     /// @param file
@@ -51,8 +51,8 @@ class TrainingData
     /// @param Movelist
     /// @param search
     /// @param td
-    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td, int depth,
-                       int number_of_lines);
+    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td,
+                       int depth);
     std::vector<std::thread> threads;
 };
 

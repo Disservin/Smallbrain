@@ -12,14 +12,13 @@ namespace Datagen
 std::string stringFenData(fenData fenData, double score)
 {
     std::ostringstream sstream;
-    sstream << fenData.fen << " [" << std::fixed << std::setprecision(1) << score << "] " << fenData.score;
+    sstream << fenData.fen << " [" << std::fixed << std::setprecision(1) << score << "] " << fenData.score << "\n";
 
     return sstream.str();
 }
 
 void TrainingData::generate(int workers, std::string book, int depth)
 {
-    int number_of_lines = 0;
     if (book != "")
     {
         std::ifstream openingFile;
@@ -29,7 +28,6 @@ void TrainingData::generate(int workers, std::string book, int depth)
         while (std::getline(openingFile, line))
         {
             openingBook.push_back(line);
-            number_of_lines++;
         }
 
         openingFile.close();
@@ -37,11 +35,11 @@ void TrainingData::generate(int workers, std::string book, int depth)
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, number_of_lines);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth);
     }
 }
 
-void TrainingData::infinitePlay(int threadId, int depth, int number_of_lines)
+void TrainingData::infinitePlay(int threadId, int depth)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
@@ -69,13 +67,13 @@ void TrainingData::infinitePlay(int threadId, int depth, int number_of_lines)
         std::memset(td.pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
         std::memset(td.pvLength, 0, MAX_PLY * sizeof(uint8_t));
 
-        randomPlayout(file, board, movelist, search, td, depth, number_of_lines);
+        randomPlayout(file, board, movelist, search, td, depth);
     }
     file.close();
 }
 
 void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td,
-                                 int depth, int number_of_lines)
+                                 int depth)
 {
     std::vector<fenData> fens;
 
@@ -90,7 +88,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     if (openingBook.size() != 0)
     {
         std::uniform_int_distribution<std::mt19937::result_type> maxLines{
-            0, static_cast<std::mt19937::result_type>(number_of_lines)};
+            0, static_cast<std::mt19937::result_type>(openingBook.size() - 1)};
 
         uint64_t randLine = maxLines(e);
 
@@ -250,9 +248,9 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     for (auto &f : fens)
     {
         if (f.use)
-            file << stringFenData(f, score) << "\n";
+            file << stringFenData(f, score);
     }
-    std::cout << std::flush;
+    file << std::flush;
 }
 
 } // namespace Datagen
