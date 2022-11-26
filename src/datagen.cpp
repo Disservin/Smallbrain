@@ -18,18 +18,6 @@ std::string stringFenData(fenData fenData, double score)
 
 void TrainingData::generate(int workers, std::string book, int depth)
 {
-    for (int i = 0; i < workers; i++)
-    {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, book, depth);
-    }
-}
-
-void TrainingData::infinitePlay(int threadId, std::string book, int depth)
-{
-    std::ofstream file;
-    std::string filename = "data/data" + std::to_string(threadId) + ".txt";
-    file.open(filename, std::ios::app);
-
     int number_of_lines = 0;
     if (book != "")
     {
@@ -38,12 +26,25 @@ void TrainingData::infinitePlay(int threadId, std::string book, int depth)
         openingFile.open(book);
 
         while (std::getline(openingFile, line))
-            ++number_of_lines;
+        {
+            openingBook.push_back(line);
+            number_of_lines++;
+        }
 
         openingFile.close();
     }
 
-    U64 games = 0;
+    for (int i = 0; i < workers; i++)
+    {
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, number_of_lines);
+    }
+}
+
+void TrainingData::infinitePlay(int threadId, int depth, int number_of_lines)
+{
+    std::ofstream file;
+    std::string filename = "data/data" + std::to_string(threadId) + ".txt";
+    file.open(filename, std::ios::app);
 
     ThreadData td;
     Board board = Board();
@@ -54,8 +55,6 @@ void TrainingData::infinitePlay(int threadId, std::string book, int depth)
 
     while (!UCI_FORCE_STOP)
     {
-        games++;
-
         td.nodes = 0;
         td.tbhits = 0;
         td.seldepth = 0;
@@ -69,13 +68,13 @@ void TrainingData::infinitePlay(int threadId, std::string book, int depth)
         std::memset(td.pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
         std::memset(td.pvLength, 0, MAX_PLY * sizeof(uint8_t));
 
-        randomPlayout(file, depth, board, movelist, search, td);
+        randomPlayout(file, board, movelist, search, td, depth, number_of_lines);
     }
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, int depth, Board &board, Movelist &movelist, Search &search,
-                                 ThreadData &td)
+void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td,
+                                 int depth, int number_of_lines)
 {
     std::vector<fenData> fens;
 
@@ -85,34 +84,21 @@ void TrainingData::randomPlayout(std::ofstream &file, int depth, Board &board, M
     int ply = 0;
     int randomMoves = 10;
 
-    std::uniform_int_distribution<std::mt19937::result_type> maxLines{0, static_cast<std::mt19937::result_type>(10)};
-    if (maxLines(e) == 1)
+    // std::uniform_int_distribution<std::mt19937::result_type> maxLines{0, static_cast<std::mt19937::result_type>(10)};
+
+    if (openingBook.size() != 0)
     {
-        ply = randomMoves;
-        board.applyFen(getRandomfen());
+        std::uniform_int_distribution<std::mt19937::result_type> maxLines{
+            0, static_cast<std::mt19937::result_type>(number_of_lines)};
+
+        uint64_t randLine = maxLines(e);
+
+        board.applyFen(openingBook[randLine]);
     }
-    // else if (maxLines(e) % 5 == 0 && book != "")
+    // else if (maxLines(e) == 1)
     // {
-    //     std::ifstream openingFile;
-    //     openingFile.open(book);
-
-    //     std::string line;
-    //     uint64_t count = 0;
-
-    //     std::uniform_int_distribution<std::mt19937::result_type> maxLines{
-    //         0, static_cast<std::mt19937::result_type>(numLines)};
-
-    //     uint64_t randLine = maxLines(e);
-    //     while (std::getline(openingFile, line))
-    //     {
-    //         if (count == randLine)
-    //         {
-    //             board.applyFen(line);
-    //             break;
-    //         }
-    //         count++;
-    //     }
-    //     openingFile.close();
+    //     ply = randomMoves;
+    //     board.applyFen(getRandomfen());
     // }
     else
     {

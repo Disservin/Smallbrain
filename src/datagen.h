@@ -29,6 +29,8 @@ std::string stringFenData(fenData fenData, double score);
 
 class TrainingData
 {
+    std::vector<std::string> openingBook;
+
   public:
     /// @brief entry function
     /// @param workers
@@ -40,7 +42,7 @@ class TrainingData
     /// @param threadId
     /// @param book
     /// @param depth
-    void infinitePlay(int threadId, std::string book, int depth);
+    void infinitePlay(int threadId, int depth, int number_of_lines);
 
     /// @brief starts one selfplay game
     /// @param file
@@ -49,8 +51,8 @@ class TrainingData
     /// @param Movelist
     /// @param search
     /// @param td
-    void randomPlayout(std::ofstream &file, int depth, Board &board, Movelist &Movelist, Search &search,
-                       ThreadData &td);
+    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td, int depth,
+                       int number_of_lines);
     std::vector<std::thread> threads;
 };
 
