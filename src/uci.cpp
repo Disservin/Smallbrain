@@ -55,7 +55,7 @@ int UCI::uciLoop(int argc, char **argv)
         std::string input;
 
         // UCI COMMANDS
-        if (argc == 1 && !std::getline(std::cin, input))
+        if (!std::getline(std::cin, input) && argc == 1)
             input = "quit";
 
         std::vector<std::string> tokens = splitInput(input);
@@ -193,5 +193,7 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options)
         }
 
         genData.generate(workers, bookPath, depth);
+
+        std::cout << "Starting data generation" << std::endl;
     }
 }

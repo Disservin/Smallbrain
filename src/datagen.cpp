@@ -12,8 +12,9 @@ namespace Datagen
 std::string stringFenData(fenData fenData, double score)
 {
     std::ostringstream sstream;
-    sstream << std::fixed << std::setprecision(1) << score;
-    return std::string{fenData.fen + " [" + sstream.str() + "] " + std::to_string(fenData.score)};
+    sstream << fenData.fen << " [" << std::fixed << std::setprecision(1) << score << "] " << fenData.score;
+
+    return sstream.str();
 }
 
 void TrainingData::generate(int workers, std::string book, int depth)
@@ -249,8 +250,9 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     for (auto &f : fens)
     {
         if (f.use)
-            file << stringFenData(f, score) << std::endl;
+            file << stringFenData(f, score) << "\n";
     }
+    std::cout << std::flush;
 }
 
 } // namespace Datagen
