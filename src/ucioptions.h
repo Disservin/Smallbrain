@@ -74,8 +74,8 @@ class uciOptions
 
     /// @brief
     /// @param board
-    /// @param isChess960
-    void uciChess960(Board &board, bool isChess960);
+    /// @param v
+    void uciChess960(Board &board, std::string_view v);
 
     /// @brief plays all moves in tokens
     /// @param board
