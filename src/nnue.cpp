@@ -59,12 +59,17 @@ void activate(NNUE::accumulator &accumulator, Square sq, Piece p)
 {
     const int inputUs = sq + p * 64;
 
+    const Square themSq = Square(sq ^ 56);
+    const Piece themP = flippedPiece[p];
+    const int inputThem = themSq + themP * 64;
+
     for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
     {
         const int offset = chunks * 256;
         for (int i = offset; i < 256 + offset; i++)
         {
-            accumulator[i] += inputWeights[inputUs * HIDDEN_BIAS + i];
+            accumulator[White][i] += inputWeights[inputUs * HIDDEN_BIAS + i];
+            accumulator[Black][i] += inputWeights[inputThem * HIDDEN_BIAS + i];
         }
     }
 }
@@ -73,20 +78,31 @@ void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p)
 {
     const int inputUs = sq + p * 64;
 
+    const Square themSq = Square(sq ^ 56);
+    const Piece themP = flippedPiece[p];
+    const int inputThem = themSq + themP * 64;
+
     for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
     {
         const int offset = chunks * 256;
         for (int i = offset; i < 256 + offset; i++)
         {
-            accumulator[i] -= inputWeights[inputUs * HIDDEN_BIAS + i];
+            accumulator[White][i] -= inputWeights[inputUs * HIDDEN_BIAS + i];
+            accumulator[Black][i] -= inputWeights[inputThem * HIDDEN_BIAS + i];
         }
     }
 }
 
 void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p)
 {
+    const Square ClearThemSq = Square(from_sq ^ 56);
+    const Piece ClearThemP = flippedPiece[p];
+    const int ClearInputThem = ClearThemSq + ClearThemP * 64;
     const int ClearInputUs = from_sq + p * 64;
 
+    const Square AddThemSq = Square(to_sq ^ 56);
+    const Piece AddThemP = flippedPiece[p];
+    const int AddInputThem = AddThemSq + AddThemP * 64;
     const int AddInputUs = to_sq + p * 64;
 
     for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
@@ -94,8 +110,10 @@ void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p)
         const int offset = chunks * 256;
         for (int i = offset; i < 256 + offset; i++)
         {
-            accumulator[i] +=
+            accumulator[White][i] +=
                 -inputWeights[ClearInputUs * HIDDEN_BIAS + i] + inputWeights[AddInputUs * HIDDEN_BIAS + i];
+            accumulator[Black][i] +=
+                -inputWeights[ClearInputThem * HIDDEN_BIAS + i] + inputWeights[AddInputThem * HIDDEN_BIAS + i];
         }
     }
 }
@@ -105,7 +123,7 @@ int16_t relu(int16_t x)
     return std::max(static_cast<int16_t>(0), x);
 }
 
-int32_t output(const NNUE::accumulator &accumulator)
+int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator)
 {
     int32_t output = outputBias[0];
 

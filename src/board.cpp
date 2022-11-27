@@ -34,7 +34,8 @@ void Board::accumulate()
 {
     for (int i = 0; i < HIDDEN_BIAS; i++)
     {
-        accumulator[i] = hiddenBias[i];
+        accumulator[White][i] = hiddenBias[i];
+        accumulator[Black][i] = hiddenBias[i];
     }
 
     for (Square i = SQ_A1; i < NO_SQ; i++)
@@ -422,9 +423,9 @@ void Board::unmakeNullMove()
     sideToMove = ~sideToMove;
 }
 
-const NNUE::accumulator &Board::getAccumulator() const
+const std::array<int16_t, HIDDEN_BIAS> &Board::getAccumulator(Color side) const
 {
-    return accumulator;
+    return accumulator[side];
 }
 
 bool Board::isLegal(const Move move)

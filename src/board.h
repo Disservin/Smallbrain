@@ -208,7 +208,7 @@ class Board
     /// @brief unmake a nullmove
     void unmakeNullMove();
 
-    const NNUE::accumulator &getAccumulator() const;
+    const std::array<int16_t, HIDDEN_BIAS> &getAccumulator(Color side) const;
 
     // update the internal board representation
 
