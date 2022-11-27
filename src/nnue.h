@@ -16,12 +16,12 @@
 extern uint8_t inputValues[INPUT_WEIGHTS];
 extern int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
 extern int16_t hiddenBias[HIDDEN_BIAS];
-extern int16_t hiddenWeights[HIDDEN_WEIGHTS];
+extern int16_t hiddenWeights[HIDDEN_WEIGHTS * 2];
 extern int32_t outputBias[OUTPUT_BIAS];
 
 namespace NNUE
 {
-using accumulator = std::array<int16_t, HIDDEN_BIAS>;
+using accumulator = std::array<std::array<int16_t, HIDDEN_BIAS>, 2>;
 
 int16_t relu(int16_t x);
 
@@ -38,5 +38,5 @@ void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p);
 void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p);
 
 // return the nnue evaluation
-int32_t output(const NNUE::accumulator &accumulator);
+int32_t output(const NNUE::accumulator &accumulator, Color side);
 } // namespace NNUE

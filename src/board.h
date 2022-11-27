@@ -15,7 +15,7 @@ extern TranspositionTable TTable;
 extern uint8_t inputValues[INPUT_WEIGHTS];
 extern int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
 extern int16_t hiddenBias[HIDDEN_BIAS];
-extern int16_t hiddenWeights[HIDDEN_WEIGHTS];
+extern int16_t hiddenWeights[HIDDEN_WEIGHTS * 2];
 extern int32_t outputBias[OUTPUT_BIAS];
 
 struct State

@@ -11,24 +11,123 @@ INCBIN(Eval, EVALFILE);
 uint8_t inputValues[INPUT_WEIGHTS];
 int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
 int16_t hiddenBias[HIDDEN_BIAS];
-int16_t hiddenWeights[HIDDEN_WEIGHTS];
+int16_t hiddenWeights[HIDDEN_WEIGHTS * 2];
 int32_t outputBias[OUTPUT_BIAS];
 
 namespace NNUE
 {
+
+int idx(Color side, Square sq, Piece p)
+{
+    if (side == White)
+    {
+        return sq + p * 64;
+    }
+    else
+    {
+        const Square mirrorSquare = Square(sq ^ 56);
+        const Piece mirrorPiece = flippedPiece[p];
+        const int input = mirrorSquare + mirrorPiece * 64;
+
+        return input;
+    }
+}
+
+void activate(NNUE::accumulator &accumulator, Square sq, Piece p)
+{
+    for (auto side : {White, Black})
+    {
+        const int input = idx(side, sq, p);
+        for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
+        {
+            const int offset = chunks * 256;
+            for (int i = offset; i < 256 + offset; i++)
+            {
+                accumulator[side][i] += inputWeights[input * HIDDEN_BIAS + i];
+            }
+        }
+    }
+}
+
+void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p)
+{
+    for (auto side : {White, Black})
+    {
+        const int input = idx(side, sq, p);
+        for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
+        {
+            const int offset = chunks * 256;
+            for (int i = offset; i < 256 + offset; i++)
+            {
+                accumulator[side][i] -= inputWeights[input * HIDDEN_BIAS + i];
+            }
+        }
+    }
+}
+
+void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p)
+{
+    for (auto side : {White, Black})
+    {
+        const int inputClear = idx(side, from_sq, p);
+        const int inputAdd = idx(side, to_sq, p);
+
+        for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
+        {
+            const int offset = chunks * 256;
+            for (int i = offset; i < 256 + offset; i++)
+            {
+                accumulator[side][i] +=
+                    -inputWeights[inputClear * HIDDEN_BIAS + i] + inputWeights[inputAdd * HIDDEN_BIAS + i];
+            }
+        }
+    }
+}
+
+int16_t relu(int16_t x)
+{
+    return std::max(static_cast<int16_t>(0), x);
+}
+
+int32_t output(const NNUE::accumulator &accumulator, Color side)
+{
+    int32_t output = outputBias[0];
+
+    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
+    {
+        const int offset = chunks * 256;
+        for (int i = 0; i < 256; i++)
+        {
+            output += relu(accumulator[side][i + offset]) * hiddenWeights[i + offset];
+        }
+    }
+
+    // seperate loop seems to be faster
+    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
+    {
+        const int offset = chunks * 256;
+        for (int i = 0; i < 256; i++)
+        {
+            output += relu(accumulator[!side][i + offset]) * hiddenWeights[HIDDEN_WEIGHTS + i + offset];
+        }
+    }
+
+    return output / (16 * 512);
+}
+
 void init(const char *filename)
 {
     FILE *f = fopen(filename, "rb");
 
     // obtain file size
-    int fileSize = INPUT_WEIGHTS * HIDDEN_WEIGHTS + HIDDEN_BIAS + HIDDEN_WEIGHTS + OUTPUT_BIAS;
+    int fileSize = INPUT_WEIGHTS * HIDDEN_WEIGHTS + HIDDEN_BIAS + 2 * HIDDEN_WEIGHTS + OUTPUT_BIAS;
 
     int readElements = 0;
     if (f != NULL)
     {
         readElements += fread(inputWeights, sizeof(int16_t), INPUT_WEIGHTS * HIDDEN_WEIGHTS, f);
         readElements += fread(hiddenBias, sizeof(int16_t), HIDDEN_BIAS, f);
-        readElements += fread(hiddenWeights, sizeof(int16_t), HIDDEN_WEIGHTS, f);
+        readElements += fread(hiddenWeights, sizeof(int16_t), 2 * HIDDEN_WEIGHTS, f);
         readElements += fread(outputBias, sizeof(int32_t), OUTPUT_BIAS, f);
 
         if (readElements != fileSize)
@@ -48,76 +147,10 @@ void init(const char *filename)
         std::memcpy(hiddenBias, &gEvalData[memoryIndex], HIDDEN_BIAS * sizeof(int16_t));
         memoryIndex += HIDDEN_BIAS * sizeof(int16_t);
 
-        std::memcpy(hiddenWeights, &gEvalData[memoryIndex], HIDDEN_WEIGHTS * sizeof(int16_t));
-        memoryIndex += HIDDEN_WEIGHTS * sizeof(int16_t);
+        std::memcpy(hiddenWeights, &gEvalData[memoryIndex], 2 * HIDDEN_WEIGHTS * sizeof(int16_t));
+        memoryIndex += 2 * HIDDEN_WEIGHTS * sizeof(int16_t);
         std::memcpy(outputBias, &gEvalData[memoryIndex], 1 * sizeof(int32_t));
         memoryIndex += OUTPUT_BIAS * sizeof(int32_t);
     }
-}
-
-void activate(NNUE::accumulator &accumulator, Square sq, Piece p)
-{
-    const int inputUs = sq + p * 64;
-
-    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
-    {
-        const int offset = chunks * 256;
-        for (int i = offset; i < 256 + offset; i++)
-        {
-            accumulator[i] += inputWeights[inputUs * HIDDEN_BIAS + i];
-        }
-    }
-}
-
-void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p)
-{
-    const int inputUs = sq + p * 64;
-
-    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
-    {
-        const int offset = chunks * 256;
-        for (int i = offset; i < 256 + offset; i++)
-        {
-            accumulator[i] -= inputWeights[inputUs * HIDDEN_BIAS + i];
-        }
-    }
-}
-
-void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p)
-{
-    const int ClearInputUs = from_sq + p * 64;
-
-    const int AddInputUs = to_sq + p * 64;
-
-    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
-    {
-        const int offset = chunks * 256;
-        for (int i = offset; i < 256 + offset; i++)
-        {
-            accumulator[i] +=
-                -inputWeights[ClearInputUs * HIDDEN_BIAS + i] + inputWeights[AddInputUs * HIDDEN_BIAS + i];
-        }
-    }
-}
-
-int16_t relu(int16_t x)
-{
-    return std::max(static_cast<int16_t>(0), x);
-}
-
-int32_t output(const NNUE::accumulator &accumulator)
-{
-    int32_t output = outputBias[0];
-
-    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
-    {
-        const int offset = chunks * 256;
-        for (int i = 0; i < 256; i++)
-        {
-            output += relu(accumulator[i + offset]) * hiddenWeights[i + offset];
-        }
-    }
-
-    return output / (16 * 512);
 }
 } // namespace NNUE
