@@ -34,7 +34,9 @@ Board::Board()
 void Board::accumulate()
 {
     for (int i = 0; i < HIDDEN_BIAS; i++)
+    {
         accumulator[i] = hiddenBias[i];
+    }
 
     for (Square i = SQ_A1; i < NO_SQ; i++)
     {
@@ -42,8 +44,7 @@ void Board::accumulate()
         bool input = p != None;
         if (!input)
             continue;
-        int j = i + p * 64;
-        NNUE::activate(accumulator, j);
+        NNUE::activate(accumulator, i, p);
     }
 }
 
@@ -64,9 +65,9 @@ Piece Board::pieceAtB(Square sq)
 
 void Board::applyFen(std::string fen, bool updateAcc)
 {
-    for (int i = 0; i < 12; i++)
+    for (Piece p = WhitePawn; p < None; p++)
     {
-        Bitboards[i] = 0ULL;
+        Bitboards[p] = 0ULL;
     }
     std::vector<std::string> params = splitInput(fen);
     std::string position = params[0];
@@ -86,7 +87,9 @@ void Board::applyFen(std::string fen, bool updateAcc)
     if (updateAcc)
     {
         for (int i = 0; i < HIDDEN_BIAS; i++)
+        {
             accumulator[i] = hiddenBias[i];
+        }
     }
 
     Square square = Square(56);
@@ -465,23 +468,19 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     {
         if (sideToMove == White && from_sq == SQ_E1 && to_sq == SQ_G1)
         {
-            removePiece<updateNNUE>(WhiteRook, SQ_H1);
-            placePiece<updateNNUE>(WhiteRook, SQ_F1);
+            movePiece<updateNNUE>(WhiteRook, SQ_H1, SQ_F1);
         }
         else if (sideToMove == White && from_sq == SQ_E1 && to_sq == SQ_C1)
         {
-            removePiece<updateNNUE>(WhiteRook, SQ_A1);
-            placePiece<updateNNUE>(WhiteRook, SQ_D1);
+            movePiece<updateNNUE>(WhiteRook, SQ_A1, SQ_D1);
         }
         else if (sideToMove == Black && from_sq == SQ_E8 && to_sq == SQ_G8)
         {
-            removePiece<updateNNUE>(BlackRook, SQ_H8);
-            placePiece<updateNNUE>(BlackRook, SQ_F8);
+            movePiece<updateNNUE>(BlackRook, SQ_H8, SQ_F8);
         }
         else if (sideToMove == Black && from_sq == SQ_E8 && to_sq == SQ_C8)
         {
-            removePiece<updateNNUE>(BlackRook, SQ_A8);
-            placePiece<updateNNUE>(BlackRook, SQ_D8);
+            movePiece<updateNNUE>(BlackRook, SQ_A8, SQ_D8);
         }
     }
     else if (pt == PAWN && ep)
@@ -501,8 +500,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     }
     else
     {
-        removePiece<updateNNUE>(p, from_sq);
-        placePiece<updateNNUE>(p, to_sq);
+        movePiece<updateNNUE>(p, from_sq, to_sq);
     }
 
     sideToMove = ~sideToMove;
@@ -548,8 +546,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     }
     else
     {
-        removePiece<updateNNUE>(p, to_sq);
-        placePiece<updateNNUE>(p, from_sq);
+        movePiece<updateNNUE>(p, to_sq, from_sq);
     }
 
     if (to_sq == enPassantSquare && pt == PAWN)
@@ -565,24 +562,20 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     {
         if (from_sq == SQ_E1 && to_sq == SQ_G1 && castlingRights & wk)
         {
-            removePiece<updateNNUE>(WhiteRook, SQ_F1);
-            placePiece<updateNNUE>(WhiteRook, SQ_H1);
+            movePiece<updateNNUE>(WhiteRook, SQ_F1, SQ_H1);
         }
         else if (from_sq == SQ_E1 && to_sq == SQ_C1 && castlingRights & wq)
         {
-            removePiece<updateNNUE>(WhiteRook, SQ_D1);
-            placePiece<updateNNUE>(WhiteRook, SQ_A1);
+            movePiece<updateNNUE>(WhiteRook, SQ_D1, SQ_A1);
         }
 
         else if (from_sq == SQ_E8 && to_sq == SQ_G8 && castlingRights & bk)
         {
-            removePiece<updateNNUE>(BlackRook, SQ_F8);
-            placePiece<updateNNUE>(BlackRook, SQ_H8);
+            movePiece<updateNNUE>(BlackRook, SQ_F8, SQ_H8);
         }
         else if (from_sq == SQ_E8 && to_sq == SQ_C8 && castlingRights & bq)
         {
-            removePiece<updateNNUE>(BlackRook, SQ_D8);
-            placePiece<updateNNUE>(BlackRook, SQ_A8);
+            movePiece<updateNNUE>(BlackRook, SQ_D8, SQ_A8);
         }
     }
 }

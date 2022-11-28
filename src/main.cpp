@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     // Initialize NNUE
     // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled
     // with.
-    NNUE::init("default.nnue");
+    NNUE::init("");
 
     UCI communication = UCI();
     communication.uciLoop(argc, argv);

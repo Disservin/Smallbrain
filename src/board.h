@@ -236,6 +236,13 @@ class Board
     /// @param sq
     template <bool updateNNUE> void placePiece(Piece piece, Square sq);
 
+    /// @brief Move a piece on the board
+    /// @tparam updateNNUE
+    /// @param piece
+    /// @param fromSq
+    /// @param toSq
+    template <bool updateNNUE> void movePiece(Piece piece, Square fromSq, Square toSq);
+
   private:
     /// @brief current accumulator
     std::array<int16_t, HIDDEN_BIAS> accumulator;
@@ -266,7 +273,9 @@ template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq)
     Bitboards[piece] &= ~(1ULL << sq);
     board[sq] = None;
     if constexpr (updateNNUE)
-        NNUE::deactivate(accumulator, sq + piece * 64);
+    {
+        NNUE::deactivate(accumulator, sq, piece);
+    }
 }
 
 template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq)
@@ -274,7 +283,21 @@ template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq)
     Bitboards[piece] |= (1ULL << sq);
     board[sq] = piece;
     if constexpr (updateNNUE)
-        NNUE::activate(accumulator, sq + piece * 64);
+    {
+        NNUE::activate(accumulator, sq, piece);
+    }
+}
+
+template <bool updateNNUE> void Board::movePiece(Piece piece, Square fromSq, Square toSq)
+{
+    Bitboards[piece] &= ~(1ULL << fromSq);
+    Bitboards[piece] |= (1ULL << toSq);
+    board[fromSq] = None;
+    board[toSq] = piece;
+    if constexpr (updateNNUE)
+    {
+        NNUE::move(accumulator, fromSq, toSq, piece);
+    }
 }
 
 template <Color c> U64 Board::Pawns()
