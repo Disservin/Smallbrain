@@ -296,9 +296,7 @@ template <bool updateNNUE> void Board::movePiece(Piece piece, Square fromSq, Squ
     board[toSq] = piece;
     if constexpr (updateNNUE)
     {
-        NNUE::deactivate(accumulator, fromSq, piece);
-        NNUE::activate(accumulator, toSq, piece);
-        // NNUE::move(accumulator, fromSq, toSq, piece);
+        NNUE::move(accumulator, fromSq, toSq, piece);
     }
 }
 
