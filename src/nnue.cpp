@@ -54,19 +54,48 @@ void init(const char *filename)
     }
 }
 
-void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum)
+void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p)
 {
-    for (int i = 0; i < HIDDEN_BIAS; i++)
+    const int inputUs = sq + p * 64;
+
+    for (int chunks = 0; chunks < 2; chunks++)
     {
-        accumulator[i] += inputWeights[inputNum * HIDDEN_BIAS + i];
+        const int offset = chunks * 256;
+        for (int i = offset; i < 256 + offset; i++)
+        {
+            accumulator[i] += inputWeights[inputUs * HIDDEN_BIAS + i];
+        }
     }
 }
 
-void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum)
+void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p)
 {
-    for (int i = 0; i < HIDDEN_BIAS; i++)
+    const int inputUs = sq + p * 64;
+
+    for (int chunks = 0; chunks < 2; chunks++)
     {
-        accumulator[i] -= inputWeights[inputNum * HIDDEN_BIAS + i];
+        const int offset = chunks * 256;
+        for (int i = offset; i < 256 + offset; i++)
+        {
+            accumulator[i] -= inputWeights[inputUs * HIDDEN_BIAS + i];
+        }
+    }
+}
+
+void move(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square from_sq, Square to_sq, Piece p)
+{
+    const int ClearInputUs = from_sq + p * 64;
+
+    const int AddInputUs = to_sq + p * 64;
+
+    for (int chunks = 0; chunks < 2; chunks++)
+    {
+        const int offset = chunks * 256;
+        for (int i = offset; i < 256 + offset; i++)
+        {
+            accumulator[i] +=
+                -inputWeights[ClearInputUs * HIDDEN_BIAS + i] + inputWeights[AddInputUs * HIDDEN_BIAS + i];
+        }
     }
 }
 
@@ -78,10 +107,16 @@ int16_t relu(int16_t x)
 int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator)
 {
     int32_t output = outputBias[0];
-    for (int i = 0; i < HIDDEN_BIAS; i++)
+
+    for (int chunks = 0; chunks < 2; chunks++)
     {
-        output += relu(accumulator[i]) * hiddenWeights[i];
+        const int offset = chunks * 256;
+        for (int i = 0; i < 256; i++)
+        {
+            output += relu(accumulator[i + offset]) * hiddenWeights[i + offset];
+        }
     }
+
     return output / (16 * 512);
 }
 } // namespace NNUE

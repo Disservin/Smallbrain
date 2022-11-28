@@ -5,6 +5,8 @@
 #include <cstdio>  // file reading
 #include <cstring> // memcpy
 
+#include "types.h"
+
 #define INPUT_WEIGHTS 64 * 12
 #define HIDDEN_BIAS 512
 #define HIDDEN_WEIGHTS 512
@@ -25,10 +27,13 @@ int16_t relu(int16_t x);
 void init(const char *filename);
 
 // activate a certain input and update the accumulator
-void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
+void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p);
 
 // deactivate a certain input and update the accumulator
-void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, int inputNum);
+void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p);
+
+// activate and deactivate, mirrors the logic of a move
+void move(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square from_sq, Square to_sq, Piece p);
 
 // return the nnue evaluation
 int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator);

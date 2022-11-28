@@ -294,6 +294,11 @@ static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL 
 
 static constexpr U64 DEFAULT_CHECKMASK = 18446744073709551615ULL;
 
+static constexpr Piece flippedPiece[] = {
+    BlackPawn, BlackKnight, BlackBishop, BlackRook, BlackQueen, BlackKing,
+    WhitePawn, WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen, WhiteKing,
+};
+
 /********************
  * Various other definitions
  *******************/
