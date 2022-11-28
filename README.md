@@ -12,6 +12,11 @@ So I started [Smallbrain](https://github.com/Disservin/Smallbrain) from scratch,
 After some time I began implementing a NNUE into Smallbrain, with the help of Luecx from [Koivisto](https://github.com/Luecx/Koivisto).<br>
 As of now Smallbrain has a NNUE trained on 500m depth 9 fens generated with the built in data generator and using [CudAD trainer](https://github.com/Luecx/CudAD) to ultimately train the network.
 
+## News
+
+The latest development version support for FRC has been added, the neural network has been retrained <br>
+with additional FRC data while being on par in classical.
+
 ## Compile
 
 Compile it using the Makefile in ./src 
@@ -27,6 +32,7 @@ or download the latest the latest executable directly over Github. <br>
 At the bottom you should be able to find multiple different compiles, choose one that doesnt crash.
 
 Ordered by performance you should try x86-64-avx2 first then x86-64-modern and at last x86-64.
+
 
 ## Elo
 #### [CCRL 40/15](http://ccrl.chessdom.com/ccrl/4040/) 
@@ -102,7 +108,6 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
   tests all perft position.
 
 
-
 ## Features
 * Evaluation
   * As of v6.0 the NNUE training dataset was regenerated using depth 9 selfplay games + random 8 piece combinations.
@@ -119,5 +124,3 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 ```
 .\smallbrain.exe -gen -threads 30 -tb E:/Chess/345
 ```
-
-* Book reading isnt fully optimized, very large books will slowdown the generation.
