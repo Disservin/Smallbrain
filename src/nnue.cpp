@@ -58,7 +58,7 @@ void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p)
 {
     const int inputUs = sq + p * 64;
 
-    for (int chunks = 0; chunks < 2; chunks++)
+    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
     {
         const int offset = chunks * 256;
         for (int i = offset; i < 256 + offset; i++)
@@ -72,7 +72,7 @@ void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece 
 {
     const int inputUs = sq + p * 64;
 
-    for (int chunks = 0; chunks < 2; chunks++)
+    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
     {
         const int offset = chunks * 256;
         for (int i = offset; i < 256 + offset; i++)
@@ -88,7 +88,7 @@ void move(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square from_sq, Square 
 
     const int AddInputUs = to_sq + p * 64;
 
-    for (int chunks = 0; chunks < 2; chunks++)
+    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
     {
         const int offset = chunks * 256;
         for (int i = offset; i < 256 + offset; i++)
@@ -108,7 +108,7 @@ int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator)
 {
     int32_t output = outputBias[0];
 
-    for (int chunks = 0; chunks < 2; chunks++)
+    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
     {
         const int offset = chunks * 256;
         for (int i = 0; i < 256; i++)
