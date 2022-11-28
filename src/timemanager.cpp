@@ -10,7 +10,7 @@ Time optimumTime(int64_t availableTime, int inc, int movestogo)
     int mtg = movestogo == 0 ? 50 : movestogo;
 
     time.optimum =
-        std::max(static_cast<int64_t>(1), static_cast<int64_t>((availableTime + mtg * inc - mtg * overhead)));
+        std::max(static_cast<int64_t>(1), static_cast<int64_t>((availableTime + mtg * inc / 2 - mtg * overhead)));
 
     if (movestogo == 0)
         time.optimum = static_cast<int64_t>(time.optimum / 20);
