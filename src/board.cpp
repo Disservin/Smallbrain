@@ -740,7 +740,7 @@ void Board::removeCastlingRightsRook(Square sq)
 
 std::string uciRep(Board &board, Move move)
 {
-    std::string m = "";
+    std::stringstream ss;
 
     Square from_sq = from(move);
     Square to_sq = to(move);
@@ -750,11 +750,12 @@ std::string uciRep(Board &board, Move move)
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
     }
 
-    m += squareToString[from_sq];
-    m += squareToString[to_sq];
+    ss << squareToString[from_sq];
+    ss << squareToString[to_sq];
     if (promoted(move))
-        m += PieceTypeToPromPiece[piece(move)];
-    return m;
+        ss << PieceTypeToPromPiece[piece(move)];
+
+    return ss.str();
 }
 
 template void Board::makeMove<false>(Move move);
