@@ -476,24 +476,23 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     if (isCastlingWhite || isCastlingBlack)
     {
-        Square rookSQ;
+        Square rookToSq;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
 
         removePiece<updateNNUE>(p, from_sq);
         removePiece<updateNNUE>(rook, to_sq);
 
-        rookSQ = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
         placePiece<updateNNUE>(p, to_sq);
-        placePiece<updateNNUE>(rook, rookSQ);
+        placePiece<updateNNUE>(rook, rookToSq);
     }
     else if (pt == PAWN && ep)
     {
         removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8));
     }
-
-    if (capture != None && !(isCastlingWhite || isCastlingBlack))
+    else if (capture != None && !(isCastlingWhite || isCastlingBlack))
     {
         removePiece<updateNNUE>(capture, to_sq);
     }
@@ -549,16 +548,17 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
     if ((isCastlingWhite || isCastlingBlack))
     {
-        Square rookSQ = to_sq;
+        Square rookToSq = to_sq;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        Square rookEnd = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        Square rookFromSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
-        removePiece<updateNNUE>(rook, rookEnd);
+        // We need to remove both pieces first and then place them back.
+        removePiece<updateNNUE>(rook, rookFromSq);
         removePiece<updateNNUE>(p, to_sq);
 
         placePiece<updateNNUE>(p, from_sq);
-        placePiece<updateNNUE>(rook, rookSQ);
+        placePiece<updateNNUE>(rook, rookToSq);
     }
     else if (promotion)
     {
