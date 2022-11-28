@@ -1,8 +1,10 @@
 #pragma once
+#include <algorithm>
 #include <atomic>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <type_traits> // for is_same_v
 #include <vector>
 
 #include "types.h"
@@ -12,17 +14,26 @@ std::vector<std::string> splitInput(std::string fen);
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-inline constexpr uint8_t square_file(Square sq)
+inline constexpr File square_file(Square sq)
 {
-    return sq & 7;
+    return File(sq & 7);
 }
 
 /// @brief Gets the rank index of the square where 0 is the first rank.
 /// @param sq
 /// @return the rank of the square
-inline constexpr uint8_t square_rank(Square sq)
+inline constexpr Rank square_rank(Square sq)
 {
-    return sq >> 3;
+    return Rank(sq >> 3);
+}
+
+/// @brief makes a square out of rank and file
+/// @param f
+/// @param r
+/// @return
+inline constexpr Square file_rank_square(File f, Rank r)
+{
+    return Square((r << 3) + f);
 }
 
 /// @brief  distance between two squares
@@ -34,21 +45,21 @@ uint8_t square_distance(Square a, Square b);
 /// @brief least significant bit instruction
 /// @param mask
 /// @return the least significant bit as the Square
-Square bsf(U64 mask);
+Square lsb(U64 mask);
 
 /// @brief most significant bit instruction
 /// @param mask
 /// @return the most significant bit as the Square
-Square bsr(U64 mask);
+Square msb(U64 mask);
 
 /// @brief Counts the set bits
 /// @param mask
 /// @return the count
 uint8_t popcount(U64 mask);
 
-/// @brief remove the bsf and return it
+/// @brief remove the lsb and return it
 /// @param mask
-/// @return the bsf
+/// @return the lsb
 Square poplsb(U64 &mask);
 
 // returns diagonal of given square
@@ -83,11 +94,6 @@ inline PieceType type_of_piece(Piece piece)
 /// @brief prefetches a memory address
 /// @param addr
 void prefetch(void *addr);
-
-/// @brief get uci representation of a move
-/// @param move
-/// @return uci move
-std::string uciRep(Move move);
 
 static std::atomic<int64_t> means[2];
 static std::atomic<int64_t> min[2];
@@ -124,3 +130,34 @@ Piece makePiece(PieceType type, Color c);
 /// @brief prints any bitboard
 /// @param bb
 void printBitboard(U64 bb);
+
+/// @brief elementInVector searches needle in the tokens
+/// @param needle
+/// @param haystack
+/// @return returns false if not found
+bool elementInVector(std::string needle, std::vector<std::string> haystack);
+
+/// @brief findElement returns the next value after a needle
+/// @param needle
+/// @param haystack
+/// @return
+template <typename T> T findElement(std::string needle, std::vector<std::string> haystack)
+{
+    int index = std::find(haystack.begin(), haystack.end(), needle) - haystack.begin();
+    if constexpr (std::is_same_v<T, int>)
+        return std::stoi(haystack[index + 1]);
+    else
+        return haystack[index + 1];
+}
+
+/// @brief
+/// @param needle
+/// @param haystack the string to search in
+/// @return
+bool contains(std::string needle, std::string haystack);
+
+/// @brief
+/// @param needle
+/// @param haystack the vector to search in
+/// @return
+bool contains(std::vector<std::string> needle, std::string haystack);

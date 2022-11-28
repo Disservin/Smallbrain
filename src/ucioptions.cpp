@@ -2,7 +2,8 @@
 
 std::vector<optionType> optionsPrint{
     optionType("Hash", "spin", "400", "1", "57344"), optionType("EvalFile", "string", "default.nnue", "", ""),
-    optionType("Threads", "spin", "1", "1", "256"), optionType("SyzygyPath", "string", "<empty>", "", "")};
+    optionType("Threads", "spin", "1", "1", "256"), optionType("SyzygyPath", "string", "<empty>", "", ""),
+    optionType("UCI_Chess960", "check", "false", "", "")};
 
 void uciOptions::printOptions()
 {
@@ -59,6 +60,11 @@ void uciOptions::uciSyzygy(std::string input)
 void uciOptions::uciPosition(Board &board, std::string fen, bool update)
 {
     board.applyFen(fen, update);
+}
+
+void uciOptions::uciChess960(Board &board, std::string_view v)
+{
+    board.chess960 = v == "true" ? true : false;
 }
 
 void uciOptions::uciMoves(Board &board, std::vector<std::string> &tokens)
@@ -132,6 +138,13 @@ Move convertUciToMove(Board &board, std::string input)
         int to_index = (rank - 1) * 8 + file - 1;
         Square target = Square(to_index);
         PieceType piece = type_of_piece(board.pieceAtBB(source));
+
+        // convert to king captures rook
+        if (!board.chess960 && piece == KING && square_distance(target, source) == 2)
+        {
+            target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
+        }
+
         return make(piece, source, target, false);
     }
     else if (input.length() == 5)

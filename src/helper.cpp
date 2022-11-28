@@ -1,6 +1,5 @@
 #include "helper.h"
 
-#include <algorithm> // reverse
 #include <bitset>
 
 std::vector<std::string> splitInput(std::string fen)
@@ -24,14 +23,14 @@ uint8_t square_distance(Square a, Square b)
 // Compiler specific functions, taken from Stockfish https://github.com/official-stockfish/Stockfish
 #if defined(__GNUC__) // GCC, Clang, ICC
 
-Square bsf(U64 b)
+Square lsb(U64 b)
 {
     if (!b)
         return NO_SQ;
     return Square(__builtin_ctzll(b));
 }
 
-Square bsr(U64 b)
+Square msb(U64 b)
 {
     if (!b)
         return NO_SQ;
@@ -42,14 +41,14 @@ Square bsr(U64 b)
 
 #ifdef _WIN64 // MSVC, WIN64
 #include <intrin.h>
-Square bsf(U64 b)
+Square lsb(U64 b)
 {
     unsigned long idx;
     _BitScanForward64(&idx, b);
     return (Square)idx;
 }
 
-Square bsr(U64 b)
+Square msb(U64 b)
 {
     unsigned long idx;
     _BitScanReverse64(&idx, b);
@@ -58,7 +57,7 @@ Square bsr(U64 b)
 
 #else // MSVC, WIN32
 #include <intrin.h>
-Square bsf(U64 b)
+Square lsb(U64 b)
 {
     unsigned long idx;
 
@@ -74,7 +73,7 @@ Square bsf(U64 b)
     }
 }
 
-Square bsr(U64 b)
+Square msb(U64 b)
 {
     unsigned long idx;
 
@@ -113,9 +112,8 @@ uint8_t popcount(U64 mask)
 
 Square poplsb(U64 &mask)
 {
-    int8_t s = bsf(mask);
-    mask &= mask - 1;
-    // mask = _blsr_u64(mask);
+    int8_t s = lsb(mask);
+    mask &= mask - 1; // compiler optimizes this to _blsr_u64
     return Square(s);
 }
 
@@ -147,16 +145,6 @@ void prefetch(void *addr)
 #else
     __builtin_prefetch(addr);
 #endif
-}
-
-std::string uciRep(Move move)
-{
-    std::string m = "";
-    m += squareToString[from(move)];
-    m += squareToString[to(move)];
-    if (promoted(move))
-        m += PieceTypeToPromPiece[piece(move)];
-    return m;
 }
 
 void mean_of(int v)
@@ -238,4 +226,24 @@ void printBitboard(U64 bb)
         std::cout << x << std::endl;
     }
     std::cout << '\n' << std::endl;
+}
+
+bool elementInVector(std::string el, std::vector<std::string> haystack)
+{
+    return std::find(haystack.begin(), haystack.end(), el) != haystack.end();
+}
+
+bool contains(std::string needle, std::string haystack)
+{
+    return haystack.find(needle) != std::string::npos;
+}
+
+bool contains(std::vector<std::string> needle, std::string haystack)
+{
+    for (auto &var : needle)
+    {
+        if (haystack.find(var) != std::string::npos)
+            return true;
+    }
+    return false;
 }

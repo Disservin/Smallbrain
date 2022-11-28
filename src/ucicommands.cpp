@@ -36,7 +36,7 @@ void parseInput(std::string input, Board &board)
         Movelist moves;
         Movegen::legalmoves<Movetype::CAPTURE>(board, moves);
         for (int i = 0; i < moves.size; i++)
-            std::cout << uciRep(moves[i].move) << std::endl;
+            std::cout << uciRep(board, moves[i].move) << std::endl;
         std::cout << "count: " << signed(moves.size) << std::endl;
     }
     else if (input == "moves")
@@ -44,7 +44,7 @@ void parseInput(std::string input, Board &board)
         Movelist moves;
         Movegen::legalmoves<Movetype::ALL>(board, moves);
         for (int i = 0; i < moves.size; i++)
-            std::cout << uciRep(moves[i].move) << std::endl;
+            std::cout << uciRep(board, moves[i].move) << std::endl;
         std::cout << "count: " << signed(moves.size) << std::endl;
     }
 
@@ -63,6 +63,22 @@ void parseInput(std::string input, Board &board)
         Perft perft = Perft();
         perft.board = board;
         perft.testAllPos();
+    }
+    else if (contains("move", input))
+    {
+        std::vector<std::string> tokens = splitInput(input);
+        bool hasMoves = elementInVector("move", tokens);
+
+        if (hasMoves)
+        {
+            std::size_t index = std::find(tokens.begin(), tokens.end(), "move") - tokens.begin();
+            index++;
+            for (; index < tokens.size(); index++)
+            {
+                Move move = convertUciToMove(board, tokens[index]);
+                board.makeMove<false>(move);
+            }
+        }
     }
 }
 
@@ -94,16 +110,6 @@ void quit(Search &searcher, Datagen::TrainingData &dg)
     stopThreads(searcher, dg);
     free(TTable);
     tb_free();
-}
-
-bool elementInVector(std::string el, std::vector<std::string> tokens)
-{
-    return std::find(tokens.begin(), tokens.end(), el) != tokens.end();
-}
-
-bool stringContain(std::string s, std::string origin)
-{
-    return origin.find(s) != std::string::npos;
 }
 
 const std::string getVersion()

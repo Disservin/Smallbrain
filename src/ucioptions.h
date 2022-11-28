@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "board.h"
+#include "helper.h"
 #include "nnue.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 #include "tt.h"
@@ -70,6 +71,11 @@ class uciOptions
     /// @param fen
     /// @param update
     void uciPosition(Board &board, std::string fen = DEFAULT_POS, bool update = true);
+
+    /// @brief
+    /// @param board
+    /// @param v
+    void uciChess960(Board &board, std::string_view v);
 
     /// @brief plays all moves in tokens
     /// @param board

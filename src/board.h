@@ -25,10 +25,12 @@ struct State
     uint8_t castling{};
     uint8_t halfMove{};
     Piece capturedPiece = None;
+    std::array<File, 2> chess960White = {};
+    std::array<File, 2> chess960Black = {};
     State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, uint8_t halfMoveCopy = {},
-          Piece capturedPieceCopy = None)
+          Piece capturedPieceCopy = None, std::array<File, 2> c960W = {NO_FILE}, std::array<File, 2> c960B = {NO_FILE})
         : enPassant(enpassantCopy), castling(castlingRightsCopy), halfMove(halfMoveCopy),
-          capturedPiece(capturedPieceCopy)
+          capturedPiece(capturedPieceCopy), chess960White(c960W), chess960Black(c960B)
     {
     }
 };
@@ -36,6 +38,10 @@ struct State
 class Board
 {
   public:
+    bool chess960 = false;
+    std::array<File, 2> castlingRights960White = {NO_FILE};
+    std::array<File, 2> castlingRights960Black = {NO_FILE};
+
     Color sideToMove;
 
     // NO_SQ when enpassant is not possible
@@ -265,7 +271,7 @@ class Board
     U64 updateKeySideToMove();
 
     void removeCastlingRightsAll(Color c);
-    void removeCastlingRightsRook(Color c, Square sq);
+    void removeCastlingRightsRook(Square sq);
 };
 
 template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq)
@@ -342,5 +348,11 @@ template <Color c> U64 Board::Enemy()
 
 template <Color c> Square Board::KingSQ()
 {
-    return bsf(Kings<c>());
+    return lsb(Kings<c>());
 }
+
+/// @brief get uci representation of a move
+/// @param board
+/// @param move
+/// @return
+std::string uciRep(Board &board, Move move);
