@@ -58,7 +58,7 @@ Piece Board::pieceAtBB(Square sq)
     return None;
 }
 
-Piece Board::pieceAtB(Square sq)
+Piece Board::pieceAtB(Square sq) const
 {
     return board[sq];
 }
@@ -180,7 +180,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
     accumulatorStack.clear();
 }
 
-std::string Board::getFen()
+std::string Board::getFen() const
 {
     std::stringstream ss;
 
@@ -234,26 +234,6 @@ std::string Board::getFen()
     ss << int(halfMoveClock) << " " << int(fullMoveNumber / 2);
 
     return ss.str();
-}
-
-void Board::print()
-{
-    for (int i = 63; i >= 0; i -= 8)
-    {
-        std::cout << " " << pieceToChar[board[i - 7]] << " " << pieceToChar[board[i - 6]] << " "
-                  << pieceToChar[board[i - 5]] << " " << pieceToChar[board[i - 4]] << " " << pieceToChar[board[i - 3]]
-                  << " " << pieceToChar[board[i - 2]] << " " << pieceToChar[board[i - 1]] << " "
-                  << pieceToChar[board[i]] << " " << std::endl;
-    }
-    std::cout << '\n' << std::endl;
-    std::cout << "Fen: " << getFen() << std::endl;
-    std::cout << "Side to move: " << static_cast<int>(sideToMove) << std::endl;
-    std::cout << "Castling rights: " << static_cast<int>(castlingRights) << std::endl;
-    std::cout << "Halfmoves: " << static_cast<int>(halfMoveClock) << std::endl;
-    std::cout << "Fullmoves: " << static_cast<int>(fullMoveNumber) / 2 << std::endl;
-    std::cout << "EP: " << static_cast<int>(enPassantSquare) << std::endl;
-    std::cout << "Hash: " << hashKey << std::endl;
-    std::cout << "Chess960: " << chess960 << std::endl;
 }
 
 bool Board::isRepetition(int draw)
@@ -621,6 +601,28 @@ void Board::unmakeNullMove()
 std::array<int16_t, HIDDEN_BIAS> &Board::getAccumulator()
 {
     return accumulator;
+}
+
+std::ostream &operator<<(std::ostream &os, const Board &b)
+{
+    for (int i = 63; i >= 0; i -= 8)
+    {
+        os << " " << pieceToChar[b.board[i - 7]] << " " << pieceToChar[b.board[i - 6]] << " "
+           << pieceToChar[b.board[i - 5]] << " " << pieceToChar[b.board[i - 4]] << " " << pieceToChar[b.board[i - 3]]
+           << " " << pieceToChar[b.board[i - 2]] << " " << pieceToChar[b.board[i - 1]] << " " << pieceToChar[b.board[i]]
+           << " \n";
+    }
+    os << "\n\n";
+    os << "Fen: " << b.getFen() << "\n";
+    os << "Side to move: " << static_cast<int>(b.sideToMove) << "\n";
+    os << "Castling rights: " << static_cast<int>(b.castlingRights) << "\n";
+    os << "Halfmoves: " << static_cast<int>(b.halfMoveClock) << "\n";
+    os << "Fullmoves: " << static_cast<int>(b.fullMoveNumber) / 2 << "\n";
+    os << "EP: " << static_cast<int>(b.enPassantSquare) << "\n";
+    os << "Hash: " << b.hashKey << "\n";
+    os << "Chess960: " << b.chess960 << std::endl;
+
+    return os;
 }
 
 /**
