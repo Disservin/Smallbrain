@@ -332,6 +332,8 @@ template <Color c> U64 Board::Queens()
 
 template <Color c> U64 Board::Kings()
 {
+    assert(Bitboards[c == White ? WhiteKing : BlackKing] != 0);
+
     return Bitboards[c == White ? WhiteKing : BlackKing];
 }
 

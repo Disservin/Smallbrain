@@ -262,6 +262,8 @@ Square Board::KingSQ(Color c)
 
 U64 Board::Enemy(Color c)
 {
+    assert(Us(~c) != 0);
+
     return Us(~c);
 }
 
@@ -302,6 +304,7 @@ U64 Board::Queens(Color c)
 }
 U64 Board::Kings(Color c)
 {
+    assert(Bitboards[KING + c * 6] != 0);
     return Bitboards[KING + c * 6];
 }
 
@@ -358,6 +361,12 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     Square to_sq = to(move);
     Piece capture = board[to_sq];
 
+    assert(from_sq >= 0 && from_sq < 64);
+    assert(to_sq >= 0 && to_sq < 64);
+    assert(type_of_piece(capture) != KING);
+    assert(p != None);
+    assert((promoted(move) && (pt != PAWN && pt != KING)) || !promoted(move));
+
     // *****************************
     // STORE STATE HISTORY
     // *****************************
@@ -394,6 +403,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     {
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
         Square rookSQ = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+
+        assert(type_of_piece(pieceAtB(to_sq)) == ROOK);
         hashKey ^= updateKeyPiece(rook, to_sq);
         hashKey ^= updateKeyPiece(rook, rookSQ);
     }
@@ -420,6 +431,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
             {
                 enPassantSquare = Square(to_sq - (sideToMove * -2 + 1) * 8);
                 hashKey ^= updateKeyEnPassant(enPassantSquare);
+
+                assert(pieceAtB(enPassantSquare) == None);
             }
         }
     }
@@ -470,20 +483,28 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     }
     else if (pt == PAWN && ep)
     {
+        assert(pieceAtB(Square(to_sq - (sideToMove * -2 + 1) * 8)) != None);
+
         removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8));
     }
     else if (capture != None && !(isCastlingWhite || isCastlingBlack))
     {
+        assert(pieceAtB(to_sq) != None);
+
         removePiece<updateNNUE>(capture, to_sq);
     }
 
     if (promoted(move))
     {
+        assert(pieceAtB(to_sq) == None);
+
         removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
         placePiece<updateNNUE>(p, to_sq);
     }
     else if (!(isCastlingWhite || isCastlingBlack))
     {
+        assert(pieceAtB(to_sq) == None);
+
         movePiece<updateNNUE>(p, from_sq, to_sq);
     }
 

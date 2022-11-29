@@ -573,6 +573,8 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
 
     init<c>(board, board.KingSQ<c>());
 
+    assert(board.doubleCheck <= 2);
+
     /********************
      * Moves have to be on the checkmask
      *******************/
