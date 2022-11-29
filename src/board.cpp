@@ -385,6 +385,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     assert(to_sq >= 0 && to_sq < 64);
     assert(type_of_piece(capture) != KING);
     assert(p != None);
+    assert((promoted(move) && (pt != PAWN && pt != KING)) || !promotion);
 
     // *****************************
     // STORE STATE HISTORY
@@ -560,9 +561,6 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     sideToMove = ~sideToMove;
     PieceType pt = piece(move);
     Piece p = makePiece(pt, sideToMove);
-
-    assert(pieceAtB(from_sq) == None);
-    assert((promotion && (pt != PAWN && pt != KING)) || !promotion);
 
     const bool isCastlingWhite =
         (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
