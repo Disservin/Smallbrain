@@ -118,7 +118,7 @@ class Board
     /// @brief Finds what piece is on the square using the board (more performant)
     /// @param sq
     /// @return found piece otherwise None
-    Piece pieceAtB(Square sq);
+    Piece pieceAtB(Square sq) const;
 
     /// @brief applys a new Fen to the board and also reload the entire nnue
     /// @param fen
@@ -127,10 +127,7 @@ class Board
 
     /// @brief returns a Fen string of the current board
     /// @return fen string
-    std::string getFen();
-
-    /// @brief prints the current board
-    void print();
+    std::string getFen() const;
 
     /// @brief detects if the position is a repetition by default 1, fide would be 3
     /// @param draw
@@ -248,6 +245,8 @@ class Board
     /// @param fromSq
     /// @param toSq
     template <bool updateNNUE> void movePiece(Piece piece, Square fromSq, Square toSq);
+
+    friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
   private:
     /// @brief current accumulator

@@ -28,7 +28,7 @@ void parseInput(std::string input, Board &board)
 {
     if (input == "print")
     {
-        board.print();
+        std::cout << board << std::endl;
     }
 
     else if (input == "captures")

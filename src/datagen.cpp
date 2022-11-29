@@ -160,7 +160,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         // CATCH BUGS
         if (result.score == VALUE_NONE)
         {
-            board.print();
+            std::cout << board << std::endl;
             exit(1);
         }
 
