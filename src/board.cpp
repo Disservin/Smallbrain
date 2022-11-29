@@ -385,7 +385,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     assert(to_sq >= 0 && to_sq < 64);
     assert(type_of_piece(capture) != KING);
     assert(p != None);
-    assert((promoted(move) && (pt != PAWN && pt != KING)) || !promotion);
+    assert((promoted(move) && (pt != PAWN && pt != KING)) || !promoted(move));
 
     // *****************************
     // STORE STATE HISTORY
