@@ -475,7 +475,7 @@ moves:
          *******************/
         if (td->id == 0 && RootNode && !stopped.load(std::memory_order_relaxed) && getTime() > 10000 && td->allowPrint)
             std::cout << "info depth " << depth - inCheck << " currmove " << uciRep(td->board, move)
-                      << " currmovenumber " << signed(madeMoves) << "\n";
+                      << " currmovenumber " << signed(madeMoves) << std::endl;
 
         /********************
          * Play the move on the internal board.

@@ -118,14 +118,13 @@ void Board::applyFen(std::string fen, bool updateAcc)
         }
     }
 
-    std::vector<std::string> v{"A", "B", "C", "D", "E", "F", "G"};
+    std::vector<std::string> allowedCastlingFiles{"A", "B", "C", "D", "E", "F", "G"};
 
-    chess960 = chess960 ? true : contains(v, castling);
+    chess960 = chess960 ? true : contains(allowedCastlingFiles, castling);
 
     castlingRights = 0;
     removeCastlingRightsAll(White);
     removeCastlingRightsAll(Black);
-    std::fill(std::begin(castlingRights960White), std::end(castlingRights960White), NO_FILE);
 
     if (!chess960)
     {
@@ -141,6 +140,9 @@ void Board::applyFen(std::string fen, bool updateAcc)
         int indexBlack = 0;
         for (size_t i = 0; i < castling.size(); i++)
         {
+            if (!elementInVector(std::string{castling[i]}, allowedCastlingFiles))
+                continue;
+
             if (isupper(castling[i]))
             {
                 castlingRights |= 1ull << indexWhite;
@@ -641,8 +643,17 @@ std::ostream &operator<<(std::ostream &os, const Board &b)
     os << "Fullmoves: " << static_cast<int>(b.fullMoveNumber) / 2 << "\n";
     os << "EP: " << static_cast<int>(b.enPassantSquare) << "\n";
     os << "Hash: " << b.hashKey << "\n";
-    os << "Chess960: " << b.chess960 << std::endl;
+    os << "Chess960: " << b.chess960;
 
+    for (int j = 0; j < 2; j++)
+    {
+        os << " WhiteRights: " << b.castlingRights960White[j];
+    }
+    for (int j = 0; j < 2; j++)
+    {
+        os << " BlackRights: " << b.castlingRights960Black[j];
+    }
+    os << std::endl;
     return os;
 }
 
