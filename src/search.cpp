@@ -118,7 +118,8 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
 
     TEntry *tte = probeTT(ttHit, ttMove, td->board.hashKey);
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
-    if (ttHit && !PvNode)
+
+    if (ttHit && !PvNode && ttScore != VALUE_NONE)
     {
         if (tte->flag == EXACTBOUND)
             return ttScore;
@@ -169,18 +170,21 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
             continue;
 
         td->nodes++;
+
         td->board.makeMove<true>(move);
 
         Score score = -qsearch<node>(-beta, -alpha, depth + 1, ss + 1, td);
+
         td->board.unmakeMove<false>(move);
 
         // update the best score
         if (score > bestValue)
         {
             bestValue = score;
+            bestMove = move;
+
             if (score > alpha)
             {
-                bestMove = move;
                 alpha = score;
                 if (score >= beta)
                     break;
@@ -292,7 +296,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      * Adjust alpha and beta for non PV nodes
      *******************/
 
-    if (!RootNode && !PvNode && ttHit && tte->depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
+    if (!RootNode && !PvNode && ttHit && tte->depth >= depth && (ss - 1)->currentmove != NULL_MOVE &&
+        ttScore != VALUE_NONE)
     {
         if (tte->flag == EXACTBOUND)
             return ttScore;
