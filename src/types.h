@@ -80,7 +80,7 @@ enum Square : uint8_t {
 
 // clang-format on
 
-enum Value : int16_t
+enum
 {
     VALUE_MATE = 32000,
     VALUE_INFINITE = 32001,

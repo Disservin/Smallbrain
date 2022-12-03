@@ -27,9 +27,9 @@ struct Stack
 {
     Movelist moves;
     Movelist quietMoves;
+    int eval;
     Move currentmove;
     uint16_t ply;
-    int eval;
 };
 
 struct SearchResult
