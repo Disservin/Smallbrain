@@ -83,7 +83,6 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
 
     Move bestMove = NO_MOVE;
     Score bestValue;
-    Score oldAlpha = alpha;
 
     /********************
      * Check for repetition or 50 move rule draw
@@ -121,7 +120,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     if (ttHit && !PvNode)
     {
-        if (tte->flag == EXACT)
+        if (tte->flag == EXACTBOUND)
             return ttScore;
         else if (tte->flag == LOWERBOUND && ttScore >= beta)
             return ttScore;
@@ -206,7 +205,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
      *******************/
 
     // Transposition table flag
-    Flag b = bestValue >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
+    Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
     if (!stopped.load(std::memory_order_relaxed))
         storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
@@ -229,7 +228,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     Score best = -VALUE_INFINITE;
     Score maxValue = VALUE_MATE;
     Score staticEval;
-    Score oldAlpha = alpha;
 
     bool improving;
     bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
@@ -296,7 +294,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     if (!RootNode && !PvNode && ttHit && tte->depth >= depth && (ss - 1)->currentmove != NULL_MOVE)
     {
-        if (tte->flag == EXACT)
+        if (tte->flag == EXACTBOUND)
             return ttScore;
         else if (tte->flag == LOWERBOUND)
             alpha = std::max(alpha, ttScore);
@@ -331,11 +329,11 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
                 break;
             default:
                 tbRes = 0;
-                flag = EXACT;
+                flag = EXACTBOUND;
                 break;
             }
 
-            if (flag == EXACT || (flag == LOWERBOUND && tbRes >= beta) || (flag == UPPERBOUND && tbRes <= alpha))
+            if (flag == EXACTBOUND || (flag == LOWERBOUND && tbRes >= beta) || (flag == UPPERBOUND && tbRes <= alpha))
             {
                 storeEntry(depth + 6, scoreToTT(tbRes, ss->ply), flag, td->board.hashKey, NO_MOVE);
                 return tbRes;
@@ -578,7 +576,7 @@ moves:
      *******************/
 
     // Transposition table flag
-    Flag b = best >= beta ? LOWERBOUND : (alpha != oldAlpha ? EXACT : UPPERBOUND);
+    Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
     if (!stopped.load(std::memory_order_relaxed))
         storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 
@@ -622,7 +620,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
 
         /********************
          * Increase the bounds because the score was outside of them or
-         * break in case it was a EXACT result.
+         * break in case it was a EXACTBOUND result.
          *******************/
         if (result <= alpha)
         {
