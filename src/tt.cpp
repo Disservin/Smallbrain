@@ -8,7 +8,7 @@ void storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
     if (tte->key != key || move)
         tte->move = move;
 
-    if (tte->key != key || b == EXACT || depth + 4 > tte->depth)
+    if (tte->key != key || b == EXACTBOUND || depth + 4 > tte->depth)
     {
         tte->depth = depth;
         tte->score = bestvalue;

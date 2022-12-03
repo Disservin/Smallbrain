@@ -97,10 +97,10 @@ enum
 
 enum Flag : uint8_t
 {
+    NONEBOUND,
     UPPERBOUND,
     LOWERBOUND,
-    EXACT,
-    NONEBOUND
+    EXACTBOUND,
 };
 
 enum CastlingRight : uint8_t
