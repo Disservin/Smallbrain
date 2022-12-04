@@ -118,7 +118,8 @@ void Board::applyFen(std::string fen, bool updateAcc)
         }
     }
 
-    std::vector<std::string> allowedCastlingFiles{"A", "B", "C", "D", "E", "F", "G"};
+    std::vector<std::string> allowedCastlingFiles{"A", "B", "C", "D", "E", "F", "G", "H",
+                                                  "a", "b", "c", "d", "e", "f", "g", "h"};
 
     chess960 = chess960 ? true : contains(allowedCastlingFiles, castling);
 

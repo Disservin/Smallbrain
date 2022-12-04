@@ -57,7 +57,10 @@ void Perft::testAllPos(int n)
                 std::cout << "Position " << i + 1 << ": passed" << std::endl;
             }
             else
+            {
                 std::cout << "Position " << i + 1 << ": failed" << std::endl;
+                exit(4);
+            }
         }
 
         board.chess960 = true;
@@ -73,7 +76,11 @@ void Perft::testAllPos(int n)
                 std::cout << "Position960 " << i + 1 << ": passed" << std::endl;
             }
             else
+            {
+
                 std::cout << "Position960 " << i + 1 << ": failed" << std::endl;
+                exit(4);
+            }
         }
 
         auto t2 = TimePoint::now();
