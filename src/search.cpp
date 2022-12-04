@@ -502,7 +502,7 @@ moves:
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
             score = -absearch<NonPV>(rdepth, -alpha - 1, -alpha, ss + 1, td);
-            doFullSearch = score > alpha;
+            doFullSearch = score > alpha && rdepth < newDepth;
         }
         else
             doFullSearch = !PvNode || madeMoves > 1;
