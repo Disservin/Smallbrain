@@ -43,12 +43,22 @@ template <typename T> struct FixedStack
     void push(const T &element)
     {
         assert(count <= MAX_PLY);
+        if (count > MAX_PLY)
+        {
+            std::cout << "bestmove push" << std::endl;
+            exit(1);
+        }
         container[count++] = element;
     }
 
     T &pop()
     {
         assert(count - 1 <= MAX_PLY && count > 0);
+        if (count - 1 < 0)
+        {
+            std::cout << "bestmove pop" << std::endl;
+            exit(1);
+        }
         return container[--count];
     }
 
