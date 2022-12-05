@@ -47,24 +47,24 @@ struct ThreadData
     Board board;
 
     // thread id, Mainthread = 0
-    int id;
+    int id = 0;
 
     // [sideToMove][from][to]
-    historyTable history;
+    historyTable history = {};
 
     // [sideToMove][ply]
-    killerTable killerMoves;
+    killerTable killerMoves = {};
 
     // pv collection
-    uint8_t pvLength[MAX_PLY]{};
-    Move pvTable[MAX_PLY][MAX_PLY]{};
+    uint8_t pvLength[MAX_PLY] = {};
+    Move pvTable[MAX_PLY][MAX_PLY] = {};
 
     // selective depth
-    uint8_t seldepth{};
+    uint8_t seldepth = {};
 
     // nodes searched
-    uint64_t nodes{};
-    uint64_t tbhits{};
+    uint64_t nodes = {};
+    uint64_t tbhits = {};
 
     // data generation is not allowed to print to the console
     bool allowPrint = true;
