@@ -35,7 +35,7 @@ struct State
     }
 };
 
-template <typename T> struct limitedStack
+template <typename T> struct FixedStack
 {
   public:
     T container[MAX_PLY + 1] = {};
@@ -130,7 +130,7 @@ class Board
 
     U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ];
 
-    limitedStack<State> stateHistory;
+    FixedStack<State> stateHistory;
 
     U64 Bitboards[12] = {};
     Piece board[MAX_SQ];
@@ -284,7 +284,7 @@ class Board
     NNUE::accumulator accumulator;
 
     /// @brief previous accumulators
-    limitedStack<NNUE::accumulator> accumulatorStack;
+    FixedStack<NNUE::accumulator> accumulatorStack;
 
     /// @brief calculate the current zobrist hash from scratch
     /// @return
