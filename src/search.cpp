@@ -774,7 +774,7 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
         ThreadData td;
         td.board = board;
         td.id = i;
-        this->tds.push_back(td);
+        this->tds.emplace_back(td);
     }
 
     /********************

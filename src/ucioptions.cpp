@@ -80,13 +80,13 @@ void uciOptions::uciMoves(Board &board, std::vector<std::string> &tokens)
 
 void uciOptions::addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max)
 {
-    optionsPrint.push_back(
+    optionsPrint.emplace_back(
         optionType(name, type, std::to_string(defaultValue), std::to_string(min), std::to_string(max)));
 }
 
 void uciOptions::addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max)
 {
-    optionsPrint.push_back(
+    optionsPrint.emplace_back(
         optionType(name, type, std::to_string(defaultValue), std::to_string(min), std::to_string(max)));
 }
 

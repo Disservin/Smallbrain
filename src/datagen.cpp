@@ -27,7 +27,7 @@ void TrainingData::generate(int workers, std::string book, int depth)
 
         while (std::getline(openingFile, line))
         {
-            openingBook.push_back(line);
+            openingBook.emplace_back(line);
         }
 
         openingFile.close();
@@ -128,7 +128,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         return;
 
     td.board = board;
-    search.tds.push_back(td);
+    search.tds.emplace_back(td);
 
     constexpr uint64_t nodes = 0;
 
@@ -231,7 +231,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         }
 
         ply++;
-        fens.push_back(fn);
+        fens.emplace_back(fn);
 
         board.makeMove<true>(result.move);
         search.tds[0].board = board;

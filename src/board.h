@@ -35,6 +35,37 @@ struct State
     }
 };
 
+template <typename T> struct limitedStack
+{
+  public:
+    T container[MAX_PLY + 1] = {};
+
+    void push(const T &element)
+    {
+        assert(count <= MAX_PLY);
+        container[count++] = element;
+    }
+
+    T &pop()
+    {
+        assert(count - 1 <= MAX_PLY && count > 0);
+        return container[--count];
+    }
+
+    void clear()
+    {
+        count = 0;
+    }
+
+    int size() const
+    {
+        return count;
+    }
+
+  private:
+    int count = 0;
+};
+
 class Board
 {
   public:
@@ -99,7 +130,7 @@ class Board
 
     U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ];
 
-    std::vector<State> stateHistory;
+    limitedStack<State> stateHistory;
 
     U64 Bitboards[12] = {};
     Piece board[MAX_SQ];
@@ -223,7 +254,7 @@ class Board
     /// @brief unmake a nullmove
     void unmakeNullMove();
 
-    std::array<int16_t, HIDDEN_BIAS> &getAccumulator();
+    NNUE::accumulator &getAccumulator();
 
     // update the internal board representation
 
@@ -250,10 +281,10 @@ class Board
 
   private:
     /// @brief current accumulator
-    std::array<int16_t, HIDDEN_BIAS> accumulator;
+    NNUE::accumulator accumulator;
 
     /// @brief previous accumulators
-    std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
+    limitedStack<NNUE::accumulator> accumulatorStack;
 
     /// @brief calculate the current zobrist hash from scratch
     /// @return
