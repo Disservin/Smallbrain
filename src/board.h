@@ -59,6 +59,7 @@ template <typename T> struct FixedStack
 
     int size() const
     {
+        assert(count >= 0 && count <= MAX_PLY);
         return count;
     }
 
