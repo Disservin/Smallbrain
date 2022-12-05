@@ -431,5 +431,7 @@ FodyWeavers.xsd
 *.sln.iml
 .vscode/settings.json
 
-
+# Others
 smallbrain*
+perf.data
+perf.data.old
