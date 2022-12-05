@@ -50,7 +50,7 @@ struct ThreadData
     int id;
 
     // [sideToMove][from][to]
-    historyTable historyTable;
+    historyTable history;
 
     // [sideToMove][ply]
     killerTable killerMoves;
