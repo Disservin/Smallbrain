@@ -54,7 +54,7 @@ void init(const char *filename)
     }
 }
 
-void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p)
+void activate(NNUE::accumulator &accumulator, Square sq, Piece p)
 {
     const int inputUs = sq + p * 64;
 
@@ -68,7 +68,7 @@ void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p)
     }
 }
 
-void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p)
+void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p)
 {
     const int inputUs = sq + p * 64;
 
@@ -82,7 +82,7 @@ void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece 
     }
 }
 
-void move(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square from_sq, Square to_sq, Piece p)
+void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p)
 {
     const int ClearInputUs = from_sq + p * 64;
 
@@ -104,7 +104,7 @@ int16_t relu(int16_t x)
     return std::max((int16_t)0, x);
 }
 
-int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator)
+int32_t output(const NNUE::accumulator &accumulator)
 {
     int32_t output = outputBias[0];
 
