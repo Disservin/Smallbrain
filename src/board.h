@@ -289,12 +289,12 @@ class Board
 
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
+    /// @brief previous accumulators
+    FixedStack<NNUE::accumulator> accumulatorStack;
+
   private:
     /// @brief current accumulator
     NNUE::accumulator accumulator;
-
-    /// @brief previous accumulators
-    FixedStack<NNUE::accumulator> accumulatorStack;
 
     /// @brief calculate the current zobrist hash from scratch
     /// @return

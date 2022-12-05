@@ -176,11 +176,12 @@ void Board::applyFen(std::string fen, bool updateAcc)
     // full_move_counter actually half moves
     fullMoveNumber = std::stoi(full_move_counter) * 2;
 
+    hashKey = zobristHash();
+
     hashHistory.clear();
-    hashHistory.emplace_back(zobristHash());
+    hashHistory.emplace_back(hashKey);
 
     stateHistory.clear();
-    hashKey = zobristHash();
     accumulatorStack.clear();
 }
 
