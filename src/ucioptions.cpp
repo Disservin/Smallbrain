@@ -78,6 +78,7 @@ void uciOptions::uciMoves(Board &board, std::vector<std::string> &tokens)
 
         board.stateHistory.clear();
         board.accumulatorStack.clear();
+        board.hashHistory.clear();
     }
 }
 
