@@ -16,6 +16,10 @@ extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
+using historyTable = std::array<std::array<std::array<int, MAX_SQ>, MAX_SQ>, 2>;
+using killerTable = std::array<std::array<Move, MAX_PLY + 1>, 2>;
+using nodeTable = std::array<std::array<U64, MAX_SQ>, MAX_SQ>;
+
 struct Movepicker
 {
     int ttMoveIndex = -1;
@@ -46,10 +50,10 @@ struct ThreadData
     int id;
 
     // [sideToMove][from][to]
-    int historyTable[2][MAX_SQ][MAX_SQ]{};
+    historyTable historyTable;
 
     // [sideToMove][ply]
-    Move killerMoves[2][MAX_PLY + 1]{};
+    killerTable killerMoves;
 
     // pv collection
     uint8_t pvLength[MAX_PLY]{};
@@ -86,7 +90,8 @@ class Search
     int checkTime;
 
     // node count logic
-    U64 spentEffort[MAX_SQ][MAX_SQ];
+    // [MAX_SQ][MAX_SQ]
+    nodeTable spentEffort;
 
     // timepoint when we entered search
     TimePoint::time_point t0;
