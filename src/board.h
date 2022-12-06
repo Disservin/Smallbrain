@@ -223,7 +223,7 @@ class Board
     /// @brief unmake a nullmove
     void unmakeNullMove();
 
-    std::array<int16_t, HIDDEN_BIAS> &getAccumulator();
+    NNUE::accumulator &getAccumulator();
 
     // update the internal board representation
 
@@ -250,10 +250,10 @@ class Board
 
   private:
     /// @brief current accumulator
-    std::array<int16_t, HIDDEN_BIAS> accumulator;
+    NNUE::accumulator accumulator;
 
     /// @brief previous accumulators
-    std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
+    std::vector<NNUE::accumulator> accumulatorStack;
 
     /// @brief calculate the current zobrist hash from scratch
     /// @return

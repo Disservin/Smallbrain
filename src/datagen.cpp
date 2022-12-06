@@ -62,8 +62,9 @@ void TrainingData::infinitePlay(int threadId, int depth)
         search.threads.clear();
         search.tds.clear();
 
-        std::memset(td.historyTable, 0, 2 * MAX_SQ * MAX_SQ * sizeof(int));
-        std::memset(td.killerMoves, 0, 2 * (MAX_PLY + 1) * sizeof(Move));
+        td.history.fill({});
+        td.killerMoves.fill({});
+
         std::memset(td.pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
         std::memset(td.pvLength, 0, MAX_PLY * sizeof(uint8_t));
 

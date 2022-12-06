@@ -646,7 +646,7 @@ void Board::unmakeNullMove()
     sideToMove = ~sideToMove;
 }
 
-std::array<int16_t, HIDDEN_BIAS> &Board::getAccumulator()
+NNUE::accumulator &Board::getAccumulator()
 {
     return accumulator;
 }
