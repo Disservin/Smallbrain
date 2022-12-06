@@ -94,6 +94,8 @@ void Board::applyFen(std::string fen, bool updateAcc)
         }
     }
 
+    std::fill(std::begin(board), std::end(board), None);
+
     Square square = Square(56);
     for (int index = 0; index < static_cast<int>(position.size()); index++)
     {
@@ -111,10 +113,6 @@ void Board::applyFen(std::string fen, bool updateAcc)
             square = Square(square - 16);
         else if (isdigit(curr))
         {
-            for (int i = 0; i < static_cast<int>(curr - '0'); i++)
-            {
-                board[square + i] = None;
-            }
             square = Square(square + (curr - '0'));
         }
     }
@@ -189,37 +187,58 @@ std::string Board::getFen() const
 {
     std::stringstream ss;
 
-    int sq;
-
+    // Loop through the ranks of the board in reverse order
     for (int rank = 7; rank >= 0; rank--)
     {
         int free_space = 0;
+
+        // Loop through the files of the board
         for (int file = 0; file < 8; file++)
         {
-            sq = rank * 8 + file;
+            // Calculate the square index
+            int sq = rank * 8 + file;
+
+            // Get the piece at the current square
             Piece piece = pieceAtB(Square(sq));
+
+            // If there is a piece at the current square
             if (piece != None)
             {
+                // If there were any empty squares before this piece,
+                // append the number of empty squares to the FEN string
                 if (free_space)
                 {
                     ss << free_space;
                     free_space = 0;
                 }
+
+                // Append the character representing the piece to the FEN string
                 ss << pieceToChar[piece];
             }
             else
             {
+                // If there is no piece at the current square, increment the
+                // counter for the number of empty squares
                 free_space++;
             }
         }
+
+        // If there are any empty squares at the end of the rank,
+        // append the number of empty squares to the FEN string
         if (free_space != 0)
         {
             ss << free_space;
         }
+
+        // Append a "/" character to the FEN string, unless this is the last rank
         ss << (rank > 0 ? "/" : "");
     }
+
+    // Append " w " or " b " to the FEN string, depending on which player's turn it is
     ss << (sideToMove == White ? " w " : " b ");
 
+    // Append the appropriate characters to the FEN string to indicate
+    // whether or not castling is allowed for each player
     if (castlingRights & wk)
         ss << "K";
     if (castlingRights & wq)
@@ -231,6 +250,8 @@ std::string Board::getFen() const
     if (castlingRights == 0)
         ss << "-";
 
+    // Append information about the en passant square (if any)
+    // and the halfmove clock and fullmove number to the FEN string
     if (enPassantSquare == NO_SQ)
         ss << " - ";
     else
@@ -238,6 +259,7 @@ std::string Board::getFen() const
 
     ss << int(halfMoveClock) << " " << int(fullMoveNumber / 2);
 
+    // Return the resulting FEN string
     return ss.str();
 }
 
@@ -590,15 +612,20 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
 void Board::makeNullMove()
 {
+    // Store the current state
     const State store =
         State(enPassantSquare, castlingRights, halfMoveClock, None, castlingRights960White, castlingRights960Black);
     stateHistory.push(store);
+
+    // Invert the side to move
     sideToMove = ~sideToMove;
 
+    // Update the hash key
     hashKey ^= updateKeySideToMove();
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
 
+    // Set the en passant square to NO_SQ and increment the full move number
     enPassantSquare = NO_SQ;
     fullMoveNumber++;
 }
@@ -776,18 +803,26 @@ std::string uciRep(Board &board, Move move)
 {
     std::stringstream ss;
 
+    // Get the from and to squares
     Square from_sq = from(move);
     Square to_sq = to(move);
 
+    // If the move is not a chess960 castling move and is a king moving more than one square,
+    // update the to square to be the correct square for a regular castling move
     if (!board.chess960 && piece(move) == KING && square_distance(to_sq, from_sq) >= 2)
     {
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
     }
 
+    // Add the from and to squares to the string stream
     ss << squareToString[from_sq];
     ss << squareToString[to_sq];
+
+    // If the move is a promotion, add the promoted piece to the string stream
     if (promoted(move))
+    {
         ss << PieceTypeToPromPiece[piece(move)];
+    }
 
     return ss.str();
 }
