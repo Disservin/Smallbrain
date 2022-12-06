@@ -10,7 +10,7 @@ std::vector<std::string> splitInput(std::string fen)
 
     while (std::getline(fen_stream, segment, ' '))
     {
-        seglist.emplace_back(segment);
+        seglist.push_back(segment);
     }
     return seglist;
 }

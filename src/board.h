@@ -35,38 +35,6 @@ struct State
     }
 };
 
-template <typename T> struct FixedStack
-{
-  public:
-    T container[MAX_PLY + 1] = {};
-
-    void push(const T &element)
-    {
-        assert(count <= MAX_PLY);
-        container[count++] = element;
-    }
-
-    T &pop()
-    {
-        assert(count - 1 <= MAX_PLY && count > 0);
-        return container[--count];
-    }
-
-    void clear()
-    {
-        count = 0;
-    }
-
-    int size() const
-    {
-        assert(count >= 0 && count <= MAX_PLY);
-        return count;
-    }
-
-  private:
-    int count = 0;
-};
-
 class Board
 {
   public:
@@ -131,7 +99,7 @@ class Board
 
     U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ];
 
-    FixedStack<State> stateHistory;
+    std::vector<State> stateHistory;
 
     U64 Bitboards[12] = {};
     Piece board[MAX_SQ];
@@ -255,7 +223,7 @@ class Board
     /// @brief unmake a nullmove
     void unmakeNullMove();
 
-    NNUE::accumulator &getAccumulator();
+    std::array<int16_t, HIDDEN_BIAS> &getAccumulator();
 
     // update the internal board representation
 
@@ -280,12 +248,12 @@ class Board
 
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
-    /// @brief previous accumulators
-    FixedStack<NNUE::accumulator> accumulatorStack;
-
   private:
     /// @brief current accumulator
-    NNUE::accumulator accumulator;
+    std::array<int16_t, HIDDEN_BIAS> accumulator;
+
+    /// @brief previous accumulators
+    std::vector<std::array<int16_t, HIDDEN_BIAS>> accumulatorStack;
 
     /// @brief calculate the current zobrist hash from scratch
     /// @return

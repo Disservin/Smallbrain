@@ -27,7 +27,7 @@ void TrainingData::generate(int workers, std::string book, int depth)
 
         while (std::getline(openingFile, line))
         {
-            openingBook.emplace_back(line);
+            openingBook.push_back(line);
         }
 
         openingFile.close();
@@ -62,8 +62,8 @@ void TrainingData::infinitePlay(int threadId, int depth)
         search.threads.clear();
         search.tds.clear();
 
-        td.history.fill({});
-        td.killerMoves.fill({});
+        std::memset(td.historyTable, 0, 2 * MAX_SQ * MAX_SQ * sizeof(int));
+        std::memset(td.killerMoves, 0, 2 * (MAX_PLY + 1) * sizeof(Move));
         std::memset(td.pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
         std::memset(td.pvLength, 0, MAX_PLY * sizeof(uint8_t));
 
@@ -128,7 +128,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         return;
 
     td.board = board;
-    search.tds.emplace_back(td);
+    search.tds.push_back(td);
 
     constexpr uint64_t nodes = 0;
 
@@ -231,7 +231,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         }
 
         ply++;
-        fens.emplace_back(fn);
+        fens.push_back(fn);
 
         board.makeMove<true>(result.move);
         search.tds[0].board = board;

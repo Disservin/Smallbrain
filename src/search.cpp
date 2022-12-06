@@ -22,14 +22,14 @@ int bonus(int depth)
 template <Movetype type> int Search::getHistory(Move move, ThreadData *td)
 {
     if constexpr (type == Movetype::QUIET)
-        return td->history[td->board.sideToMove][from(move)][to(move)];
+        return td->historyTable[td->board.sideToMove][from(move)][to(move)];
 }
 
 template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus, ThreadData *td)
 {
     int hhBonus = bonus - getHistory<type>(move, td) * std::abs(bonus) / 16384;
     if constexpr (type == Movetype::QUIET)
-        td->history[td->board.sideToMove][from(move)][to(move)] += hhBonus;
+        td->historyTable[td->board.sideToMove][from(move)][to(move)] += hhBonus;
 }
 
 template <Movetype type>
@@ -672,7 +672,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
     int depth = 1;
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
-    spentEffort.fill({});
+    std::memset(spentEffort, 0, 64 * 64 * sizeof(U64));
 
     for (int i = -2; i <= MAX_PLY + 1; ++i)
     {
@@ -774,7 +774,7 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
         ThreadData td;
         td.board = board;
         td.id = i;
-        this->tds.emplace_back(td);
+        this->tds.push_back(td);
     }
 
     /********************

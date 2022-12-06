@@ -3,10 +3,9 @@
 Board::Board()
 {
     initializeLookupTables();
-
+    stateHistory.reserve(MAX_PLY);
     hashHistory.reserve(512);
-    stateHistory.clear();
-    accumulatorStack.clear();
+    accumulatorStack.reserve(MAX_PLY);
 
     applyFen(DEFAULT_POS, true);
 
@@ -174,12 +173,11 @@ void Board::applyFen(std::string fen, bool updateAcc)
     // full_move_counter actually half moves
     fullMoveNumber = std::stoi(full_move_counter) * 2;
 
-    hashKey = zobristHash();
-
     hashHistory.clear();
-    hashHistory.emplace_back(hashKey);
+    hashHistory.push_back(zobristHash());
 
     stateHistory.clear();
+    hashKey = zobristHash();
     accumulatorStack.clear();
 }
 
@@ -400,12 +398,12 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashHistory.emplace_back(hashKey);
 
-    const State store =
+    State store =
         State(enPassantSquare, castlingRights, halfMoveClock, capture, castlingRights960White, castlingRights960Black);
-    stateHistory.push(store);
+    stateHistory.push_back(store);
 
     if constexpr (updateNNUE)
-        accumulatorStack.push(accumulator);
+        accumulatorStack.emplace_back(accumulator);
 
     halfMoveClock++;
     fullMoveNumber++;
@@ -540,11 +538,13 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
 template <bool updateNNUE> void Board::unmakeMove(Move move)
 {
-    const State restore = stateHistory.pop();
+    State restore = stateHistory.back();
+    stateHistory.pop_back();
 
     if (accumulatorStack.size())
     {
-        accumulator = accumulatorStack.pop();
+        accumulator = accumulatorStack.back();
+        accumulatorStack.pop_back();
     }
 
     hashKey = hashHistory.back();
@@ -612,12 +612,9 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
 void Board::makeNullMove()
 {
-    // Store the current state
-    const State store =
+    State store =
         State(enPassantSquare, castlingRights, halfMoveClock, None, castlingRights960White, castlingRights960Black);
-    stateHistory.push(store);
-
-    // Invert the side to move
+    stateHistory.push_back(store);
     sideToMove = ~sideToMove;
 
     // Update the hash key
@@ -632,7 +629,8 @@ void Board::makeNullMove()
 
 void Board::unmakeNullMove()
 {
-    const State restore = stateHistory.pop();
+    State restore = stateHistory.back();
+    stateHistory.pop_back();
 
     enPassantSquare = restore.enPassant;
     castlingRights = restore.castling;
@@ -648,7 +646,7 @@ void Board::unmakeNullMove()
     sideToMove = ~sideToMove;
 }
 
-NNUE::accumulator &Board::getAccumulator()
+std::array<int16_t, HIDDEN_BIAS> &Board::getAccumulator()
 {
     return accumulator;
 }

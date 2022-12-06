@@ -21,23 +21,20 @@ extern int32_t outputBias[OUTPUT_BIAS];
 
 namespace NNUE
 {
-
-using accumulator = std::array<int16_t, HIDDEN_BIAS>;
-
 int16_t relu(int16_t x);
 
 // load the weights and bias
 void init(const char *filename);
 
 // activate a certain input and update the accumulator
-void activate(NNUE::accumulator &accumulator, Square sq, Piece p);
+void activate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p);
 
 // deactivate a certain input and update the accumulator
-void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p);
+void deactivate(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square sq, Piece p);
 
 // activate and deactivate, mirrors the logic of a move
-void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p);
+void move(std::array<int16_t, HIDDEN_BIAS> &accumulator, Square from_sq, Square to_sq, Piece p);
 
 // return the nnue evaluation
-int32_t output(const NNUE::accumulator &accumulator);
+int32_t output(const std::array<int16_t, HIDDEN_BIAS> &accumulator);
 } // namespace NNUE

@@ -75,22 +75,18 @@ void uciOptions::uciMoves(Board &board, std::vector<std::string> &tokens)
     {
         Move move = convertUciToMove(board, tokens[index]);
         board.makeMove<false>(move);
-
-        board.stateHistory.clear();
-        board.accumulatorStack.clear();
-        board.hashHistory.clear();
     }
 }
 
 void uciOptions::addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max)
 {
-    optionsPrint.emplace_back(
+    optionsPrint.push_back(
         optionType(name, type, std::to_string(defaultValue), std::to_string(min), std::to_string(max)));
 }
 
 void uciOptions::addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max)
 {
-    optionsPrint.emplace_back(
+    optionsPrint.push_back(
         optionType(name, type, std::to_string(defaultValue), std::to_string(min), std::to_string(max)));
 }
 

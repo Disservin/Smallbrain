@@ -16,10 +16,6 @@ extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
-using historyTable = std::array<std::array<std::array<int, MAX_SQ>, MAX_SQ>, 2>;
-using killerTable = std::array<std::array<Move, MAX_PLY + 1>, 2>;
-using nodeTable = std::array<std::array<U64, MAX_SQ>, MAX_SQ>;
-
 struct Movepicker
 {
     int ttMoveIndex = -1;
@@ -47,24 +43,24 @@ struct ThreadData
     Board board;
 
     // thread id, Mainthread = 0
-    int id = 0;
+    int id;
 
     // [sideToMove][from][to]
-    historyTable history = {};
+    int historyTable[2][MAX_SQ][MAX_SQ]{};
 
     // [sideToMove][ply]
-    killerTable killerMoves = {};
+    Move killerMoves[2][MAX_PLY + 1]{};
 
     // pv collection
-    uint8_t pvLength[MAX_PLY] = {};
-    Move pvTable[MAX_PLY][MAX_PLY] = {};
+    uint8_t pvLength[MAX_PLY]{};
+    Move pvTable[MAX_PLY][MAX_PLY]{};
 
     // selective depth
-    uint8_t seldepth = {};
+    uint8_t seldepth{};
 
     // nodes searched
-    uint64_t nodes = {};
-    uint64_t tbhits = {};
+    uint64_t nodes{};
+    uint64_t tbhits{};
 
     // data generation is not allowed to print to the console
     bool allowPrint = true;
@@ -90,8 +86,7 @@ class Search
     int checkTime;
 
     // node count logic
-    // [MAX_SQ][MAX_SQ]
-    nodeTable spentEffort;
+    U64 spentEffort[MAX_SQ][MAX_SQ];
 
     // timepoint when we entered search
     TimePoint::time_point t0;
