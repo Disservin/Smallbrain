@@ -80,6 +80,8 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
             movelist[i].value = scoreMove(movelist[i].move);
             if (movelist[i].move == ttMove)
             {
+                assert(td->board.isPseudoLegal(ttMove) && td->board.isLegal(ttMove));
+
                 std::swap(movelist[0], movelist[i]);
                 played++;
             }
