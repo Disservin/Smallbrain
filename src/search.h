@@ -95,13 +95,6 @@ class Search
     // timepoint when we entered search
     TimePoint::time_point t0;
 
-    /// @brief return the history of the move
-    /// @tparam type
-    /// @param move
-    /// @param td
-    /// @return
-    template <Movetype type> int getHistory(Move move, ThreadData *td);
-
     /// @brief update move history
     /// @tparam type
     /// @param move
@@ -135,13 +128,6 @@ class Search
     template <Node node> Score qsearch(Score alpha, Score beta, int depth, Stack *ss, ThreadData *td);
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
-
-    /// @brief Static Exchange Evaluation
-    /// @param move
-    /// @param threshold
-    /// @param board
-    /// @return
-    bool see(Move move, int threshold, Board &board);
 
     /// @brief Most Valuable Victim - Least Valuable Aggressor
     /// @param move
@@ -198,6 +184,17 @@ class Search
     Move probeDTZ(ThreadData *td);
 };
 
+/// @brief return the history of the move
+/// @tparam type
+/// @param move
+/// @param td
+/// @return
+template <Movetype type> int getHistory(Move move, ThreadData *td)
+{
+    if constexpr (type == Movetype::QUIET)
+        return td->history[td->board.sideToMove][from(move)][to(move)];
+}
+
 static constexpr int mvvlvaArray[7][7] = {{0, 0, 0, 0, 0, 0, 0},
                                           {0, 205, 204, 203, 202, 201, 200},
                                           {0, 305, 304, 303, 302, 301, 300},
@@ -205,9 +202,6 @@ static constexpr int mvvlvaArray[7][7] = {{0, 0, 0, 0, 0, 0, 0},
                                           {0, 505, 504, 503, 502, 501, 500},
                                           {0, 605, 604, 603, 602, 601, 600},
                                           {0, 705, 704, 703, 702, 701, 700}};
-
-static constexpr int piece_values[2][7] = {{98, 337, 365, 477, 1025, 0, 0}, {114, 281, 297, 512, 936, 0, 0}};
-static constexpr int pieceValuesDefault[7] = {100, 320, 330, 500, 900, 0, 0};
 
 // fill reductions array
 void init_reductions();

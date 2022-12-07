@@ -325,12 +325,12 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             movelist.Add(make<KNIGHT, true>(to + DOWN_RIGHT, to));
             movelist.Add(make<BISHOP, true>(to + DOWN_RIGHT, to));
         }
-
-        // Remove the promotion pawns
-        singlePush &= ~RANK_PROMO;
-        Lpawns &= ~RANK_PROMO;
-        Rpawns &= ~RANK_PROMO;
     }
+
+    // Remove the promotion pawns
+    singlePush &= ~RANK_PROMO;
+    Lpawns &= ~RANK_PROMO;
+    Rpawns &= ~RANK_PROMO;
 
     /********************
      * Add single pushs.
@@ -479,9 +479,14 @@ template <Movetype mt> U64 LegalKingMoves(const Board &board, Square sq)
 
 template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, Square sq)
 {
-    U64 moves;
+    U64 bb;
 
-    moves = KingAttacks(sq) & board.enemyEmptyBB & ~board.seen;
+    if (mt == Movetype::ALL)
+        bb = board.enemyEmptyBB;
+    else
+        bb = ~board.occAll;
+
+    U64 moves = KingAttacks(sq) & bb & ~board.seen;
     U64 emptyAndNotAttacked = ~board.seen & ~board.occAll;
 
     switch (c)
@@ -510,9 +515,14 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, S
 
 template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board, Square sq)
 {
-    U64 moves;
+    U64 bb;
 
-    moves = KingAttacks(sq) & board.enemyEmptyBB & ~board.seen;
+    if (mt == Movetype::ALL)
+        bb = board.enemyEmptyBB;
+    else
+        bb = ~board.occAll;
+
+    U64 moves = KingAttacks(sq) & bb & ~board.seen;
 
     switch (c)
     {
