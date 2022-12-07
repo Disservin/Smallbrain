@@ -412,7 +412,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     const bool isCastlingWhite =
         (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
     const bool isCastlingBlack =
-        (p == BlackKing && capture == BlackRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
+        (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
 
     // *****************************
     // UPDATE HASH
@@ -570,7 +570,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     const bool isCastlingWhite =
         (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
     const bool isCastlingBlack =
-        (p == BlackKing && capture == BlackRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
+        (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
 
     if ((isCastlingWhite || isCastlingBlack))
     {
@@ -622,6 +622,8 @@ void Board::makeNullMove()
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
 
+    prefetch(&TTable[ttIndex(hashKey)]);
+
     // Set the en passant square to NO_SQ and increment the full move number
     enPassantSquare = NO_SQ;
     fullMoveNumber++;
@@ -649,6 +651,85 @@ void Board::unmakeNullMove()
 NNUE::accumulator &Board::getAccumulator()
 {
     return accumulator;
+}
+
+U64 Board::attacksByPiece(PieceType pt, Square sq, Color c)
+{
+    switch (pt)
+    {
+    case PAWN:
+        return PawnAttacks(sq, c);
+    case KNIGHT:
+        return KnightAttacks(sq);
+    case BISHOP:
+        return BishopAttacks(sq, All());
+    case ROOK:
+        return RookAttacks(sq, All());
+    case QUEEN:
+        return QueenAttacks(sq, All());
+    case KING:
+        return KingAttacks(sq);
+    case NONETYPE:
+        return 0ULL;
+    default:
+        return 0ULL;
+    }
+}
+
+/********************
+ * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
+ *******************/
+bool Board::see(Move move, int threshold)
+{
+    Square from_sq = from(move);
+    Square to_sq = to(move);
+    PieceType attacker = type_of_piece(pieceAtB(from_sq));
+    PieceType victim = type_of_piece(pieceAtB(to_sq));
+    int swap = pieceValuesDefault[victim] - threshold;
+    if (swap < 0)
+        return false;
+    swap -= pieceValuesDefault[attacker];
+    if (swap >= 0)
+        return true;
+    U64 occ = (All() ^ (1ULL << from_sq)) | (1ULL << to_sq);
+    U64 attackers = allAttackers(to_sq, occ) & occ;
+
+    U64 queens = Bitboards[WhiteQueen] | Bitboards[BlackQueen];
+
+    U64 bishops = Bitboards[WhiteBishop] | Bitboards[BlackBishop] | queens;
+    U64 rooks = Bitboards[WhiteRook] | Bitboards[BlackRook] | queens;
+
+    Color sT = ~colorOf(from_sq);
+
+    while (true)
+    {
+        attackers &= occ;
+        U64 myAttackers = attackers & Us(sT);
+        if (!myAttackers)
+            break;
+
+        int pt;
+        for (pt = 0; pt <= 5; pt++)
+        {
+            if (myAttackers & (Bitboards[pt] | Bitboards[pt + 6]))
+                break;
+        }
+        sT = ~sT;
+        if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0)
+        {
+            if (pt == KING && (attackers & Us(sT)))
+                sT = ~sT;
+            break;
+        }
+
+        occ ^= (1ULL << (lsb(myAttackers & (Bitboards[pt] | Bitboards[pt + 6]))));
+
+        if (pt == PAWN || pt == BISHOP || pt == QUEEN)
+            attackers |= BishopAttacks(to_sq, occ) & bishops;
+        if (pt == ROOK || pt == QUEEN)
+            attackers |= RookAttacks(to_sq, occ) & rooks;
+    }
+    return sT != colorOf(from_sq);
 }
 
 std::ostream &operator<<(std::ostream &os, const Board &b)

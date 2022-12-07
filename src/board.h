@@ -246,6 +246,13 @@ class Board
     /// @param toSq
     template <bool updateNNUE> void movePiece(Piece piece, Square fromSq, Square toSq);
 
+    U64 attacksByPiece(PieceType pt, Square sq, Color c);
+
+    /********************
+     * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
+     *******************/
+    bool see(Move move, int threshold);
+
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
   private:
@@ -357,3 +364,6 @@ template <Color c> Square Board::KingSQ()
 /// @param move
 /// @return
 std::string uciRep(Board &board, Move move);
+
+static constexpr int piece_values[2][7] = {{98, 337, 365, 477, 1025, 0, 0}, {114, 281, 297, 512, 936, 0, 0}};
+static constexpr int pieceValuesDefault[7] = {100, 320, 330, 500, 900, 0, 0};

@@ -19,12 +19,6 @@ int bonus(int depth)
     return std::min(2000, depth * 150);
 }
 
-template <Movetype type> int Search::getHistory(Move move, ThreadData *td)
-{
-    if constexpr (type == Movetype::QUIET)
-        return td->history[td->board.sideToMove][from(move)][to(move)];
-}
-
 template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus, ThreadData *td)
 {
     int hhBonus = bonus - getHistory<type>(move, td) * std::abs(bonus) / 16384;
@@ -166,7 +160,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
             continue;
 
         // see based capture pruning
-        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && !see(move, 0, td->board))
+        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && !td->board.see(move, 0))
             continue;
 
         td->nodes++;
@@ -463,7 +457,7 @@ moves:
                 continue;
 
             // SEE pruning
-            if (depth < 6 && !see(move, -(depth * 97), td->board))
+            if (depth < 6 && !td->board.see(move, -(depth * 97)))
                 continue;
         }
 
@@ -813,62 +807,6 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
     }
 }
 
-/********************
- * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0
- *******************/
-bool Search::see(Move move, int threshold, Board &board)
-{
-    Square from_sq = from(move);
-    Square to_sq = to(move);
-    PieceType attacker = type_of_piece(board.pieceAtB(from_sq));
-    PieceType victim = type_of_piece(board.pieceAtB(to_sq));
-    int swap = pieceValuesDefault[victim] - threshold;
-    if (swap < 0)
-        return false;
-    swap -= pieceValuesDefault[attacker];
-    if (swap >= 0)
-        return true;
-    U64 occ = (board.All() ^ (1ULL << from_sq)) | (1ULL << to_sq);
-    U64 attackers = board.allAttackers(to_sq, occ) & occ;
-
-    U64 queens = board.Bitboards[WhiteQueen] | board.Bitboards[BlackQueen];
-
-    U64 bishops = board.Bitboards[WhiteBishop] | board.Bitboards[BlackBishop] | queens;
-    U64 rooks = board.Bitboards[WhiteRook] | board.Bitboards[BlackRook] | queens;
-
-    Color sT = ~board.colorOf(from_sq);
-
-    while (true)
-    {
-        attackers &= occ;
-        U64 myAttackers = attackers & board.Us(sT);
-        if (!myAttackers)
-            break;
-
-        int pt;
-        for (pt = 0; pt <= 5; pt++)
-        {
-            if (myAttackers & (board.Bitboards[pt] | board.Bitboards[pt + 6]))
-                break;
-        }
-        sT = ~sT;
-        if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0)
-        {
-            if (pt == KING && (attackers & board.Us(sT)))
-                sT = ~sT;
-            break;
-        }
-
-        occ ^= (1ULL << (lsb(myAttackers & (board.Bitboards[pt] | board.Bitboards[pt + 6]))));
-
-        if (pt == PAWN || pt == BISHOP || pt == QUEEN)
-            attackers |= BishopAttacks(to_sq, occ) & bishops;
-        if (pt == ROOK || pt == QUEEN)
-            attackers |= RookAttacks(to_sq, occ) & rooks;
-    }
-    return sT != board.colorOf(from_sq);
-}
-
 int Search::mvvlva(Move move, Board &board)
 {
     int attacker = type_of_piece(board.pieceAtB(from(move))) + 1;
@@ -884,7 +822,7 @@ int Search::scoreMove(Move move, int ply, Move ttMove, ThreadData *td)
     }
     else if (td->board.pieceAtB(to(move)) != None)
     {
-        return see(move, 0, td->board) ? CAPTURE_SCORE + mvvlva(move, td->board) : mvvlva(move, td->board);
+        return td->board.see(move, 0) ? CAPTURE_SCORE + mvvlva(move, td->board) : mvvlva(move, td->board);
     }
     else if (td->killerMoves[0][ply] == move)
     {
