@@ -1,4 +1,5 @@
 #include "search.h"
+#include "movepick.h"
 
 #include <algorithm> // clamp
 #include <cmath>
@@ -107,7 +108,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
      * Adjust alpha and beta for non PV Nodes.
      *******************/
 
-    Move ttMove;
+    Move ttMove = NO_MOVE;
     bool ttHit = false;
 
     TEntry *tte = probeTT(ttHit, ttMove, td->board.hashKey);
@@ -123,35 +124,14 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
             return ttScore;
     }
 
-    /********************
-     * Generate all legalmoves in case we are in check,
-     * otherwise generate all capture moves or generate capture + check
-     * giving moves for depth 0.
-     *******************/
-
-    ss->moves.size = 0;
-    if (inCheck)
-        Movegen::legalmoves<Movetype::ALL>(td->board, ss->moves);
-    else
-        Movegen::legalmoves<Movetype::CAPTURE>(td->board, ss->moves);
-
-    // assign a value to each move
-    for (int i = 0; i < ss->moves.size; i++)
-        ss->moves[i].value = scoreqMove(ss->moves[i].move, ss->ply, ttMove, td);
+    MovePick<QSEARCH> mp(td, ss, ss->moves, ttMove);
 
     /********************
      * Search the moves
      *******************/
-
-    for (int i = 0; i < static_cast<int>(ss->moves.size); i++)
+    Move move = NO_MOVE;
+    while ((move = mp.nextMove(inCheck)) != NO_MOVE)
     {
-        // sort the best move to the front
-        // we dont need to sort the whole list, since we might have a cutoff
-        // and return before we checked all moves
-        sortMoves(ss->moves, i);
-
-        Move move = ss->moves[i].move;
-
         PieceType captured = type_of_piece(td->board.pieceAtB(to(move)));
 
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
@@ -418,25 +398,22 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
 moves:
     // reset movelists
-    ss->moves.size = 0;
     ss->quietMoves.size = 0;
-
-    Movegen::legalmoves<Movetype::ALL>(td->board, ss->moves);
 
     Score score = VALUE_NONE;
     Move bestMove = NO_MOVE;
-    Move move;
+    Move move = NO_MOVE;
     uint8_t madeMoves = 0;
     bool doFullSearch = false;
 
-    Movepicker mp;
+    MovePick<ABSEARCH> mp(td, ss, ss->moves, ttMove);
 
     /********************
      * Movepicker fetches the next move that we should search.
      * It is very important to return the likely best move first,
      * since then we get many cut offs.
      *******************/
-    while ((move = nextMove(ss->moves, mp, ttMove, td, ss)) != NO_MOVE)
+    while ((move = mp.nextMove(false)) != NO_MOVE)
     {
         madeMoves++;
 
@@ -805,123 +782,6 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
         this->tds[i].board = board;
         this->threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, i);
     }
-}
-
-int Search::mvvlva(Move move, Board &board)
-{
-    int attacker = type_of_piece(board.pieceAtB(from(move))) + 1;
-    int victim = type_of_piece(board.pieceAtB(to(move))) + 1;
-    return mvvlvaArray[victim][attacker];
-}
-
-int Search::scoreMove(Move move, int ply, Move ttMove, ThreadData *td)
-{
-    if (move == ttMove)
-    {
-        return TT_MOVE_SCORE;
-    }
-    else if (td->board.pieceAtB(to(move)) != None)
-    {
-        return td->board.see(move, 0) ? CAPTURE_SCORE + mvvlva(move, td->board) : mvvlva(move, td->board);
-    }
-    else if (td->killerMoves[0][ply] == move)
-    {
-        return KILLER_ONE_SCORE;
-    }
-    else if (td->killerMoves[1][ply] == move)
-    {
-        return KILLER_TWO_SCORE;
-    }
-    else
-    {
-        return getHistory<Movetype::QUIET>(move, td);
-    }
-}
-
-int Search::scoreqMove(Move move, int ply, Move ttMove, ThreadData *td)
-{
-    if (move == ttMove)
-    {
-        return TT_MOVE_SCORE;
-    }
-    else if (td->board.pieceAtB(to(move)) != None)
-    {
-        return CAPTURE_SCORE + mvvlva(move, td->board);
-    }
-    else if (td->killerMoves[0][ply] == move)
-    {
-        return KILLER_ONE_SCORE;
-    }
-    else if (td->killerMoves[1][ply] == move)
-    {
-        return KILLER_TWO_SCORE;
-    }
-    else
-    {
-        return getHistory<Movetype::QUIET>(move, td);
-    }
-}
-
-Move Search::nextMove(Movelist &moves, Movepicker &mp, Move ttMove, ThreadData *td, Stack *ss)
-{
-    switch (mp.stage)
-    {
-    case TT_MOVE:
-        mp.stage++;
-        mp.ttMoveIndex = -1;
-        for (mp.i = 0; mp.i < moves.size; mp.i++)
-        {
-            const Move move = moves[mp.i].move;
-            moves[mp.i].value = scoreMove(move, ss->ply, ttMove, td);
-            if (moves[mp.i].value == TT_MOVE_SCORE)
-            {
-                mp.ttMoveIndex = mp.i;
-                mp.i++;
-                return move;
-            }
-        }
-
-        [[fallthrough]];
-    case EVAL_OTHER:
-        for (; mp.i < moves.size; mp.i++)
-        {
-            moves[mp.i].value = scoreMove(moves[mp.i].move, ss->ply, NO_MOVE, td);
-        }
-        if (mp.ttMoveIndex != -1)
-        {
-            std::swap(moves[0], moves[mp.ttMoveIndex]);
-            mp.i = 1;
-        }
-        else
-            mp.i = 0;
-
-        mp.stage++;
-        [[fallthrough]];
-    case OTHER:
-        if (mp.i < moves.size)
-        {
-            sortMoves(moves, mp.i);
-            const Move move = moves[mp.i].move;
-            mp.i++;
-            return move;
-        }
-        else
-            return NO_MOVE;
-
-    default:
-        return NO_MOVE;
-    }
-}
-
-void Search::sortMoves(Movelist &moves, int sorted)
-{
-    int index = 0 + sorted;
-    for (int i = 1 + sorted; i < moves.size; i++)
-    {
-        if (moves[i] > moves[index])
-            index = i;
-    }
-    std::swap(moves[index], moves[0 + sorted]);
 }
 
 bool Search::exitEarly(uint64_t nodes, int ThreadId)

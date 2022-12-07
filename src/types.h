@@ -135,7 +135,8 @@ enum MoveScores : int
 enum Staging
 {
     TT_MOVE,
-    EVAL_OTHER,
+    GENERATE,
+    PICK_NEXT,
     OTHER
 };
 

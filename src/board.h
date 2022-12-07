@@ -246,6 +246,10 @@ class Board
     /// @param toSq
     template <bool updateNNUE> void movePiece(Piece piece, Square fromSq, Square toSq);
 
+    bool isLegal(const Move move);
+
+    bool isPseudoLegal(const Move move);
+
     U64 attacksByPiece(PieceType pt, Square sq, Color c);
 
     /********************

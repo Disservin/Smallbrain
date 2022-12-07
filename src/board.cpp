@@ -653,6 +653,236 @@ NNUE::accumulator &Board::getAccumulator()
     return accumulator;
 }
 
+bool Board::isLegal(const Move move)
+{
+    const Color color = sideToMove;
+    const Square from_sq = from(move);
+    const Square to_sq = to(move);
+    const Piece p = makePiece(piece(move), color);
+    const Piece capture = pieceAtB(to_sq);
+    Square kSQ = KingSQ(color);
+
+    assert(type_of_piece(capture) != KING);
+
+    U64 all = All();
+
+    if (piece(move) == PAWN && to_sq == enPassantSquare)
+    {
+        const Direction DOWN = color == Black ? NORTH : SOUTH;
+        const Square capSq = to_sq + DOWN;
+
+        U64 bb = all;
+        bb &= ~(1ull << from_sq);
+        bb |= 1ull << to_sq;
+        bb &= ~(1ull << capSq);
+
+        return !((RookAttacks(kSQ, bb) & (Rooks(~color) | Queens(~color))) ||
+                 (BishopAttacks(kSQ, bb) & (Bishops(~color) | Queens(~color))));
+    }
+
+    const bool isCastlingWhite =
+        (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
+    const bool isCastlingBlack =
+        (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
+
+    if (isCastlingWhite || isCastlingBlack)
+    {
+        const Square destKing = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+        const Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+
+        if (isSquareAttacked(~color, from_sq) || isSquareAttacked(~color, destKing))
+            return false;
+
+        Bitboards[p] &= ~(1ull << from_sq);
+        Bitboards[rook] &= ~(1ull << to_sq);
+
+        Bitboards[p] |= (1ull << destKing);
+        Bitboards[rook] |= (1ull << rookToSq);
+
+        bool isAttacked = isSquareAttacked(~color, destKing);
+
+        Bitboards[rook] &= ~(1ull << rookToSq);
+        Bitboards[p] &= ~(1ull << destKing);
+
+        Bitboards[p] |= (1ull << from_sq);
+        Bitboards[rook] |= (1ull << to_sq);
+
+        return !isAttacked;
+
+        assert(All() == all);
+        return true;
+    }
+
+    if (piece(move) == KING)
+    {
+        kSQ = to_sq;
+    }
+
+    if (promoted(move))
+    {
+        Bitboards[makePiece(PAWN, color)] &= ~(1ull << from_sq);
+        Bitboards[p] |= (1ull << to_sq);
+    }
+    else
+    {
+        Bitboards[p] &= ~(1ull << from_sq);
+        Bitboards[p] |= (1ull << to_sq);
+    }
+
+    if (capture != None)
+        Bitboards[capture] &= ~(1ull << to_sq);
+
+    const bool isAttacked = isSquareAttacked(~color, kSQ);
+
+    if (capture != None)
+        Bitboards[capture] |= (1ull << to_sq);
+
+    if (promoted(move))
+    {
+        Bitboards[p] &= ~(1ull << to_sq);
+        Bitboards[makePiece(PAWN, color)] |= (1ull << from_sq);
+    }
+    else
+    {
+        Bitboards[p] |= (1ull << from_sq);
+        Bitboards[p] &= ~(1ull << to_sq);
+    }
+
+    assert(All() == all);
+    return !isAttacked;
+}
+
+bool Board::isPseudoLegal(const Move move)
+{
+    if (move == NO_MOVE || move == NULL_MOVE)
+        return false;
+
+    const Color color = sideToMove;
+    const Square from_sq = from(move);
+    const Square to_sq = to(move);
+    const Piece p = makePiece(piece(move), color);
+    const Piece capture = pieceAtB(to_sq);
+    // const Square kSQ = KingSQ(color);
+
+    const bool isCastlingWhite =
+        (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
+    const bool isCastlingBlack =
+        (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
+
+    if (p != pieceAtB(from_sq) && !promoted(move))
+        return false;
+
+    if (promoted(move) && (type_of_piece(pieceAtB(from_sq)) != PAWN || (piece(move) == PAWN || piece(move) == KING)))
+        return false;
+
+    if (colorOf(from_sq) != color)
+        return false;
+
+    if (from_sq == to_sq)
+        return false;
+
+    if (piece(move) != type_of_piece(pieceAtB(from_sq)) && !promoted(move))
+        return false;
+
+    if (isCastlingWhite || isCastlingBlack)
+    {
+        bool correctRank = color == White ? square_rank(from_sq) == RANK_1 && square_rank(to_sq) == RANK_1
+                                          : square_rank(from_sq) == RANK_8 && square_rank(to_sq) == RANK_8;
+
+        if (!correctRank)
+            return false;
+
+        Square destKing = color == White ? to_sq > from_sq ? SQ_G1 : SQ_C1 : to_sq > from_sq ? SQ_G8 : SQ_C8;
+        Square destRook;
+
+        if (color == White)
+            destRook = destKing == SQ_G1 ? SQ_F1 : SQ_D1;
+        else
+            destRook = destKing == SQ_G8 ? SQ_F8 : SQ_D8;
+
+        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+
+        if (pieceAtB(to_sq) != rook)
+            return false;
+
+        U64 occ = All();
+        U64 copy = SQUARES_BETWEEN_BB[from_sq][to_sq] | SQUARES_BETWEEN_BB[from_sq][destKing];
+        occ &= ~(1ull << to_sq);
+        occ &= ~(1ull << from_sq);
+
+        while (copy)
+        {
+            const Square sq = poplsb(copy);
+            if ((1ull << sq) & occ)
+                return false;
+        }
+
+        if (((1ull << destRook) & occ) || ((1ull << destKing) & occ))
+            return false;
+
+        copy = SQUARES_BETWEEN_BB[from_sq][destKing];
+        while (copy)
+        {
+            const Square sq = poplsb(copy);
+            if (isSquareAttacked(~color, sq))
+                return false;
+        }
+
+        uint8_t rights = color == White ? to_sq > from_sq ? wk : wq : to_sq > from_sq ? bk : bq;
+
+        if (!chess960 && !(rights & castlingRights))
+            return false;
+
+        if (chess960)
+        {
+            bool rights960 = color == White ? castlingRights960White[0] == square_file(to_sq) ||
+                                                  castlingRights960White[1] == square_file(to_sq)
+                                            : castlingRights960Black[0] == square_file(to_sq) ||
+                                                  castlingRights960Black[1] == square_file(to_sq);
+            if (!rights960)
+                return false;
+        }
+
+        return true;
+    }
+
+    if (capture != None && colorOf(to_sq) == color)
+        return false;
+
+    if (piece(move) == PAWN || promoted(move))
+    {
+        const Direction DOWN = color == Black ? NORTH : SOUTH;
+
+        if (std::abs(from_sq - to_sq) == 16)
+        {
+            const Direction UP = color == Black ? SOUTH : NORTH;
+            return pieceAtB(Square(int(to_sq) ^ 8)) == None && pieceAtB(Square(int(to_sq))) == None &&
+                   to_sq == from_sq + UP + UP;
+        }
+        else if (std::abs(from_sq - to_sq) == 8)
+        {
+            const Direction UP = color == Black ? SOUTH : NORTH;
+            return pieceAtB(Square(int(to_sq))) == None && to_sq == from_sq + UP;
+        }
+        else
+        {
+            return enPassantSquare == to_sq
+                       ? capture == None && attacksByPiece(PAWN, from_sq, color) & (1ull << to_sq) &&
+                             type_of_piece(pieceAtB(to_sq + DOWN)) == PAWN
+                       : capture != None && attacksByPiece(PAWN, from_sq, color) & (1ull << to_sq);
+        }
+
+        return true;
+    }
+
+    if ((piece(move) != KNIGHT && SQUARES_BETWEEN_BB[from_sq][to_sq] & All()) ||
+        !(attacksByPiece(piece(move), from_sq, color) & (1ull << to_sq)))
+        return false;
+
+    return true;
+}
+
 U64 Board::attacksByPiece(PieceType pt, Square sq, Color c)
 {
     switch (pt)

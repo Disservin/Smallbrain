@@ -129,42 +129,6 @@ class Search
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
 
-    /// @brief Most Valuable Victim - Least Valuable Aggressor
-    /// @param move
-    /// @param board
-    /// @return
-    int mvvlva(Move move, Board &board);
-
-    /// @brief score moves from qsearch
-    /// @param move
-    /// @param ply
-    /// @param ttMove
-    /// @param td
-    /// @return
-    int scoreqMove(Move move, int ply, Move ttMove, ThreadData *td);
-
-    /// @brief score main search moves
-    /// @param move
-    /// @param ply
-    /// @param ttMove
-    /// @param td
-    /// @return
-    int scoreMove(Move move, int ply, Move ttMove, ThreadData *td);
-
-    // utility functions
-
-    /// @brief requires a clean Movepicker to start with
-    /// @param moves legal movelist
-    /// @param mp Movepicker object
-    /// @param ttHit
-    /// @param td ThreadData
-    /// @param ss Stack
-    /// @return next move
-    Move nextMove(Movelist &moves, Movepicker &mp, Move ttMove, ThreadData *td, Stack *ss);
-
-    // sorts the next bestmove to the front
-    void sortMoves(Movelist &moves, int sorted);
-
     // check limits
     bool exitEarly(uint64_t nodes, int ThreadId);
 
