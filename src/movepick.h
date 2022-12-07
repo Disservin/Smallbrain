@@ -76,10 +76,14 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
             Movegen::legalmoves<Movetype::CAPTURE>(td->board, movelist);
 
         for (int i = 0; i < movelist.size; i++)
+        {
             movelist[i].value = scoreMove(movelist[i].move);
-
-        if (playedTT)
-            orderNext();
+            if (movelist[i].move == ttMove)
+            {
+                std::swap(movelist[0], movelist[i]);
+                played++;
+            }
+        }
 
         stage++;
         [[fallthrough]];
