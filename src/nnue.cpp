@@ -1,6 +1,8 @@
 #include "nnue.h"
 
+#include <immintrin.h> // Include AVX2 header
 #include <iostream>
+#include <x86intrin.h>
 
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
@@ -56,46 +58,89 @@ void init(const char *filename)
 
 void activate(NNUE::accumulator &accumulator, Square sq, Piece p)
 {
+    // Compute the input index
     const int inputUs = sq + p * 64;
 
-    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
+    // Compute the base offset for accessing the input weights array
+    const int baseOffset = inputUs * HIDDEN_BIAS;
+
+    // Create a vector of 16-bit integers with all elements set to 0
+    // __m256i zero = _mm256_setzero_si256();
+
+    // Loop over the full accumulator array
+    for (int i = 0; i < 512; i += 16)
     {
-        const int offset = chunks * 256;
-        for (int i = offset; i < 256 + offset; i++)
-        {
-            accumulator[i] += inputWeights[inputUs * HIDDEN_BIAS + i];
-        }
+        // Load the next 16 values from the input weights array using _mm256_loadu_si256()
+        __m256i input = _mm256_loadu_si256((__m256i *)&inputWeights[baseOffset + i]);
+
+        // Load the next 16 values from the accumulator array using _mm256_loadu_si256()
+        __m256i acc = _mm256_loadu_si256((__m256i *)&accumulator[i]);
+
+        // Add the input and acc vectors using _mm256_add_epi16()
+        __m256i result = _mm256_add_epi16(input, acc);
+
+        // Store the result vector to the accumulator array using _mm256_storeu_si256()
+        _mm256_storeu_si256((__m256i *)&accumulator[i], result);
     }
 }
 
 void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p)
 {
+    // Compute the input index
     const int inputUs = sq + p * 64;
 
-    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
+    // Compute the base offset for accessing the input weights array
+    const int baseOffset = inputUs * HIDDEN_BIAS;
+
+    // Loop over the full accumulator array
+    for (int i = 0; i < 512; i += 16)
     {
-        const int offset = chunks * 256;
-        for (int i = offset; i < 256 + offset; i++)
-        {
-            accumulator[i] -= inputWeights[inputUs * HIDDEN_BIAS + i];
-        }
+        // Load the next 16 values from the input weights array using _mm256_loadu_si256()
+        __m256i input = _mm256_loadu_si256((__m256i *)&inputWeights[baseOffset + i]);
+
+        // Load the next 16 values from the accumulator array using _mm256_loadu_si256()
+        __m256i acc = _mm256_loadu_si256((__m256i *)&accumulator[i]);
+
+        // Subtract the input from the acc vector using _mm256_sub_epi16()
+        __m256i result = _mm256_sub_epi16(acc, input);
+
+        // Store the result vector to the accumulator array using _mm256_storeu_si256()
+        _mm256_storeu_si256((__m256i *)&accumulator[i], result);
     }
 }
 
 void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p)
 {
-    const int ClearInputUs = from_sq + p * 64;
+    // Compute the input index for the 'from' square
+    const int clearInputUs = from_sq + p * 64;
 
-    const int AddInputUs = to_sq + p * 64;
+    // Compute the input index for the 'to' square
+    const int addInputUs = to_sq + p * 64;
 
-    for (int chunks = 0; chunks < HIDDEN_BIAS / 256; chunks++)
+    // Compute the base offsets for accessing the input weights array
+    const int clearInputOffset = clearInputUs * HIDDEN_BIAS;
+    const int addInputOffset = addInputUs * HIDDEN_BIAS;
+
+    // Loop over the full accumulator array
+    for (int i = 0; i < 512; i += 16)
     {
-        const int offset = chunks * 256;
-        for (int i = offset; i < 256 + offset; i++)
-        {
-            accumulator[i] +=
-                -inputWeights[ClearInputUs * HIDDEN_BIAS + i] + inputWeights[AddInputUs * HIDDEN_BIAS + i];
-        }
+        // Load the next 16 values from the 'clear' input weights array using _mm256_loadu_si256()
+        __m256i clearInput = _mm256_loadu_si256((__m256i *)&inputWeights[clearInputOffset + i]);
+
+        // Load the next 16 values from the 'add' input weights array using _m256_loadu_si256()
+        __m256i addInput = _mm256_loadu_si256((__m256i *)&inputWeights[addInputOffset + i]);
+
+        // Load the next 16 values from the accumulator array using _mm256_loadu_si256()
+        __m256i acc = _mm256_loadu_si256((__m256i *)&accumulator[i]);
+
+        // Subtract the clearInput from the acc vector using _mm256_sub_epi16()
+        __m256i temp = _mm256_sub_epi16(acc, clearInput);
+
+        // Add the addInput to the temp vector using _mm256_add_epi16()
+        __m256i result = _mm256_add_epi16(temp, addInput);
+
+        // Store the result vector to the accumulator array using _mm256_storeu_si256()
+        _mm256_storeu_si256((__m256i *)&accumulator[i], result);
     }
 }
 
@@ -119,4 +164,5 @@ int32_t output(const NNUE::accumulator &accumulator)
 
     return output / (16 * 512);
 }
+
 } // namespace NNUE
