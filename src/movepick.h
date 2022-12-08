@@ -122,6 +122,10 @@ template <SearchType st> int MovePick<st>::scoreMove(const Move move)
     }
     else if (td->board.pieceAtB(to(move)) != None)
     {
+        if (st == QSEARCH)
+        {
+            return CAPTURE_SCORE + mvvlva(move);
+        }
         return td->board.see(move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
     }
     else
