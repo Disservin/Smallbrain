@@ -413,7 +413,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashHistory.emplace_back(hashKey);
 
-    State store =
+    const State store =
         State(enPassantSquare, castlingRights, halfMoveClock, capture, castlingRights960White, castlingRights960Black);
     stateHistory.push_back(store);
 
@@ -553,7 +553,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
 template <bool updateNNUE> void Board::unmakeMove(Move move)
 {
-    State restore = stateHistory.back();
+    const State restore = stateHistory.back();
     stateHistory.pop_back();
 
     if (accumulatorStack.size())
@@ -627,7 +627,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
 void Board::makeNullMove()
 {
-    State store =
+    const State store =
         State(enPassantSquare, castlingRights, halfMoveClock, None, castlingRights960White, castlingRights960Black);
     stateHistory.push_back(store);
     sideToMove = ~sideToMove;
@@ -646,7 +646,7 @@ void Board::makeNullMove()
 
 void Board::unmakeNullMove()
 {
-    State restore = stateHistory.back();
+    const State restore = stateHistory.back();
     stateHistory.pop_back();
 
     enPassantSquare = restore.enPassant;
@@ -675,11 +675,11 @@ bool Board::isLegal(const Move move)
     const Square to_sq = to(move);
     const Piece p = makePiece(piece(move), color);
     const Piece capture = pieceAtB(to_sq);
+    const U64 all = All();
+
     Square kSQ = KingSQ(color);
 
     assert(type_of_piece(capture) != KING);
-
-    U64 all = All();
 
     if (piece(move) == PAWN && to_sq == enPassantSquare)
     {
@@ -695,16 +695,14 @@ bool Board::isLegal(const Move move)
                  (BishopAttacks(kSQ, bb) & (Bishops(~color) | Queens(~color))));
     }
 
-    const bool isCastlingWhite =
-        (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
-    const bool isCastlingBlack =
-        (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
+    const bool isCastlingWhite = p == WhiteKing && capture == WhiteRook;
+    const bool isCastlingBlack = p == BlackKing && capture == BlackRook;
 
     if (isCastlingWhite || isCastlingBlack)
     {
         const Square destKing = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
-        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
         const Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
 
         if (isSquareAttacked(~color, from_sq, all) || isSquareAttacked(~color, destKing, all))
             return false;
@@ -778,8 +776,6 @@ bool Board::isPseudoLegal(const Move move)
     const Square to_sq = to(move);
     const Piece p = makePiece(piece(move), color);
     const Piece capture = pieceAtB(to_sq);
-    // const Square kSQ = KingSQ(color);
-
     const bool isCastlingWhite =
         (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
     const bool isCastlingBlack =
@@ -800,41 +796,37 @@ bool Board::isPseudoLegal(const Move move)
     if (piece(move) != type_of_piece(pieceAtB(from_sq)) && !promoted(move))
         return false;
 
-    U64 occ = All();
+    const U64 occ = All();
 
     if (isCastlingWhite || isCastlingBlack)
     {
-        bool correctRank = color == White ? square_rank(from_sq) == RANK_1 && square_rank(to_sq) == RANK_1
-                                          : square_rank(from_sq) == RANK_8 && square_rank(to_sq) == RANK_8;
+        const bool correctRank = color == White ? square_rank(from_sq) == RANK_1 && square_rank(to_sq) == RANK_1
+                                                : square_rank(from_sq) == RANK_8 && square_rank(to_sq) == RANK_8;
 
         if (!correctRank)
             return false;
 
-        Square destKing = color == White ? to_sq > from_sq ? SQ_G1 : SQ_C1 : to_sq > from_sq ? SQ_G8 : SQ_C8;
-        Square destRook;
-
-        if (color == White)
-            destRook = destKing == SQ_G1 ? SQ_F1 : SQ_D1;
-        else
-            destRook = destKing == SQ_G8 ? SQ_F8 : SQ_D8;
-
+        const Square destKing = color == White ? (to_sq > from_sq ? SQ_G1 : SQ_C1) : (to_sq > from_sq ? SQ_G8 : SQ_C8);
+        const Square destRook =
+            color == White ? (destKing == SQ_G1 ? SQ_F1 : SQ_D1) : (destKing == SQ_G8 ? SQ_F8 : SQ_D8);
         const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
 
         if (pieceAtB(to_sq) != rook)
             return false;
 
         U64 copy = SQUARES_BETWEEN_BB[from_sq][to_sq] | SQUARES_BETWEEN_BB[from_sq][destKing];
-        occ &= ~(1ull << to_sq);
-        occ &= ~(1ull << from_sq);
+        U64 occCopy = occ;
+        occCopy &= ~(1ull << to_sq);
+        occCopy &= ~(1ull << from_sq);
 
         while (copy)
         {
             const Square sq = poplsb(copy);
-            if ((1ull << sq) & occ)
+            if ((1ull << sq) & occCopy)
                 return false;
         }
 
-        if (((1ull << destRook) & occ) || ((1ull << destKing) & occ))
+        if (((1ull << destRook) & occCopy) || ((1ull << destKing) & occCopy))
             return false;
 
         copy = SQUARES_BETWEEN_BB[from_sq][destKing];
@@ -845,17 +837,17 @@ bool Board::isPseudoLegal(const Move move)
                 return false;
         }
 
-        uint8_t rights = color == White ? to_sq > from_sq ? wk : wq : to_sq > from_sq ? bk : bq;
+        const uint8_t rights = color == White ? to_sq > from_sq ? wk : wq : to_sq > from_sq ? bk : bq;
 
         if (!chess960 && !(rights & castlingRights))
             return false;
 
         if (chess960)
         {
-            bool rights960 = color == White ? castlingRights960White[0] == square_file(to_sq) ||
-                                                  castlingRights960White[1] == square_file(to_sq)
-                                            : castlingRights960Black[0] == square_file(to_sq) ||
-                                                  castlingRights960Black[1] == square_file(to_sq);
+            const bool rights960 = color == White ? castlingRights960White[0] == square_file(to_sq) ||
+                                                        castlingRights960White[1] == square_file(to_sq)
+                                                  : castlingRights960Black[0] == square_file(to_sq) ||
+                                                        castlingRights960Black[1] == square_file(to_sq);
             if (!rights960)
                 return false;
         }
