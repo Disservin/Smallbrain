@@ -197,11 +197,19 @@ class Board
     /// @param loc
     /// @return
     Color colorOf(Square loc);
+
     /// @brief is square attacked by color c
     /// @param c
     /// @param sq
     /// @return
     bool isSquareAttacked(Color c, Square sq);
+
+    /// @brief
+    /// @param c
+    /// @param sq
+    /// @param occ
+    /// @return
+    bool isSquareAttacked(Color c, Square sq, U64 occ);
 
     // attackers used for SEE
     U64 allAttackers(Square sq, U64 occupiedBB);
@@ -251,6 +259,8 @@ class Board
     bool isPseudoLegal(const Move move);
 
     U64 attacksByPiece(PieceType pt, Square sq, Color c);
+
+    U64 attacksByPiece(PieceType pt, Square sq, Color c, U64 occupied);
 
     /********************
      * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed under GPL-3.0

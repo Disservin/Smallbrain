@@ -353,6 +353,21 @@ bool Board::isSquareAttacked(Color c, Square sq)
     return false;
 }
 
+bool Board::isSquareAttacked(Color c, Square sq, U64 occ)
+{
+    if (Pawns(c) & PawnAttacks(sq, ~c))
+        return true;
+    if (Knights(c) & KnightAttacks(sq))
+        return true;
+    if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, occ))
+        return true;
+    if ((Rooks(c) | Queens(c)) & RookAttacks(sq, occ))
+        return true;
+    if (Kings(c) & KingAttacks(sq))
+        return true;
+    return false;
+}
+
 U64 Board::allAttackers(Square sq, U64 occupiedBB)
 {
     return attackersForSide(White, sq, occupiedBB) | attackersForSide(Black, sq, occupiedBB);
@@ -691,7 +706,7 @@ bool Board::isLegal(const Move move)
         const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
         const Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
 
-        if (isSquareAttacked(~color, from_sq) || isSquareAttacked(~color, destKing))
+        if (isSquareAttacked(~color, from_sq, all) || isSquareAttacked(~color, destKing, all))
             return false;
 
         Bitboards[p] &= ~(1ull << from_sq);
@@ -785,6 +800,8 @@ bool Board::isPseudoLegal(const Move move)
     if (piece(move) != type_of_piece(pieceAtB(from_sq)) && !promoted(move))
         return false;
 
+    U64 occ = All();
+
     if (isCastlingWhite || isCastlingBlack)
     {
         bool correctRank = color == White ? square_rank(from_sq) == RANK_1 && square_rank(to_sq) == RANK_1
@@ -806,7 +823,6 @@ bool Board::isPseudoLegal(const Move move)
         if (pieceAtB(to_sq) != rook)
             return false;
 
-        U64 occ = All();
         U64 copy = SQUARES_BETWEEN_BB[from_sq][to_sq] | SQUARES_BETWEEN_BB[from_sq][destKing];
         occ &= ~(1ull << to_sq);
         occ &= ~(1ull << from_sq);
@@ -825,7 +841,7 @@ bool Board::isPseudoLegal(const Move move)
         while (copy)
         {
             const Square sq = poplsb(copy);
-            if (isSquareAttacked(~color, sq))
+            if (isSquareAttacked(~color, sq, occ))
                 return false;
         }
 
@@ -868,16 +884,16 @@ bool Board::isPseudoLegal(const Move move)
         else
         {
             return enPassantSquare == to_sq
-                       ? capture == None && attacksByPiece(PAWN, from_sq, color) & (1ull << to_sq) &&
+                       ? capture == None && attacksByPiece(PAWN, from_sq, color, occ) & (1ull << to_sq) &&
                              type_of_piece(pieceAtB(to_sq + DOWN)) == PAWN
-                       : capture != None && attacksByPiece(PAWN, from_sq, color) & (1ull << to_sq);
+                       : capture != None && attacksByPiece(PAWN, from_sq, color, occ) & (1ull << to_sq);
         }
 
         return true;
     }
 
     if ((piece(move) != KNIGHT && SQUARES_BETWEEN_BB[from_sq][to_sq] & All()) ||
-        !(attacksByPiece(piece(move), from_sq, color) & (1ull << to_sq)))
+        !(attacksByPiece(piece(move), from_sq, color, occ) & (1ull << to_sq)))
         return false;
 
     return true;
@@ -897,6 +913,29 @@ U64 Board::attacksByPiece(PieceType pt, Square sq, Color c)
         return RookAttacks(sq, All());
     case QUEEN:
         return QueenAttacks(sq, All());
+    case KING:
+        return KingAttacks(sq);
+    case NONETYPE:
+        return 0ULL;
+    default:
+        return 0ULL;
+    }
+}
+
+U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ)
+{
+    switch (pt)
+    {
+    case PAWN:
+        return PawnAttacks(sq, c);
+    case KNIGHT:
+        return KnightAttacks(sq);
+    case BISHOP:
+        return BishopAttacks(sq, occ);
+    case ROOK:
+        return RookAttacks(sq, occ);
+    case QUEEN:
+        return QueenAttacks(sq, occ);
     case KING:
         return KingAttacks(sq);
     case NONETYPE:
