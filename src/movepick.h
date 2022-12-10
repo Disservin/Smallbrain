@@ -77,7 +77,7 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
 
         for (int i = 0; i < movelist.size; i++)
         {
-            movelist[i].value = scoreMove(movelist[i].move);
+            movelist[i].value = movelist[i].move == ttMove ? NEGATIVE_SCORE : scoreMove(movelist[i].move);
         }
 
         stage++;
@@ -92,7 +92,7 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
             if (move == ttMove)
             {
                 assert(playedTT);
-                move = played < movelist.size ? orderNext() : NO_MOVE;
+                move = NO_MOVE;
             }
 
             return move;
