@@ -78,24 +78,24 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
         for (int i = 0; i < movelist.size; i++)
         {
             movelist[i].value = scoreMove(movelist[i].move);
-
-            if (movelist[i].move == ttMove)
-            {
-                assert(playedTT);
-                assert(td->board.isPseudoLegal(ttMove) && td->board.isLegal(ttMove));
-
-                std::swap(movelist[0], movelist[i]);
-                played++;
-            }
         }
 
         stage++;
         [[fallthrough]];
     case PICK_NEXT:
+
         if (played < movelist.size)
         {
-            const Move move = orderNext();
+            Move move = orderNext();
             assert(td->board.isPseudoLegal(move) && td->board.isLegal(move));
+
+            if (playedTT && move == ttMove)
+            {
+                assert(playedTT);
+                assert(td->board.isPseudoLegal(ttMove) && td->board.isLegal(ttMove));
+                move = played < movelist.size ? orderNext() : NO_MOVE;
+            }
+
             return move;
         }
 
@@ -118,10 +118,8 @@ template <SearchType st> int MovePick<st>::mvvlva(Move move)
 
 template <SearchType st> int MovePick<st>::scoreMove(const Move move)
 {
-    if (move == ttMove)
-    {
-        return TT_MOVE_SCORE;
-    }
+    if (playedTT && move == ttMove)
+        return 0;
     else if (td->board.pieceAtB(to(move)) != None)
     {
         if (st == QSEARCH)
