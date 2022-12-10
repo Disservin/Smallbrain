@@ -308,10 +308,10 @@ static FD open_tb(const char *str, const char *suffix)
     size_t len;
     mbstowcs_s(&len, ucode_name, 4096, file, _TRUNCATE);
     fd = CreateFile(ucode_name, GENERIC_READ, FILE_SHARE_READ, NULL,
-			  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			  OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, NULL);
 #else
     fd = CreateFile(file, GENERIC_READ, FILE_SHARE_READ, NULL,
-			  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			  OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, NULL);
 #endif
 #endif
     free(file);
@@ -343,6 +343,9 @@ static void *map_file(FD fd, map_t *mapping)
   *mapping = statbuf.st_size;
   void *data = mmap(NULL, statbuf.st_size, PROT_READ,
 			      MAP_SHARED, fd, 0);
+#if defined(MADV_RANDOM)
+    madvise((void*)data, statbuf.st_size, MADV_RANDOM);
+#endif
   if (data == MAP_FAILED) {
     perror("mmap");
     return NULL;
