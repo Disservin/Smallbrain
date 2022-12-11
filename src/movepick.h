@@ -27,7 +27,7 @@ template <SearchType st> class MovePick
     int played = 0;
     bool playedTT = false;
 
-    Move orderNext();
+    template <bool score> Move orderNext();
 
     int mvvlva(const Move move);
     int scoreMove(const Move move);
@@ -42,11 +42,17 @@ MovePick<st>::MovePick(ThreadData *t, Stack *s, Movelist &moves, const Move move
     played = 0;
 }
 
-template <SearchType st> Move MovePick<st>::orderNext()
+template <SearchType st> template <bool score> Move MovePick<st>::orderNext()
 {
     int index = played;
+    if constexpr (score)
+        movelist[index].value = scoreMove(movelist[index].move);
+
     for (int i = 1 + played; i < movelist.size; i++)
     {
+        if constexpr (score)
+            movelist[i].value = scoreMove(movelist[i].move);
+
         if (movelist[i] > movelist[index])
             index = i;
     }
@@ -75,18 +81,18 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
         else
             Movegen::legalmoves<Movetype::CAPTURE>(td->board, movelist);
 
-        for (int i = 0; i < movelist.size; i++)
-        {
-            movelist[i].value = scoreMove(movelist[i].move);
-        }
-
         stage++;
         [[fallthrough]];
     case PICK_NEXT:
 
         if (played < movelist.size)
         {
-            Move move = orderNext();
+            Move move = NO_MOVE;
+            if (played == 0)
+                move = orderNext<true>();
+            else
+                move = orderNext<false>();
+
             assert(td->board.isPseudoLegal(move) && td->board.isLegal(move));
 
             // last move and we already searched it
