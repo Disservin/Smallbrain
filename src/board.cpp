@@ -353,6 +353,21 @@ bool Board::isSquareAttacked(Color c, Square sq)
     return false;
 }
 
+bool Board::isSquareAttacked(Color c, Square sq, U64 occ)
+{
+    if (Pawns(c) & PawnAttacks(sq, ~c))
+        return true;
+    if (Knights(c) & KnightAttacks(sq))
+        return true;
+    if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, occ))
+        return true;
+    if ((Rooks(c) | Queens(c)) & RookAttacks(sq, occ))
+        return true;
+    if (Kings(c) & KingAttacks(sq))
+        return true;
+    return false;
+}
+
 U64 Board::allAttackers(Square sq, U64 occupiedBB)
 {
     return attackersForSide(White, sq, occupiedBB) | attackersForSide(Black, sq, occupiedBB);
@@ -398,7 +413,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashHistory.emplace_back(hashKey);
 
-    State store =
+    const State store =
         State(enPassantSquare, castlingRights, halfMoveClock, capture, castlingRights960White, castlingRights960Black);
     stateHistory.push_back(store);
 
@@ -538,7 +553,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
 template <bool updateNNUE> void Board::unmakeMove(Move move)
 {
-    State restore = stateHistory.back();
+    const State restore = stateHistory.back();
     stateHistory.pop_back();
 
     if (accumulatorStack.size())
@@ -612,7 +627,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
 void Board::makeNullMove()
 {
-    State store =
+    const State store =
         State(enPassantSquare, castlingRights, halfMoveClock, None, castlingRights960White, castlingRights960Black);
     stateHistory.push_back(store);
     sideToMove = ~sideToMove;
@@ -631,7 +646,7 @@ void Board::makeNullMove()
 
 void Board::unmakeNullMove()
 {
-    State restore = stateHistory.back();
+    const State restore = stateHistory.back();
     stateHistory.pop_back();
 
     enPassantSquare = restore.enPassant;
@@ -653,6 +668,229 @@ NNUE::accumulator &Board::getAccumulator()
     return accumulator;
 }
 
+bool Board::isLegal(const Move move)
+{
+    const Color color = sideToMove;
+    const Square from_sq = from(move);
+    const Square to_sq = to(move);
+    const Piece p = makePiece(piece(move), color);
+    const Piece capture = pieceAtB(to_sq);
+    const U64 all = All();
+
+    Square kSQ = KingSQ(color);
+
+    assert(type_of_piece(capture) != KING);
+
+    if (piece(move) == PAWN && to_sq == enPassantSquare)
+    {
+        const Direction DOWN = color == Black ? NORTH : SOUTH;
+        const Square capSq = to_sq + DOWN;
+
+        U64 bb = all;
+        bb &= ~(1ull << from_sq);
+        bb |= 1ull << to_sq;
+        bb &= ~(1ull << capSq);
+
+        return !((RookAttacks(kSQ, bb) & (Rooks(~color) | Queens(~color))) ||
+                 (BishopAttacks(kSQ, bb) & (Bishops(~color) | Queens(~color))));
+    }
+
+    const bool isCastlingWhite = p == WhiteKing && capture == WhiteRook;
+    const bool isCastlingBlack = p == BlackKing && capture == BlackRook;
+
+    if (isCastlingWhite || isCastlingBlack)
+    {
+        const Square destKing = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+        const Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+
+        if (isSquareAttacked(~color, from_sq, all) || isSquareAttacked(~color, destKing, all))
+            return false;
+
+        Bitboards[p] &= ~(1ull << from_sq);
+        Bitboards[rook] &= ~(1ull << to_sq);
+
+        Bitboards[p] |= (1ull << destKing);
+        Bitboards[rook] |= (1ull << rookToSq);
+
+        bool isAttacked = isSquareAttacked(~color, destKing);
+
+        Bitboards[rook] &= ~(1ull << rookToSq);
+        Bitboards[p] &= ~(1ull << destKing);
+
+        Bitboards[p] |= (1ull << from_sq);
+        Bitboards[rook] |= (1ull << to_sq);
+
+        return !isAttacked;
+
+        assert(All() == all);
+        return true;
+    }
+
+    if (piece(move) == KING)
+    {
+        kSQ = to_sq;
+    }
+
+    if (promoted(move))
+    {
+        Bitboards[makePiece(PAWN, color)] &= ~(1ull << from_sq);
+        Bitboards[p] |= (1ull << to_sq);
+    }
+    else
+    {
+        Bitboards[p] &= ~(1ull << from_sq);
+        Bitboards[p] |= (1ull << to_sq);
+    }
+
+    if (capture != None)
+        Bitboards[capture] &= ~(1ull << to_sq);
+
+    const bool isAttacked = isSquareAttacked(~color, kSQ);
+
+    if (capture != None)
+        Bitboards[capture] |= (1ull << to_sq);
+
+    if (promoted(move))
+    {
+        Bitboards[p] &= ~(1ull << to_sq);
+        Bitboards[makePiece(PAWN, color)] |= (1ull << from_sq);
+    }
+    else
+    {
+        Bitboards[p] |= (1ull << from_sq);
+        Bitboards[p] &= ~(1ull << to_sq);
+    }
+
+    assert(All() == all);
+    return !isAttacked;
+}
+
+bool Board::isPseudoLegal(const Move move)
+{
+    if (move == NO_MOVE || move == NULL_MOVE)
+        return false;
+
+    const Color color = sideToMove;
+    const Square from_sq = from(move);
+    const Square to_sq = to(move);
+    const Piece p = makePiece(piece(move), color);
+    const Piece capture = pieceAtB(to_sq);
+    const bool isCastlingWhite =
+        (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
+    const bool isCastlingBlack =
+        (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
+
+    if (p != pieceAtB(from_sq) && !promoted(move))
+        return false;
+
+    if (promoted(move) && (type_of_piece(pieceAtB(from_sq)) != PAWN || (piece(move) == PAWN || piece(move) == KING)))
+        return false;
+
+    if (colorOf(from_sq) != color)
+        return false;
+
+    if (from_sq == to_sq)
+        return false;
+
+    if (piece(move) != type_of_piece(pieceAtB(from_sq)) && !promoted(move))
+        return false;
+
+    const U64 occ = All();
+
+    if (isCastlingWhite || isCastlingBlack)
+    {
+        const bool correctRank = color == White ? square_rank(from_sq) == RANK_1 && square_rank(to_sq) == RANK_1
+                                                : square_rank(from_sq) == RANK_8 && square_rank(to_sq) == RANK_8;
+
+        if (!correctRank)
+            return false;
+
+        const Square destKing = color == White ? (to_sq > from_sq ? SQ_G1 : SQ_C1) : (to_sq > from_sq ? SQ_G8 : SQ_C8);
+        const Square destRook =
+            color == White ? (destKing == SQ_G1 ? SQ_F1 : SQ_D1) : (destKing == SQ_G8 ? SQ_F8 : SQ_D8);
+        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+
+        if (pieceAtB(to_sq) != rook)
+            return false;
+
+        U64 copy = SQUARES_BETWEEN_BB[from_sq][to_sq] | SQUARES_BETWEEN_BB[from_sq][destKing];
+        U64 occCopy = occ;
+        occCopy &= ~(1ull << to_sq);
+        occCopy &= ~(1ull << from_sq);
+
+        while (copy)
+        {
+            const Square sq = poplsb(copy);
+            if ((1ull << sq) & occCopy)
+                return false;
+        }
+
+        if (((1ull << destRook) & occCopy) || ((1ull << destKing) & occCopy))
+            return false;
+
+        copy = SQUARES_BETWEEN_BB[from_sq][destKing];
+        while (copy)
+        {
+            const Square sq = poplsb(copy);
+            if (isSquareAttacked(~color, sq, occ))
+                return false;
+        }
+
+        const uint8_t rights = color == White ? to_sq > from_sq ? wk : wq : to_sq > from_sq ? bk : bq;
+
+        if (!chess960 && !(rights & castlingRights))
+            return false;
+
+        if (chess960)
+        {
+            const bool rights960 = color == White ? castlingRights960White[0] == square_file(to_sq) ||
+                                                        castlingRights960White[1] == square_file(to_sq)
+                                                  : castlingRights960Black[0] == square_file(to_sq) ||
+                                                        castlingRights960Black[1] == square_file(to_sq);
+            if (!rights960)
+                return false;
+        }
+
+        return true;
+    }
+
+    if (capture != None && colorOf(to_sq) == color)
+        return false;
+
+    if (piece(move) == PAWN || promoted(move))
+    {
+        const Direction DOWN = color == Black ? NORTH : SOUTH;
+
+        if (std::abs(from_sq - to_sq) == 16)
+        {
+            const Direction UP = color == Black ? SOUTH : NORTH;
+            return pieceAtB(Square(int(to_sq) ^ 8)) == None && pieceAtB(Square(int(to_sq))) == None &&
+                   to_sq == from_sq + UP + UP;
+        }
+        else if (std::abs(from_sq - to_sq) == 8)
+        {
+            const Direction UP = color == Black ? SOUTH : NORTH;
+            return pieceAtB(Square(int(to_sq))) == None && to_sq == from_sq + UP;
+        }
+        else
+        {
+            return enPassantSquare == to_sq
+                       ? capture == None && attacksByPiece(PAWN, from_sq, color, occ) & (1ull << to_sq) &&
+                             type_of_piece(pieceAtB(to_sq + DOWN)) == PAWN
+                       : capture != None && attacksByPiece(PAWN, from_sq, color, occ) & (1ull << to_sq);
+        }
+
+        return true;
+    }
+
+    if ((piece(move) != KNIGHT && SQUARES_BETWEEN_BB[from_sq][to_sq] & All()) ||
+        !(attacksByPiece(piece(move), from_sq, color, occ) & (1ull << to_sq)))
+        return false;
+
+    return true;
+}
+
 U64 Board::attacksByPiece(PieceType pt, Square sq, Color c)
 {
     switch (pt)
@@ -667,6 +905,29 @@ U64 Board::attacksByPiece(PieceType pt, Square sq, Color c)
         return RookAttacks(sq, All());
     case QUEEN:
         return QueenAttacks(sq, All());
+    case KING:
+        return KingAttacks(sq);
+    case NONETYPE:
+        return 0ULL;
+    default:
+        return 0ULL;
+    }
+}
+
+U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ)
+{
+    switch (pt)
+    {
+    case PAWN:
+        return PawnAttacks(sq, c);
+    case KNIGHT:
+        return KnightAttacks(sq);
+    case BISHOP:
+        return BishopAttacks(sq, occ);
+    case ROOK:
+        return RookAttacks(sq, occ);
+    case QUEEN:
+        return QueenAttacks(sq, occ);
     case KING:
         return KingAttacks(sq);
     case NONETYPE:

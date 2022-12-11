@@ -125,17 +125,18 @@ enum Direction : int8_t
 
 enum MoveScores : int
 {
-    TT_MOVE_SCORE = 10'000'000,
     PROMOTION_SCORE = 9'000'000,
     CAPTURE_SCORE = 7'000'000,
     KILLER_ONE_SCORE = 6'000'000,
-    KILLER_TWO_SCORE = 5'000'000
+    KILLER_TWO_SCORE = 5'000'000,
+    NEGATIVE_SCORE = -10'000'000
 };
 
 enum Staging
 {
     TT_MOVE,
-    EVAL_OTHER,
+    GENERATE,
+    PICK_NEXT,
     OTHER
 };
 
