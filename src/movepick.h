@@ -93,14 +93,10 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
             else
                 move = orderNext<false>();
 
-            assert(td->board.isPseudoLegal(move) && td->board.isLegal(move));
-
-            // last move and we already searched it
             if (move == ttMove)
-            {
-                return playedTT ? (played < movelist.size ? orderNext<false>() : NO_MOVE) : move;
-            }
+                move = playedTT ? (played < movelist.size ? orderNext<false>() : NO_MOVE) : move;
 
+            assert(td->board.isPseudoLegal(move) && td->board.isLegal(move));
             return move;
         }
 
