@@ -1,7 +1,7 @@
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/default.nnue
-CC        := g++
+CXX       := g++
 TARGET    := smallbrain
 CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra -DNDEBUG
 NATIVE     = -march=native
@@ -35,6 +35,7 @@ endif
 # all bmi2 instructions
 INSTRUCTIONS_BMI2 = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
 
+# SPECIFIC BUILDS
 ifeq ($(build), native)
 	NATIVE   = -march=native
 	ARCH     = -x86-64-native
@@ -82,12 +83,14 @@ ifeq ($(build), x86-64-vnni512)
 	ARCH         = -x86-64-vnni512
 endif
 
+# Native build with debug symbols
 ifeq ($(build), symbols)
 	CXXFLAGS += -g3 -fno-omit-frame-pointer
 	NATIVE   = -march=native
 	FLAGS    = -lpthread -lstdc++
 endif
 
+# OS independent build with full debug
 ifeq ($(build), debug)
 	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++17
 	NATIVE   = -msse -msse3 -mpopcnt
@@ -106,18 +109,26 @@ ifneq ($(GIT_DATE), )
 	CXXFLAGS += -DGIT_DATE=\"$(GIT_DATE)\"
 endif
 
-SRCS := $(wildcard *.cpp) ./syzygy/Fathom/src/tbprobe.c
-OBJS := $(patsubst %.cpp,%.o,$(SRCS))
-EXE  := $(NAME)$(ARCH)$(SUFFIX)
+SOURCES := $(wildcard *.cpp) syzygy/Fathom/src/tbprobe.cpp
+OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
+DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
+EXE     := $(NAME)$(ARCH)$(SUFFIX)
+
+.PHONY: all clean FORCE
 
 all: $(TARGET)
+clean:
+	rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS)
 
-$(TARGET): $(OBJS)
-	$(CC) -o $(EXE) $^ $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) -flto
+# Linking the executable from the object files
+$(TARGET): $(OBJECTS)
+	$(CXX) -o $(EXE) $^ $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) -flto
+
+-include $(DEPENDS)
 
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -DEVALFILE=\"$(EVALFILE)\" -flto -c $< $(FLAGS)
-clean:
-	rm -rf *.o $(DEPENDS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -DEVALFILE=\"$(EVALFILE)\" -flto -MMD -MP -c -o $@ $< $(FLAGS)
 
-.PHONY: all clean
+# Force recompilation of ucicommands to include latest version string
+ucicommands.o: FORCE
+FORCE:
