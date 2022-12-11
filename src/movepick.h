@@ -16,13 +16,13 @@ template <SearchType st> class MovePick
 
     Move nextMove(const bool inCheck);
 
+    Staging stage;
+
   private:
     ThreadData *td;
     Stack *ss;
     Movelist &movelist;
     Move ttMove;
-
-    Staging stage;
 
     int played = 0;
     bool playedTT = false;
@@ -98,8 +98,7 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
             // last move and we already searched it
             if (move == ttMove)
             {
-                assert(playedTT);
-                return NO_MOVE;
+                return playedTT ? (played < movelist.size ? orderNext<false>() : NO_MOVE) : move;
             }
 
             return move;
@@ -124,10 +123,6 @@ template <SearchType st> int MovePick<st>::mvvlva(Move move)
 
 template <SearchType st> int MovePick<st>::scoreMove(const Move move)
 {
-    if (move == ttMove)
-    {
-        return NEGATIVE_SCORE;
-    }
     if (td->board.pieceAtB(to(move)) != None)
     {
         if (st == QSEARCH)

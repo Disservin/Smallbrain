@@ -125,7 +125,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     }
 
     MovePick<QSEARCH> mp(td, ss, ss->moves, ttMove);
-
+    mp.stage = ttHit ? TT_MOVE : GENERATE;
     /********************
      * Search the moves
      *******************/
@@ -407,7 +407,7 @@ moves:
     bool doFullSearch = false;
 
     MovePick<ABSEARCH> mp(td, ss, ss->moves, ttMove);
-
+    mp.stage = ttHit ? TT_MOVE : GENERATE;
     /********************
      * Movepicker fetches the next move that we should search.
      * It is very important to return the likely best move first,
