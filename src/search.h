@@ -100,7 +100,7 @@ class Search
     /// @param move
     /// @param bonus
     /// @param td
-    template <Movetype type> void updateHistoryBonus(Move move, int bonus, ThreadData *td);
+    template <Gentype type> void updateHistoryBonus(Move move, int bonus, ThreadData *td);
 
     /// @brief update history for all moves
     /// @tparam type
@@ -109,7 +109,7 @@ class Search
     /// @param depth
     /// @param movelist movelist of moves to update
     /// @param td
-    template <Movetype type>
+    template <Gentype type>
     void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td);
 
     /// @brief  update all history + other move ordering
@@ -153,9 +153,9 @@ class Search
 /// @param move
 /// @param td
 /// @return
-template <Movetype type> int getHistory(Move move, ThreadData *td)
+template <Gentype type> int getHistory(Move move, ThreadData *td)
 {
-    if constexpr (type == Movetype::QUIET)
+    if constexpr (type == Gentype::QUIET)
         return td->history[td->board.sideToMove][from(move)][to(move)];
 }
 

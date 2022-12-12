@@ -39,7 +39,7 @@ MovePick<st>::MovePick(ThreadData *t, Stack *s, Movelist &moves, const Move move
 {
     stage = TT_MOVE;
     movelist.size = 0;
-    played = 0;
+    played = false;
 }
 
 template <SearchType st> template <bool score> Move MovePick<st>::orderNext()
@@ -70,16 +70,28 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
 
         if (td->board.isPseudoLegal(ttMove) && td->board.isLegal(ttMove))
         {
-            playedTT = true;
+            Movegen::legalmoves<Gentype::ALL>(td->board, movelist);
+
+            for (int i = 0; i < movelist.size; i++)
+            {
+                if (movelist[i].move == ttMove)
+                {
+                    playedTT = true;
+                    break;
+                }
+            }
+            assert(playedTT);
+            movelist.size = 0;
+            // playedTT = true;
             return ttMove;
         }
 
         [[fallthrough]];
     case GENERATE:
         if ((st == QSEARCH && inCheck) || st == ABSEARCH)
-            Movegen::legalmoves<Movetype::ALL>(td->board, movelist);
+            Movegen::legalmoves<Gentype::ALL>(td->board, movelist);
         else
-            Movegen::legalmoves<Movetype::CAPTURE>(td->board, movelist);
+            Movegen::legalmoves<Gentype::CAPTURE>(td->board, movelist);
 
         stage++;
         [[fallthrough]];
@@ -94,9 +106,16 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
                 move = orderNext<false>();
 
             if (move == ttMove)
-                move = playedTT ? (played < movelist.size ? orderNext<false>() : NO_MOVE) : move;
-
-            assert(move == NO_MOVE || td->board.isPseudoLegal(move) && td->board.isLegal(move));
+            {
+                if (playedTT)
+                {
+                    if (played < movelist.size)
+                        move = orderNext<false>();
+                    else
+                        return NO_MOVE;
+                }
+            }
+            assert(td->board.isPseudoLegal(move) && td->board.isLegal(move));
             return move;
         }
 
@@ -139,7 +158,7 @@ template <SearchType st> int MovePick<st>::scoreMove(const Move move)
         }
         else
         {
-            return getHistory<Movetype::QUIET>(move, td);
+            return getHistory<Gentype::QUIET>(move, td);
         }
     }
 }

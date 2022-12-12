@@ -44,8 +44,8 @@ template <Color c> bool hasLegalMoves(Board &board)
 
     Square from = board.KingSQ<c>();
     U64 moves = !board.castlingRights || board.checkMask != DEFAULT_CHECKMASK
-                    ? LegalKingMoves<Movetype::ALL>(board, from)
-                    : LegalKingMovesCastling<c, Movetype::ALL>(board, from);
+                    ? LegalKingMoves<Gentype::ALL>(board, from)
+                    : LegalKingMovesCastling<c, Gentype::ALL>(board);
     if (moves)
         return true;
 
@@ -58,14 +58,14 @@ template <Color c> bool hasLegalMoves(Board &board)
     U64 queens_mask = board.Queens<c>();
 
     Movelist m;
-    LegalPawnMovesAll<c, Movetype::ALL>(board, m);
+    LegalPawnMovesAll<c, Gentype::ALL>(board, m);
     if (m.size > 0)
         return true;
 
     while (knights_mask)
     {
         Square from = poplsb(knights_mask);
-        U64 moves = LegalKnightMoves<Movetype::ALL>(from, movableSquare);
+        U64 moves = LegalKnightMoves<Gentype::ALL>(from, movableSquare);
         while (moves)
         {
             return true;
@@ -74,7 +74,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (bishops_mask)
     {
         Square from = poplsb(bishops_mask);
-        U64 moves = LegalBishopMoves<Movetype::ALL>(board, from, movableSquare);
+        U64 moves = LegalBishopMoves<Gentype::ALL>(board, from, movableSquare);
         while (moves)
         {
             return true;
@@ -83,7 +83,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (rooks_mask)
     {
         Square from = poplsb(rooks_mask);
-        U64 moves = LegalRookMoves<Movetype::ALL>(board, from, movableSquare);
+        U64 moves = LegalRookMoves<Gentype::ALL>(board, from, movableSquare);
         while (moves)
         {
             return true;
@@ -92,7 +92,7 @@ template <Color c> bool hasLegalMoves(Board &board)
     while (queens_mask)
     {
         Square from = poplsb(queens_mask);
-        U64 moves = LegalQueenMoves<Movetype::ALL>(board, from, movableSquare);
+        U64 moves = LegalQueenMoves<Gentype::ALL>(board, from, movableSquare);
         while (moves)
         {
             return true;

@@ -20,14 +20,14 @@ int bonus(int depth)
     return std::min(2000, depth * 150);
 }
 
-template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus, ThreadData *td)
+template <Gentype type> void Search::updateHistoryBonus(Move move, int bonus, ThreadData *td)
 {
     int hhBonus = bonus - getHistory<type>(move, td) * std::abs(bonus) / 16384;
-    if constexpr (type == Movetype::QUIET)
+    if constexpr (type == Gentype::QUIET)
         td->history[td->board.sideToMove][from(move)][to(move)] += hhBonus;
 }
 
-template <Movetype type>
+template <Gentype type>
 void Search::updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td)
 {
     if (depth > 1)
@@ -60,7 +60,7 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
         td->killerMoves[1][ss->ply] = td->killerMoves[0][ss->ply];
         td->killerMoves[0][ss->ply] = bestMove;
 
-        updateHistory<Movetype::QUIET>(bestMove, depthBonus, depth, quietMoves, td);
+        updateHistory<Gentype::QUIET>(bestMove, depthBonus, depth, quietMoves, td);
     }
 }
 
@@ -136,7 +136,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
 
         // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
         if (captured != NONETYPE && !inCheck && bestValue + 400 + piece_values[EG][captured] < alpha &&
-            !promoted(move) && td->board.nonPawnMat(color))
+            type_of(move) != PROMOTION && td->board.nonPawnMat(color))
             continue;
 
         // see based capture pruning
@@ -429,7 +429,7 @@ moves:
         if (!RootNode && best > -VALUE_INFINITE)
         {
             // late move pruning/movecount pruning
-            if (!capture && !inCheck && !PvNode && !promoted(move) && depth <= 4 &&
+            if (!capture && !inCheck && !PvNode && type_of(move) != PROMOTION && depth <= 4 &&
                 ss->quietMoves.size > (4 + depth * depth))
                 continue;
 
@@ -926,15 +926,16 @@ Move Search::probeDTZ(ThreadData *td)
     Square sqTo = Square(TB_GET_TO(TBresult));
 
     Movelist legalmoves;
-    Movegen::legalmoves<Movetype::ALL>(td->board, legalmoves);
+    Movegen::legalmoves<Gentype::ALL>(td->board, legalmoves);
 
     for (int i = 0; i < legalmoves.size; i++)
     {
         Move move = legalmoves[i].move;
         if (from(move) == sqFrom && to(move) == sqTo)
         {
-            if ((promoTranslation[promo] == NONETYPE && !promoted(move)) ||
-                (promo < 5 && promoTranslation[promo] == piece(move) && promoted(move)))
+            if ((promoTranslation[promo] == NONETYPE && type_of(move) != PROMOTION) ||
+                (promo < 5 && promoTranslation[promo] == td->board.moved_piece_type(move) &&
+                 type_of(move) == PROMOTION))
             {
                 uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(),
                           " " + uciRep(td->board, move));

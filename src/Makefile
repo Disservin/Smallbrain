@@ -3,7 +3,7 @@ _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/default.nnue
 CXX       := g++
 TARGET    := smallbrain
-CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra -DNDEBUG
+CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra
 NATIVE     = -march=native
 
 # engine name

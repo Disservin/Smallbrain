@@ -98,7 +98,7 @@ void Perft::testAllPos(int n)
 U64 Perft::perftFunction(int depth, int max)
 {
     movelists[depth].size = 0;
-    Movegen::legalmoves<Movetype::ALL>(board, movelists[depth]);
+    Movegen::legalmoves<Gentype::ALL>(board, movelists[depth]);
     if (depth == 0)
         return 1;
     else if (depth == 1 && max != 1)
@@ -109,6 +109,7 @@ U64 Perft::perftFunction(int depth, int max)
     for (int i = 0; i < movelists[depth].size; i++)
     {
         Move move = movelists[depth][i].move;
+        assert(board.isPseudoLegal(move) && board.isLegal(move));
         board.makeMove<false>(move);
         nodesIt += perftFunction(depth - 1, depth);
         board.unmakeMove<false>(move);

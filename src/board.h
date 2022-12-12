@@ -254,6 +254,9 @@ class Board
     /// @param toSq
     template <bool updateNNUE> void movePiece(Piece piece, Square fromSq, Square toSq);
 
+    Piece moved_piece(const Move move);
+    PieceType moved_piece_type(const Move move);
+
     bool isLegal(const Move move);
 
     bool isPseudoLegal(const Move move);
@@ -267,6 +270,7 @@ class Board
      *******************/
     bool see(Move move, int threshold);
 
+    void printBoard();
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
   private:

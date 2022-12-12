@@ -108,7 +108,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     while (ply < randomMoves)
     {
         movelist.size = 0;
-        Movegen::legalmoves<Movetype::ALL>(board, movelist);
+        Movegen::legalmoves<Gentype::ALL>(board, movelist);
         if (movelist.size == 0 || UCI_FORCE_STOP)
             return;
 
@@ -124,7 +124,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     movelist.size = 0;
     board.hashHistory.clear();
 
-    Movegen::legalmoves<Movetype::ALL>(board, movelist);
+    Movegen::legalmoves<Gentype::ALL>(board, movelist);
     if (movelist.size == 0)
         return;
 
@@ -144,7 +144,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     {
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
         movelist.size = 0;
-        Movegen::legalmoves<Movetype::ALL>(board, movelist);
+        Movegen::legalmoves<Gentype::ALL>(board, movelist);
         if (movelist.size == 0)
         {
             winningSide = inCheck ? ((board.sideToMove == White) ? Black : White) : NO_COLOR;

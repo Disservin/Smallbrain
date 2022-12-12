@@ -17,7 +17,7 @@ static constexpr int MAX_MOVES = 128;
  * Enum Definitions
  *******************/
 
-enum class Movetype : uint8_t
+enum class Gentype : uint8_t
 {
     ALL,
     CAPTURE,
@@ -402,6 +402,14 @@ enum Move : uint16_t
     NULL_MOVE = 65
 };
 
+enum MoveType
+{
+    NORMAL,
+    PROMOTION,
+    EN_PASSANT,
+    CASTLING
+};
+
 constexpr inline Square from(Move move)
 {
     return Square(move & 0b111111);
@@ -412,23 +420,22 @@ constexpr inline Square to(Move move)
     return Square((move & 0b111111000000) >> 6);
 }
 
-constexpr inline PieceType piece(Move move)
+constexpr inline PieceType promoting_piece(Move move)
 {
-    return PieceType((move & 0b111000000000000) >> 12);
+    return PieceType(((move & 0b11000000000000) >> 12) + 1);
 }
 
-constexpr inline bool promoted(Move move)
+constexpr inline MoveType type_of(Move move)
 {
-    return bool((move & 0b1000000000000000) >> 15);
+    return MoveType((move & 0b1100000000000000) >> 14);
 }
 
-constexpr inline Move make(PieceType piece = NONETYPE, Square source = NO_SQ, Square target = NO_SQ,
-                           bool promoted = false)
+constexpr inline Move make(Square source, Square target, uint8_t type, PieceType piece = KNIGHT)
 {
-    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
+    return Move((uint16_t)source | (uint16_t)target << 6 | uint16_t((piece - 1) << 12) | (uint16_t)type << 14);
 }
 
-template <PieceType piece, bool promoted> Move make(Square source = NO_SQ, Square target = NO_SQ)
+template <MoveType type, PieceType piece = KNIGHT> Move make(Square source, Square target)
 {
-    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
+    return Move((uint16_t)source | (uint16_t)target << 6 | uint16_t((piece - 1) << 12) | (uint16_t)type << 14);
 }

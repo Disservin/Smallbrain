@@ -140,12 +140,17 @@ Move convertUciToMove(Board &board, std::string input)
         PieceType piece = type_of_piece(board.pieceAtBB(source));
 
         // convert to king captures rook
+        MoveType mt = NORMAL;
         if (!board.chess960 && piece == KING && square_distance(target, source) == 2)
         {
             target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
+            mt = CASTLING;
         }
 
-        return make(piece, source, target, false);
+        if (board.enPassantSquare == target && piece == PAWN)
+            mt = EN_PASSANT;
+
+        return make(source, target, mt);
     }
     else if (input.length() == 5)
     {
@@ -159,11 +164,12 @@ Move convertUciToMove(Board &board, std::string input)
 
         char prom = input.at(4);
         PieceType piece = pieceToInt[prom];
-        return make(piece, source, target, true);
+
+        return make(source, target, PROMOTION, piece);
     }
     else
     {
         std::cout << "FALSE INPUT" << std::endl;
-        return make(NONETYPE, NO_SQ, NO_SQ, false);
+        return NO_MOVE;
     }
 }
