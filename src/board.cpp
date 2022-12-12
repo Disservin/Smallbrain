@@ -1169,7 +1169,7 @@ std::string uciRep(Board &board, Move move)
 
     // If the move is not a chess960 castling move and is a king moving more than one square,
     // update the to square to be the correct square for a regular castling move
-    if (!board.chess960 && board.moved_piece_type(move) == KING && square_distance(to_sq, from_sq) >= 2)
+    if (!board.chess960 && type_of(move) == CASTLING)
     {
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
     }
