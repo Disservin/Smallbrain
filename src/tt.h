@@ -2,7 +2,7 @@
 #include "types.h"
 
 PACK(struct TEntry {
-    U64 key;
+    uint16_t key;
     Score score;
     Move move;
     uint8_t depth;
