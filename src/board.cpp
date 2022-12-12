@@ -770,11 +770,19 @@ bool Board::isPseudoLegal(const Move move)
     const Square from_sq = from(move);
     const Square to_sq = to(move);
     const Piece capture = pieceAtB(to_sq);
+    const PieceType moved = type_of_piece(pieceAtB(from_sq));
+
+    if (moved != PAWN && (type_of(move) == PROMOTION || type_of(move) == EN_PASSANT || promoting_piece(move) != KNIGHT))
+        return false;
+
+    if (moved != KING && type_of(move) == CASTLING)
+        return false;
 
     if (type_of(move) != PROMOTION && promoting_piece(move) != KNIGHT)
         return false;
 
-    if (type_of(move) == PROMOTION && moved_piece_type(move) != PAWN && moved_piece_type(move) != KING)
+    if (type_of(move) == PROMOTION &&
+        (promoting_piece(move) == PAWN || promoting_piece(move) == KING || moved_piece_type(move) != PAWN))
         return false;
 
     if (colorOf(from_sq) != color)
@@ -851,12 +859,24 @@ bool Board::isPseudoLegal(const Move move)
     if (moved_piece_type(move) == PAWN || type_of(move) == PROMOTION)
     {
         const Direction DOWN = color == Black ? NORTH : SOUTH;
+        const Rank promotionRank = color == Black ? RANK_1 : RANK_8;
+
+        if (type_of(move) != PROMOTION && square_rank(to_sq) == promotionRank)
+            return false;
+
+        if (square_rank(to_sq) != promotionRank && (type_of(move) == PROMOTION || promoting_piece(move) != KNIGHT))
+            return false;
+
+        if (to_sq != enPassantSquare && type_of(move) == EN_PASSANT)
+            return false;
 
         if (std::abs(from_sq - to_sq) == 16)
         {
             const Direction UP = color == Black ? SOUTH : NORTH;
-            return pieceAtB(Square(int(to_sq) ^ 8)) == None && pieceAtB(Square(int(to_sq))) == None &&
-                   to_sq == from_sq + UP + UP;
+            const Rank rankD = color == Black ? RANK_7 : RANK_2;
+
+            return square_rank(from_sq) == rankD && pieceAtB(Square(int(from_sq + UP))) == None &&
+                   pieceAtB(Square(int(from_sq + UP + UP))) == None && to_sq == from_sq + UP + UP;
         }
         else if (std::abs(from_sq - to_sq) == 8)
         {
