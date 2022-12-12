@@ -12,7 +12,7 @@ void storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
     {
         tte->depth = depth;
         tte->score = bestvalue;
-        tte->key = uint16_t(key);
+        tte->key = key;
         tte->flag = b;
     }
 }
@@ -21,7 +21,7 @@ TEntry *probeTT(bool &ttHit, Move &ttmove, U64 key)
 {
     U64 index = ttIndex(key);
     TEntry *tte = &TTable[index];
-    ttHit = (tte->key == uint16_t(key));
+    ttHit = (tte->key == key);
     ttmove = tte->move;
     return tte;
 }
