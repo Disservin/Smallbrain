@@ -674,12 +674,13 @@ bool Board::isLegal(const Move move)
     const Square from_sq = from(move);
     const Square to_sq = to(move);
     const Piece p = moved_piece(move);
+    const PieceType pt = moved_piece_type(move);
     const Piece capture = pieceAtB(to_sq);
     const U64 all = All();
 
     Square kSQ = KingSQ(color);
 
-    if (moved_piece_type(move) == PAWN && to_sq == enPassantSquare)
+    if (pt == PAWN && type_of(move) == EN_PASSANT)
     {
         const Direction DOWN = color == Black ? NORTH : SOUTH;
         const Square capSq = to_sq + DOWN;
@@ -722,7 +723,7 @@ bool Board::isLegal(const Move move)
         return true;
     }
 
-    if (moved_piece_type(move) == KING)
+    if (pt == KING)
     {
         kSQ = to_sq;
     }
@@ -770,7 +771,7 @@ bool Board::isPseudoLegal(const Move move)
     const Square from_sq = from(move);
     const Square to_sq = to(move);
     const Piece capture = pieceAtB(to_sq);
-    const PieceType moved = type_of_piece(pieceAtB(from_sq));
+    const PieceType moved = moved_piece_type(move);
 
     if (moved != PAWN && (type_of(move) == PROMOTION || type_of(move) == EN_PASSANT || promoting_piece(move) != KNIGHT))
         return false;
@@ -893,7 +894,7 @@ bool Board::isPseudoLegal(const Move move)
         return true;
     }
 
-    if ((moved_piece_type(move) != KNIGHT && SQUARES_BETWEEN_BB[from_sq][to_sq] & All()) ||
+    if ((moved_piece_type(move) != KNIGHT && SQUARES_BETWEEN_BB[from_sq][to_sq] & occ) ||
         !(attacksByPiece(moved_piece_type(move), from_sq, color, occ) & (1ull << to_sq)))
         return false;
 
