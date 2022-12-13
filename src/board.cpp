@@ -1003,64 +1003,39 @@ bool Board::see(Move move, int threshold)
     return sT != colorOf(from_sq);
 }
 
-void Board::printBoard()
+std::string Board::printBoard() const
 {
+    std::stringstream ss;
     for (int i = 63; i >= 0; i -= 8)
     {
-        std::cout << " " << pieceToChar[board[i - 7]] << " " << pieceToChar[board[i - 6]] << " "
-                  << pieceToChar[board[i - 5]] << " " << pieceToChar[board[i - 4]] << " " << pieceToChar[board[i - 3]]
-                  << " " << pieceToChar[board[i - 2]] << " " << pieceToChar[board[i - 1]] << " "
-                  << pieceToChar[board[i]] << " \n";
+        ss << " " << pieceToChar[board[i - 7]] << " " << pieceToChar[board[i - 6]] << " " << pieceToChar[board[i - 5]]
+           << " " << pieceToChar[board[i - 4]] << " " << pieceToChar[board[i - 3]] << " " << pieceToChar[board[i - 2]]
+           << " " << pieceToChar[board[i - 1]] << " " << pieceToChar[board[i]] << " \n";
     }
-    std::cout << "\n\n";
-    std::cout << "Fen: " << getFen() << "\n";
-    std::cout << "Side to move: " << static_cast<int>(sideToMove) << "\n";
-    std::cout << "Castling rights: " << static_cast<int>(castlingRights) << "\n";
-    std::cout << "Halfmoves: " << static_cast<int>(halfMoveClock) << "\n";
-    std::cout << "Fullmoves: " << static_cast<int>(fullMoveNumber) / 2 << "\n";
-    std::cout << "EP: " << static_cast<int>(enPassantSquare) << "\n";
-    std::cout << "Hash: " << hashKey << "\n";
-    std::cout << "Chess960: " << chess960;
+    ss << "\n\n";
+    ss << "Fen: " << getFen() << "\n";
+    ss << "Side to move: " << static_cast<int>(sideToMove) << "\n";
+    ss << "Castling rights: " << static_cast<int>(castlingRights) << "\n";
+    ss << "Halfmoves: " << static_cast<int>(halfMoveClock) << "\n";
+    ss << "Fullmoves: " << static_cast<int>(fullMoveNumber) / 2 << "\n";
+    ss << "EP: " << static_cast<int>(enPassantSquare) << "\n";
+    ss << "Hash: " << hashKey << "\n";
+    ss << "Chess960: " << chess960;
 
     for (int j = 0; j < 2; j++)
     {
-        std::cout << " WhiteRights: " << castlingRights960White[j];
+        ss << " WhiteRights: " << castlingRights960White[j];
     }
     for (int j = 0; j < 2; j++)
     {
-        std::cout << " BlackRights: " << castlingRights960Black[j];
+        ss << " BlackRights: " << castlingRights960Black[j];
     }
-    std::cout << std::endl;
+    return ss.str();
 }
 
 std::ostream &operator<<(std::ostream &os, const Board &b)
 {
-    for (int i = 63; i >= 0; i -= 8)
-    {
-        os << " " << pieceToChar[b.board[i - 7]] << " " << pieceToChar[b.board[i - 6]] << " "
-           << pieceToChar[b.board[i - 5]] << " " << pieceToChar[b.board[i - 4]] << " " << pieceToChar[b.board[i - 3]]
-           << " " << pieceToChar[b.board[i - 2]] << " " << pieceToChar[b.board[i - 1]] << " " << pieceToChar[b.board[i]]
-           << " \n";
-    }
-    os << "\n\n";
-    os << "Fen: " << b.getFen() << "\n";
-    os << "Side to move: " << static_cast<int>(b.sideToMove) << "\n";
-    os << "Castling rights: " << static_cast<int>(b.castlingRights) << "\n";
-    os << "Halfmoves: " << static_cast<int>(b.halfMoveClock) << "\n";
-    os << "Fullmoves: " << static_cast<int>(b.fullMoveNumber) / 2 << "\n";
-    os << "EP: " << static_cast<int>(b.enPassantSquare) << "\n";
-    os << "Hash: " << b.hashKey << "\n";
-    os << "Chess960: " << b.chess960;
-
-    for (int j = 0; j < 2; j++)
-    {
-        os << " WhiteRights: " << b.castlingRights960White[j];
-    }
-    for (int j = 0; j < 2; j++)
-    {
-        os << " BlackRights: " << b.castlingRights960Black[j];
-    }
-    os << std::endl;
+    os << b.printBoard();
     return os;
 }
 

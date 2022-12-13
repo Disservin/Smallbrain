@@ -270,7 +270,7 @@ class Board
      *******************/
     bool see(Move move, int threshold);
 
-    void printBoard();
+    std::string printBoard() const;
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
   private:
