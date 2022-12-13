@@ -121,12 +121,16 @@ template <SearchType st> int MovePick<st>::mvvlva(Move move)
 {
     int attacker = type_of_piece(td->board.pieceAtB(from(move))) + 1;
     int victim = type_of_piece(td->board.pieceAtB(to(move))) + 1;
+
+    if (type_of(move) == EN_PASSANT)
+        victim = PAWN;
+
     return mvvlvaArray[victim][attacker];
 }
 
 template <SearchType st> int MovePick<st>::scoreMove(const Move move)
 {
-    if (td->board.pieceAtB(to(move)) != None)
+    if (td->board.pieceAtB(to(move)) != None && type_of(move) != CASTLING)
     {
         if (st == QSEARCH)
         {
