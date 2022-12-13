@@ -423,7 +423,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     halfMoveClock++;
     fullMoveNumber++;
 
-    bool ep = to_sq == enPassantSquare;
+    bool ep = type_of(move) == EN_PASSANT;
 
     // *****************************
     // UPDATE HASH
@@ -517,7 +517,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
         placePiece<updateNNUE>(p, to_sq);
         placePiece<updateNNUE>(rook, rookToSq);
     }
-    else if (pt == PAWN && ep)
+    else if (ep)
     {
         assert(pieceAtB(Square(to_sq - (sideToMove * -2 + 1) * 8)) != None);
 
@@ -781,8 +781,7 @@ bool Board::isPseudoLegal(const Move move)
     if (type_of(move) != PROMOTION && promoting_piece(move) != KNIGHT)
         return false;
 
-    if (type_of(move) == PROMOTION &&
-        (promoting_piece(move) == PAWN || promoting_piece(move) == KING || moved_piece_type(move) != PAWN))
+    if (type_of(move) == PROMOTION && (promoting_piece(move) == PAWN || promoting_piece(move) == KING))
         return false;
 
     if (colorOf(from_sq) != color)
