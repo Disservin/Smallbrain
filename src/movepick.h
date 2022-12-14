@@ -70,7 +70,31 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
 
         if (td->board.isPseudoLegal(ttMove) && td->board.isLegal(ttMove))
         {
-            playedTT = true;
+            movelist.size = 0;
+            Movegen::legalmoves<Gentype::ALL>(td->board, movelist);
+
+            for (int i = 0; i < movelist.size; i++)
+            {
+                if (movelist[i].move == ttMove)
+                {
+                    playedTT = true;
+                    break;
+                }
+            }
+
+            if (!playedTT)
+            {
+                td->board.printBoard();
+                for (int i = 0; i < movelist.size; i++)
+                {
+                    std::cout << uciRep(td->board, movelist[i].move) << std::endl;
+                }
+                std::cout << "\n" << uciRep(td->board, ttMove) << std::endl;
+                std::cout << int(promoting_piece(ttMove)) << " " << int(type_of(ttMove)) << std::endl;
+                assert(playedTT);
+            }
+            movelist.size = 0;
+            // playedTT = true;
             return ttMove;
         }
 
