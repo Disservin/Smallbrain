@@ -680,7 +680,7 @@ bool Board::isLegal(const Move move)
 
     Square kSQ = KingSQ(color);
 
-    if (pt == PAWN && type_of(move) == EN_PASSANT)
+    if (type_of(move) == EN_PASSANT)
     {
         const Direction DOWN = color == Black ? NORTH : SOUTH;
         const Square capSq = to_sq + DOWN;
@@ -723,10 +723,8 @@ bool Board::isLegal(const Move move)
         return true;
     }
 
-    if (pt == KING)
-    {
-        kSQ = to_sq;
-    }
+    if (capture != None)
+        Bitboards[capture] &= ~(1ull << to_sq);
 
     if (type_of(move) == PROMOTION)
     {
@@ -739,13 +737,10 @@ bool Board::isLegal(const Move move)
         Bitboards[p] |= (1ull << to_sq);
     }
 
-    if (capture != None)
-        Bitboards[capture] &= ~(1ull << to_sq);
+    if (pt == KING)
+        kSQ = to_sq;
 
     const bool isAttacked = isSquareAttacked(~color, kSQ);
-
-    if (capture != None)
-        Bitboards[capture] |= (1ull << to_sq);
 
     if (type_of(move) == PROMOTION)
     {
@@ -757,6 +752,9 @@ bool Board::isLegal(const Move move)
         Bitboards[p] |= (1ull << from_sq);
         Bitboards[p] &= ~(1ull << to_sq);
     }
+
+    if (capture != None)
+        Bitboards[capture] |= (1ull << to_sq);
 
     assert(All() == all);
     return !isAttacked;
