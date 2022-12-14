@@ -287,7 +287,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      *  Tablebase probing
      *******************/
 
-    if (!RootNode && td->allowPrint && useTB)
+    if (!RootNode && td->allowPrint && td->useTB)
     {
         Score tbRes = probeTB(td);
 
@@ -735,7 +735,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
     return sr;
 }
 
-void Search::startThinking(Board board, int workers, int searchDepth, uint64_t maxN, Time time)
+void Search::startThinking(Board board, int workers, int searchDepth, uint64_t maxN, Time time, bool useTB)
 {
     /********************
      * If we dont have previous data create default data
@@ -745,6 +745,7 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
         ThreadData td;
         td.board = board;
         td.id = i;
+        td.useTB = useTB;
         this->tds.push_back(td);
     }
 
@@ -754,6 +755,7 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
      *******************/
     this->tds[0].board = board;
     this->tds[0].id = 0;
+    this->tds[0].useTB = useTB;
 
     /********************
      * Play dtz move when time is limited
