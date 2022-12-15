@@ -11,8 +11,6 @@ U64 TT_SIZE = 16 * 1024 * 1024 / sizeof(TEntry);
 TEntry *TTable;
 
 std::atomic<bool> stopped;
-static_assert(std::atomic<bool>::is_always_lock_free);
-
 std::atomic<bool> UCI_FORCE_STOP;
 
 int main(int argc, char **argv)
