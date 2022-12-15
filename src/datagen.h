@@ -11,7 +11,6 @@
 #include <iomanip> // std::setprecision
 #include <random>
 
-extern std::atomic<bool> useTB;
 extern std::atomic<bool> UCI_FORCE_STOP;
 
 namespace Datagen
@@ -36,13 +35,13 @@ class TrainingData
     /// @param workers
     /// @param book
     /// @param depth
-    void generate(int workers = 4, std::string book = "", int depth = 7);
+    void generate(int workers = 4, std::string book = "", int depth = 7, bool useTB = false);
 
     /// @brief repeats infinite random playouts
     /// @param threadId
     /// @param book
     /// @param depth
-    void infinitePlay(int threadId, int depth);
+    void infinitePlay(int threadId, int depth, bool useTB);
 
     /// @brief starts one selfplay game
     /// @param file
@@ -51,8 +50,8 @@ class TrainingData
     /// @param Movelist
     /// @param search
     /// @param td
-    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td,
-                       int depth);
+    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td, int depth,
+                       bool useTB);
     std::vector<std::thread> threads;
 };
 
