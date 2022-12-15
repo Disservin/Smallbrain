@@ -11,7 +11,7 @@
 #include <iomanip> // std::setprecision
 #include <random>
 
-extern std::atomic<bool> UCI_FORCE_STOP;
+extern std::atomic_bool UCI_FORCE_STOP;
 
 namespace Datagen
 {

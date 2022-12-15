@@ -14,8 +14,8 @@
 #include "ucicommands.h"
 #include "ucioptions.h"
 
-extern std::atomic<bool> stopped;
-extern std::atomic<bool> UCI_FORCE_STOP;
+extern std::atomic_bool stopped;
+extern std::atomic_bool UCI_FORCE_STOP;
 extern TEntry *TTable;
 
 #define TUNE_INT(x, min, max)                                                                                          \

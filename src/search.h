@@ -11,7 +11,7 @@
 #include "timemanager.h"
 #include "tt.h"
 
-extern std::atomic<bool> stopped;
+extern std::atomic_bool stopped;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
