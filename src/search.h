@@ -12,7 +12,6 @@
 #include "tt.h"
 
 extern std::atomic<bool> stopped;
-extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
@@ -49,6 +48,8 @@ struct ThreadData
     // thread id, Mainthread = 0
     int id;
 
+    bool useTB;
+
     // [sideToMove][from][to]
     historyTable history = {};
 
@@ -77,7 +78,7 @@ class Search
     SearchResult iterativeDeepening(int searchDepth, uint64_t maxN, Time time, int threadId);
 
     // search entry function
-    void startThinking(Board board, int workers, int searchDepth, uint64_t maxN, Time time);
+    void startThinking(Board board, int workers, int searchDepth, uint64_t maxN, Time time, bool useTB);
 
     std::vector<ThreadData> tds;
     std::vector<std::thread> threads;
