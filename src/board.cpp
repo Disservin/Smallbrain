@@ -861,12 +861,19 @@ bool Board::isPseudoLegal(const Move move)
     if (piece(move) == PAWN || promoted(move))
     {
         const Direction DOWN = color == Black ? NORTH : SOUTH;
+        const Rank promotionRank = color == Black ? RANK_1 : RANK_8;
+
+        if ((!promoted(move) && square_rank(to_sq) == promotionRank) ||
+            (promoted(move) && square_rank(to_sq) != promotionRank))
+            return false;
 
         if (std::abs(from_sq - to_sq) == 16)
         {
             const Direction UP = color == Black ? SOUTH : NORTH;
-            return pieceAtB(Square(int(to_sq) ^ 8)) == None && pieceAtB(Square(int(to_sq))) == None &&
-                   to_sq == from_sq + UP + UP;
+            const Rank rankD = color == Black ? RANK_7 : RANK_2;
+
+            return square_rank(from_sq) == rankD && pieceAtB(Square(int(from_sq + UP))) == None &&
+                   pieceAtB(Square(int(from_sq + UP + UP))) == None && to_sq == from_sq + UP + UP;
         }
         else if (std::abs(from_sq - to_sq) == 8)
         {
