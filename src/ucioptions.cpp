@@ -65,7 +65,7 @@ void uciOptions::uciPosition(Board &board, std::string fen, bool update)
 
 void uciOptions::uciChess960(Board &board, std::string_view v)
 {
-    board.chess960 = v == "true" ? true : false;
+    board.chess960 = v == "true";
 }
 
 void uciOptions::uciMoves(Board &board, std::vector<std::string> &tokens)
