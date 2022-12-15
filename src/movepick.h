@@ -103,9 +103,6 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
         [[fallthrough]];
     case OTHER:
         return NO_MOVE;
-
-    default:
-        return NO_MOVE;
     }
 }
 
@@ -124,6 +121,7 @@ template <SearchType st> int MovePick<st>::scoreMove(const Move move)
         {
             return CAPTURE_SCORE + mvvlva(move);
         }
+
         return td->board.see(move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
     }
     else
