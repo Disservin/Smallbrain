@@ -84,8 +84,7 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
         stage++;
         [[fallthrough]];
     case PICK_NEXT:
-
-        if (played < movelist.size)
+        while (played < movelist.size)
         {
             Move move = NO_MOVE;
             if (played == 0)
@@ -93,8 +92,8 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
             else
                 move = orderNext<false>();
 
-            if (move == ttMove)
-                move = playedTT ? (played < movelist.size ? orderNext<false>() : NO_MOVE) : move;
+            if (move == ttMove && playedTT)
+                continue;
 
             assert(move == NO_MOVE || td->board.isPseudoLegal(move) && td->board.isLegal(move));
             return move;
