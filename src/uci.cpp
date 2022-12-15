@@ -6,7 +6,6 @@ UCI::UCI()
     board = Board();
     options = uciOptions();
     genData = Datagen::TrainingData();
-    useTB = false;
 
     threadCount = 1;
 
@@ -85,7 +84,7 @@ int UCI::uciLoop(int argc, char **argv)
             else if (option == "Threads")
                 threadCount = options.uciThreads(std::stoi(value));
             else if (option == "SyzygyPath")
-                useTB = options.uciSyzygy(input);
+                options.uciSyzygy(input);
             else if (option == "UCI_Chess960")
                 options.uciChess960(board, value);
             // ADD TUNES BY HAND AND DO `extern int x;` IN uci.h
@@ -153,7 +152,7 @@ int UCI::uciLoop(int argc, char **argv)
             }
 
             // start search
-            searcher.startThinking(board, threadCount, info.depth, info.nodes, info.time, useTB);
+            searcher.startThinking(board, threadCount, info.depth, info.nodes, info.time);
         }
         // ENGINE SPECIFIC
         uciCommand::parseInput(input, board);
@@ -171,7 +170,6 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options)
         int depth = 7;
         std::string bookPath = "";
         std::string tbPath = "";
-        bool useTB = false;
 
         if (elementInVector("-threads", allArgs))
         {
@@ -186,7 +184,7 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options)
         if (elementInVector("-tb", allArgs))
         {
             std::string s = "setoption name SyzygyPath value " + findElement<std::string>("-tb", allArgs);
-            useTB = options.uciSyzygy(s);
+            options.uciSyzygy(s);
         }
 
         if (elementInVector("-depth", allArgs))
@@ -194,7 +192,7 @@ void UCI::parseArgs(int argc, char **argv, uciOptions options)
             depth = findElement<int>("-depth", allArgs);
         }
 
-        genData.generate(workers, bookPath, depth, useTB);
+        genData.generate(workers, bookPath, depth);
 
         std::cout << "Starting data generation" << std::endl;
     }

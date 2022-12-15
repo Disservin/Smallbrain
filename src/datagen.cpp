@@ -17,7 +17,7 @@ std::string stringFenData(fenData fenData, double score)
     return sstream.str();
 }
 
-void TrainingData::generate(int workers, std::string book, int depth, bool useTB)
+void TrainingData::generate(int workers, std::string book, int depth)
 {
     if (book != "")
     {
@@ -35,11 +35,11 @@ void TrainingData::generate(int workers, std::string book, int depth, bool useTB
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, useTB);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth);
     }
 }
 
-void TrainingData::infinitePlay(int threadId, int depth, bool useTB)
+void TrainingData::infinitePlay(int threadId, int depth)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
@@ -68,13 +68,13 @@ void TrainingData::infinitePlay(int threadId, int depth, bool useTB)
         std::memset(td.pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
         std::memset(td.pvLength, 0, MAX_PLY * sizeof(uint8_t));
 
-        randomPlayout(file, board, movelist, search, td, depth, useTB);
+        randomPlayout(file, board, movelist, search, td, depth);
     }
     file.close();
 }
 
 void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td,
-                                 int depth, bool useTB)
+                                 int depth)
 {
     std::vector<fenData> fens;
 

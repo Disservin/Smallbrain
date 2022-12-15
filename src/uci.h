@@ -16,6 +16,7 @@
 
 extern std::atomic<bool> stopped;
 extern std::atomic<bool> UCI_FORCE_STOP;
+extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 
 #define TUNE_INT(x, min, max)                                                                                          \
@@ -44,7 +45,6 @@ class UCI
     Board board;
     uciOptions options;
     Datagen::TrainingData genData;
-    bool useTB;
 
     int threadCount;
 

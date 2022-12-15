@@ -95,13 +95,13 @@ inline PieceType type_of_piece(Piece piece)
 /// @param addr
 void prefetch(void *addr);
 
-[[maybe_unused]] static std::atomic<int64_t> means[2];
-[[maybe_unused]] static std::atomic<int64_t> min[2];
-[[maybe_unused]] static std::atomic<int64_t> max[2];
+static std::atomic<int64_t> means[2];
+static std::atomic<int64_t> min[2];
+static std::atomic<int64_t> max[2];
 
-[[maybe_unused]] void mean_of(int v);
-[[maybe_unused]] void min_of(int v);
-[[maybe_unused]] void max_of(int v);
+void mean_of(int v);
+void min_of(int v);
+void max_of(int v);
 
 void print_mean();
 

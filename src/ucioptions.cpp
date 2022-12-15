@@ -41,7 +41,7 @@ int uciOptions::uciThreads(int value)
     return std::clamp(value, 1, 512);
 }
 
-bool uciOptions::uciSyzygy(std::string input)
+void uciOptions::uciSyzygy(std::string input)
 {
     std::string path = input.substr(input.find("value ") + 6);
 
@@ -49,12 +49,11 @@ bool uciOptions::uciSyzygy(std::string input)
     if (TB_LARGEST == 0)
     {
         std::cout << "TB NOT FOUND" << std::endl;
-        return false;
     }
     else
     {
         std::cout << "using " << TB_LARGEST << " syzygy " << std::endl;
-        return true;
+        useTB = true;
     }
 }
 

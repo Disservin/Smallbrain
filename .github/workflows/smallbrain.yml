@@ -77,7 +77,4 @@ jobs:
       - name: Valgrind
         if: runner.os == 'Linux'
         run: |
-          chmod +x ../tests/go_depth.sh
-          valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain bench
-          printf "position startpos\ngo depth 8\nucinewgame" | ../tests/go_depth.sh
-
+          valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain* bench

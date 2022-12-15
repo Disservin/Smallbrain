@@ -18,9 +18,6 @@ void isreadyInput()
 
 void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen::TrainingData &dg)
 {
-    while (!stopped)
-    {
-    };
     options.uciPosition(board);
     stopThreads(searcher, dg);
     searcher.tds.clear();

@@ -9,6 +9,7 @@
 #include "tt.h"
 #include "types.h"
 
+extern std::atomic<bool> useTB;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
@@ -61,10 +62,9 @@ class uciOptions
     /// @return
     int uciThreads(int value);
 
-    /// @brief
+    /// @brief Setup Syzygy
     /// @param input
-    /// @return
-    bool uciSyzygy(std::string input);
+    void uciSyzygy(std::string input);
 
     /// @brief Setup a Position
     /// @param board

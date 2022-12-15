@@ -1,1 +1,0 @@
-valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain

@@ -1045,6 +1045,6 @@ static TbMove *gen_legal(const Pos *pos, TbMove *moves)
 }
 
 #ifdef __cplusplus
-};
+}
 #endif
 

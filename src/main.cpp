@@ -1,6 +1,5 @@
 
 #include "uci.h"
-#include <atomic>
 #include <signal.h>
 
 // initialise to 16 MB
@@ -12,11 +11,13 @@ TEntry *TTable;
 
 std::atomic<bool> stopped;
 std::atomic<bool> UCI_FORCE_STOP;
+std::atomic<bool> useTB;
 
 int main(int argc, char **argv)
 {
     UCI_FORCE_STOP = false;
     stopped = false;
+    useTB = false;
 
     // Initialize TT
     allocateTT();
