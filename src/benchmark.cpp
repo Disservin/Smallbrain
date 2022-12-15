@@ -73,7 +73,7 @@ int startBench()
     for (auto &fen : benchmarkfens)
     {
         std::cout << "\nPosition: " << i++ << "/" << benchmarkfens.size() << " " << fen << std::endl;
-        stopped = false;
+        searchStop = false;
 
         ThreadData td;
         td.id = 0;

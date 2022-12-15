@@ -18,7 +18,7 @@ void isreadyInput()
 
 void ucinewgameInput(uciOptions &options, Board &board, Search &searcher, Datagen::TrainingData &dg)
 {
-    while (!stopped)
+    while (!searchStop)
     {
     };
     options.uciPosition(board);
@@ -87,7 +87,7 @@ void parseInput(std::string input, Board &board)
 
 void stopThreads(Search &searcher, Datagen::TrainingData &dg)
 {
-    stopped = true;
+    searchStop = true;
     UCI_FORCE_STOP = true;
 
     for (std::thread &th : searcher.threads)
@@ -105,7 +105,7 @@ void stopThreads(Search &searcher, Datagen::TrainingData &dg)
     searcher.threads.clear();
     dg.threads.clear();
 
-    stopped = false;
+    searchStop = false;
 }
 
 void quit(Search &searcher, Datagen::TrainingData &dg)

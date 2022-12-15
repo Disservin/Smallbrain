@@ -66,9 +66,6 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
 
 template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, Stack *ss, ThreadData *td)
 {
-    if (exitEarly(td->nodes, td->id))
-        return VALUE_NONE;
-
     /********************
      * Initialize various variables
      *******************/
@@ -185,14 +182,13 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     // Transposition table flag
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
-    if (!stopped.load(std::memory_order_relaxed))
-        storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
+    storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
 template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td)
 {
-    if (exitEarly(td->nodes, td->id))
+    if (td->id == 0 && exitEarly(td->nodes))
         return 0;
 
     /********************
@@ -223,6 +219,9 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     if (!RootNode)
     {
+        if (searchStop.load(std::memory_order_relaxed))
+            return Score(0);
+
         if (td->board.halfMoveClock >= 100)
         {
             if (inCheck)
@@ -443,7 +442,7 @@ moves:
         /********************
          * Print currmove information.
          *******************/
-        if (td->id == 0 && RootNode && !stopped.load(std::memory_order_relaxed) && getTime() > 10000 && td->allowPrint)
+        if (td->id == 0 && RootNode && getTime() > 10000 && td->allowPrint)
             std::cout << "info depth " << depth - inCheck << " currmove " << uciRep(td->board, move)
                       << " currmovenumber " << signed(madeMoves) << std::endl;
 
@@ -497,6 +496,9 @@ moves:
         }
 
         td->board.unmakeMove<false>(move);
+
+        if (searchStop.load(std::memory_order_relaxed))
+            return Score(0);
 
         /********************
          * Node count logic used for time control.
@@ -553,8 +555,7 @@ moves:
 
     // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
-    if (!stopped.load(std::memory_order_relaxed))
-        storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
+    storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 
     return best;
 }
@@ -588,7 +589,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
             beta = VALUE_INFINITE;
         result = absearch<Root>(depth, alpha, beta, ss, td);
 
-        if (stopped.load(std::memory_order_relaxed))
+        if (searchStop.load(std::memory_order_relaxed))
             return 0;
 
         if (td->id == 0 && maxNodes != 0 && td->nodes >= maxNodes)
@@ -670,12 +671,15 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
         result = aspirationSearch(depth, result, ss, td);
         evalAverage += result;
 
-        if (exitEarly(td->nodes, td->id))
+        if (searchStop.load(std::memory_order_relaxed))
             break;
 
         // only mainthread manages time control
         if (threadId != 0)
             continue;
+
+        if (exitEarly(td->nodes))
+            break;
 
         sr.score = result;
 
@@ -710,7 +714,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
      * wait for uci stop or quit
      *******************/
     while (td->allowPrint && depth == MAX_PLY + 1 && maxNodes == 0 && optimumTime == 0 &&
-           !stopped.load(std::memory_order_relaxed))
+           !searchStop.load(std::memory_order_relaxed))
     {
     }
 
@@ -727,7 +731,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
     if (threadId == 0 && td->allowPrint)
     {
         std::cout << "bestmove " << uciRep(td->board, bestmove) << std::endl;
-        stopped = true;
+        searchStop = true;
     }
     print_mean();
 
@@ -766,7 +770,7 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
         if (dtzMove != NO_MOVE)
         {
             std::cout << "bestmove " << uciRep(board, dtzMove) << std::endl;
-            stopped = true;
+            searchStop = true;
             return;
         }
     }
@@ -786,25 +790,20 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
     }
 }
 
-bool Search::exitEarly(uint64_t nodes, int ThreadId)
+bool Search::exitEarly(uint64_t nodes)
 {
-    if (stopped.load(std::memory_order_relaxed))
-        return true;
-    if (ThreadId != 0)
-        return false;
-    if (maxNodes != 0 && nodes >= maxNodes)
-        return true;
-
     if (--checkTime > 0)
         return false;
     checkTime = 2047;
 
+    if (maxNodes != 0 && nodes >= maxNodes)
+        return true;
+
     if (maxTime != 0)
     {
-        auto ms = getTime();
-        if (ms >= maxTime)
+        if (getTime() >= maxTime - 10)
         {
-            stopped = true;
+            searchStop = true;
             return true;
         }
     }
