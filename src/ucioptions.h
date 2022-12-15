@@ -12,8 +12,7 @@
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
-// 57344 MB = 2^32 * 14B / (1024 * 1024)
-#define MAXHASH 57344
+static constexpr int MAXHASH = 2 ^ 32 * sizeof(TEntry) / (1024 * 1024);
 
 struct optionType
 {
