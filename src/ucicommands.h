@@ -14,7 +14,7 @@
 #include "tt.h"
 #include "ucioptions.h"
 
-extern std::atomic<bool> searchStop;
+extern std::atomic<bool> stopped;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 

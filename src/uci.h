@@ -14,7 +14,7 @@
 #include "ucicommands.h"
 #include "ucioptions.h"
 
-extern std::atomic<bool> searchStop;
+extern std::atomic<bool> stopped;
 extern std::atomic<bool> UCI_FORCE_STOP;
 extern TEntry *TTable;
 

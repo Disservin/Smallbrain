@@ -11,7 +11,7 @@
 #include "timemanager.h"
 #include "tt.h"
 
-extern std::atomic<bool> searchStop;
+extern std::atomic<bool> stopped;
 extern TEntry *TTable;
 extern U64 TT_SIZE;
 
@@ -131,7 +131,7 @@ class Search
     Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
 
     // check limits
-    bool exitEarly(uint64_t nodes);
+    bool exitEarly(uint64_t nodes, int ThreadId);
 
     std::string getPV();
     long long getTime();

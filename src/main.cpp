@@ -10,13 +10,13 @@ U64 TT_SIZE = 16 * 1024 * 1024 / sizeof(TEntry);
 // Each entry is 14 bytes large
 TEntry *TTable;
 
-std::atomic<bool> searchStop;
+std::atomic<bool> stopped;
 std::atomic<bool> UCI_FORCE_STOP;
 
 int main(int argc, char **argv)
 {
     UCI_FORCE_STOP = false;
-    searchStop = false;
+    stopped = false;
 
     // Initialize TT
     allocateTT();
