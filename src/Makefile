@@ -3,7 +3,7 @@ _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/default.nnue
 CXX       := g++
 TARGET    := smallbrain
-CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++20 -pedantic -Wextra -DNDEBUG
+CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra -DNDEBUG
 NATIVE     = -march=native
 
 # engine name
@@ -92,7 +92,7 @@ endif
 
 # OS independent build with full debug
 ifeq ($(build), debug)
-	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++20
+	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++17
 	NATIVE   = -msse -msse3 -mpopcnt
 	FLAGS    = -lpthread -lstdc++
 endif
