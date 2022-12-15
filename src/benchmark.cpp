@@ -77,7 +77,9 @@ int startBench()
 
         ThreadData td;
         td.id = 0;
+        td.useTB = false;
         td.board.applyFen(fen);
+
         searcher.tds.emplace_back(td);
 
         searcher.iterativeDeepening(12, 0, t, 0);
