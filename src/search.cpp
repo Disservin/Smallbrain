@@ -167,18 +167,6 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     }
 
     /********************
-     * Checkmate Check
-     *******************/
-
-    if (ss->moves.size == 0)
-    {
-        if (inCheck)
-            return mated_in(ss->ply);
-        else if (!Movegen::hasLegalMoves(td->board))
-            return 0;
-    }
-
-    /********************
      * store in the transposition table
      *******************/
 
@@ -691,7 +679,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / td->nodes;
-            if (optimumTime * (110 - std::min(effort, 90)) / 100 < now)
+            if (depth > 10 && optimumTime * (110 - std::min(effort, 90)) / 100 < now)
                 break;
 
             if (result + 30 < evalAverage / depth)
@@ -700,7 +688,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
             // stop if we have searched for more than 75% of our max time.
             if (bestmoveChanges > 4)
                 optimumTime = maxTime * 0.75;
-            else if (now * 10 > optimumTime * 6)
+            else if (depth > 10 && now * 10 > optimumTime * 6)
                 break;
         }
     }
