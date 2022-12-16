@@ -32,16 +32,6 @@ struct optionType
     }
 };
 
-struct optionTune
-{
-    std::string name;
-    // constructor
-    optionTune(std::string name)
-    {
-        this->name = name;
-    }
-};
-
 class uciOptions
 {
   public:

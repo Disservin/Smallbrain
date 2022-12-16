@@ -126,6 +126,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
 
     MovePick<QSEARCH> mp(td, ss, ss->moves, ttMove);
     mp.stage = ttHit ? TT_MOVE : GENERATE;
+
     /********************
      * Search the moves
      *******************/
@@ -164,18 +165,6 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
                     break;
             }
         }
-    }
-
-    /********************
-     * Checkmate Check
-     *******************/
-
-    if (ss->moves.size == 0)
-    {
-        if (inCheck)
-            return mated_in(ss->ply);
-        else if (!Movegen::hasLegalMoves(td->board))
-            return 0;
     }
 
     /********************
