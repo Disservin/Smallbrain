@@ -103,6 +103,8 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
         [[fallthrough]];
     case OTHER:
         return NO_MOVE;
+    default:
+        return NO_MOVE;
     }
 }
 
