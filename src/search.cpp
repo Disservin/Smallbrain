@@ -126,6 +126,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
 
     MovePick<QSEARCH> mp(td, ss, ss->moves, ttMove);
     mp.stage = ttHit ? TT_MOVE : GENERATE;
+
     /********************
      * Search the moves
      *******************/

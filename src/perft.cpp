@@ -2,6 +2,33 @@
 
 #include <vector>
 
+U64 Perft::perftFunction(int depth, int max)
+{
+    movelists[depth].size = 0;
+    Movegen::legalmoves<Movetype::ALL>(board, movelists[depth]);
+    if (depth == 0)
+        return 1;
+    else if (depth == 1 && max != 1)
+    {
+        return movelists[depth].size;
+    }
+    U64 nodesIt = 0;
+    for (int i = 0; i < movelists[depth].size; i++)
+    {
+        Move move = movelists[depth][i].move;
+        board.makeMove<false>(move);
+        nodesIt += perftFunction(depth - 1, depth);
+        board.unmakeMove<false>(move);
+        if (depth == max)
+        {
+            nodes += nodesIt;
+            std::cout << uciRep(board, move) << " " << nodesIt << std::endl;
+            nodesIt = 0;
+        }
+    }
+    return nodesIt;
+}
+
 void Perft::perfTest(int depth, int max)
 {
     auto t1 = TimePoint::now();
@@ -93,31 +120,4 @@ void Perft::testAllPos(int n)
         std::cout << "Correct Positions  : " << passed << "/" << expected.size() + expected960.size() << std::endl;
     }
     std::cout << "Avg Nodes/second   : " << mnps / n << std::endl;
-}
-
-U64 Perft::perftFunction(int depth, int max)
-{
-    movelists[depth].size = 0;
-    Movegen::legalmoves<Movetype::ALL>(board, movelists[depth]);
-    if (depth == 0)
-        return 1;
-    else if (depth == 1 && max != 1)
-    {
-        return movelists[depth].size;
-    }
-    U64 nodesIt = 0;
-    for (int i = 0; i < movelists[depth].size; i++)
-    {
-        Move move = movelists[depth][i].move;
-        board.makeMove<false>(move);
-        nodesIt += perftFunction(depth - 1, depth);
-        board.unmakeMove<false>(move);
-        if (depth == max)
-        {
-            nodes += nodesIt;
-            std::cout << uciRep(board, move) << " " << nodesIt << std::endl;
-            nodesIt = 0;
-        }
-    }
-    return nodesIt;
 }

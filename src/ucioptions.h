@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 
 #include "board.h"
 #include "helper.h"
@@ -13,7 +14,7 @@ extern TEntry *TTable;
 extern U64 TT_SIZE;
 
 // 57344 MB = 2^32 * 14B / (1024 * 1024)
-#define MAXHASH 57344
+static constexpr int MAXHASH = std::pow(2.0, 32) * sizeof(TEntry) / (1024 * 1024);
 
 struct optionType
 {
@@ -30,16 +31,6 @@ struct optionType
         this->defaultValue = defaultValue;
         this->min = min;
         this->max = max;
-    }
-};
-
-struct optionTune
-{
-    std::string name;
-    // constructor
-    optionTune(std::string name)
-    {
-        this->name = name;
     }
 };
 
