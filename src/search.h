@@ -144,9 +144,9 @@ class Search
     Score probeTB(ThreadData *td);
 
     /// @brief find the DTZ Move
-    /// @param td ThreadData
+    /// @param b Board
     /// @return return DTZ Move
-    Move probeDTZ(ThreadData *td);
+    Move probeDTZ(Board &board);
 };
 
 /// @brief return the history of the move

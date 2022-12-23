@@ -641,7 +641,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
         (ss + i)->eval = 0;
     }
 
-    ThreadData *td = &this->tds[threadId];
+    ThreadData *td = &tds[threadId];
     td->nodes = 0;
     td->tbhits = 0;
     td->seldepth = 0;
@@ -728,29 +728,35 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
     /********************
      * If we dont have previous data create default data
      *******************/
-    for (int i = tds.size(); i < workers; i++)
+    ThreadData td;
+    if (!tds.size())
     {
-        ThreadData td;
-        td.board = board;
-        td.id = i;
-        td.useTB = useTB;
-        this->tds.push_back(td);
+        tds.emplace_back(td);
+    }
+    // Save old data
+    else
+    {
+        td = tds[0];
     }
 
-    /********************
-     * Set the right board for the main thread
-     * important that this is done before probing the DTZ
-     *******************/
-    this->tds[0].board = board;
-    this->tds[0].id = 0;
-    this->tds[0].useTB = useTB;
+    td.nodes = 0;
+    td.board = board;
+    td.useTB = useTB;
+
+    tds.clear();
+
+    for (int i = 0; i < workers; i++)
+    {
+        td.id = i;
+        tds.emplace_back(td);
+    }
 
     /********************
      * Play dtz move when time is limited
      *******************/
     if (time.optimum != 0)
     {
-        Move dtzMove = probeDTZ(&this->tds[0]);
+        Move dtzMove = probeDTZ(board);
         if (dtzMove != NO_MOVE)
         {
             std::cout << "bestmove " << uciRep(board, dtzMove) << std::endl;
@@ -762,15 +768,14 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
     /********************
      * Start main thread right away
      *******************/
-    this->threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, 0);
+    threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, 0);
 
     /********************
      * Launch helper threads
      *******************/
     for (int i = 1; i < workers; i++)
     {
-        this->tds[i].board = board;
-        this->threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, i);
+        threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, i);
     }
 }
 
@@ -819,17 +824,19 @@ long long Search::getTime()
 uint64_t Search::getNodes()
 {
     uint64_t nodes = 0;
-    for (size_t i = 0; i < tds.size(); i++)
-        nodes += tds[i].nodes;
+    for (const auto &td : tds)
+    {
+        nodes += td.nodes;
+    }
     return nodes;
 }
 
 uint64_t Search::getTbHits()
 {
     uint64_t nodes = 0;
-    for (size_t i = 0; i < tds.size(); i++)
+    for (const auto &td : tds)
     {
-        nodes += tds[i].tbhits;
+        nodes += td.tbhits;
     }
     return nodes;
 }
@@ -868,22 +875,21 @@ Score Search::probeTB(ThreadData *td)
     return VALUE_NONE;
 }
 
-Move Search::probeDTZ(ThreadData *td)
+Move Search::probeDTZ(Board &board)
 {
-    U64 white = td->board.Us<White>();
-    U64 black = td->board.Us<Black>();
+    U64 white = board.Us<White>();
+    U64 black = board.Us<Black>();
     if (popcount(white | black) > (signed)TB_LARGEST)
         return NO_MOVE;
 
-    Square ep = td->board.enPassantSquare <= 63 ? td->board.enPassantSquare : Square(0);
+    Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 
     unsigned TBresult;
     TBresult = tb_probe_root(
-        white, black, td->board.Kings<White>() | td->board.Kings<Black>(),
-        td->board.Queens<White>() | td->board.Queens<Black>(), td->board.Rooks<White>() | td->board.Rooks<Black>(),
-        td->board.Bishops<White>() | td->board.Bishops<Black>(),
-        td->board.Knights<White>() | td->board.Knights<Black>(), td->board.Pawns<White>() | td->board.Pawns<Black>(),
-        td->board.halfMoveClock, td->board.castlingRights, ep, td->board.sideToMove == White,
+        white, black, board.Kings<White>() | board.Kings<Black>(), board.Queens<White>() | board.Queens<Black>(),
+        board.Rooks<White>() | board.Rooks<Black>(), board.Bishops<White>() | board.Bishops<Black>(),
+        board.Knights<White>() | board.Knights<Black>(), board.Pawns<White>() | board.Pawns<Black>(),
+        board.halfMoveClock, board.castlingRights, ep, board.sideToMove == White,
         NULL); //  * - turn: true=white, false=black
 
     if (TBresult == TB_RESULT_FAILED || TBresult == TB_RESULT_CHECKMATE || TBresult == TB_RESULT_STALEMATE)
@@ -916,7 +922,7 @@ Move Search::probeDTZ(ThreadData *td)
     Square sqTo = Square(TB_GET_TO(TBresult));
 
     Movelist legalmoves;
-    Movegen::legalmoves<Movetype::ALL>(td->board, legalmoves);
+    Movegen::legalmoves<Movetype::ALL>(board, legalmoves);
 
     for (int i = 0; i < legalmoves.size; i++)
     {
@@ -926,8 +932,7 @@ Move Search::probeDTZ(ThreadData *td)
             if ((promoTranslation[promo] == NONETYPE && !promoted(move)) ||
                 (promo < 5 && promoTranslation[promo] == piece(move) && promoted(move)))
             {
-                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(),
-                          " " + uciRep(td->board, move));
+                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(), " " + uciRep(board, move));
                 return move;
             }
         }
