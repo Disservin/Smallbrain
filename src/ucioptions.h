@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <cmath>
 
 #include "board.h"
 #include "helper.h"
@@ -14,7 +13,7 @@ extern TEntry *TTable;
 extern U64 TT_SIZE;
 
 // 57344 MB = 2^32 * 14B / (1024 * 1024)
-static constexpr int MAXHASH = std::pow(2.0, 32) * sizeof(TEntry) / (1024 * 1024);
+static constexpr int MAXHASH = (1ull << 32) * sizeof(TEntry) / (1024 * 1024);
 
 struct optionType
 {
