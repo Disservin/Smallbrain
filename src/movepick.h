@@ -106,6 +106,7 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
     default:
         return NO_MOVE;
     }
+    return NO_MOVE;
 }
 
 template <SearchType st> int MovePick<st>::mvvlva(Move move)
