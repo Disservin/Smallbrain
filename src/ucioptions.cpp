@@ -7,18 +7,13 @@ std::vector<optionType> optionsPrint{
 
 void uciOptions::printOptions()
 {
-    for (auto &option : optionsPrint)
+    for (const auto &option : optionsPrint)
     {
+        std::cout << "option name " << option.name << " type " << option.type << " default " << option.defaultValue;
         if (option.min != "")
-        {
-            std::cout << "option name " << option.name << " type " << option.type << " default " << option.defaultValue
-                      << " min " << option.min << " max " << option.max << std::endl;
-        }
-        else
-        {
-            std::cout << "option name " << option.name << " type " << option.type << " default " << option.defaultValue
-                      << std::endl;
-        }
+            std::cout << " min " << option.min << " max " << option.max;
+
+        std::cout << std::endl;
     }
 }
 
