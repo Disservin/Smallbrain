@@ -155,6 +155,9 @@ int UCI::uciLoop(int argc, char **argv)
             // start search
             searcher.startThinking(board, threadCount, info.depth, info.nodes, info.time, useTB);
         }
+		else
+			std::cout << "Unknown command: " << input << std::endl;
+		
         // ENGINE SPECIFIC
         uciCommand::parseInput(input, board);
     }
