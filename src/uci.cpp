@@ -204,7 +204,7 @@ void UCI::processCommand(std::string command)
     }
     else
     {
-        std::cout << "Unknown command: " << input << std::endl;
+        std::cout << "Unknown command: " << command << std::endl;
     }
 }
 
