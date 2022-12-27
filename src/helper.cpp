@@ -2,7 +2,7 @@
 
 #include <bitset>
 
-std::vector<std::string> splitInput(std::string fen)
+std::vector<std::string> splitInput(const std::string &fen)
 {
     std::stringstream fen_stream(fen);
     std::string segment;
@@ -12,6 +12,7 @@ std::vector<std::string> splitInput(std::string fen)
     {
         seglist.push_back(segment);
     }
+
     return seglist;
 }
 
@@ -229,17 +230,17 @@ void printBitboard(U64 bb)
     std::cout << '\n' << std::endl;
 }
 
-bool elementInVector(std::string el, std::vector<std::string> haystack)
+bool elementInVector(std::string_view el, const std::vector<std::string> &haystack)
 {
     return std::find(haystack.begin(), haystack.end(), el) != haystack.end();
 }
 
-bool contains(std::string needle, std::string haystack)
+bool contains(std::string_view needle, std::string_view haystack)
 {
     return haystack.find(needle) != std::string::npos;
 }
 
-bool contains(std::vector<std::string> needle, std::string haystack)
+bool contains(const std::vector<std::string> &needle, std::string_view haystack)
 {
     for (auto &var : needle)
     {

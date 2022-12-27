@@ -9,7 +9,7 @@
 
 #include "types.h"
 
-std::vector<std::string> splitInput(std::string fen);
+std::vector<std::string> splitInput(const std::string &fen);
 
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
@@ -107,9 +107,8 @@ void print_mean();
 
 /// @brief adjust the outputted score
 /// @param score
-/// @param beta
 /// @return a new score used for uci output
-std::string outputScore(int score, Score beta);
+std::string outputScore(int score);
 
 /// @brief prints the new uci info
 /// @param score
@@ -135,13 +134,13 @@ void printBitboard(U64 bb);
 /// @param needle
 /// @param haystack
 /// @return returns false if not found
-bool elementInVector(std::string needle, std::vector<std::string> haystack);
+bool elementInVector(std::string_view needle, const std::vector<std::string> &haystack);
 
 /// @brief findElement returns the next value after a needle
 /// @param needle
 /// @param haystack
 /// @return
-template <typename T> T findElement(std::string needle, std::vector<std::string> haystack)
+template <typename T> T findElement(std::string_view needle, const std::vector<std::string> &haystack)
 {
     int index = std::find(haystack.begin(), haystack.end(), needle) - haystack.begin();
     if constexpr (std::is_same_v<T, int>)
@@ -154,10 +153,10 @@ template <typename T> T findElement(std::string needle, std::vector<std::string>
 /// @param needle
 /// @param haystack the string to search in
 /// @return
-bool contains(std::string needle, std::string haystack);
+bool contains(std::string_view needle, std::string_view haystack);
 
 /// @brief
 /// @param needle
 /// @param haystack the vector to search in
 /// @return
-bool contains(std::vector<std::string> needle, std::string haystack);
+bool contains(const std::vector<std::string> &needle, std::string_view haystack);
