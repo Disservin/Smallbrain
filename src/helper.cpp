@@ -134,7 +134,7 @@ bool get_square_color(Square square)
     }
 }
 
-void prefetch(void *addr)
+void prefetch(const void *addr)
 {
 #if defined(__INTEL_COMPILER)
     __asm__("");
@@ -191,7 +191,7 @@ std::string outputScore(int score)
 }
 
 // clang-format off
-void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv)
+void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv, int hashfull)
 {
     std::stringstream ss;
 
@@ -201,6 +201,7 @@ void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, in
         << " tbhits "    << tbHits 
         << " nodes "     << nodes 
         << " nps "       << signed((nodes / (time + 1)) * 1000)
+        << " hashfull "  << hashfull
         << " time "      << time 
         << " pv"         << pv;
 

@@ -9,7 +9,7 @@
 #include "tt.h"
 #include "types.h"
 
-// 57344 MB = 2^32 * 14B / (1024 * 1024)
+// 57344 MiB = 2^32 * 14B / (1024 * 1024)
 static constexpr int MAXHASH = (1ull << 32) * sizeof(TEntry) / (1024 * 1024);
 
 struct optionType

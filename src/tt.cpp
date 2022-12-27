@@ -1,9 +1,14 @@
 #include "tt.h"
 
-void storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
+TranspositionTable::TranspositionTable()
 {
-    U64 index = ttIndex(key);
-    TEntry *tte = &TTable[index];
+    static constexpr uint64_t size = 16 * 1024 * 1024 / sizeof(TEntry);
+    allocateTT(size);
+}
+
+void TranspositionTable::storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
+{
+    TEntry *tte = &entries[index(key)];
 
     if (tte->key != key || move)
         tte->move = move;
@@ -17,46 +22,42 @@ void storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
     }
 }
 
-TEntry *probeTT(bool &ttHit, Move &ttmove, U64 key)
+TEntry *TranspositionTable::probeTT(bool &ttHit, Move &ttmove, U64 key)
 {
-    U64 index = ttIndex(key);
-    TEntry *tte = &TTable[index];
+    TEntry *tte = &entries[index(key)];
     ttHit = (tte->key == key);
     ttmove = tte->move;
     return tte;
 }
 
-uint32_t ttIndex(U64 key)
+uint32_t TranspositionTable::index(U64 key) const
 {
-    // return key & (TT_SIZE-1);
-    return ((uint32_t)key * (uint64_t)TT_SIZE) >> 32;
+    assert((((uint32_t)key * entries.size()) >> 32) < entries.size());
+
+    return ((uint32_t)key * entries.size()) >> 32;
 }
 
-void allocateTT()
+void TranspositionTable::allocateTT(uint64_t size)
 {
-    if ((TTable = (TEntry *)malloc(TT_SIZE * sizeof(TEntry))) == NULL)
+    entries.resize(size, TEntry());
+}
+
+void TranspositionTable::clearTT()
+{
+    std::fill(entries.begin(), entries.end(), TEntry());
+}
+
+void TranspositionTable::prefetchTT(uint64_t key) const
+{
+    prefetch(&entries[index(key)]);
+}
+
+int TranspositionTable::hashfull() const
+{
+    size_t used = 0;
+    for (size_t i = 0; i < 1000; i++)
     {
-        std::cout << "Error: Could not allocate memory for TT" << std::endl;
-        exit(1);
+        used += entries[i].flag != NONEBOUND;
     }
-    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
-}
-
-void reallocateTT(U64 elements)
-{
-    TEntry *oldbuffer = TTable;
-    if ((TTable = (TEntry *)realloc(TTable, elements * sizeof(TEntry))) == NULL)
-    {
-        std::cout << "Error: Could not allocate memory for TT" << std::endl;
-        free(oldbuffer);
-        exit(1);
-    }
-
-    TT_SIZE = elements;
-    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
-}
-
-void clearTT()
-{
-    std::memset(TTable, 0, TT_SIZE * sizeof(TEntry));
+    return used;
 }
