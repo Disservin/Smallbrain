@@ -7,7 +7,7 @@
 
 PACK(struct TEntry {
     U64 key = 0;
-    Score score = VALUE_NONE;
+    Score score = 0;
     Move move = NO_MOVE;
     uint8_t depth = 0;
     Flag flag = NONEBOUND;
