@@ -8,6 +8,12 @@ int startBench()
     U64 totalNodes = 0;
     Search searcher = Search();
     Time t;
+
+    Limits limit;
+    limit.depth = 12;
+    limit.nodes = 0;
+    limit.time = t;
+
     int i = 1;
 
     auto t1 = TimePoint::now();
@@ -24,7 +30,7 @@ int startBench()
 
         searcher.tds.emplace_back(td);
 
-        searcher.iterativeDeepening(12, 0, t, 0);
+        searcher.iterativeDeepening(limit, 0);
 
         totalNodes += searcher.tds[0].nodes;
         searcher.tds.clear();

@@ -75,19 +75,21 @@ class Search
 {
   public:
     // data generation entry function
-    SearchResult iterativeDeepening(int searchDepth, uint64_t maxN, Time time, int threadId);
+    SearchResult iterativeDeepening(Limits lim, int threadId);
 
     // search entry function
-    void startThinking(Board board, int workers, int searchDepth, uint64_t maxN, Time time, bool useTB);
+    void startThinking(Board board, int workers, Limits limit, bool useTB);
 
     std::vector<ThreadData> tds;
     std::vector<std::thread> threads;
 
   private:
     // Mainthread limits
-    uint64_t maxNodes{};
-    int64_t optimumTime{};
-    int64_t maxTime{};
+    Limits limit;
+
+    // uint64_t maxNodes{};
+    // int64_t optimumTime{};
+    // int64_t maxTime{};
     int checkTime;
 
     // node count logic

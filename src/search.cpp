@@ -580,7 +580,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
         if (stopped.load(std::memory_order_relaxed))
             return 0;
 
-        if (td->id == 0 && maxNodes != 0 && td->nodes >= maxNodes)
+        if (td->id == 0 && limit.nodes != 0 && td->nodes >= limit.nodes)
             return 0;
 
         /********************
@@ -610,7 +610,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
     return result;
 }
 
-SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time time, int threadId)
+SearchResult Search::iterativeDeepening(Limits lim, int threadId)
 {
     /********************
      * Various Limits that only the main Thread needs to know
@@ -619,9 +619,8 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
     if (threadId == 0)
     {
         t0 = TimePoint::now();
-        optimumTime = time.optimum;
-        maxTime = time.maximum;
-        maxNodes = maxN;
+
+        limit = lim;
         checkTime = 0;
     }
 
@@ -653,7 +652,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
     /********************
      * Iterative Deepening Loop.
      *******************/
-    for (depth = 1; depth <= searchDepth; depth++)
+    for (depth = 1; depth <= lim.depth; depth++)
     {
         td->seldepth = 0;
         result = aspirationSearch(depth, result, ss, td);
@@ -674,22 +673,22 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
         bestmove = td->pvTable[0][0];
 
         // limit type time
-        if (optimumTime != 0)
+        if (lim.time.optimum != 0)
         {
             auto now = getTime();
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / td->nodes;
-            if (depth > 10 && optimumTime * (110 - std::min(effort, 90)) / 100 < now)
+            if (depth > 10 && lim.time.optimum * (110 - std::min(effort, 90)) / 100 < now)
                 break;
 
             if (result + 30 < evalAverage / depth)
-                optimumTime *= 1.10;
+                lim.time.optimum *= 1.10;
 
             // stop if we have searched for more than 75% of our max time.
             if (bestmoveChanges > 4)
-                optimumTime = maxTime * 0.75;
-            else if (depth > 10 && now * 10 > optimumTime * 6)
+                lim.time.optimum = lim.time.maximum * 0.75;
+            else if (depth > 10 && now * 10 > lim.time.optimum * 6)
                 break;
         }
     }
@@ -698,7 +697,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
      * Dont stop analysis in infinite mode when max depth is reached
      * wait for uci stop or quit
      *******************/
-    while (td->allowPrint && depth == MAX_PLY + 1 && maxNodes == 0 && optimumTime == 0 &&
+    while (td->allowPrint && depth == MAX_PLY + 1 && lim.nodes == 0 && lim.time.optimum == 0 &&
            !stopped.load(std::memory_order_relaxed))
     {
     }
@@ -724,7 +723,7 @@ SearchResult Search::iterativeDeepening(int searchDepth, uint64_t maxN, Time tim
     return sr;
 }
 
-void Search::startThinking(Board board, int workers, int searchDepth, uint64_t maxN, Time time, bool useTB)
+void Search::startThinking(Board board, int workers, Limits limit, bool useTB)
 {
     /********************
      * If we dont have previous data create default data
@@ -755,7 +754,7 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
     /********************
      * Play dtz move when time is limited
      *******************/
-    if (time.optimum != 0)
+    if (limit.time.optimum != 0)
     {
         Move dtzMove = probeDTZ(board);
         if (dtzMove != NO_MOVE)
@@ -769,14 +768,14 @@ void Search::startThinking(Board board, int workers, int searchDepth, uint64_t m
     /********************
      * Start main thread right away
      *******************/
-    threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, 0);
+    threads.emplace_back(&Search::iterativeDeepening, this, limit, 0);
 
     /********************
      * Launch helper threads
      *******************/
     for (int i = 1; i < workers; i++)
     {
-        threads.emplace_back(&Search::iterativeDeepening, this, searchDepth, maxN, time, i);
+        threads.emplace_back(&Search::iterativeDeepening, this, limit, i);
     }
 }
 
@@ -786,17 +785,17 @@ bool Search::exitEarly(uint64_t nodes, int ThreadId)
         return true;
     if (ThreadId != 0)
         return false;
-    if (maxNodes != 0 && nodes >= maxNodes)
+    if (limit.nodes != 0 && nodes >= limit.nodes)
         return true;
 
     if (--checkTime > 0)
         return false;
     checkTime = 2047;
 
-    if (maxTime != 0)
+    if (limit.time.maximum != 0)
     {
         auto ms = getTime();
-        if (ms >= maxTime)
+        if (ms >= limit.time.maximum)
         {
             stopped = true;
             return true;

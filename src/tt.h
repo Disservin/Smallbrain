@@ -1,6 +1,8 @@
 #pragma once
 #include "types.h"
 
+#include <cstring> //memset
+
 PACK(struct TEntry {
     U64 key;
     Score score;
@@ -30,3 +32,13 @@ TEntry *probeTT(bool &ttHit, Move &ttmove, U64 key);
 /// @param key
 /// @return
 uint32_t ttIndex(U64 key);
+
+/// @brief allocate Transposition Table and initialize entries
+void allocateTT();
+
+/// @brief resize Transposition Table
+/// @param elements
+void reallocateTT(U64 elements);
+
+/// @brief clear the TT
+void clearTT();
