@@ -64,9 +64,8 @@ void TrainingData::infinitePlay(int threadId, int depth, bool useTB)
 
         td.history.fill({});
         td.killerMoves.fill({});
-
-        std::memset(td.pvTable, 0, MAX_PLY * MAX_PLY * sizeof(Move));
-        std::memset(td.pvLength, 0, MAX_PLY * sizeof(uint8_t));
+        td.pvLength.fill({});
+        td.pvTable.fill({});
 
         randomPlayout(file, board, movelist, search, td, depth, useTB);
     }

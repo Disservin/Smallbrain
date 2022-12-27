@@ -2,7 +2,6 @@
 #include "helper.h"
 #include "types.h"
 
-#include <cstring> //memset
 #include <vector>
 
 PACK(struct TEntry {

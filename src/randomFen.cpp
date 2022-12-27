@@ -1,7 +1,5 @@
 #include "randomFen.h"
 
-#include <cstring> //memset
-
 /*
 This was written very poorly but it does the job.
 I actually have no idea how the random_device behaves when multiple threads access
@@ -61,9 +59,9 @@ bool randomFenBoard::isAttacked(int sq, Color c)
 
 std::string randomFenBoard::generateRandomFen()
 {
-    std::memset(piece_count, 0, sizeof(piece_count));
-    std::memset(board, 0, sizeof(board));
-    std::memset(bitboards, 0, sizeof(bitboards));
+    board.fill({});
+    piece_count.fill({});
+    bitboards.fill({});
 
     std::uniform_int_distribution<int> distPieceCount{4, 32};
     std::uniform_int_distribution<int> distPiece{0, 30};

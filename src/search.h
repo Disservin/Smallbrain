@@ -18,13 +18,6 @@ using historyTable = std::array<std::array<std::array<int, MAX_SQ>, MAX_SQ>, 2>;
 using killerTable = std::array<std::array<Move, MAX_PLY + 1>, 2>;
 using nodeTable = std::array<std::array<U64, MAX_SQ>, MAX_SQ>;
 
-struct Movepicker
-{
-    int ttMoveIndex = -1;
-    int i = 0;
-    Staging stage = TT_MOVE;
-};
-
 struct Stack
 {
     Movelist moves;
@@ -56,8 +49,8 @@ struct ThreadData
     killerTable killerMoves = {};
 
     // pv collection
-    uint8_t pvLength[MAX_PLY]{};
-    Move pvTable[MAX_PLY][MAX_PLY]{};
+    std::array<uint8_t, MAX_PLY> pvLength{};
+    std::array<std::array<Move, MAX_PLY>, MAX_PLY> pvTable{};
 
     // selective depth
     uint8_t seldepth{};

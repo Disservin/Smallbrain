@@ -1,12 +1,13 @@
 #pragma once
 
-#include <iostream>
-#include <random>
-
 #include "attacks.h"
 #include "helper.h"
 #include "sliders.hpp"
 #include "types.h"
+
+#include <array>
+#include <iostream>
+#include <random>
 
 extern std::random_device rd;
 extern std::mt19937 e;
@@ -22,9 +23,9 @@ class randomFenBoard
     std::string generateRandomFen();
 
   private:
-    Piece board[64];
-    int piece_count[12];
-    U64 bitboards[12];
+    std::array<Piece, 64> board{};
+    std::array<int, 12> piece_count{};
+    std::array<U64, 12> bitboards{};
 
     U64 Pawns(Color color);
     U64 Knights(Color color);
