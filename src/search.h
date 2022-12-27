@@ -38,9 +38,9 @@ struct ThreadData
     Board board;
 
     // thread id, Mainthread = 0
-    int id;
+    int id = 0;
 
-    bool useTB;
+    bool useTB = false;
 
     // [sideToMove][from][to]
     historyTable history = {};
@@ -79,13 +79,10 @@ class Search
     // Mainthread limits
     Limits limit;
 
-    // uint64_t maxNodes{};
-    // int64_t optimumTime{};
-    // int64_t maxTime{};
-    int checkTime;
+    int checkTime = 2047;
 
     // node count logic
-    nodeTable spentEffort;
+    nodeTable spentEffort{};
 
     // timepoint when we entered search
     TimePoint::time_point t0;
