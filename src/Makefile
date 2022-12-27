@@ -16,7 +16,8 @@ ifeq ($(OS), Windows_NT)
 	SUFFIX  := .exe
 	FLAGS    = -pthread -lstdc++ -static
 	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-else (ifeq($(COMP), MINGW))
+else
+ifeq ($(COMP), MINGW)
 	uname_S := Windows
 	SUFFIX  := .exe
 	FLAGS    = -pthread -lstdc++ -static
@@ -25,6 +26,7 @@ else
 	FLAGS   = -lpthread -lstdc++
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
+endif
 endif
 
 # Different native flag for macOS
