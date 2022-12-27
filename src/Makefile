@@ -130,5 +130,5 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -DEVALFILE=\"$(EVALFILE)\" -flto -MMD -MP -c -o $@ $< $(FLAGS)
 
 # Force recompilation of ucicommands to include latest version string
-ucicommands.o: FORCE
+uci.o: FORCE
 FORCE:

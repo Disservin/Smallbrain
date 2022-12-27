@@ -131,14 +131,17 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     td.board = board;
     search.tds.push_back(td);
 
-    constexpr uint64_t nodes = 0;
-
-    Time t;
-
     int drawCount = 0;
     int winCount = 0;
 
     Color winningSide = NO_COLOR;
+
+    Time t;
+
+    Limits limit;
+    limit.depth = depth;
+    limit.nodes = 0;
+    limit.time = t;
 
     while (true)
     {
@@ -156,7 +159,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             break;
         }
 
-        SearchResult result = search.iterativeDeepening(depth, nodes, t, 0);
+        SearchResult result = search.iterativeDeepening(limit, 0);
 
         // CATCH BUGS
         if (result.score == VALUE_NONE)

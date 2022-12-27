@@ -9,9 +9,6 @@
 #include "tt.h"
 #include "types.h"
 
-extern TEntry *TTable;
-extern U64 TT_SIZE;
-
 // 57344 MB = 2^32 * 14B / (1024 * 1024)
 static constexpr int MAXHASH = (1ull << 32) * sizeof(TEntry) / (1024 * 1024);
 
@@ -56,38 +53,11 @@ class uciOptions
     /// @return
     bool uciSyzygy(std::string input);
 
-    /// @brief Setup a Position
-    /// @param board
-    /// @param fen
-    /// @param update
-    void uciPosition(Board &board, std::string fen = DEFAULT_POS, bool update = true);
-
     /// @brief
     /// @param board
     /// @param v
     void uciChess960(Board &board, std::string_view v);
 
-    /// @brief plays all moves in tokens
-    /// @param board
-    /// @param tokens
-    void uciMoves(Board &board, std::vector<std::string> &tokens);
-
     void addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max);
     void addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max);
 };
-
-/// @brief allocate Transposition Table and initialize entries
-void allocateTT();
-
-/// @brief resize Transposition Table
-/// @param elements
-void reallocateTT(U64 elements);
-
-/// @brief clear the TT
-void clearTT();
-
-/// @brief convert console input to move
-/// @param board
-/// @param input
-/// @return
-Move convertUciToMove(Board &board, std::string input);

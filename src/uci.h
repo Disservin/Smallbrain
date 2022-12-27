@@ -11,7 +11,6 @@
 #include "syzygy/Fathom/src/tbprobe.h"
 #include "timemanager.h"
 #include "tt.h"
-#include "ucicommands.h"
 #include "ucioptions.h"
 
 extern std::atomic_bool stopped;
@@ -43,7 +42,7 @@ class UCI
     Search searcher;
     Board board;
     uciOptions options;
-    Datagen::TrainingData genData;
+    Datagen::TrainingData datagen;
     bool useTB;
 
     int threadCount;
@@ -52,5 +51,30 @@ class UCI
     /// @param argc
     /// @param argv
     /// @param options
-    void parseArgs(int argc, char **argv, uciOptions options);
+    /// @return true if we should terminate after processing the command
+    bool parseArgs(int argc, char **argv, uciOptions options);
+
+    void processCommand(std::string command);
+
+    void uciInput();
+
+    void isreadyInput();
+
+    void ucinewgameInput();
+
+    void stopThreads();
+
+    void quit();
+
+    const std::string getVersion();
+
+    void uciMoves(std::vector<std::string> &tokens);
+
+    Square extractSquare(std::string_view squareStr);
+
+    /// @brief convert console input to move
+    /// @param board
+    /// @param input
+    /// @return
+    Move convertUciToMove(std::string input);
 };
