@@ -21,7 +21,7 @@ int UCI::uciLoop(int argc, char **argv)
 {
     std::vector<std::string> allArgs(argv + 1, argv + argc);
 
-    if (parseArgs(argc, argv, options))
+    if (argc > 1 && parseArgs(argc, argv, options))
         return 0;
 
     // START OF TUNE
@@ -202,6 +202,10 @@ void UCI::processCommand(std::string command)
             }
         }
     }
+    else
+    {
+        std::cout << "Unknown command: " << input << std::endl;
+    }
 }
 
 bool UCI::parseArgs(int argc, char **argv, uciOptions options)
@@ -261,6 +265,10 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
         std::cout << "Data generation started" << std::endl;
 
         return false;
+    }
+    else
+    {
+        std::cout << "Unknown argument" << std::endl;
     }
     return false;
 }
