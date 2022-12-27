@@ -93,7 +93,7 @@ inline PieceType type_of_piece(Piece piece)
 
 /// @brief prefetches a memory address
 /// @param addr
-void prefetch(void *addr);
+void prefetch(const void *addr);
 
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];

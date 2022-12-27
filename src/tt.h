@@ -38,17 +38,13 @@ class TranspositionTable
     /// @brief calculates the TT index of key
     /// @param key
     /// @return
-    uint32_t ttIndex(U64 key);
+    uint32_t index(U64 key) const;
 
     /// @brief allocate Transposition Table and initialize entries
     void allocateTT(uint64_t size);
 
-    // /// @brief resize Transposition Table
-    // /// @param elements
-    // void reallocateTT(U64 elements);
-
     /// @brief clear the TT
     void clearTT();
 
-    void prefetchTT(uint64_t key);
+    void prefetchTT(uint64_t key) const;
 };

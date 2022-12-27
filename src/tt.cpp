@@ -8,8 +8,7 @@ TranspositionTable::TranspositionTable()
 
 void TranspositionTable::storeEntry(int depth, Score bestvalue, Flag b, U64 key, Move move)
 {
-    U64 index = ttIndex(key);
-    TEntry *tte = &entries[index];
+    TEntry *tte = &entries[index(key)];
 
     if (tte->key != key || move)
         tte->move = move;
@@ -25,23 +24,22 @@ void TranspositionTable::storeEntry(int depth, Score bestvalue, Flag b, U64 key,
 
 TEntry *TranspositionTable::probeTT(bool &ttHit, Move &ttmove, U64 key)
 {
-    U64 index = ttIndex(key);
-    TEntry *tte = &entries[index];
+    TEntry *tte = &entries[index(key)];
     ttHit = (tte->key == key);
     ttmove = tte->move;
     return tte;
 }
 
-uint32_t TranspositionTable::ttIndex(U64 key)
+uint32_t TranspositionTable::index(U64 key) const
 {
-    // return key & (TT_SIZE-1);
+    assert((((uint32_t)key * entries.size()) >> 32) < entries.size());
+
     return ((uint32_t)key * entries.size()) >> 32;
 }
 
 void TranspositionTable::allocateTT(uint64_t size)
 {
     entries.resize(size, TEntry());
-    std::fill(entries.begin(), entries.end(), TEntry());
 }
 
 void TranspositionTable::clearTT()
@@ -49,7 +47,7 @@ void TranspositionTable::clearTT()
     std::fill(entries.begin(), entries.end(), TEntry());
 }
 
-void TranspositionTable::prefetchTT(uint64_t key)
+void TranspositionTable::prefetchTT(uint64_t key) const
 {
-    prefetch(&entries[ttIndex(key)]);
+    prefetch(&entries[index(key)]);
 }

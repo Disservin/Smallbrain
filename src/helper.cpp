@@ -134,7 +134,7 @@ bool get_square_color(Square square)
     }
 }
 
-void prefetch(void *addr)
+void prefetch(const void *addr)
 {
 #if defined(__INTEL_COMPILER)
     __asm__("");
