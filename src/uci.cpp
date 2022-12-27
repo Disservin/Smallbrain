@@ -291,7 +291,7 @@ void UCI::ucinewgameInput()
     board.applyFen(DEFAULT_POS);
     stopThreads();
     searcher.tds.clear();
-    clearTT();
+    TTable.clearTT();
 }
 
 void UCI::stopThreads()
@@ -320,7 +320,6 @@ void UCI::stopThreads()
 void UCI::quit()
 {
     stopThreads();
-    free(TTable);
     tb_free();
 }
 

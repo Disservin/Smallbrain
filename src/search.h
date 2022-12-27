@@ -12,8 +12,7 @@
 #include "tt.h"
 
 extern std::atomic_bool stopped;
-extern TEntry *TTable;
-extern U64 TT_SIZE;
+extern TranspositionTable TTable;
 
 using historyTable = std::array<std::array<std::array<int, MAX_SQ>, MAX_SQ>, 2>;
 using killerTable = std::array<std::array<Move, MAX_PLY + 1>, 2>;

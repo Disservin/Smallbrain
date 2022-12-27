@@ -15,7 +15,7 @@
 
 extern std::atomic_bool stopped;
 extern std::atomic_bool UCI_FORCE_STOP;
-extern TEntry *TTable;
+extern TranspositionTable TTable;
 
 #define TUNE_INT(x, min, max)                                                                                          \
     do                                                                                                                 \

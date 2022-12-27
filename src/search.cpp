@@ -111,7 +111,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     Move ttMove = NO_MOVE;
     bool ttHit = false;
 
-    TEntry *tte = probeTT(ttHit, ttMove, td->board.hashKey);
+    TEntry *tte = TTable.probeTT(ttHit, ttMove, td->board.hashKey);
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     if (ttHit && !PvNode && ttScore != VALUE_NONE)
@@ -175,7 +175,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
     if (!stopped.load(std::memory_order_relaxed))
-        storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
+        TTable.storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
     return bestValue;
 }
 
@@ -252,7 +252,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     Move ttMove = NO_MOVE;
     bool ttHit = false;
 
-    TEntry *tte = probeTT(ttHit, ttMove, td->board.hashKey);
+    TEntry *tte = TTable.probeTT(ttHit, ttMove, td->board.hashKey);
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     /********************
      * Look up in the TT
@@ -303,7 +303,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
             if (flag == EXACTBOUND || (flag == LOWERBOUND && tbRes >= beta) || (flag == UPPERBOUND && tbRes <= alpha))
             {
-                storeEntry(depth + 6, scoreToTT(tbRes, ss->ply), flag, td->board.hashKey, NO_MOVE);
+                TTable.storeEntry(depth + 6, scoreToTT(tbRes, ss->ply), flag, td->board.hashKey, NO_MOVE);
                 return tbRes;
             }
 
@@ -543,7 +543,7 @@ moves:
     // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
     if (!stopped.load(std::memory_order_relaxed))
-        storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
+        TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 
     return best;
 }

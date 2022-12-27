@@ -501,7 +501,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     hashKey ^= updateKeySideToMove();
     hashKey ^= updateKeyCastling();
 
-    prefetch(&TTable[ttIndex(hashKey)]);
+    TTable.prefetchTT(hashKey);
 
     // *****************************
     // UPDATE PIECES AND NNUE
@@ -637,7 +637,7 @@ void Board::makeNullMove()
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
 
-    prefetch(&TTable[ttIndex(hashKey)]);
+    TTable.prefetchTT(hashKey);
 
     // Set the en passant square to NO_SQ and increment the full move number
     enPassantSquare = NO_SQ;

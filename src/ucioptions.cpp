@@ -21,7 +21,7 @@ void uciOptions::uciHash(int value)
 {
     int sizeMB = std::clamp(value, 2, MAXHASH);
     U64 elements = (static_cast<uint64_t>(sizeMB) * 1024 * 1024) / sizeof(TEntry);
-    reallocateTT(elements);
+    TTable.allocateTT(elements);
 }
 
 void uciOptions::uciEvalFile(std::string name)
