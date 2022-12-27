@@ -47,4 +47,6 @@ class TranspositionTable
     void clearTT();
 
     void prefetchTT(uint64_t key) const;
+
+    int hashfull() const;
 };

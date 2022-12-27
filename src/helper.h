@@ -119,7 +119,7 @@ std::string outputScore(int score, Score beta);
 /// @param tbHits
 /// @param time
 /// @param pv
-void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv);
+void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv, int hashfull);
 
 /// @brief makes a Piece from only the piece type and color
 /// @param type

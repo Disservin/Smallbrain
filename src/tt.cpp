@@ -51,3 +51,13 @@ void TranspositionTable::prefetchTT(uint64_t key) const
 {
     prefetch(&entries[index(key)]);
 }
+
+int TranspositionTable::hashfull() const
+{
+    size_t used = 0;
+    for (size_t i = 0; i < 1000; i++)
+    {
+        used += entries[i].flag != NONEBOUND;
+    }
+    return used * 1000 / 1000;
+}

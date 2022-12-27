@@ -605,7 +605,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData
     }
 
     if (td->id == 0 && td->allowPrint)
-        uciOutput(result, depth, td->seldepth, getNodes(), getTbHits(), getTime(), getPV());
+        uciOutput(result, depth, td->seldepth, getNodes(), getTbHits(), getTime(), getPV(), TTable.hashfull());
 
     return result;
 }
@@ -932,7 +932,8 @@ Move Search::probeDTZ(Board &board)
             if ((promoTranslation[promo] == NONETYPE && !promoted(move)) ||
                 (promo < 5 && promoTranslation[promo] == piece(move) && promoted(move)))
             {
-                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(), " " + uciRep(board, move));
+                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(), " " + uciRep(board, move),
+                          TTable.hashfull());
                 return move;
             }
         }
