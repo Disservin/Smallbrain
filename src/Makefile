@@ -5,12 +5,18 @@ CXX       := g++
 TARGET    := smallbrain
 CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra -DNDEBUG
 NATIVE     = -march=native
+COMP       =
 
 # engine name
 NAME      := smallbrain
 
 # Detect Windows
 ifeq ($(OS), Windows_NT)
+	uname_S := Windows
+	SUFFIX  := .exe
+	FLAGS    = -pthread -lstdc++ -static
+	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+else (ifeq($(COMP), MINGW))
 	uname_S := Windows
 	SUFFIX  := .exe
 	FLAGS    = -pthread -lstdc++ -static
