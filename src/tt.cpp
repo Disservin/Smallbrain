@@ -59,5 +59,5 @@ int TranspositionTable::hashfull() const
     {
         used += entries[i].flag != NONEBOUND;
     }
-    return used * 1000 / 1000;
+    return used;
 }
