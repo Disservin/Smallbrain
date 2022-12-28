@@ -119,7 +119,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
      * Search the moves
      *******************/
     Move move = NO_MOVE;
-    while ((move = mp.nextMove(inCheck)) != NO_MOVE)
+    while ((move = mp.nextMove()) != NO_MOVE)
     {
         PieceType captured = type_of_piece(td->board.pieceAtB(to(move)));
 
@@ -392,7 +392,7 @@ moves:
      * It is very important to return the likely best move first,
      * since then we get many cut offs.
      *******************/
-    while ((move = mp.nextMove(false)) != NO_MOVE)
+    while ((move = mp.nextMove()) != NO_MOVE)
     {
         madeMoves++;
 
