@@ -128,12 +128,6 @@ Piece makePiece(PieceType type, Color c);
 /// @param bb
 void printBitboard(U64 bb);
 
-/// @brief elementInVector searches needle in the tokens
-/// @param needle
-/// @param haystack
-/// @return returns false if not found
-bool elementInVector(std::string_view needle, const std::vector<std::string> &haystack);
-
 /// @brief findElement returns the next value after a needle
 /// @param needle
 /// @param haystack

@@ -86,7 +86,7 @@ void UCI::processCommand(std::string command)
     }
     else if (tokens[0] == "position")
     {
-        bool hasMoves = elementInVector("moves", tokens);
+        bool hasMoves = contains(tokens, "moves");
 
         if (tokens[1] == "fen")
             board.applyFen(command.substr(command.find("fen") + 4), false);
@@ -126,18 +126,18 @@ void UCI::processCommand(std::string command)
         std::string side_str = board.sideToMove == White ? "wtime" : "btime";
         std::string inc_str = board.sideToMove == White ? "winc" : "binc";
 
-        if (elementInVector(side_str, tokens))
+        if (contains(tokens, side_str))
         {
             int64_t timegiven = findElement<int>(side_str, tokens);
             int64_t inc = 0;
             int64_t mtg = 0;
 
             // Increment
-            if (elementInVector(inc_str, tokens))
+            if (contains(tokens, inc_str))
                 inc = findElement<int>(inc_str, tokens);
 
             // Moves to next time control
-            if (elementInVector("movestogo", tokens))
+            if (contains(tokens, "movestogo"))
                 mtg = findElement<int>("movestogo", tokens);
 
             // Calculate search time
@@ -190,7 +190,7 @@ void UCI::processCommand(std::string command)
     }
     else if (contains("move", command))
     {
-        if (elementInVector("move", tokens))
+        if (contains(tokens, "move"))
         {
             std::size_t index = std::find(tokens.begin(), tokens.end(), "move") - tokens.begin();
             index++;
@@ -213,16 +213,16 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
     std::vector<std::string> allArgs(argv + 1, argv + argc);
 
     // ./smallbrain bench
-    if (elementInVector("bench", allArgs))
+    if (contains(allArgs, "bench"))
     {
         Bench::startBench();
         quit();
         return true;
     }
-    else if (elementInVector("perft", allArgs))
+    else if (contains(allArgs, "perft"))
     {
         int n = 1;
-        if (elementInVector("-n", allArgs))
+        if (contains(allArgs, "-n"))
             n = findElement<int>("-n", allArgs);
 
         Perft perft = Perft();
@@ -231,7 +231,7 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
         quit();
         return true;
     }
-    else if (elementInVector("-gen", allArgs))
+    else if (contains(allArgs, "-gen"))
     {
         std::string bookPath = "";
         std::string tbPath = "";
@@ -239,23 +239,23 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
         int depth = 7;
         bool useTB = false;
 
-        if (elementInVector("-threads", allArgs))
+        if (contains(allArgs, "-threads"))
         {
             workers = findElement<int>("-threads", allArgs);
         }
 
-        if (elementInVector("-book", allArgs))
+        if (contains(allArgs, "-book"))
         {
             bookPath = findElement<std::string>("-book", allArgs);
         }
 
-        if (elementInVector("-tb", allArgs))
+        if (contains(allArgs, "-tb"))
         {
             std::string s = "setoption name SyzygyPath value " + findElement<std::string>("-tb", allArgs);
             useTB = options.uciSyzygy(s);
         }
 
-        if (elementInVector("-depth", allArgs))
+        if (contains(allArgs, "-depth"))
         {
             depth = findElement<int>("-depth", allArgs);
         }

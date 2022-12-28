@@ -77,7 +77,6 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     const bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
 
     Move bestMove = NO_MOVE;
-    Score bestValue;
 
     /********************
      * Check for repetition or 50 move rule draw
@@ -86,22 +85,11 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     if (td->board.isRepetition() || ss->ply >= MAX_PLY)
         return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(td->board) : 0;
 
-    /********************
-     * Skip evaluating positions that are in check
-     *******************/
-
-    if (inCheck)
-    {
-        bestValue = -VALUE_INFINITE;
-    }
-    else
-    {
-        bestValue = Eval::evaluation(td->board);
-        if (bestValue >= beta)
-            return bestValue;
-        if (bestValue > alpha)
-            alpha = bestValue;
-    }
+    Score bestValue = Eval::evaluation(td->board);
+    if (bestValue >= beta)
+        return bestValue;
+    if (bestValue > alpha)
+        alpha = bestValue;
 
     /********************
      * Look up in the TT
@@ -167,11 +155,6 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         }
     }
 
-    if (inCheck && ss->moves.size == 0)
-    {
-        return mated_in(ss->ply);
-    }
-
     /********************
      * store in the transposition table
      *******************/
@@ -181,6 +164,8 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
 
     if (!stopped.load(std::memory_order_relaxed))
         TTable.storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
+
+    assert(bestValue != -VALUE_INFINITE);
     return bestValue;
 }
 
@@ -550,6 +535,7 @@ moves:
     if (!stopped.load(std::memory_order_relaxed))
         TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 
+    assert(best != -VALUE_INFINITE);
     return best;
 }
 
