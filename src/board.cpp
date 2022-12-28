@@ -139,7 +139,7 @@ void Board::applyFen(std::string fen, bool updateAcc)
         int indexBlack = 0;
         for (size_t i = 0; i < castling.size(); i++)
         {
-            if (!elementInVector(std::string{castling[i]}, allowedCastlingFiles))
+            if (!contains(allowedCastlingFiles, std::string{castling[i]}))
                 continue;
 
             if (isupper(castling[i]))

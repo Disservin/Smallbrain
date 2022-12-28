@@ -14,7 +14,7 @@ template <SearchType st> class MovePick
   public:
     MovePick(ThreadData *t, Stack *s, Movelist &moves, const Move move);
 
-    Move nextMove(const bool inCheck);
+    Move nextMove();
 
     Staging stage;
 
@@ -61,7 +61,7 @@ template <SearchType st> template <bool score> Move MovePick<st>::orderNext()
     return movelist[played++].move;
 }
 
-template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
+template <SearchType st> Move MovePick<st>::nextMove()
 {
     switch (stage)
     {
@@ -76,7 +76,7 @@ template <SearchType st> Move MovePick<st>::nextMove(const bool inCheck)
 
         [[fallthrough]];
     case GENERATE:
-        if ((st == QSEARCH && inCheck) || st == ABSEARCH)
+        if (st == ABSEARCH)
             Movegen::legalmoves<Movetype::ALL>(td->board, movelist);
         else
             Movegen::legalmoves<Movetype::CAPTURE>(td->board, movelist);
