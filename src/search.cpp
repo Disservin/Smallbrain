@@ -167,6 +167,11 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         }
     }
 
+    if (inCheck && ss->moves.size == 0)
+    {
+        return mated_in(ss->ply);
+    }
+
     /********************
      * store in the transposition table
      *******************/
