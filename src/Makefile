@@ -29,15 +29,15 @@ else
 endif
 endif
 
+# Remove native for distributed builds
+ifdef build
+	NATIVE =
+endif
+
 # Different native flag for macOS
 ifeq ($(uname_S), Darwin)
 	NATIVE = -mcpu=apple-a14	
 	FLAGS = 
-endif
-
-# Remove native for distributed builds
-ifdef build
-	NATIVE =
 endif
 
 # all bmi2 instructions

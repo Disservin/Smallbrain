@@ -46,6 +46,8 @@ jobs:
         exclude:
           - binaries: x86-64-avx2
             config: {os: macos-12}
+          - binaries: x86-64-bmi2
+            config: {os: macos-12}
     defaults:
       run:
         working-directory: src
