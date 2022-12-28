@@ -42,6 +42,7 @@ jobs:
           - x86-64
           - x86-64-modern
           - x86-64-avx2
+          - x86-64-bmi2
         exclude:
           - binaries: x86-64-avx2
             config: {os: macos-12}
