@@ -34,12 +34,6 @@ ifdef build
 	NATIVE =
 endif
 
-# Different native flag for macOS
-ifeq ($(uname_S), Darwin)
-	NATIVE = -mcpu=apple-a14	
-	FLAGS = 
-endif
-
 # all bmi2 instructions
 INSTRUCTIONS_BMI2 = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
 
@@ -89,6 +83,12 @@ ifeq ($(build), x86-64-vnni512)
 	NATIVE       = -mtune=alderlake
 	INSTRUCTIONS = $(INSTRUCTIONS_BMI2) -mavx512vnni -mavx512dq -mavx512vl
 	ARCH         = -x86-64-vnni512
+endif
+
+# Different native flag for macOS
+ifeq ($(uname_S), Darwin)
+	NATIVE = -mcpu=apple-a14	
+	FLAGS = 
 endif
 
 # Native build with debug symbols
