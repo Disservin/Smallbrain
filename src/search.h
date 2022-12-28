@@ -117,7 +117,7 @@ class Search
 
     // main search functions
 
-    template <Node node> Score qsearch(Score alpha, Score beta, int depth, Stack *ss, ThreadData *td);
+    template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
     template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
     Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
 
@@ -151,13 +151,13 @@ template <Movetype type> int getHistory(Move move, ThreadData *td)
         return td->history[td->board.sideToMove][from(move)][to(move)];
 }
 
-static constexpr int mvvlvaArray[7][7] = {{0, 0, 0, 0, 0, 0, 0},
-                                          {0, 205, 204, 203, 202, 201, 200},
-                                          {0, 305, 304, 303, 302, 301, 300},
-                                          {0, 405, 404, 403, 402, 401, 400},
-                                          {0, 505, 504, 503, 502, 501, 500},
-                                          {0, 605, 604, 603, 602, 601, 600},
-                                          {0, 705, 704, 703, 702, 701, 700}};
+static constexpr int mvvlvaArray[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
+                                          {0, 205, 204, 203, 202, 201, 200, 0},
+                                          {0, 305, 304, 303, 302, 301, 300, 0},
+                                          {0, 405, 404, 403, 402, 401, 400, 0},
+                                          {0, 505, 504, 503, 502, 501, 500, 0},
+                                          {0, 605, 604, 603, 602, 601, 600, 0},
+                                          {0, 705, 704, 703, 702, 701, 700, 0}};
 
 // fill reductions array
 void init_reductions();

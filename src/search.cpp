@@ -64,7 +64,7 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
     }
 }
 
-template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, Stack *ss, ThreadData *td)
+template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td)
 {
     if (exitEarly(td->nodes, td->id))
         return VALUE_NONE;
@@ -148,7 +148,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, int depth, S
 
         td->board.makeMove<true>(move);
 
-        Score score = -qsearch<node>(-beta, -alpha, depth + 1, ss + 1, td);
+        Score score = -qsearch<node>(-beta, -alpha, ss + 1, td);
 
         td->board.unmakeMove<false>(move);
 
@@ -239,7 +239,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      * Enter qsearch
      *******************/
     if (depth <= 0)
-        return qsearch<node>(alpha, beta, 0, ss, td);
+        return qsearch<node>(alpha, beta, ss, td);
 
     /********************
      * Selective depth (heighest depth we have ever reached)
@@ -342,7 +342,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      * Razoring
      *******************/
     if (!PvNode && depth < 3 && staticEval + 120 < alpha)
-        return qsearch<NonPV>(alpha, beta, 0, ss, td);
+        return qsearch<NonPV>(alpha, beta, ss, td);
 
     /********************
      * Reverse futility pruning
@@ -383,7 +383,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         depth--;
 
     if (depth <= 0)
-        return qsearch<PV>(alpha, beta, 0, ss, td);
+        return qsearch<PV>(alpha, beta, ss, td);
 
 moves:
     // reset movelists

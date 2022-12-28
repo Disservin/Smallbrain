@@ -240,8 +240,8 @@ const std::string squareToString[64] = {
 
 // clang-format on
 
-static constexpr PieceType PieceToPieceType[12] = {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
-                                                   PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
+static constexpr PieceType PieceToPieceType[13] = {PAWN,   KNIGHT, BISHOP, ROOK,  QUEEN, KING,    PAWN,
+                                                   KNIGHT, BISHOP, ROOK,   QUEEN, KING,  NONETYPE};
 
 // file masks
 static constexpr U64 MASK_FILE[8] = {

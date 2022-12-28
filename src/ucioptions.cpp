@@ -27,7 +27,7 @@ void uciOptions::uciHash(int value)
 {
     // value * 10^6 / 2^20
     int sizeMiB = value * 1000000 / 1048576;
-    sizeMiB = std::clamp(value, 1, MAXHASH);
+    sizeMiB = std::clamp(sizeMiB, 1, MAXHASH);
     U64 elements = (static_cast<uint64_t>(sizeMiB) * 1024 * 1024) / sizeof(TEntry);
     TTable.allocateTT(elements);
 }

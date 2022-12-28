@@ -86,8 +86,6 @@ bool get_square_color(Square square);
 /// @return the piecetype
 inline PieceType type_of_piece(Piece piece)
 {
-    if (piece == None)
-        return NONETYPE;
     return PieceToPieceType[piece];
 }
 
