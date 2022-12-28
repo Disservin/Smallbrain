@@ -165,7 +165,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     if (!stopped.load(std::memory_order_relaxed))
         TTable.storeEntry(0, scoreToTT(bestValue, ss->ply), b, td->board.hashKey, bestMove);
 
-    assert(bestValue != -VALUE_INFINITE);
+    assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
     return bestValue;
 }
 
@@ -535,7 +535,7 @@ moves:
     if (!stopped.load(std::memory_order_relaxed))
         TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, td->board.hashKey, bestMove);
 
-    assert(best != -VALUE_INFINITE);
+    assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
     return best;
 }
 
