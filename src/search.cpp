@@ -67,7 +67,7 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
 template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td)
 {
     if (exitEarly(td->nodes, td->id))
-        return VALUE_NONE;
+        return 0;
 
     /********************
      * Initialize various variables
@@ -77,6 +77,9 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     const bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
 
     Move bestMove = NO_MOVE;
+
+    assert(alpha >= -VALUE_INFINITE && alpha < beta && beta <= VALUE_INFINITE);
+    assert(PvNode || (alpha == beta - 1));
 
     /********************
      * Check for repetition or 50 move rule draw
@@ -102,7 +105,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     TEntry *tte = TTable.probeTT(ttHit, ttMove, td->board.hashKey);
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
-    if (ttHit && !PvNode && ttScore != VALUE_NONE)
+    if (ttHit && !PvNode && ttScore != VALUE_NONE && tte->flag != NONEBOUND)
     {
         if (tte->flag == EXACTBOUND)
             return ttScore;
@@ -123,14 +126,17 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     {
         PieceType captured = type_of_piece(td->board.pieceAtB(to(move)));
 
-        // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
-        if (captured != NONETYPE && !inCheck && bestValue + 400 + piece_values[EG][captured] < alpha &&
-            !promoted(move) && td->board.nonPawnMat(color))
-            continue;
+        if (bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
+        {
+            // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
+            if (captured != NONETYPE && !inCheck && bestValue + 400 + piece_values[EG][captured] < alpha &&
+                !promoted(move) && td->board.nonPawnMat(color))
+                continue;
 
-        // see based capture pruning
-        if (bestValue > VALUE_MATED_IN_PLY && !inCheck && !td->board.see(move, 0))
-            continue;
+            // see based capture pruning
+            if (!inCheck && !td->board.see(move, 0))
+                continue;
+        }
 
         td->nodes++;
 
@@ -140,15 +146,18 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
 
         td->board.unmakeMove<false>(move);
 
+        assert(score > -VALUE_INFINITE && score < VALUE_INFINITE);
+
         // update the best score
         if (score > bestValue)
         {
             bestValue = score;
-            bestMove = move;
 
             if (score > alpha)
             {
                 alpha = score;
+                bestMove = move;
+
                 if (score >= beta)
                     break;
             }
@@ -199,7 +208,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     /********************
      * Draw detection and mate pruning
      *******************/
-
     if (!RootNode)
     {
         if (td->board.halfMoveClock >= 100)
@@ -230,6 +238,10 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      *******************/
     if (depth <= 0)
         return qsearch<node>(alpha, beta, ss, td);
+
+    assert(-VALUE_INFINITE <= alpha && alpha < beta && beta <= VALUE_INFINITE);
+    assert(PvNode || (alpha == beta - 1));
+    assert(0 < depth && depth < MAX_PLY);
 
     /********************
      * Selective depth (heighest depth we have ever reached)
@@ -325,27 +337,38 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     // improving boolean
     improving = (ss - 2)->eval != VALUE_NONE ? staticEval > (ss - 2)->eval : false;
 
-    if (RootNode)
+    /********************
+     * Internal Iterative Deepening
+     *******************/
+    if (depth >= 4 && !ttHit)
+        depth--;
+
+    if (PvNode && !ttHit)
+        depth--;
+
+    if (depth <= 0)
+        return qsearch<PV>(alpha, beta, ss, td);
+
+    if (RootNode || PvNode)
         goto moves;
 
     /********************
      * Razoring
      *******************/
-    if (!PvNode && depth < 3 && staticEval + 120 < alpha)
+    if (depth < 3 && staticEval + 120 < alpha)
         return qsearch<NonPV>(alpha, beta, ss, td);
 
     /********************
      * Reverse futility pruning
      *******************/
-    if (std::abs(beta) < VALUE_MATE_IN_PLY)
+    if (std::abs(beta) < VALUE_TB_WIN_IN_MAX_PLY)
         if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta)
             return beta;
 
     /********************
      * Null move pruning
      *******************/
-    if (!PvNode && td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 &&
-        staticEval >= beta)
+    if (td->board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 && staticEval >= beta)
     {
         int R = 5 + std::min(4, depth / 5) + std::min(3, (staticEval - beta) / 214);
 
@@ -363,18 +386,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         }
     }
 
-    /********************
-     * Internal Iterative Deepening
-     *******************/
-    if (depth >= 4 && !ttHit)
-        depth--;
-
-    if (PvNode && !ttHit)
-        depth--;
-
-    if (depth <= 0)
-        return qsearch<PV>(alpha, beta, ss, td);
-
 moves:
     // reset movelists
     ss->quietMoves.size = 0;
@@ -387,6 +398,7 @@ moves:
 
     MovePick<ABSEARCH> mp(td, ss, ss->moves, ttMove);
     mp.stage = ttHit ? TT_MOVE : GENERATE;
+
     /********************
      * Movepicker fetches the next move that we should search.
      * It is very important to return the likely best move first,
@@ -477,6 +489,8 @@ moves:
 
         td->board.unmakeMove<false>(move);
 
+        assert(score > -VALUE_INFINITE && score < VALUE_INFINITE);
+
         /********************
          * Node count logic used for time control.
          *******************/
@@ -489,7 +503,6 @@ moves:
         if (score > best)
         {
             best = score;
-            bestMove = move;
 
             // update the PV
             td->pvTable[ss->ply][ss->ply] = move;
@@ -502,6 +515,7 @@ moves:
             if (score > alpha)
             {
                 alpha = score;
+                bestMove = move;
 
                 /********************
                  * Score beat beta -> update histories and break.
