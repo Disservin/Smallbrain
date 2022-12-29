@@ -141,8 +141,10 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         td->board.unmakeMove<false>(move);
 
         // update the best score
-        if (score > bestValue)
+        if (score > bestValue) {
 	    bestValue = score;
+	    bestMove = move; 
+      }
 		
 	if (score > alpha)
             alpha=score;
