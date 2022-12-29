@@ -144,7 +144,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
         if (score > bestValue) {
 	    bestValue = score;
 	    bestMove = move; 
-      }
+       }
 		
 	if (score > alpha)
             alpha=score;
