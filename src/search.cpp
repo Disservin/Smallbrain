@@ -417,7 +417,7 @@ moves:
         /********************
          * Various pruning techniques.
          *******************/
-        if (!RootNode && best > -VALUE_INFINITE)
+        if (!RootNode && best > VALUE_TB_LOSS_IN_MAX_PLY)
         {
             // late move pruning/movecount pruning
             if (!capture && !inCheck && !PvNode && !promoted(move) && depth <= 4 &&
