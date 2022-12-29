@@ -68,7 +68,8 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case TT_MOVE:
         stage++;
 
-        if (td->board.isPseudoLegal(ttMove) && td->board.isLegal(ttMove))
+        if (td->board.isPseudoLegal(ttMove) && (st == ABSEARCH || (td->board.pieceAtB(to(ttMove)) != None)) &&
+            td->board.isLegal(ttMove))
         {
             playedTT = true;
             return ttMove;
