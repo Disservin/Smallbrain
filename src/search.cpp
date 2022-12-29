@@ -337,6 +337,9 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     // improving boolean
     improving = (ss - 2)->eval != VALUE_NONE ? staticEval > (ss - 2)->eval : false;
 
+    if (RootNode)
+        goto moves;
+
     /********************
      * Internal Iterative Deepening
      *******************/
@@ -349,7 +352,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (depth <= 0)
         return qsearch<PV>(alpha, beta, ss, td);
 
-    if (RootNode || PvNode)
+    if (PvNode)
         goto moves;
 
     /********************

@@ -122,5 +122,5 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 .\smallbrain.exe -gen -threads 30 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
 ```
 ```
-.\smallbrain.exe -gen -threads 30 -tb E:/Chess/345
+.\smallbrain.exe -gen -threads 30 -depth 9 -tb H:/Chess/345
 ```
