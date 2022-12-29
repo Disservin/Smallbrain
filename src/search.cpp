@@ -142,13 +142,13 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
 
         // update the best score
         if (score > bestValue)
-		    bestValue = score;
+	    bestValue = score;
 		
-		if (score > alpha)
+	if (score > alpha)
             alpha=score;
 			
-		if (alpha >= beta)	
-		   break;
+	if (alpha >= beta)	
+	    break;
     }
 
     /********************
