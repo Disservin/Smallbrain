@@ -7,8 +7,6 @@ Board::Board()
     hashHistory.reserve(512);
     accumulatorStack.reserve(MAX_PLY);
 
-    applyFen(DEFAULT_POS, true);
-
     sideToMove = White;
     enPassantSquare = NO_SQ;
     castlingRights = wk | wq | bk | bq;
@@ -26,7 +24,7 @@ Board::Board()
     occAll = All();
     enemyEmptyBB = EnemyEmpty(White);
 
-    hashKey = zobristHash();
+    applyFen(DEFAULT_POS, true);
 
     std::fill(std::begin(board), std::end(board), None);
 }
