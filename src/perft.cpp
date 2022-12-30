@@ -22,7 +22,7 @@ U64 Perft::perftFunction(int depth, int max)
         if (depth == max)
         {
             nodes += nodesIt;
-            std::cout << uciRep(board, move) << " " << nodesIt << std::endl;
+            std::cout << uciMove(board, move) << " " << nodesIt << std::endl;
             nodesIt = 0;
         }
     }

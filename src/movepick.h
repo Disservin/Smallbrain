@@ -29,8 +29,8 @@ template <SearchType st> class MovePick
 
     template <bool score> Move orderNext();
 
-    int mvvlva(const Move move);
-    int scoreMove(const Move move);
+    int mvvlva(const Move move) const;
+    int scoreMove(const Move move) const;
 };
 
 template <SearchType st>
@@ -110,14 +110,14 @@ template <SearchType st> Move MovePick<st>::nextMove()
     return NO_MOVE;
 }
 
-template <SearchType st> int MovePick<st>::mvvlva(Move move)
+template <SearchType st> int MovePick<st>::mvvlva(Move move) const
 {
     int attacker = type_of_piece(td->board.pieceAtB(from(move))) + 1;
     int victim = type_of_piece(td->board.pieceAtB(to(move))) + 1;
     return mvvlvaArray[victim][attacker];
 }
 
-template <SearchType st> int MovePick<st>::scoreMove(const Move move)
+template <SearchType st> int MovePick<st>::scoreMove(const Move move) const
 {
     if (td->board.pieceAtB(to(move)) != None)
     {

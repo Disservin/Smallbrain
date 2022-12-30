@@ -151,4 +151,4 @@ bool contains(std::string_view needle, std::string_view haystack);
 /// @param needle
 /// @param haystack the vector to search in
 /// @return
-bool contains(const std::vector<std::string> &needle, std::string_view haystack);
+bool contains(const std::vector<std::string> &haystack, std::string_view needle);
