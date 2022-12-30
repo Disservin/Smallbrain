@@ -19,12 +19,12 @@ Board::Board()
     checkMask = DEFAULT_CHECKMASK;
     seen = 0;
 
+    applyFen(DEFAULT_POS, true);
+
     occEnemy = Enemy<White>();
     occUs = Us<White>();
     occAll = All();
     enemyEmptyBB = EnemyEmpty(White);
-
-    applyFen(DEFAULT_POS, true);
 
     std::fill(std::begin(board), std::end(board), None);
 }
