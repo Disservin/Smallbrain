@@ -276,7 +276,7 @@ bool Board::nonPawnMat(Color c) const
 
 Square Board::KingSQ(Color c) const
 {
-    assert(Kings<c>() != 0);
+    assert(Kings(c) != 0);
     return lsb(Kings(c));
 }
 
