@@ -230,7 +230,7 @@ void printBitboard(U64 bb)
     std::cout << '\n' << std::endl;
 }
 
-bool contains(std::string_view needle, std::string_view haystack)
+bool contains(std::string_view haystack, std::string_view needle)
 {
     return haystack.find(needle) != std::string::npos;
 }

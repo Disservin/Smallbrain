@@ -438,7 +438,7 @@ moves:
          * Print currmove information.
          *******************/
         if (td->id == 0 && RootNode && !stopped.load(std::memory_order_relaxed) && getTime() > 10000 && td->allowPrint)
-            std::cout << "info depth " << depth - inCheck << " currmove " << uciRep(td->board, move)
+            std::cout << "info depth " << depth - inCheck << " currmove " << uciMove(td->board, move)
                       << " currmovenumber " << signed(madeMoves) << std::endl;
 
         /********************
@@ -722,7 +722,7 @@ SearchResult Search::iterativeDeepening(Limits lim, int threadId)
      *******************/
     if (threadId == 0 && td->allowPrint)
     {
-        std::cout << "bestmove " << uciRep(td->board, bestmove) << std::endl;
+        std::cout << "bestmove " << uciMove(td->board, bestmove) << std::endl;
         stopped = true;
     }
     print_mean();
@@ -767,7 +767,7 @@ void Search::startThinking(Board board, int workers, Limits limit, bool useTB)
         Move dtzMove = probeDTZ(board);
         if (dtzMove != NO_MOVE)
         {
-            std::cout << "bestmove " << uciRep(board, dtzMove) << std::endl;
+            std::cout << "bestmove " << uciMove(board, dtzMove) << std::endl;
             stopped = true;
             return;
         }
@@ -818,7 +818,7 @@ std::string Search::getPV()
 
     for (int i = 0; i < tds[0].pvLength[0]; i++)
     {
-        ss << " " << uciRep(tds[0].board, tds[0].pvTable[0][i]);
+        ss << " " << uciMove(tds[0].board, tds[0].pvTable[0][i]);
     }
     return ss.str();
 }
@@ -940,7 +940,7 @@ Move Search::probeDTZ(Board &board)
             if ((promoTranslation[promo] == NONETYPE && !promoted(move)) ||
                 (promo < 5 && promoTranslation[promo] == piece(move) && promoted(move)))
             {
-                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(), " " + uciRep(board, move),
+                uciOutput(s, static_cast<int>(dtz), 1, getNodes(), getTbHits(), getTime(), " " + uciMove(board, move),
                           TTable.hashfull());
                 return move;
             }

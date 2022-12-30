@@ -101,7 +101,7 @@ void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p)
 
 int16_t relu(int16_t x)
 {
-    return std::max((int16_t)0, x);
+    return std::max(static_cast<int16_t>(0), x);
 }
 
 int32_t output(const NNUE::accumulator &accumulator)
