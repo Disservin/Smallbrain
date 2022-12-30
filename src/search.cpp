@@ -341,7 +341,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         goto moves;
 
     /********************
-     * Internal Iterative Deepening
+     * Internal Iterative Reductions (IIR)
      *******************/
     if (depth >= 4 && !ttHit)
         depth--;
