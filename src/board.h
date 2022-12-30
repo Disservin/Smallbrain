@@ -175,12 +175,12 @@ class Board
 
     // Gets individual bitboards
 
-    U64 Pawns(Color c) const;
-    U64 Knights(Color c) const;
-    U64 Bishops(Color c) const;
-    U64 Rooks(Color c) const;
-    U64 Queens(Color c) const;
-    U64 Kings(Color c) const;
+    U64 Pawns(const Color c) const;
+    U64 Knights(const Color c) const;
+    U64 Bishops(const Color c) const;
+    U64 Rooks(const Color c) const;
+    U64 Queens(const Color c) const;
+    U64 Kings(const Color c) const;
     template <Color c> U64 Pawns() const;
     template <Color c> U64 Knights() const;
     template <Color c> U64 Bishops() const;
