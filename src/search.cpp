@@ -81,12 +81,21 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     assert(alpha >= -VALUE_INFINITE && alpha < beta && beta <= VALUE_INFINITE);
     assert(PvNode || (alpha == beta - 1));
 
+    if (ss->ply >= MAX_PLY)
+        return Eval::evaluation(td->board);
+
     /********************
      * Check for repetition or 50 move rule draw
      *******************/
+    if (td->board.isRepetition(1))
+        return -1 + (td->nodes & 0x2);
 
-    if (td->board.isRepetition() || ss->ply >= MAX_PLY)
-        return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(td->board) : 0;
+    if (td->board.halfMoveClock >= 100)
+    {
+        if (inCheck && !Movegen::hasLegalMoves(td->board))
+            return mated_in(ss->ply);
+        return 0;
+    }
 
     Score bestValue = Eval::evaluation(td->board);
     if (bestValue >= beta)
@@ -195,10 +204,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     Score maxValue = VALUE_MATE;
     Score staticEval;
 
+    const bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
     bool improving;
-    bool inCheck = td->board.isSquareAttacked(~color, td->board.KingSQ(color));
-
-    ss->eval = VALUE_NONE;
 
     if (ss->ply >= MAX_PLY)
         return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(td->board) : 0;
@@ -210,21 +217,35 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      *******************/
     if (!RootNode)
     {
+        if (td->board.isRepetition(1))
+            return -1 + (td->nodes & 0x2);
+
         if (td->board.halfMoveClock >= 100)
         {
-            if (inCheck)
-                return !Movegen::hasLegalMoves(td->board) ? mated_in(ss->ply) : 0;
+            if (inCheck && !Movegen::hasLegalMoves(td->board))
+                return mated_in(ss->ply);
             return 0;
         }
-
-        if (td->board.isRepetition(1 + 2 * (node == PV)) && (ss - 1)->currentmove != NULL_MOVE)
-            return -3 + (td->nodes & 7);
 
         alpha = std::max(alpha, mated_in(ss->ply));
         beta = std::min(beta, mate_in(ss->ply + 1));
         if (alpha >= beta)
             return alpha;
     }
+    // else
+    // {
+    //     for (int i = td->board.hashHistory.size() - 3;
+    //          i >= 0 && i >= td->board.hashHistory.size() - td->board.halfMoveClock - 1; i -= 2)
+    //     {
+    //         if (td->board.hashHistory[i] == td->board.hashKey)
+    //             std::cout << " hit " << std::endl;
+    //     }
+
+    //     std::cout << "rep " << td->board.hashHistory.size() << " " << int(td->board.halfMoveClock) << " "
+    //               << td->board.isRepetition() << std::endl;
+
+    //     std::cout << td->board << std::endl;
+    // }
 
     /********************
      * Check extension
@@ -247,7 +268,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      * Selective depth (heighest depth we have ever reached)
      *******************/
 
-    if (ss->ply > td->seldepth)
+    if (PvNode && ss->ply > td->seldepth)
         td->seldepth = ss->ply;
 
     // Look up in the TT
@@ -507,18 +528,18 @@ moves:
         {
             best = score;
 
-            // update the PV
-            td->pvTable[ss->ply][ss->ply] = move;
-            for (int next_ply = ss->ply + 1; next_ply < td->pvLength[ss->ply + 1]; next_ply++)
-            {
-                td->pvTable[ss->ply][next_ply] = td->pvTable[ss->ply + 1][next_ply];
-            }
-            td->pvLength[ss->ply] = td->pvLength[ss->ply + 1];
-
             if (score > alpha)
             {
                 alpha = score;
                 bestMove = move;
+
+                // update the PV
+                td->pvTable[ss->ply][ss->ply] = move;
+                for (int next_ply = ss->ply + 1; next_ply < td->pvLength[ss->ply + 1]; next_ply++)
+                {
+                    td->pvTable[ss->ply][next_ply] = td->pvTable[ss->ply + 1][next_ply];
+                }
+                td->pvLength[ss->ply] = td->pvLength[ss->ply + 1];
 
                 /********************
                  * Score beat beta -> update histories and break.

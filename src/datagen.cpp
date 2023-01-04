@@ -152,7 +152,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             winningSide = inCheck ? ((board.sideToMove == White) ? Black : White) : NO_COLOR;
             break;
         }
-        else if (board.isRepetition(3) || board.halfMoveClock >= 100)
+        else if (board.isRepetition(2) || board.halfMoveClock >= 100)
         {
             winningSide = NO_COLOR;
             break;
