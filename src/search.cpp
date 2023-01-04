@@ -87,7 +87,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss, T
     /********************
      * Check for repetition or 50 move rule draw
      *******************/
-    if (td->board.isRepetition(1))
+    if (td->board.isRepetition(1 + PvNode))
         return -1 + (td->nodes & 0x2);
 
     if (td->board.halfMoveClock >= 100)
@@ -217,7 +217,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      *******************/
     if (!RootNode)
     {
-        if (td->board.isRepetition(1))
+        if (td->board.isRepetition(1 + PvNode))
             return -1 + (td->nodes & 0x2);
 
         if (td->board.halfMoveClock >= 100)
@@ -232,20 +232,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         if (alpha >= beta)
             return alpha;
     }
-    // else
-    // {
-    //     for (int i = td->board.hashHistory.size() - 3;
-    //          i >= 0 && i >= td->board.hashHistory.size() - td->board.halfMoveClock - 1; i -= 2)
-    //     {
-    //         if (td->board.hashHistory[i] == td->board.hashKey)
-    //             std::cout << " hit " << std::endl;
-    //     }
-
-    //     std::cout << "rep " << td->board.hashHistory.size() << " " << int(td->board.halfMoveClock) << " "
-    //               << td->board.isRepetition() << std::endl;
-
-    //     std::cout << td->board << std::endl;
-    // }
 
     /********************
      * Check extension
