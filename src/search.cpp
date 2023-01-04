@@ -539,9 +539,10 @@ moves:
      * If the move list is empty, we are in checkmate or stalemate.
      *******************/
     if (madeMoves == 0)
-        return inCheck ? mated_in(ss->ply) : 0;
+        best = inCheck ? mated_in(ss->ply) : 0;
 
-    best = std::min(best, maxValue);
+    if (PvNode)
+        best = std::min(best, maxValue);
 
     /********************
      * Store an TEntry in the Transposition Table.
