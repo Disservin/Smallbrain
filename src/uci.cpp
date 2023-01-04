@@ -174,7 +174,7 @@ void UCI::processCommand(std::string command)
 
     else if (command == "rep")
     {
-        std::cout << board.isRepetition(3) << std::endl;
+        std::cout << board.isRepetition(2) << std::endl;
     }
 
     else if (command == "eval")
