@@ -4,15 +4,11 @@
 
 #include "syzygy/Fathom/src/tbprobe.h"
 
-#include "attacks.h"
 #include "board.h"
-#include "evaluation.h"
 #include "movegen.h"
 #include "timemanager.h"
-#include "tt.h"
 
 extern std::atomic_bool stopped;
-extern TranspositionTable TTable;
 
 using historyTable = std::array<std::array<std::array<int, MAX_SQ>, MAX_SQ>, 2>;
 using killerTable = std::array<std::array<Move, MAX_PLY + 1>, 2>;
@@ -33,14 +29,15 @@ struct SearchResult
     Score score;
 };
 
-struct ThreadData
+class Search
 {
-    Board board;
+  public:
+    Board board = Board();
 
     // thread id, Mainthread = 0
     int id = 0;
 
-    bool useTB = false;
+    bool useTB = 0;
 
     // [sideToMove][from][to]
     historyTable history = {};
@@ -48,51 +45,42 @@ struct ThreadData
     // [sideToMove][ply]
     killerTable killerMoves = {};
 
+    // node count logic
+    nodeTable spentEffort = {};
+
     // pv collection
-    std::array<uint8_t, MAX_PLY> pvLength{};
-    std::array<std::array<Move, MAX_PLY>, MAX_PLY> pvTable{};
+    std::array<uint8_t, MAX_PLY> pvLength = {};
+    std::array<std::array<Move, MAX_PLY>, MAX_PLY> pvTable = {};
 
     // selective depth
-    uint8_t seldepth{};
-
-    // nodes searched
-    uint64_t nodes{};
-    uint64_t tbhits{};
+    uint8_t seldepth = 0;
 
     // data generation is not allowed to print to the console
     bool allowPrint = true;
-};
 
-class Search
-{
-  public:
-    // data generation entry function
-    SearchResult iterativeDeepening(Limits lim, int threadId);
-
-    // search entry function
-    void startThinking(Board board, int workers, Limits limit, bool useTB);
-
-    std::vector<ThreadData> tds;
-    std::vector<std::thread> threads;
-
-  private:
     // Mainthread limits
-    Limits limit;
+    Limits limit = {};
 
-    int checkTime = 2047;
-
-    // node count logic
-    nodeTable spentEffort{};
+    int checkTime = 0;
 
     // timepoint when we entered search
-    TimePoint::time_point t0;
+    TimePoint::time_point t0 = TimePoint::now();
 
+    // nodes searched
+    uint64_t nodes = 0;
+    uint64_t tbhits = 0;
+
+    void startThinking();
+
+    // data generation entry function
+    SearchResult iterativeDeepening();
+
+  private:
     /// @brief update move history
     /// @tparam type
     /// @param move
     /// @param bonus
-    /// @param td
-    template <Movetype type> void updateHistoryBonus(Move move, int bonus, ThreadData *td);
+    template <Movetype type> void updateHistoryBonus(Move move, int bonus);
 
     /// @brief update history for all moves
     /// @tparam type
@@ -100,9 +88,7 @@ class Search
     /// @param bonus
     /// @param depth
     /// @param movelist movelist of moves to update
-    /// @param td
-    template <Movetype type>
-    void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist, ThreadData *td);
+    template <Movetype type> void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist);
 
     /// @brief  update all history + other move ordering
     /// @param bestMove
@@ -110,29 +96,23 @@ class Search
     /// @param beta
     /// @param depth
     /// @param quietMoves
-    /// @param td
     /// @param ss
-    void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, ThreadData *td,
-                            Stack *ss);
+    void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, Stack *ss);
 
     // main search functions
 
-    template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss, ThreadData *td);
-    template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss, ThreadData *td);
-    Score aspirationSearch(int depth, Score prev_eval, Stack *ss, ThreadData *td);
+    template <Node node> Score qsearch(Score alpha, Score beta, Stack *ss);
+    template <Node node> Score absearch(int depth, Score alpha, Score beta, Stack *ss);
+    Score aspirationSearch(int depth, Score prev_eval, Stack *ss);
 
     // check limits
-    bool exitEarly(uint64_t nodes, int ThreadId);
+    bool exitEarly();
 
     std::string getPV();
     long long getTime();
-    uint64_t getNodes();
-    uint64_t getTbHits();
 
     /// @brief check TB evaluation
-    /// @param td ThreadData
-    /// @return TB Score
-    Score probeTB(ThreadData *td);
+    Score probeTB();
 
     /// @brief find the DTZ Move
     /// @param b Board
@@ -143,12 +123,11 @@ class Search
 /// @brief return the history of the move
 /// @tparam type
 /// @param move
-/// @param td
 /// @return
-template <Movetype type> int getHistory(Move move, ThreadData *td)
+template <Movetype type> int getHistory(Move move, Search &search)
 {
     if constexpr (type == Movetype::QUIET)
-        return td->history[td->board.sideToMove][from(move)][to(move)];
+        return search.history[search.board.sideToMove][from(move)][to(move)];
 }
 
 static constexpr int mvvlvaArray[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},

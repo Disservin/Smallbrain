@@ -126,7 +126,7 @@ EXE     := $(NAME)$(ARCH)$(SUFFIX)
 
 all: $(TARGET)
 clean:
-	rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS)
+	rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d
 
 # Linking the executable from the object files
 $(TARGET): $(OBJECTS)

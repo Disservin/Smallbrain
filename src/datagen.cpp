@@ -1,6 +1,6 @@
-#include "datagen.h"
-
 #include <fstream>
+
+#include "datagen.h"
 
 // random number generator
 std::random_device rd;
@@ -45,35 +45,22 @@ void TrainingData::infinitePlay(int threadId, int depth, bool useTB)
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
 
-    ThreadData td;
     Board board = Board();
     Search search = Search();
     Movelist movelist;
 
-    td.allowPrint = false;
+    search.allowPrint = false;
 
     while (!UCI_FORCE_STOP)
     {
-        td.nodes = 0;
-        td.tbhits = 0;
-        td.seldepth = 0;
-        td.id = 0;
 
-        search.threads.clear();
-        search.tds.clear();
-
-        td.history.fill({});
-        td.killerMoves.fill({});
-        td.pvLength.fill({});
-        td.pvTable.fill({});
-
-        randomPlayout(file, board, movelist, search, td, depth, useTB);
+        randomPlayout(file, board, movelist, search, depth, useTB);
     }
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td,
-                                 int depth, bool useTB)
+void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, int depth,
+                                 bool useTB)
 {
     std::vector<fenData> fens;
 
@@ -127,8 +114,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     if (movelist.size == 0)
         return;
 
-    td.board = board;
-    search.tds.push_back(td);
+    search.board = board;
 
     int drawCount = 0;
     int winCount = 0;
@@ -141,6 +127,9 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     limit.depth = depth;
     limit.nodes = 0;
     limit.time = t;
+
+    search.limit = limit;
+    search.id = 0;
 
     while (true)
     {
@@ -158,7 +147,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             break;
         }
 
-        SearchResult result = search.iterativeDeepening(limit, 0);
+        SearchResult result = search.iterativeDeepening();
 
         // CATCH BUGS
         if (result.score == VALUE_NONE)
@@ -237,7 +226,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         fens.push_back(fn);
 
         board.makeMove<true>(result.move);
-        search.tds[0].board = board;
+        search.board = board;
     }
 
     double score;

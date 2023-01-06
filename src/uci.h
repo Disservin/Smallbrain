@@ -3,19 +3,8 @@
 #include "benchmark.h"
 #include "board.h"
 #include "datagen.h"
-#include "evaluation.h"
-#include "helper.h"
-#include "nnue.h"
-#include "perft.h"
-#include "search.h"
-#include "syzygy/Fathom/src/tbprobe.h"
 #include "timemanager.h"
-#include "tt.h"
 #include "ucioptions.h"
-
-extern std::atomic_bool stopped;
-extern std::atomic_bool UCI_FORCE_STOP;
-extern TranspositionTable TTable;
 
 #define TUNE_INT(x, min, max)                                                                                          \
     do                                                                                                                 \
@@ -39,13 +28,12 @@ class UCI
     int uciLoop(int argc, char **argv);
 
   private:
-    Search searcher;
-    Board board;
-    uciOptions options;
-    Datagen::TrainingData datagen;
-    bool useTB;
+    Board board = Board();
+    uciOptions options = uciOptions();
+    Datagen::TrainingData datagen = Datagen::TrainingData();
 
     int threadCount;
+    bool useTB;
 
     /// @brief parse custom engine commands
     /// @param argc
@@ -61,8 +49,6 @@ class UCI
     void isreadyInput();
 
     void ucinewgameInput();
-
-    void stopThreads();
 
     void quit();
 

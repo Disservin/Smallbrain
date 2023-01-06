@@ -1,4 +1,5 @@
 #pragma once
+
 #include "board.h"
 #include "search.h"
 #include "types.h"
@@ -12,14 +13,14 @@ enum SearchType
 template <SearchType st> class MovePick
 {
   public:
-    MovePick(ThreadData *t, Stack *s, Movelist &moves, const Move move);
+    MovePick(Search &sh, Stack *s, Movelist &moves, const Move move);
 
     Move nextMove();
 
     Staging stage;
 
   private:
-    ThreadData *td;
+    Search &search;
     Stack *ss;
     Movelist &movelist;
     Move ttMove;
@@ -34,8 +35,8 @@ template <SearchType st> class MovePick
 };
 
 template <SearchType st>
-MovePick<st>::MovePick(ThreadData *t, Stack *s, Movelist &moves, const Move move)
-    : td(t), ss(s), movelist(moves), ttMove(move)
+MovePick<st>::MovePick(Search &sh, Stack *s, Movelist &moves, const Move move)
+    : search(sh), ss(s), movelist(moves), ttMove(move)
 {
     stage = TT_MOVE;
     movelist.size = 0;
@@ -68,8 +69,8 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case TT_MOVE:
         stage++;
 
-        if (td->board.isPseudoLegal(ttMove) && (st == ABSEARCH || (td->board.pieceAtB(to(ttMove)) != None)) &&
-            td->board.isLegal(ttMove))
+        if (search.board.isPseudoLegal(ttMove) && (st == ABSEARCH || (search.board.pieceAtB(to(ttMove)) != None)) &&
+            search.board.isLegal(ttMove))
         {
             playedTT = true;
             return ttMove;
@@ -78,9 +79,9 @@ template <SearchType st> Move MovePick<st>::nextMove()
         [[fallthrough]];
     case GENERATE:
         if (st == ABSEARCH)
-            Movegen::legalmoves<Movetype::ALL>(td->board, movelist);
+            Movegen::legalmoves<Movetype::ALL>(search.board, movelist);
         else
-            Movegen::legalmoves<Movetype::CAPTURE>(td->board, movelist);
+            Movegen::legalmoves<Movetype::CAPTURE>(search.board, movelist);
 
         stage++;
         [[fallthrough]];
@@ -96,7 +97,7 @@ template <SearchType st> Move MovePick<st>::nextMove()
             if (move == ttMove && playedTT)
                 continue;
 
-            assert(move == NO_MOVE || td->board.isPseudoLegal(move) && td->board.isLegal(move));
+            assert(move == NO_MOVE || search.board.isPseudoLegal(move) && search.board.isLegal(move));
             return move;
         }
 
@@ -112,35 +113,35 @@ template <SearchType st> Move MovePick<st>::nextMove()
 
 template <SearchType st> int MovePick<st>::mvvlva(Move move) const
 {
-    int attacker = type_of_piece(td->board.pieceAtB(from(move))) + 1;
-    int victim = type_of_piece(td->board.pieceAtB(to(move))) + 1;
+    int attacker = type_of_piece(search.board.pieceAtB(from(move))) + 1;
+    int victim = type_of_piece(search.board.pieceAtB(to(move))) + 1;
     return mvvlvaArray[victim][attacker];
 }
 
 template <SearchType st> int MovePick<st>::scoreMove(const Move move) const
 {
-    if (td->board.pieceAtB(to(move)) != None)
+    if (search.board.pieceAtB(to(move)) != None)
     {
         if (st == QSEARCH)
         {
             return CAPTURE_SCORE + mvvlva(move);
         }
 
-        return td->board.see(move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
+        return search.board.see(move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
     }
     else
     {
-        if (td->killerMoves[0][ss->ply] == move)
+        if (search.killerMoves[0][ss->ply] == move)
         {
             return KILLER_ONE_SCORE;
         }
-        else if (td->killerMoves[1][ss->ply] == move)
+        else if (search.killerMoves[1][ss->ply] == move)
         {
             return KILLER_TWO_SCORE;
         }
         else
         {
-            return getHistory<Movetype::QUIET>(move, td);
+            return getHistory<Movetype::QUIET>(move, search);
         }
     }
 }

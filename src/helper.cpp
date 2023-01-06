@@ -1,6 +1,6 @@
-#include "helper.h"
-
 #include <bitset>
+
+#include "helper.h"
 
 std::vector<std::string> splitInput(const std::string &fen)
 {

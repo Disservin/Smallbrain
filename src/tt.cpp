@@ -1,4 +1,5 @@
 #include "tt.h"
+#include "helper.h"
 
 TranspositionTable::TranspositionTable()
 {
