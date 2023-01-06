@@ -25,7 +25,7 @@ uint64_t ThreadPool::getTbHits()
 
     for (auto &th : pool)
     {
-        total += th.search.nodes;
+        total += th.search.tbhits;
     }
 
     return total;
