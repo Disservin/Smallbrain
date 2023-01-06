@@ -38,6 +38,7 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, int work
     stopped = false;
 
     Thread mainThread;
+
     if (pool.size() > 0)
         mainThread = pool[0];
 
@@ -50,19 +51,21 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, int work
     mainThread.search.useTB = useTB;
     mainThread.search.nodes = 0;
     mainThread.search.tbhits = 0;
+    mainThread.search.spentEffort.fill({});
 
     pool.push_back(mainThread);
 
     // start at index 1 to keep "mainthread" data alive
+    Thread th;
+    th.search.board = board;
+    th.search.limit = limit;
+    th.search.useTB = useTB;
+    th.search.nodes = 0;
+    th.search.tbhits = 0;
+
     for (int i = 1; i < workerCount; i++)
     {
-        Thread th;
         th.search.id = i;
-        th.search.board = board;
-        th.search.limit = limit;
-        th.search.useTB = useTB;
-        th.search.nodes = 0;
-        th.search.tbhits = 0;
 
         pool.push_back(th);
     }

@@ -1,5 +1,7 @@
 #include "benchmark.h"
 
+extern std::atomic_bool stopped;
+
 namespace Bench
 {
 

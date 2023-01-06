@@ -85,7 +85,7 @@ bool get_square_color(Square square);
 /// @brief get the piecetype of a piece
 /// @param piece
 /// @return the piecetype
-inline PieceType type_of_piece(Piece piece)
+inline constexpr PieceType type_of_piece(const Piece piece)
 {
     return PieceToPieceType[piece];
 }

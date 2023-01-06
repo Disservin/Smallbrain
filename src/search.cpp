@@ -9,6 +9,7 @@
 
 extern ThreadPool Threads;
 extern TranspositionTable TTable;
+extern std::atomic_bool stopped;
 
 // Initialize reduction table
 int reductions[MAX_PLY][MAX_MOVES];
@@ -267,6 +268,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     TEntry *tte = TTable.probeTT(ttHit, ttMove, board.hashKey);
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+
     /********************
      * Look up in the TT
      * Adjust alpha and beta for non PV nodes
@@ -342,7 +344,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         goto moves;
     }
 
-    // use tt eval for a better staticEval
+    // Typically people save the evaluation call in the TT, however
+    // I dont and use the TT search score instead, this somehow seems to gain
     ss->eval = staticEval = ttHit ? tte->score : Eval::evaluation(board);
 
     // improving boolean
@@ -362,6 +365,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     if (depth <= 0)
         return qsearch<PV>(alpha, beta, ss);
+
+    // Skip early pruning in Pv Nodes
 
     if (PvNode)
         goto moves;
@@ -525,10 +530,12 @@ moves:
 
                 // update the PV
                 pvTable[ss->ply][ss->ply] = move;
+
                 for (int next_ply = ss->ply + 1; next_ply < pvLength[ss->ply + 1]; next_ply++)
                 {
                     pvTable[ss->ply][next_ply] = pvTable[ss->ply + 1][next_ply];
                 }
+
                 pvLength[ss->ply] = pvLength[ss->ply + 1];
 
                 /********************
@@ -561,6 +568,7 @@ moves:
 
     // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
+
     if (!stopped.load(std::memory_order_relaxed))
         TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, board.hashKey, bestMove);
 
@@ -568,7 +576,7 @@ moves:
     return best;
 }
 
-Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss)
+Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss)
 {
     Score alpha = -VALUE_INFINITE;
     Score beta = VALUE_INFINITE;
@@ -585,8 +593,8 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss)
      *******************/
     if (depth >= 9)
     {
-        alpha = prev_eval - delta;
-        beta = prev_eval + delta;
+        alpha = prevEval - delta;
+        beta = prevEval + delta;
     }
 
     while (true)
@@ -595,6 +603,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss)
             alpha = -VALUE_INFINITE;
         if (beta > 3500)
             beta = VALUE_INFINITE;
+
         result = absearch<Root>(depth, alpha, beta, ss);
 
         if (stopped.load(std::memory_order_relaxed))
@@ -746,7 +755,7 @@ void Search::startThinking()
      *******************/
     if (limit.time.optimum != 0)
     {
-        Move dtzMove = probeDTZ(board);
+        Move dtzMove = probeDTZ();
         if (dtzMove != NO_MOVE)
         {
             std::cout << "bestmove " << uciMove(board, dtzMove) << std::endl;
@@ -769,11 +778,13 @@ bool Search::exitEarly()
 
     if (--checkTime > 0)
         return false;
+
     checkTime = 2047;
 
     if (limit.time.maximum != 0)
     {
         auto ms = getTime();
+
         if (ms >= limit.time.maximum)
         {
             stopped = true;
@@ -791,10 +802,11 @@ std::string Search::getPV()
     {
         ss << " " << uciMove(board, pvTable[0][i]);
     }
+
     return ss.str();
 }
 
-long long Search::getTime()
+int64_t Search::getTime()
 {
     auto t1 = TimePoint::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
@@ -810,13 +822,13 @@ Score Search::probeTB()
 
     Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 
-    unsigned TBresult;
-    TBresult =
-        tb_probe_wdl(white, black, board.Kings<White>() | board.Kings<Black>(),
-                     board.Queens<White>() | board.Queens<Black>(), board.Rooks<White>() | board.Rooks<Black>(),
-                     board.Bishops<White>() | board.Bishops<Black>(), board.Knights<White>() | board.Knights<Black>(),
-                     board.Pawns<White>() | board.Pawns<Black>(), board.halfMoveClock, board.castlingRights, ep,
-                     board.sideToMove == White); //  * - turn: true=white, false=black
+    unsigned TBresult = tb_probe_wdl(white, black, board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
+                                     board.pieces<WhiteQueen>() | board.pieces<BlackQueen>(),
+                                     board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
+                                     board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
+                                     board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
+                                     board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), board.halfMoveClock,
+                                     board.castlingRights, ep, board.sideToMove == White);
 
     if (TBresult == TB_LOSS)
     {
@@ -833,7 +845,7 @@ Score Search::probeTB()
     return VALUE_NONE;
 }
 
-Move Search::probeDTZ(Board &board)
+Move Search::probeDTZ()
 {
     U64 white = board.Us<White>();
     U64 black = board.Us<Black>();
@@ -842,13 +854,13 @@ Move Search::probeDTZ(Board &board)
 
     Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 
-    unsigned TBresult;
-    TBresult = tb_probe_root(
-        white, black, board.Kings<White>() | board.Kings<Black>(), board.Queens<White>() | board.Queens<Black>(),
-        board.Rooks<White>() | board.Rooks<Black>(), board.Bishops<White>() | board.Bishops<Black>(),
-        board.Knights<White>() | board.Knights<Black>(), board.Pawns<White>() | board.Pawns<Black>(),
-        board.halfMoveClock, board.castlingRights, ep, board.sideToMove == White,
-        NULL); //  * - turn: true=white, false=black
+    unsigned TBresult = tb_probe_root(
+        white, black, board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
+        board.pieces<WhiteQueen>() | board.pieces<BlackQueen>(), board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
+        board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
+        board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
+        board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), board.halfMoveClock, board.castlingRights, ep,
+        board.sideToMove == White, NULL); //  * - turn: true=white, false=black
 
     if (TBresult == TB_RESULT_FAILED || TBresult == TB_RESULT_CHECKMATE || TBresult == TB_RESULT_STALEMATE)
         return NO_MOVE;

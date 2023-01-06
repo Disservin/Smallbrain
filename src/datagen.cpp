@@ -199,10 +199,12 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 
             unsigned TBresult = tb_probe_wdl(
-                board.Us<White>(), board.Us<Black>(), board.Kings<White>() | board.Kings<Black>(),
-                board.Queens<White>() | board.Queens<Black>(), board.Rooks<White>() | board.Rooks<Black>(),
-                board.Bishops<White>() | board.Bishops<Black>(), board.Knights<White>() | board.Knights<Black>(),
-                board.Pawns<White>() | board.Pawns<Black>(), 0, board.castlingRights, ep,
+                board.Us<White>(), board.Us<Black>(), board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
+                board.pieces<WhiteQueen>() | board.pieces<BlackQueen>(),
+                board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
+                board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
+                board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
+                board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), 0, board.castlingRights, ep,
                 ~board.sideToMove); //  * - turn: true=white, false=black
 
             if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)

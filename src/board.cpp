@@ -21,10 +21,10 @@ Board::Board()
 
     applyFen(DEFAULT_POS, true);
 
-    occEnemy = Enemy<White>();
-    occUs = Us<White>();
+    occEnemy = Enemy(sideToMove);
+    occUs = Us(sideToMove);
     occAll = All();
-    enemyEmptyBB = EnemyEmpty(White);
+    enemyEmptyBB = ~occUs;
 
     std::fill(std::begin(board), std::end(board), None);
 }
@@ -50,7 +50,7 @@ Piece Board::pieceAtBB(Square sq)
 {
     for (Piece p = WhitePawn; p < None; p++)
     {
-        if (Bitboards[p] & (1ULL << sq))
+        if (piecesBB[p] & (1ULL << sq))
             return p;
     }
 
@@ -62,11 +62,11 @@ Piece Board::pieceAtB(Square sq) const
     return board[sq];
 }
 
-void Board::applyFen(std::string fen, bool updateAcc)
+void Board::applyFen(const std::string &fen, bool updateAcc)
 {
     for (Piece p = WhitePawn; p < None; p++)
     {
-        Bitboards[p] = 0ULL;
+        piecesBB[p] = 0ULL;
     }
 
     std::vector<std::string> params = splitInput(fen);
@@ -269,54 +269,28 @@ bool Board::isRepetition(int draw) const
 
 bool Board::nonPawnMat(Color c) const
 {
-    return Knights(c) | Bishops(c) | Rooks(c) | Queens(c);
+    return pieces(KNIGHT, c) | pieces(BISHOP, c) | pieces(ROOK, c) | pieces(QUEEN, c);
 }
 
 Square Board::KingSQ(Color c) const
 {
-    assert(Kings(c) != 0);
-    return lsb(Kings(c));
+    return lsb(pieces(KING, c));
+}
+
+U64 Board::Enemy(Color c) const
+{
+    return Us(~c);
 }
 
 U64 Board::Us(Color c) const
 {
-    return Bitboards[PAWN + c * 6] | Bitboards[KNIGHT + c * 6] | Bitboards[BISHOP + c * 6] | Bitboards[ROOK + c * 6] |
-           Bitboards[QUEEN + c * 6] | Bitboards[KING + c * 6];
+    return piecesBB[PAWN + c * 6] | piecesBB[KNIGHT + c * 6] | piecesBB[BISHOP + c * 6] | piecesBB[ROOK + c * 6] |
+           piecesBB[QUEEN + c * 6] | piecesBB[KING + c * 6];
 }
 
-U64 Board::EnemyEmpty(Color c) const
-{
-    return ~Us(c);
-}
 U64 Board::All() const
 {
     return Us<White>() | Us<Black>();
-}
-
-U64 Board::Pawns(Color c) const
-{
-    return Bitboards[PAWN + c * 6];
-}
-U64 Board::Knights(Color c) const
-{
-    return Bitboards[KNIGHT + c * 6];
-}
-U64 Board::Bishops(Color c) const
-{
-    return Bitboards[BISHOP + c * 6];
-}
-U64 Board::Rooks(Color c) const
-{
-    return Bitboards[ROOK + c * 6];
-}
-U64 Board::Queens(Color c) const
-{
-    return Bitboards[QUEEN + c * 6];
-}
-U64 Board::Kings(Color c) const
-{
-    assert(Bitboards[KING + c * 6] != 0);
-    return Bitboards[KING + c * 6];
 }
 
 Color Board::colorOf(Square loc) const
@@ -326,30 +300,30 @@ Color Board::colorOf(Square loc) const
 
 bool Board::isSquareAttacked(Color c, Square sq) const
 {
-    if (Pawns(c) & PawnAttacks(sq, ~c))
+    if (pieces(PAWN, c) & PawnAttacks(sq, ~c))
         return true;
-    if (Knights(c) & KnightAttacks(sq))
+    if (pieces(KNIGHT, c) & KnightAttacks(sq))
         return true;
-    if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, All()))
+    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & BishopAttacks(sq, All()))
         return true;
-    if ((Rooks(c) | Queens(c)) & RookAttacks(sq, All()))
+    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & RookAttacks(sq, All()))
         return true;
-    if (Kings(c) & KingAttacks(sq))
+    if (pieces(KING, c) & KingAttacks(sq))
         return true;
     return false;
 }
 
 bool Board::isSquareAttacked(Color c, Square sq, U64 occ) const
 {
-    if (Pawns(c) & PawnAttacks(sq, ~c))
+    if (pieces(PAWN, c) & PawnAttacks(sq, ~c))
         return true;
-    if (Knights(c) & KnightAttacks(sq))
+    if (pieces(KNIGHT, c) & KnightAttacks(sq))
         return true;
-    if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, occ))
+    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & BishopAttacks(sq, occ))
         return true;
-    if ((Rooks(c) | Queens(c)) & RookAttacks(sq, occ))
+    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & RookAttacks(sq, occ))
         return true;
-    if (Kings(c) & KingAttacks(sq))
+    if (pieces(KING, c) & KingAttacks(sq))
         return true;
     return false;
 }
@@ -361,12 +335,12 @@ U64 Board::allAttackers(Square sq, U64 occupiedBB)
 
 U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB)
 {
-    U64 attackingBishops = Bishops(attackerColor);
-    U64 attackingRooks = Rooks(attackerColor);
-    U64 attackingQueens = Queens(attackerColor);
-    U64 attackingKnights = Knights(attackerColor);
-    U64 attackingKing = Kings(attackerColor);
-    U64 attackingPawns = Pawns(attackerColor);
+    U64 attackingBishops = pieces(BISHOP, attackerColor);
+    U64 attackingRooks = pieces(ROOK, attackerColor);
+    U64 attackingQueens = pieces(QUEEN, attackerColor);
+    U64 attackingKnights = pieces(KNIGHT, attackerColor);
+    U64 attackingKing = pieces(KING, attackerColor);
+    U64 attackingPawns = pieces(PAWN, attackerColor);
 
     U64 interCardinalRays = BishopAttacks(sq, occupiedBB);
     U64 cardinalRaysRays = RookAttacks(sq, occupiedBB);
@@ -445,8 +419,8 @@ bool Board::isLegal(const Move move)
         bb |= 1ull << to_sq;
         bb &= ~(1ull << capSq);
 
-        return !((RookAttacks(kSQ, bb) & (Rooks(~color) | Queens(~color))) ||
-                 (BishopAttacks(kSQ, bb) & (Bishops(~color) | Queens(~color))));
+        return !((RookAttacks(kSQ, bb) & (pieces(ROOK, ~color) | pieces(QUEEN, ~color))) ||
+                 (BishopAttacks(kSQ, bb) & (pieces(BISHOP, ~color) | pieces(QUEEN, ~color))));
     }
 
     const bool isCastlingWhite = p == WhiteKing && capture == WhiteRook;
@@ -461,19 +435,19 @@ bool Board::isLegal(const Move move)
         if (isSquareAttacked(~color, from_sq, all) || isSquareAttacked(~color, destKing, all))
             return false;
 
-        Bitboards[p] &= ~(1ull << from_sq);
-        Bitboards[rook] &= ~(1ull << to_sq);
+        piecesBB[p] &= ~(1ull << from_sq);
+        piecesBB[rook] &= ~(1ull << to_sq);
 
-        Bitboards[p] |= (1ull << destKing);
-        Bitboards[rook] |= (1ull << rookToSq);
+        piecesBB[p] |= (1ull << destKing);
+        piecesBB[rook] |= (1ull << rookToSq);
 
         bool isAttacked = isSquareAttacked(~color, destKing);
 
-        Bitboards[rook] &= ~(1ull << rookToSq);
-        Bitboards[p] &= ~(1ull << destKing);
+        piecesBB[rook] &= ~(1ull << rookToSq);
+        piecesBB[p] &= ~(1ull << destKing);
 
-        Bitboards[p] |= (1ull << from_sq);
-        Bitboards[rook] |= (1ull << to_sq);
+        piecesBB[p] |= (1ull << from_sq);
+        piecesBB[rook] |= (1ull << to_sq);
 
         return !isAttacked;
 
@@ -488,32 +462,32 @@ bool Board::isLegal(const Move move)
 
     if (promoted(move))
     {
-        Bitboards[makePiece(PAWN, color)] &= ~(1ull << from_sq);
-        Bitboards[p] |= (1ull << to_sq);
+        piecesBB[makePiece(PAWN, color)] &= ~(1ull << from_sq);
+        piecesBB[p] |= (1ull << to_sq);
     }
     else
     {
-        Bitboards[p] &= ~(1ull << from_sq);
-        Bitboards[p] |= (1ull << to_sq);
+        piecesBB[p] &= ~(1ull << from_sq);
+        piecesBB[p] |= (1ull << to_sq);
     }
 
     if (capture != None)
-        Bitboards[capture] &= ~(1ull << to_sq);
+        piecesBB[capture] &= ~(1ull << to_sq);
 
     const bool isAttacked = isSquareAttacked(~color, kSQ);
 
     if (capture != None)
-        Bitboards[capture] |= (1ull << to_sq);
+        piecesBB[capture] |= (1ull << to_sq);
 
     if (promoted(move))
     {
-        Bitboards[p] &= ~(1ull << to_sq);
-        Bitboards[makePiece(PAWN, color)] |= (1ull << from_sq);
+        piecesBB[p] &= ~(1ull << to_sq);
+        piecesBB[makePiece(PAWN, color)] |= (1ull << from_sq);
     }
     else
     {
-        Bitboards[p] |= (1ull << from_sq);
-        Bitboards[p] &= ~(1ull << to_sq);
+        piecesBB[p] |= (1ull << from_sq);
+        piecesBB[p] &= ~(1ull << to_sq);
     }
 
     assert(All() == all);
@@ -716,10 +690,10 @@ bool Board::see(Move move, int threshold)
     U64 occ = (All() ^ (1ULL << from_sq)) | (1ULL << to_sq);
     U64 attackers = allAttackers(to_sq, occ) & occ;
 
-    U64 queens = Bitboards[WhiteQueen] | Bitboards[BlackQueen];
+    U64 queens = piecesBB[WhiteQueen] | piecesBB[BlackQueen];
 
-    U64 bishops = Bitboards[WhiteBishop] | Bitboards[BlackBishop] | queens;
-    U64 rooks = Bitboards[WhiteRook] | Bitboards[BlackRook] | queens;
+    U64 bishops = piecesBB[WhiteBishop] | piecesBB[BlackBishop] | queens;
+    U64 rooks = piecesBB[WhiteRook] | piecesBB[BlackRook] | queens;
 
     Color sT = ~colorOf(from_sq);
 
@@ -733,7 +707,7 @@ bool Board::see(Move move, int threshold)
         int pt;
         for (pt = 0; pt <= 5; pt++)
         {
-            if (myAttackers & (Bitboards[pt] | Bitboards[pt + 6]))
+            if (myAttackers & (piecesBB[pt] | piecesBB[pt + 6]))
                 break;
         }
         sT = ~sT;
@@ -744,7 +718,7 @@ bool Board::see(Move move, int threshold)
             break;
         }
 
-        occ ^= (1ULL << (lsb(myAttackers & (Bitboards[pt] | Bitboards[pt + 6]))));
+        occ ^= (1ULL << (lsb(myAttackers & (piecesBB[pt] | piecesBB[pt + 6]))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
             attackers |= BishopAttacks(to_sq, occ) & bishops;

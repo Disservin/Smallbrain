@@ -87,7 +87,7 @@ class Board
     // all squares that are seen by an enemy piece
     U64 seen;
 
-    // Occupation Bitboards
+    // Occupation bitboards
     U64 occEnemy;
     U64 occUs;
     U64 occAll;
@@ -100,7 +100,7 @@ class Board
 
     std::vector<State> stateHistory;
 
-    U64 Bitboards[12] = {};
+    U64 piecesBB[12] = {};
     Piece board[MAX_SQ];
 
     /// @brief constructor for the board, loads startpos and initializes SQUARES_BETWEEN_BB array
@@ -122,7 +122,7 @@ class Board
     /// @brief applys a new Fen to the board and also reload the entire nnue
     /// @param fen
     /// @param updateAcc
-    void applyFen(std::string fen, bool updateAcc = true);
+    void applyFen(const std::string &fen, bool updateAcc = true);
 
     /// @brief returns a Fen string of the current board
     /// @return fen string
@@ -138,54 +138,35 @@ class Board
     /// @return
     bool nonPawnMat(Color c) const;
 
-    /// @brief returns the King Square of the specified color
-    /// @param c
-    /// @return
     Square KingSQ(Color c) const;
 
-    /// @brief returns the King Square of the specified color
-    /// @tparam c
-    /// @return
-    template <Color c> Square KingSQ() const;
+    U64 Enemy(Color c) const;
 
-    /// @brief returns all pieces of the other color
-    /// @tparam c
-    /// @return
-    template <Color c> U64 Enemy() const;
-
-    /// @brief returns a bitboard of our pieces
-    /// @param c
-    /// @return
     U64 Us(Color c) const;
+    template <Color c> U64 Us() const
+    {
+        return piecesBB[PAWN + c * 6] | piecesBB[KNIGHT + c * 6] | piecesBB[BISHOP + c * 6] | piecesBB[ROOK + c * 6] |
+               piecesBB[QUEEN + c * 6] | piecesBB[KING + c * 6];
+    }
 
-    /// @brief returns a bitboard of our pieces
-    /// @tparam c
-    /// @return
-    template <Color c> U64 Us() const;
-
-    /// @brief returns all empty squares or squares with an enemy on them
-    /// @param c
-    /// @return
-    U64 EnemyEmpty(Color c) const;
-
-    /// @brief returns all pieces
-    /// @return
     U64 All() const;
 
-    // Gets individual bitboards
+    // Gets individual piece bitboards
 
-    U64 Pawns(const Color c) const;
-    U64 Knights(const Color c) const;
-    U64 Bishops(const Color c) const;
-    U64 Rooks(const Color c) const;
-    U64 Queens(const Color c) const;
-    U64 Kings(const Color c) const;
-    template <Color c> U64 Pawns() const;
-    template <Color c> U64 Knights() const;
-    template <Color c> U64 Bishops() const;
-    template <Color c> U64 Rooks() const;
-    template <Color c> U64 Queens() const;
-    template <Color c> U64 Kings() const;
+    template <Piece p> constexpr U64 pieces() const
+    {
+        return piecesBB[p];
+    }
+
+    template <PieceType p, Color c> constexpr U64 pieces() const
+    {
+        return piecesBB[p + c * 6];
+    }
+
+    constexpr U64 pieces(PieceType p, Color c) const
+    {
+        return piecesBB[p + c * 6];
+    }
 
     /// @brief returns the color of a piece at a square
     /// @param loc
@@ -290,7 +271,7 @@ class Board
 
 template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq)
 {
-    Bitboards[piece] &= ~(1ULL << sq);
+    piecesBB[piece] &= ~(1ULL << sq);
     board[sq] = None;
     if constexpr (updateNNUE)
     {
@@ -300,7 +281,7 @@ template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq)
 
 template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq)
 {
-    Bitboards[piece] |= (1ULL << sq);
+    piecesBB[piece] |= (1ULL << sq);
     board[sq] = piece;
     if constexpr (updateNNUE)
     {
@@ -310,64 +291,14 @@ template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq)
 
 template <bool updateNNUE> void Board::movePiece(Piece piece, Square fromSq, Square toSq)
 {
-    Bitboards[piece] &= ~(1ULL << fromSq);
-    Bitboards[piece] |= (1ULL << toSq);
+    piecesBB[piece] &= ~(1ULL << fromSq);
+    piecesBB[piece] |= (1ULL << toSq);
     board[fromSq] = None;
     board[toSq] = piece;
     if constexpr (updateNNUE)
     {
         NNUE::move(accumulator, fromSq, toSq, piece);
     }
-}
-
-template <Color c> U64 Board::Pawns() const
-{
-    return Bitboards[c == White ? WhitePawn : BlackPawn];
-}
-
-template <Color c> U64 Board::Knights() const
-{
-    return Bitboards[c == White ? WhiteKnight : BlackKnight];
-}
-
-template <Color c> U64 Board::Bishops() const
-{
-    return Bitboards[c == White ? WhiteBishop : BlackBishop];
-}
-
-template <Color c> U64 Board::Rooks() const
-{
-    return Bitboards[c == White ? WhiteRook : BlackRook];
-}
-
-template <Color c> U64 Board::Queens() const
-{
-    return Bitboards[c == White ? WhiteQueen : BlackQueen];
-}
-
-template <Color c> U64 Board::Kings() const
-{
-    assert(Bitboards[c == White ? WhiteKing : BlackKing] != 0);
-
-    return Bitboards[c == White ? WhiteKing : BlackKing];
-}
-
-template <Color c> U64 Board::Us() const
-{
-    return Pawns<c>() | Knights<c>() | Bishops<c>() | Rooks<c>() | Queens<c>() | Kings<c>();
-}
-
-template <Color c> U64 Board::Enemy() const
-{
-    assert(Us(~c) != 0);
-
-    return Us<~c>();
-}
-
-template <Color c> Square Board::KingSQ() const
-{
-    assert(Kings<c>() != 0);
-    return lsb(Kings<c>());
 }
 
 template <bool updateNNUE> void Board::makeMove(Move move)
@@ -444,7 +375,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
         else if (std::abs(from_sq - to_sq) == 16)
         {
             U64 epMask = PawnAttacks(Square(to_sq - (sideToMove * -2 + 1) * 8), sideToMove);
-            if (epMask & Pawns(~sideToMove))
+            if (epMask & pieces(PAWN, ~sideToMove))
             {
                 enPassantSquare = Square(to_sq - (sideToMove * -2 + 1) * 8);
                 hashKey ^= updateKeyEnPassant(enPassantSquare);
