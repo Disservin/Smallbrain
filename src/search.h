@@ -31,7 +31,7 @@ class Search
 {
   public:
     // timepoint when we entered search
-    TimePoint::time_point t0 = TimePoint::now();
+    TimePoint::time_point t0;
 
     Board board = Board();
 

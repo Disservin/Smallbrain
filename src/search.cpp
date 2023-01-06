@@ -13,11 +13,14 @@ extern std::atomic_bool stopped;
 
 // Initialize reduction table
 int reductions[MAX_PLY][MAX_MOVES];
+
 void init_reductions()
 {
-    for (int depth = 0; depth < MAX_PLY; depth++)
+    reductions[0][0] = 0;
+
+    for (int depth = 1; depth < MAX_PLY; depth++)
     {
-        for (int moves = 0; moves < MAX_MOVES; moves++)
+        for (int moves = 1; moves < MAX_MOVES; moves++)
             reductions[depth][moves] = 1 + log(depth) * log(moves) / 1.75;
     }
 }
@@ -642,16 +645,6 @@ Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss)
 
 SearchResult Search::iterativeDeepening()
 {
-    /********************
-     * Various Limits that only the main Thread needs to know
-     * and initialise.
-     *******************/
-    if (id == 0)
-    {
-        t0 = TimePoint::now();
-        checkTime = 0;
-    }
-
     Move bestmove = NO_MOVE;
     SearchResult sr;
 
@@ -751,6 +744,16 @@ SearchResult Search::iterativeDeepening()
 void Search::startThinking()
 {
     /********************
+     * Various Limits that only the MainThread needs to know
+     * and initialise.
+     *******************/
+    if (id == 0)
+    {
+        t0 = TimePoint::now();
+        checkTime = 0;
+    }
+
+    /********************
      * Play dtz move when time is limited
      *******************/
     if (limit.time.optimum != 0)
@@ -771,8 +774,10 @@ bool Search::exitEarly()
 {
     if (stopped.load(std::memory_order_relaxed))
         return true;
+
     if (id != 0)
         return false;
+
     if (limit.nodes != 0 && nodes >= limit.nodes)
         return true;
 
@@ -788,6 +793,7 @@ bool Search::exitEarly()
         if (ms >= limit.time.maximum)
         {
             stopped = true;
+
             return true;
         }
     }

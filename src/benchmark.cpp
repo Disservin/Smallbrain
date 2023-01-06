@@ -21,6 +21,7 @@ int startBench()
     for (auto &fen : benchmarkfens)
     {
         std::cout << "\nPosition: " << i++ << "/" << benchmarkfens.size() << " " << fen << std::endl;
+
         stopped = false;
 
         Search searcher;
@@ -30,7 +31,8 @@ int startBench()
         searcher.board.applyFen(fen);
         searcher.limit = limit;
         searcher.id = 0;
-        searcher.iterativeDeepening();
+
+        searcher.startThinking();
 
         totalNodes += searcher.nodes;
     }

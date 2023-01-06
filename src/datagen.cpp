@@ -122,6 +122,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     Color winningSide = NO_COLOR;
 
     Time t;
+    t.maximum = 0;
+    t.optimum = 0;
 
     Limits limit;
     limit.depth = depth;
