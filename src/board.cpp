@@ -164,7 +164,7 @@ void Board::applyFen(const std::string &fen, bool updateAcc)
     fullMoveNumber = std::stoi(full_move_counter) * 2;
 
     hashHistory.clear();
-    hashHistory.push_back(zobristHash());
+    hashHistory.emplace_back(zobristHash());
 
     stateHistory.clear();
     hashKey = zobristHash();
@@ -355,9 +355,8 @@ U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB)
 
 void Board::makeNullMove()
 {
-    const State store =
-        State(enPassantSquare, castlingRights, halfMoveClock, None, castlingRights960White, castlingRights960Black);
-    stateHistory.push_back(store);
+    stateHistory.emplace_back(enPassantSquare, castlingRights, halfMoveClock, None, castlingRights960White,
+                              castlingRights960Black);
     sideToMove = ~sideToMove;
 
     // Update the hash key

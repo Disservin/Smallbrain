@@ -53,7 +53,7 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, int work
     mainThread.search.tbhits = 0;
     mainThread.search.spentEffort.fill({});
 
-    pool.push_back(mainThread);
+    pool.emplace_back(mainThread);
 
     // start at index 1 to keep "mainthread" data alive
     Thread th;
@@ -67,7 +67,7 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, int work
     {
         th.search.id = i;
 
-        pool.push_back(th);
+        pool.emplace_back(th);
     }
 
     for (int i = 0; i < workerCount; i++)

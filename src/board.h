@@ -321,9 +321,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     hashHistory.emplace_back(hashKey);
 
-    const State store =
-        State(enPassantSquare, castlingRights, halfMoveClock, capture, castlingRights960White, castlingRights960Black);
-    stateHistory.push_back(store);
+    stateHistory.emplace_back(enPassantSquare, castlingRights, halfMoveClock, capture, castlingRights960White,
+                              castlingRights960Black);
 
     if constexpr (updateNNUE)
         accumulatorStack.emplace_back(accumulator);
