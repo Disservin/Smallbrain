@@ -9,6 +9,7 @@
 #include "search.h"
 
 extern std::atomic_bool stopped;
+extern std::atomic_bool UCI_FORCE_STOP;
 
 // A wrapper class to start the search
 class Thread

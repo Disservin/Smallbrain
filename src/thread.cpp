@@ -35,7 +35,7 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, int work
 {
     assert(runningThreads.size() == 0);
 
-    stopped = false;
+    stopped = UCI_FORCE_STOP = false;
 
     Thread mainThread;
 
@@ -78,9 +78,11 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, int work
 
 void ThreadPool::stop_threads()
 {
-    stopped = true;
+    stopped = UCI_FORCE_STOP = true;
 
     for (auto &th : runningThreads)
         if (th.joinable())
             th.join();
+
+    pool.clear();
 }

@@ -46,16 +46,19 @@ void TrainingData::infinitePlay(int threadId, int depth, bool useTB)
     file.open(filename, std::ios::app);
 
     Board board = Board();
-    Search search = Search();
-    Movelist movelist;
 
-    search.allowPrint = false;
+    Movelist movelist;
 
     while (!UCI_FORCE_STOP)
     {
+        Search search = Search();
+        search.normalSearch = false;
+        search.useTB = false;
+        search.id = 0;
 
         randomPlayout(file, board, movelist, search, depth, useTB);
     }
+
     file.close();
 }
 
@@ -69,8 +72,6 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
     int ply = 0;
     int randomMoves = 10;
-
-    // std::uniform_int_distribution<std::mt19937::result_type> maxLines{0, static_cast<std::mt19937::result_type>(10)};
 
     if (openingBook.size() != 0)
     {
@@ -95,7 +96,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     {
         movelist.size = 0;
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
-        if (movelist.size == 0 || UCI_FORCE_STOP)
+        if (movelist.size == 0)
             return;
 
         std::uniform_int_distribution<std::mt19937::result_type> randomNum{
@@ -114,8 +115,6 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     if (movelist.size == 0)
         return;
 
-    search.board = board;
-
     int drawCount = 0;
     int winCount = 0;
 
@@ -130,14 +129,16 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     limit.nodes = 0;
     limit.time = t;
 
+    search.board = board;
     search.limit = limit;
-    search.id = 0;
 
     while (true)
     {
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
+
         movelist.size = 0;
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
+
         if (movelist.size == 0)
         {
             winningSide = inCheck ? ((board.sideToMove == White) ? Black : White) : NO_COLOR;
@@ -148,6 +149,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             winningSide = NO_COLOR;
             break;
         }
+
+        search.nodes = 0;
 
         SearchResult result = search.iterativeDeepening();
 

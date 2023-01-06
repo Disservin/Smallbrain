@@ -54,6 +54,8 @@ int UCI::uciLoop(int argc, char **argv)
         else
             processCommand(input);
     }
+
+    return 0;
 }
 
 void UCI::processCommand(std::string command)
@@ -268,6 +270,8 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
             depth = findElement<int>("-depth", allArgs);
         }
 
+        UCI_FORCE_STOP = false;
+
         datagen.generate(workers, bookPath, depth, useTB);
 
         std::cout << "Data generation started" << std::endl;
@@ -303,6 +307,7 @@ void UCI::ucinewgameInput()
 
 void UCI::quit()
 {
+
     Threads.stop_threads();
 
     for (std::thread &th : datagen.threads)
@@ -310,6 +315,9 @@ void UCI::quit()
         if (th.joinable())
             th.join();
     }
+
+    Threads.pool.clear();
+    datagen.threads.clear();
 
     tb_free();
 }

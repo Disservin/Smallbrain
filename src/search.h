@@ -65,7 +65,8 @@ class Search
     uint8_t seldepth = 0;
 
     // data generation is not allowed to print to the console
-    bool allowPrint = true;
+    // and sets this to false
+    bool normalSearch = true;
 
     bool useTB = false;
 
@@ -96,7 +97,7 @@ class Search
     Score aspirationSearch(int depth, Score prevEval, Stack *ss);
 
     // check limits
-    bool exitEarly();
+    bool limitReached();
 
     std::string getPV();
     int64_t getTime();

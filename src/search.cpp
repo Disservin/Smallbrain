@@ -74,7 +74,7 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
 
 template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
 {
-    if (exitEarly())
+    if (limitReached())
         return 0;
 
     /********************
@@ -185,10 +185,9 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
      * store in the transposition table
      *******************/
 
-    // Transposition table flag
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
-    if (!stopped.load(std::memory_order_relaxed))
+    if (!normalSearch || !stopped.load(std::memory_order_relaxed))
         TTable.storeEntry(0, scoreToTT(bestValue, ss->ply), b, board.hashKey, bestMove);
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
@@ -197,7 +196,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
 
 template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss)
 {
-    if (exitEarly())
+    if (limitReached())
         return 0;
 
     /********************
@@ -294,7 +293,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      *  Tablebase probing
      *******************/
 
-    if (!RootNode && allowPrint && useTB)
+    if (!RootNode && normalSearch && useTB)
     {
         Score tbRes = probeTB();
 
@@ -456,7 +455,7 @@ moves:
         /********************
          * Print currmove information.
          *******************/
-        if (id == 0 && RootNode && !stopped.load(std::memory_order_relaxed) && getTime() > 10000 && allowPrint)
+        if (id == 0 && RootNode && normalSearch && !stopped.load(std::memory_order_relaxed) && getTime() > 10000)
             std::cout << "info depth " << depth - inCheck << " currmove " << uciMove(board, move) << " currmovenumber "
                       << signed(madeMoves) << std::endl;
 
@@ -572,7 +571,7 @@ moves:
     // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
-    if (!stopped.load(std::memory_order_relaxed))
+    if (!normalSearch || !stopped.load(std::memory_order_relaxed))
         TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, board.hashKey, bestMove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
@@ -636,7 +635,7 @@ Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss)
         }
     }
 
-    if (id == 0 && allowPrint)
+    if (id == 0 && normalSearch)
         uciOutput(result, depth, seldepth, Threads.getNodes(), Threads.getTbHits(), getTime(), getPV(),
                   TTable.hashfull());
 
@@ -675,7 +674,7 @@ SearchResult Search::iterativeDeepening()
         result = aspirationSearch(depth, result, ss);
         evalAverage += result;
 
-        if (exitEarly())
+        if (limitReached())
             break;
 
         // only mainthread manages time control
@@ -714,7 +713,7 @@ SearchResult Search::iterativeDeepening()
      * Dont stop analysis in infinite mode when max depth is reached
      * wait for uci stop or quit
      *******************/
-    while (allowPrint && depth == MAX_PLY + 1 && limit.nodes == 0 && limit.time.optimum == 0 &&
+    while (normalSearch && depth == MAX_PLY + 1 && limit.nodes == 0 && limit.time.optimum == 0 &&
            !stopped.load(std::memory_order_relaxed))
     {
     }
@@ -729,7 +728,7 @@ SearchResult Search::iterativeDeepening()
      * Mainthread prints bestmove.
      * Allowprint is disabled in data generation
      *******************/
-    if (id == 0 && allowPrint)
+    if (id == 0 && normalSearch)
     {
         std::cout << "bestmove " << uciMove(board, bestmove) << std::endl;
         stopped = true;
@@ -770,9 +769,9 @@ void Search::startThinking()
     iterativeDeepening();
 }
 
-bool Search::exitEarly()
+bool Search::limitReached()
 {
-    if (stopped.load(std::memory_order_relaxed))
+    if (normalSearch && stopped.load(std::memory_order_relaxed))
         return true;
 
     if (id != 0)
