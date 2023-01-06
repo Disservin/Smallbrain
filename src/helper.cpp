@@ -1,6 +1,6 @@
-#include "helper.h"
-
 #include <bitset>
+
+#include "helper.h"
 
 std::vector<std::string> splitInput(const std::string &fen)
 {
@@ -10,7 +10,7 @@ std::vector<std::string> splitInput(const std::string &fen)
 
     while (std::getline(fen_stream, segment, ' '))
     {
-        seglist.push_back(segment);
+        seglist.emplace_back(segment);
     }
 
     return seglist;

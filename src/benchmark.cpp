@@ -1,5 +1,7 @@
 #include "benchmark.h"
 
+extern std::atomic_bool stopped;
+
 namespace Bench
 {
 
@@ -19,18 +21,20 @@ int startBench()
     for (auto &fen : benchmarkfens)
     {
         std::cout << "\nPosition: " << i++ << "/" << benchmarkfens.size() << " " << fen << std::endl;
+
         stopped = false;
 
-        ThreadData td;
-        td.id = 0;
-        td.useTB = false;
-        td.board.applyFen(fen);
+        Search searcher;
 
-        Search searcher = Search();
-        searcher.tds.emplace_back(td);
-        searcher.iterativeDeepening(limit, 0);
+        searcher.id = 0;
+        searcher.useTB = false;
+        searcher.board.applyFen(fen);
+        searcher.limit = limit;
+        searcher.id = 0;
 
-        totalNodes += searcher.tds[0].nodes;
+        searcher.startThinking();
+
+        totalNodes += searcher.nodes;
     }
 
     auto t2 = TimePoint::now();

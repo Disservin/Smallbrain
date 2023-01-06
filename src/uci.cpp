@@ -1,11 +1,19 @@
 #include "uci.h"
+#include "evaluation.h"
+#include "helper.h"
+#include "nnue.h"
+#include "perft.h"
+#include "syzygy/Fathom/src/tbprobe.h"
+#include "thread.h"
+#include "tt.h"
+
+extern std::atomic_bool stopped;
+extern std::atomic_bool UCI_FORCE_STOP;
+extern TranspositionTable TTable;
+extern ThreadPool Threads;
 
 UCI::UCI()
 {
-    searcher = Search();
-    board = Board();
-    options = uciOptions();
-    datagen = Datagen::TrainingData();
     useTB = false;
 
     threadCount = 1;
@@ -46,6 +54,8 @@ int UCI::uciLoop(int argc, char **argv)
         else
             processCommand(input);
     }
+
+    return 0;
 }
 
 void UCI::processCommand(std::string command)
@@ -54,7 +64,7 @@ void UCI::processCommand(std::string command)
 
     if (tokens[0] == "stop")
     {
-        stopThreads();
+        Threads.stop_threads();
     }
     else if (tokens[0] == "ucinewgame")
     {
@@ -111,7 +121,7 @@ void UCI::processCommand(std::string command)
         Limits info;
         std::string limit;
 
-        stopThreads();
+        Threads.stop_threads();
 
         if (tokens.size() == 1)
             limit = "";
@@ -145,7 +155,7 @@ void UCI::processCommand(std::string command)
         }
 
         // start search
-        searcher.startThinking(board, threadCount, info, useTB);
+        Threads.start_threads(board, info, threadCount, useTB);
     }
     else if (command == "print")
     {
@@ -260,6 +270,8 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
             depth = findElement<int>("-depth", allArgs);
         }
 
+        UCI_FORCE_STOP = false;
+
         datagen.generate(workers, bookPath, depth, useTB);
 
         std::cout << "Data generation started" << std::endl;
@@ -289,21 +301,14 @@ void UCI::isreadyInput()
 void UCI::ucinewgameInput()
 {
     board.applyFen(DEFAULT_POS);
-    stopThreads();
-    searcher.tds.clear();
+    Threads.stop_threads();
     TTable.clearTT();
 }
 
-void UCI::stopThreads()
+void UCI::quit()
 {
-    stopped = true;
-    UCI_FORCE_STOP = true;
 
-    for (std::thread &th : searcher.threads)
-    {
-        if (th.joinable())
-            th.join();
-    }
+    Threads.stop_threads();
 
     for (std::thread &th : datagen.threads)
     {
@@ -311,15 +316,9 @@ void UCI::stopThreads()
             th.join();
     }
 
-    searcher.threads.clear();
+    Threads.pool.clear();
     datagen.threads.clear();
 
-    stopped = false;
-}
-
-void UCI::quit()
-{
-    stopThreads();
     tb_free();
 }
 

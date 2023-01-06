@@ -1,6 +1,6 @@
-#include "datagen.h"
-
 #include <fstream>
+
+#include "datagen.h"
 
 // random number generator
 std::random_device rd;
@@ -27,7 +27,7 @@ void TrainingData::generate(int workers, std::string book, int depth, bool useTB
 
         while (std::getline(openingFile, line))
         {
-            openingBook.push_back(line);
+            openingBook.emplace_back(line);
         }
 
         openingFile.close();
@@ -45,35 +45,25 @@ void TrainingData::infinitePlay(int threadId, int depth, bool useTB)
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
 
-    ThreadData td;
     Board board = Board();
-    Search search = Search();
-    Movelist movelist;
 
-    td.allowPrint = false;
+    Movelist movelist;
 
     while (!UCI_FORCE_STOP)
     {
-        td.nodes = 0;
-        td.tbhits = 0;
-        td.seldepth = 0;
-        td.id = 0;
+        Search search = Search();
+        search.normalSearch = false;
+        search.useTB = false;
+        search.id = 0;
 
-        search.threads.clear();
-        search.tds.clear();
-
-        td.history.fill({});
-        td.killerMoves.fill({});
-        td.pvLength.fill({});
-        td.pvTable.fill({});
-
-        randomPlayout(file, board, movelist, search, td, depth, useTB);
+        randomPlayout(file, board, movelist, search, depth, useTB);
     }
+
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td,
-                                 int depth, bool useTB)
+void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, int depth,
+                                 bool useTB)
 {
     std::vector<fenData> fens;
 
@@ -82,8 +72,6 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
     int ply = 0;
     int randomMoves = 10;
-
-    // std::uniform_int_distribution<std::mt19937::result_type> maxLines{0, static_cast<std::mt19937::result_type>(10)};
 
     if (openingBook.size() != 0)
     {
@@ -108,7 +96,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     {
         movelist.size = 0;
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
-        if (movelist.size == 0 || UCI_FORCE_STOP)
+        if (movelist.size == 0)
             return;
 
         std::uniform_int_distribution<std::mt19937::result_type> randomNum{
@@ -127,26 +115,30 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     if (movelist.size == 0)
         return;
 
-    td.board = board;
-    search.tds.push_back(td);
-
     int drawCount = 0;
     int winCount = 0;
 
     Color winningSide = NO_COLOR;
 
     Time t;
+    t.maximum = 0;
+    t.optimum = 0;
 
     Limits limit;
     limit.depth = depth;
     limit.nodes = 0;
     limit.time = t;
 
+    search.board = board;
+    search.limit = limit;
+
     while (true)
     {
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
+
         movelist.size = 0;
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
+
         if (movelist.size == 0)
         {
             winningSide = inCheck ? ((board.sideToMove == White) ? Black : White) : NO_COLOR;
@@ -158,7 +150,9 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             break;
         }
 
-        SearchResult result = search.iterativeDeepening(limit, 0);
+        search.nodes = 0;
+
+        SearchResult result = search.iterativeDeepening();
 
         // CATCH BUGS
         if (result.score == VALUE_NONE)
@@ -210,10 +204,12 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 
             unsigned TBresult = tb_probe_wdl(
-                board.Us<White>(), board.Us<Black>(), board.Kings<White>() | board.Kings<Black>(),
-                board.Queens<White>() | board.Queens<Black>(), board.Rooks<White>() | board.Rooks<Black>(),
-                board.Bishops<White>() | board.Bishops<Black>(), board.Knights<White>() | board.Knights<Black>(),
-                board.Pawns<White>() | board.Pawns<Black>(), 0, board.castlingRights, ep,
+                board.Us<White>(), board.Us<Black>(), board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
+                board.pieces<WhiteQueen>() | board.pieces<BlackQueen>(),
+                board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
+                board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
+                board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
+                board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), 0, board.castlingRights, ep,
                 ~board.sideToMove); //  * - turn: true=white, false=black
 
             if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)
@@ -234,10 +230,10 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         }
 
         ply++;
-        fens.push_back(fn);
+        fens.emplace_back(fn);
 
         board.makeMove<true>(result.move);
-        search.tds[0].board = board;
+        search.board = board;
     }
 
     double score;

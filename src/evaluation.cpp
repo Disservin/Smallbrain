@@ -1,10 +1,11 @@
-#include "evaluation.h"
-
 #include <algorithm> // clamp
+
+#include "evaluation.h"
+#include "nnue.h"
 
 namespace Eval
 {
-Score evaluation(Board &board)
+Score evaluation(const Board &board)
 {
     int32_t v = NNUE::output(board.getAccumulator()) * (board.sideToMove * -2 + 1);
 

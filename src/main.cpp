@@ -1,11 +1,13 @@
-
-#include "uci.h"
 #include <atomic>
 #include <signal.h>
+
+#include "thread.h"
+#include "uci.h"
 
 // Transposition Table
 // Each entry is 14 bytes large
 TranspositionTable TTable{};
+ThreadPool Threads;
 
 std::atomic_bool stopped;
 std::atomic_bool UCI_FORCE_STOP;

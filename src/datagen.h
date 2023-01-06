@@ -1,15 +1,15 @@
 #pragma once
 
+#include <cstring>
+#include <iomanip> // std::setprecision
+#include <random>
+
 #include "board.h"
 #include "movegen.h"
 #include "randomFen.h"
 #include "search.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 #include "types.h"
-
-#include <cstring>
-#include <iomanip> // std::setprecision
-#include <random>
 
 extern std::atomic_bool UCI_FORCE_STOP;
 
@@ -49,9 +49,7 @@ class TrainingData
     /// @param board
     /// @param Movelist
     /// @param search
-    /// @param td
-    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, ThreadData &td, int depth,
-                       bool useTB);
+    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, int depth, bool useTB);
     std::vector<std::thread> threads;
 };
 
