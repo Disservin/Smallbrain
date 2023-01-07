@@ -98,12 +98,9 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
     if (board.isRepetition(1 + PvNode))
         return -1 + (nodes & 0x2);
 
-    if (board.halfMoveClock >= 100)
-    {
-        if (inCheck && !Movegen::hasLegalMoves(board))
-            return mated_in(ss->ply);
-        return 0;
-    }
+    const Result state = board.isDrawn(inCheck);
+    if (state != Result::NONE)
+        return state == Result::LOST ? mated_in(ss->ply) : 0;
 
     Score bestValue = Eval::evaluation(board);
     if (bestValue >= beta)
@@ -227,12 +224,9 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         if (board.isRepetition(1 + PvNode))
             return -1 + (nodes & 0x2);
 
-        if (board.halfMoveClock >= 100)
-        {
-            if (inCheck && !Movegen::hasLegalMoves(board))
-                return mated_in(ss->ply);
-            return 0;
-        }
+        const Result state = board.isDrawn(inCheck);
+        if (state != Result::NONE)
+            return state == Result::LOST ? mated_in(ss->ply) : 0;
 
         alpha = std::max(alpha, mated_in(ss->ply));
         beta = std::min(beta, mate_in(ss->ply + 1));

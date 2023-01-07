@@ -1,4 +1,5 @@
 #include "board.h"
+#include "movegen.h"
 
 Board::Board()
 {
@@ -46,7 +47,7 @@ void Board::accumulate()
     }
 }
 
-Piece Board::pieceAtBB(Square sq)
+Piece Board::pieceAtBB(Square sq) const
 {
     for (Piece p = WhitePawn; p < None; p++)
     {
@@ -163,12 +164,11 @@ void Board::applyFen(const std::string &fen, bool updateAcc)
     // full_move_counter actually half moves
     fullMoveNumber = std::stoi(full_move_counter) * 2;
 
-    hashHistory.clear();
-    hashHistory.emplace_back(zobristHash());
-
     stateHistory.clear();
-    hashKey = zobristHash();
+    hashHistory.clear();
     accumulatorStack.clear();
+
+    hashKey = zobristHash();
 }
 
 std::string Board::getFen() const
@@ -256,7 +256,7 @@ bool Board::isRepetition(int draw) const
     uint8_t c = 0;
 
     for (int i = static_cast<int>(hashHistory.size()) - 2;
-         i >= 0 && i >= static_cast<int>(hashHistory.size()) - halfMoveClock; i -= 2)
+         i >= 0 && i >= static_cast<int>(hashHistory.size()) - halfMoveClock - 1; i -= 2)
     {
         if (hashHistory[i] == hashKey)
             c++;
@@ -265,6 +265,38 @@ bool Board::isRepetition(int draw) const
     }
 
     return false;
+}
+
+Result Board::isDrawn(bool inCheck)
+{
+    if (halfMoveClock >= 100)
+    {
+        if (inCheck && !Movegen::hasLegalMoves(*this))
+            return Result::LOST;
+        return Result::DRAWN;
+    }
+
+    const auto count = popcount(All());
+
+    if (count == 2)
+        return Result::DRAWN;
+
+    if (count == 3)
+    {
+        if (pieces<WhiteBishop>() || pieces<BlackBishop>())
+            return Result::DRAWN;
+        if (pieces<WhiteKnight>() || pieces<BlackKnight>())
+            return Result::DRAWN;
+    }
+
+    if (count == 4)
+    {
+        if (pieces<WhiteBishop>() && pieces<BlackBishop>() &&
+            colorOf(lsb(pieces<WhiteBishop>())) == colorOf(lsb(pieces<BlackBishop>())))
+            return Result::DRAWN;
+    }
+
+    return Result::NONE;
 }
 
 bool Board::nonPawnMat(Color c) const
@@ -764,11 +796,6 @@ std::ostream &operator<<(std::ostream &os, const Board &b)
     return os;
 }
 
-/**
- * PRIVATE FUNCTIONS
- *
- */
-
 U64 Board::zobristHash() const
 {
     U64 hash = 0ULL;
@@ -798,6 +825,11 @@ U64 Board::zobristHash() const
 
     return hash ^ cast_hash ^ turn_hash ^ ep_hash;
 }
+
+/**
+ * PRIVATE FUNCTIONS
+ *
+ */
 
 void Board::initializeLookupTables()
 {
@@ -904,4 +936,37 @@ std::string uciMove(const Board &board, Move move)
     }
 
     return ss.str();
+}
+
+Square extractSquare(std::string_view squareStr)
+{
+    char letter = squareStr[0];
+    int file = letter - 96;
+    int rank = squareStr[1] - 48;
+    int index = (rank - 1) * 8 + file - 1;
+    return Square(index);
+}
+
+Move convertUciToMove(const Board &board, const std::string &input)
+{
+    Square source = extractSquare(input.substr(0, 2));
+    Square target = extractSquare(input.substr(2, 2));
+    PieceType piece = type_of_piece(board.pieceAtBB(source));
+
+    // convert to king captures rook
+    if (!board.chess960 && piece == KING && square_distance(target, source) == 2)
+    {
+        target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
+    }
+
+    switch (input.length())
+    {
+    case 4:
+        return make(piece, source, target, false);
+    case 5:
+        return make(pieceToInt[input.at(4)], source, target, true);
+    default:
+        std::cout << "FALSE INPUT" << std::endl;
+        return make(NONETYPE, NO_SQ, NO_SQ, false);
+    }
 }

@@ -85,4 +85,5 @@ void ThreadPool::stop_threads()
             th.join();
 
     pool.clear();
+    runningThreads.clear();
 }

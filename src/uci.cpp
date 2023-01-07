@@ -4,6 +4,7 @@
 #include "nnue.h"
 #include "perft.h"
 #include "syzygy/Fathom/src/tbprobe.h"
+#include "tests.h"
 #include "thread.h"
 #include "tt.h"
 
@@ -207,7 +208,7 @@ void UCI::processCommand(std::string command)
 
             for (; index < tokens.size(); index++)
             {
-                Move move = convertUciToMove(tokens[index]);
+                Move move = convertUciToMove(board, tokens[index]);
                 board.makeMove<false>(move);
             }
         }
@@ -289,6 +290,11 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
                   << "\nNodes: " << nodes << "\nUseTb: " << useTB << std::endl;
 
         return false;
+    }
+    else if (contains(allArgs, "-tests"))
+    {
+        assert(Tests::testAll());
+        return true;
     }
     else
     {
@@ -379,40 +385,7 @@ void UCI::uciMoves(std::vector<std::string> &tokens)
     index++;
     for (; index < tokens.size(); index++)
     {
-        Move move = convertUciToMove(tokens[index]);
+        Move move = convertUciToMove(board, tokens[index]);
         board.makeMove<false>(move);
-    }
-}
-
-Square UCI::extractSquare(std::string_view squareStr)
-{
-    char letter = squareStr[0];
-    int file = letter - 96;
-    int rank = squareStr[1] - 48;
-    int index = (rank - 1) * 8 + file - 1;
-    return Square(index);
-}
-
-Move UCI::convertUciToMove(std::string input)
-{
-    Square source = extractSquare(input.substr(0, 2));
-    Square target = extractSquare(input.substr(2, 2));
-    PieceType piece = type_of_piece(board.pieceAtBB(source));
-
-    // convert to king captures rook
-    if (!board.chess960 && piece == KING && square_distance(target, source) == 2)
-    {
-        target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
-    }
-
-    switch (input.length())
-    {
-    case 4:
-        return make(piece, source, target, false);
-    case 5:
-        return make(pieceToInt[input.at(4)], source, target, true);
-    default:
-        std::cout << "FALSE INPUT" << std::endl;
-        return make(NONETYPE, NO_SQ, NO_SQ, false);
     }
 }

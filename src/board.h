@@ -112,7 +112,7 @@ class Board
     /// @brief Finds what piece is on the square using bitboards (slow)
     /// @param sq
     /// @return found piece otherwise None
-    Piece pieceAtBB(Square sq);
+    Piece pieceAtBB(Square sq) const;
 
     /// @brief Finds what piece is on the square using the board (more performant)
     /// @param sq
@@ -132,6 +132,8 @@ class Board
     /// @param draw
     /// @return true for repetition otherwise false
     bool isRepetition(int draw = 1) const;
+
+    Result isDrawn(bool inCheck);
 
     /// @brief only pawns + king = true else false
     /// @param c
@@ -246,16 +248,16 @@ class Board
 
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
+    /// @brief calculate the current zobrist hash from scratch
+    /// @return
+    U64 zobristHash() const;
+
   private:
     /// @brief current accumulator
     NNUE::accumulator accumulator;
 
     /// @brief previous accumulators
     std::vector<NNUE::accumulator> accumulatorStack;
-
-    /// @brief calculate the current zobrist hash from scratch
-    /// @return
-    U64 zobristHash() const;
 
     /// @brief initialize SQUARES_BETWEEN_BB array
     void initializeLookupTables();
@@ -321,8 +323,6 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     // STORE STATE HISTORY
     // *****************************
 
-    hashHistory.emplace_back(hashKey);
-
     stateHistory.emplace_back(enPassantSquare, castlingRights, halfMoveClock, capture, castlingRights960White,
                               castlingRights960Black);
 
@@ -341,6 +341,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     // *****************************
     // UPDATE HASH
     // *****************************
+
+    hashHistory.emplace_back(hashKey);
 
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
@@ -539,6 +541,14 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 /// @param move
 /// @return
 std::string uciMove(const Board &board, Move move);
+
+Square extractSquare(std::string_view squareStr);
+
+/// @brief convert console input to move
+/// @param board
+/// @param input
+/// @return
+Move convertUciToMove(const Board &board, const std::string &fen);
 
 static constexpr int piece_values[2][7] = {{98, 337, 365, 477, 1025, 0, 0}, {114, 281, 297, 512, 936, 0, 0}};
 static constexpr int pieceValuesDefault[7] = {100, 320, 330, 500, 900, 0, 0};
