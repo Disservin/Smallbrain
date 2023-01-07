@@ -37,6 +37,13 @@ enum Phase : int
     EG
 };
 
+enum class Result
+{
+    NONE,
+    DRAWN,
+    LOST
+};
+
 enum Piece : uint8_t
 {
     WhitePawn,

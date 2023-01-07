@@ -84,8 +84,8 @@ jobs:
         run: |
           mkdir ../binaries
 
-      # Compile profile guided builds
-
+      # Compiles
+      
       - name: Compile ${{ matrix.binaries }} build
         run: |
           make clean

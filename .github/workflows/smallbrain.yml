@@ -74,8 +74,16 @@ jobs:
         run: |
           ./smallbrain* bench
 
+      - name: Tests
+        run: |
+          ./smallbrain* -tests
+
       - name: Valgrind
         if: runner.os == 'Linux'
         run: |
           valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain bench
 
+      - name: Valgrind
+        if: runner.os == 'Linux'
+        run: |
+          valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain -tests

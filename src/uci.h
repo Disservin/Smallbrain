@@ -55,12 +55,4 @@ class UCI
     const std::string getVersion();
 
     void uciMoves(std::vector<std::string> &tokens);
-
-    Square extractSquare(std::string_view squareStr);
-
-    /// @brief convert console input to move
-    /// @param board
-    /// @param input
-    /// @return
-    Move convertUciToMove(std::string input);
 };
