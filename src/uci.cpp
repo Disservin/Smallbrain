@@ -110,7 +110,7 @@ void UCI::processCommand(std::string command)
         // setup accumulator with the correct board
         board.accumulate();
     }
-    else if (command == "go perft")
+    else if (contains(command, "go perft"))
     {
         int depth = findElement<int>("perft", tokens);
         Perft perft = Perft();

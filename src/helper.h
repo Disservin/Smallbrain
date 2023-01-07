@@ -146,7 +146,7 @@ template <typename T> T findElement(std::string_view needle, const std::vector<s
 /// @param needle
 /// @param haystack the string to search in
 /// @return
-bool contains(std::string_view needle, std::string_view haystack);
+bool contains(std::string_view haystack, std::string_view needle);
 
 /// @brief
 /// @param needle
