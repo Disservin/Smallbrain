@@ -129,8 +129,8 @@ void UCI::processCommand(std::string command)
         else
             limit = tokens[1];
 
-        info.depth = (limit == "depth") ? findElement<int>("depth", tokens) : MAX_PLY;
-        info.depth = (limit == "infinite" || command == "go") ? MAX_PLY : info.depth;
+        info.depth = (limit == "depth") ? findElement<int>("depth", tokens) : MAX_PLY - 1;
+        info.depth = (limit == "infinite" || command == "go") ? MAX_PLY - 1 : info.depth;
         info.nodes = (limit == "nodes") ? findElement<int>("nodes", tokens) : 0;
         info.time.maximum = info.time.optimum = (limit == "movetime") ? findElement<int>("movetime", tokens) : 0;
 

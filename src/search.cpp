@@ -662,7 +662,7 @@ SearchResult Search::iterativeDeepening()
     /********************
      * Iterative Deepening Loop.
      *******************/
-    for (depth = 1; depth < limit.depth; depth++)
+    for (depth = 1; depth <= limit.depth; depth++)
     {
         seldepth = 0;
         result = aspirationSearch(depth, result, ss);

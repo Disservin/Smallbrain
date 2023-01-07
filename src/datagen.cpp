@@ -53,7 +53,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
     t.optimum = 0;
 
     Limits limit;
-    limit.depth = depth == 0 ? MAX_PLY : depth;
+    limit.depth = depth == 0 ? MAX_PLY - 1 : depth;
     limit.nodes = nodes;
     limit.time = t;
 
