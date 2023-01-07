@@ -53,7 +53,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
     t.optimum = 0;
 
     Limits limit;
-    limit.depth = depth;
+    limit.depth = depth == 0 ? MAX_PLY : depth;
     limit.nodes = nodes;
     limit.time = t;
 
@@ -153,8 +153,6 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             winningSide = NO_COLOR;
             break;
         }
-
-        search.nodes = 0;
 
         SearchResult result = search.iterativeDeepening();
 
