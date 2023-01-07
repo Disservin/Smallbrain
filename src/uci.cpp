@@ -277,6 +277,9 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
             nodes = findElement<int>("-nodes", allArgs);
         }
 
+        static constexpr int ttsize = 16 * 1024 * 1024 / sizeof(TEntry); // 16 MiB
+        TTable.allocateTT(ttsize * workers);
+
         UCI_FORCE_STOP = false;
 
         datagen.generate(workers, bookPath, depth, nodes, useTB);
