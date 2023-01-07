@@ -727,6 +727,12 @@ bool Board::see(Move move, int threshold)
     return sT != colorOf(from_sq);
 }
 
+void Board::clearStacks()
+{
+    accumulatorStack.clear();
+    stateHistory.clear();
+}
+
 std::ostream &operator<<(std::ostream &os, const Board &b)
 {
     for (int i = 63; i >= 0; i -= 8)

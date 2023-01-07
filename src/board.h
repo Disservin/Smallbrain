@@ -242,6 +242,8 @@ class Board
      *******************/
     bool see(Move move, int threshold);
 
+    void clearStacks();
+
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
   private:

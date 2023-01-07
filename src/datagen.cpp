@@ -9,15 +9,15 @@ std::mt19937 e(rd());
 namespace Datagen
 {
 
-std::string stringFenData(fenData fenData, double score)
+std::string stringFenData(const fenData &fenData, double score)
 {
     std::ostringstream sstream;
-    sstream << fenData.fen << " [" << std::fixed << std::setprecision(1) << score << "] " << fenData.score << "\n";
+    sstream << fenData.fen << " [" << std::fixed << std::setprecision(1) << score << "] " << fenData.score;
 
     return sstream.str();
 }
 
-void TrainingData::generate(int workers, std::string book, int depth, bool useTB)
+void TrainingData::generate(int workers, std::string book, int depth, int nodes, bool useTB)
 {
     if (book != "")
     {
@@ -35,19 +35,27 @@ void TrainingData::generate(int workers, std::string book, int depth, bool useTB
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, useTB);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, useTB);
     }
 }
 
-void TrainingData::infinitePlay(int threadId, int depth, bool useTB)
+void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
 
     Board board = Board();
-
     Movelist movelist;
+
+    Time t;
+    t.maximum = 0;
+    t.optimum = 0;
+
+    Limits limit;
+    limit.depth = depth;
+    limit.nodes = nodes;
+    limit.time = t;
 
     while (!UCI_FORCE_STOP)
     {
@@ -55,15 +63,15 @@ void TrainingData::infinitePlay(int threadId, int depth, bool useTB)
         search.normalSearch = false;
         search.useTB = false;
         search.id = 0;
+        search.limit = limit;
 
-        randomPlayout(file, board, movelist, search, depth, useTB);
+        randomPlayout(file, board, movelist, search, useTB);
     }
 
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, int depth,
-                                 bool useTB)
+void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, bool useTB)
 {
     std::vector<fenData> fens;
 
@@ -87,20 +95,22 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     //     ply = randomMoves;
     //     board.applyFen(getRandomfen());
     // }
-    else
-    {
-        board.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    }
 
     while (ply < randomMoves)
     {
+        board.clearStacks();
+
+        search.nodes = 0;
         movelist.size = 0;
+
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
+
         if (movelist.size == 0)
             return;
 
         std::uniform_int_distribution<std::mt19937::result_type> randomNum{
             0, static_cast<std::mt19937::result_type>(movelist.size - 1)};
+
         int index = randomNum(e);
 
         Move move = movelist[index].move;
@@ -108,35 +118,29 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         ply++;
     }
 
-    movelist.size = 0;
     board.hashHistory.clear();
 
+    movelist.size = 0;
     Movegen::legalmoves<Movetype::ALL>(board, movelist);
+
     if (movelist.size == 0)
         return;
 
+    Color winningSide = NO_COLOR;
     int drawCount = 0;
     int winCount = 0;
 
-    Color winningSide = NO_COLOR;
-
-    Time t;
-    t.maximum = 0;
-    t.optimum = 0;
-
-    Limits limit;
-    limit.depth = depth;
-    limit.nodes = 0;
-    limit.time = t;
-
     search.board = board;
-    search.limit = limit;
 
     while (true)
     {
+        board.clearStacks();
+
+        search.nodes = 0;
+        movelist.size = 0;
+
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
 
-        movelist.size = 0;
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
 
         if (movelist.size == 0)
@@ -174,23 +178,15 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             fn.fen = "";
 
         Score absScore = std::abs(result.score);
+
         if (absScore >= 2000)
         {
             winCount++;
-            if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY)
-            {
-                winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
-                break;
-            }
+            drawCount = 0;
         }
         else if (absScore <= 4)
         {
             drawCount++;
-            if (drawCount >= 12)
-            {
-                winningSide = NO_COLOR;
-                break;
-            }
             winCount = 0;
         }
         else
@@ -199,41 +195,54 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             winCount = 0;
         }
 
-        if (board.halfMoveClock >= 50 && popcount(board.All()) <= 6 && useTB)
+        if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY)
         {
-            Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
-
-            unsigned TBresult = tb_probe_wdl(
-                board.Us<White>(), board.Us<Black>(), board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
-                board.pieces<WhiteQueen>() | board.pieces<BlackQueen>(),
-                board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
-                board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
-                board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
-                board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), 0, board.castlingRights, ep,
-                ~board.sideToMove); //  * - turn: true=white, false=black
-
-            if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)
-            {
-                winningSide = ~board.sideToMove;
-                break;
-            }
-            else if (TBresult == TB_WIN || TBresult == TB_CURSED_WIN)
-            {
-                winningSide = board.sideToMove;
-                break;
-            }
-            else if (TBresult == TB_DRAW)
-            {
-                winningSide = NO_COLOR;
-                break;
-            }
+            winningSide = result.score > 0 ? board.sideToMove : ~board.sideToMove;
+            break;
+        }
+        else if (drawCount >= 12)
+        {
+            winningSide = NO_COLOR;
+            break;
         }
 
-        ply++;
         fens.emplace_back(fn);
 
+        if (useTB && board.halfMoveClock >= 40 && popcount(board.All()) <= 6)
+            break;
+
+        ply++;
         board.makeMove<true>(result.move);
         search.board = board;
+    }
+
+    U64 white = board.Us<White>();
+    U64 black = board.Us<Black>();
+    // Set correct winningSide for if (useTB && board.halfMoveClock >= 40 && popcount(board.All()) <= 6)
+    if (useTB && popcount(white | black) <= 6)
+    {
+        Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
+
+        unsigned TBresult = tb_probe_wdl(white, black, board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
+                                         board.pieces<WhiteQueen>() | board.pieces<BlackQueen>(),
+                                         board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
+                                         board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
+                                         board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
+                                         board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), 0, 0, ep,
+                                         board.sideToMove == White); //  * - turn: true=white, false=black
+
+        if (TBresult == TB_LOSS)
+        {
+            winningSide = ~board.sideToMove;
+        }
+        else if (TBresult == TB_WIN)
+        {
+            winningSide = board.sideToMove;
+        }
+        else if (TBresult == TB_DRAW || TB_BLESSED_LOSS || TB_CURSED_WIN)
+        {
+            winningSide = NO_COLOR;
+        }
     }
 
     double score;
@@ -247,9 +256,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     for (auto &f : fens)
     {
         if (f.use)
-            file << stringFenData(f, score);
+            file << stringFenData(f, score) << std::endl;
     }
-    file << std::flush;
 }
 
 } // namespace Datagen

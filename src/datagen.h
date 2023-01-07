@@ -24,7 +24,7 @@ struct fenData
     bool use;
 };
 
-std::string stringFenData(fenData fenData, double score);
+std::string stringFenData(const fenData &fenData, double score);
 
 class TrainingData
 {
@@ -35,13 +35,13 @@ class TrainingData
     /// @param workers
     /// @param book
     /// @param depth
-    void generate(int workers = 4, std::string book = "", int depth = 7, bool useTB = false);
+    void generate(int workers = 4, std::string book = "", int depth = 7, int nodes = 0, bool useTB = false);
 
     /// @brief repeats infinite random playouts
     /// @param threadId
     /// @param book
     /// @param depth
-    void infinitePlay(int threadId, int depth, bool useTB);
+    void infinitePlay(int threadId, int depth, int nodes, bool useTB);
 
     /// @brief starts one selfplay game
     /// @param file
@@ -49,7 +49,7 @@ class TrainingData
     /// @param board
     /// @param Movelist
     /// @param search
-    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, int depth, bool useTB);
+    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, bool useTB);
     std::vector<std::thread> threads;
 };
 

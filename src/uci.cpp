@@ -247,6 +247,7 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
         std::string tbPath = "";
         int workers = 1;
         int depth = 7;
+        int nodes = 0;
         bool useTB = false;
 
         if (contains(allArgs, "-threads"))
@@ -270,11 +271,19 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
             depth = findElement<int>("-depth", allArgs);
         }
 
+        if (contains(allArgs, "-nodes"))
+        {
+            depth = 0;
+            nodes = findElement<int>("-nodes", allArgs);
+        }
+
         UCI_FORCE_STOP = false;
 
-        datagen.generate(workers, bookPath, depth, useTB);
+        datagen.generate(workers, bookPath, depth, nodes, useTB);
 
         std::cout << "Data generation started" << std::endl;
+        std::cout << "Workers: " << workers << "\nBookPath: " << bookPath << "\nDepth: " << depth
+                  << "\nNodes: " << nodes << "\nUseTb: " << useTB << std::endl;
 
         return false;
     }

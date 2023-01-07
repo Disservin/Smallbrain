@@ -123,4 +123,5 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 ```
 ```
 .\smallbrain.exe -gen -threads 30 -depth 9 -tb H:/Chess/345
+.\smallbrain.exe -gen -threads 30 -nodes 5000 -tb H:/Chess/345
 ```
