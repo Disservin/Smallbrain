@@ -292,7 +292,7 @@ Result Board::isDrawn(bool inCheck)
     if (count == 4)
     {
         if (pieces<WhiteBishop>() && pieces<BlackBishop>() &&
-            colorOf(lsb(pieces<WhiteBishop>())) == colorOf(lsb(pieces<BlackBishop>())))
+            sameColor(lsb(pieces<WhiteBishop>()), lsb(pieces<BlackBishop>())))
             return Result::DRAWN;
     }
 

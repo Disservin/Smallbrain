@@ -153,3 +153,5 @@ bool contains(std::string_view haystack, std::string_view needle);
 /// @param haystack the vector to search in
 /// @return
 bool contains(const std::vector<std::string> &haystack, std::string_view needle);
+
+bool sameColor (int sq1, int sq2);

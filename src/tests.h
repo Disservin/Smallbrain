@@ -4,5 +4,7 @@ void testZobristHash();
 
 void testRepetition();
 
+void testDraw();
+
 bool testAll();
 }

@@ -8,6 +8,7 @@ bool testAll()
 {
     testZobristHash();
     testRepetition();
+    testDraw();
 
     return true;
 }
@@ -43,6 +44,8 @@ void testFenRepetition(std::string input)
 
 void testRepetition()
 {
+    std::cout << "Testing repetions" << std::endl;
+
     std::string input =
         "position fen r2qk2r/pp3pp1/2nbpn1p/8/6b1/2NP1N2/PPP1BPPP/R1BQ1RK1 w - - 0 1 moves h2h3 g4f5 d3d4 e8h8 e2d3 "
         "f5d3 d1d3 a8c8 a2a3 f8e8 f1e1 e6e5 d4e5 c6e5 f3e5 d6e5 d3d8 c8d8 c3d1 f6e4 d1e3 e5d4 g1f1 d4c5 e1d1 d8d1 e3d1 "
@@ -71,6 +74,8 @@ void testRepetition()
 
 void testZobristHash()
 {
+    std::cout << "Testing zobrist hash" << std::endl;
+
     Board b;
 
     b.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -113,6 +118,8 @@ void testZobristHash()
 
 void testDraw()
 {
+    std::cout << "Testing draw detection" << std::endl;
+
     Board b;
 
     // KBvkb same colour

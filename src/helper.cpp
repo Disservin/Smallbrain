@@ -239,3 +239,8 @@ bool contains(const std::vector<std::string> &haystack, std::string_view needle)
 {
     return std::find(haystack.begin(), haystack.end(), needle) != haystack.end();
 }
+
+bool sameColor(int sq1, int sq2)
+{
+    return ((9 * (sq1 ^ sq2)) & 8) == 0;
+}
