@@ -4,10 +4,13 @@
 #include "helper.h"
 #include "types.h"
 
-PACK(struct ExtMove {
+#include <iterator>
+
+struct ExtMove
+{
     int value = 0;
     Move move = NO_MOVE;
-});
+};
 
 inline constexpr bool operator==(const ExtMove &a, const ExtMove &b)
 {
@@ -28,6 +31,8 @@ struct Movelist
 {
     ExtMove list[MAX_MOVES] = {};
     uint8_t size = 0;
+    typedef ExtMove *iterator;
+    typedef const ExtMove *const_iterator;
 
     void Add(Move move)
     {
@@ -49,6 +54,27 @@ struct Movelist
                 return i;
         }
         return -1;
+    }
+
+    iterator begin()
+    {
+        return (std::begin(list));
+    }
+    const_iterator begin() const
+    {
+        return (std::begin(list));
+    }
+    iterator end()
+    {
+        auto it = std::begin(list);
+        std::advance(it, size);
+        return it;
+    }
+    const_iterator end() const
+    {
+        auto it = std::begin(list);
+        std::advance(it, size);
+        return it;
     }
 };
 

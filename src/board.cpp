@@ -917,7 +917,7 @@ void Board::removeCastlingRightsRook(Square sq)
     }
 }
 
-std::string uciMove(const Board &board, Move move)
+std::string uciMove(Move move, bool chess960)
 {
     std::stringstream ss;
 
@@ -927,7 +927,7 @@ std::string uciMove(const Board &board, Move move)
 
     // If the move is not a chess960 castling move and is a king moving more than one square,
     // update the to square to be the correct square for a regular castling move
-    if (!board.chess960 && piece(move) == KING && square_distance(to_sq, from_sq) >= 2)
+    if (!chess960 && piece(move) == KING && square_distance(to_sq, from_sq) >= 2)
     {
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
     }

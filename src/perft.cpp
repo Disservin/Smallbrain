@@ -13,16 +13,16 @@ U64 Perft::perftFunction(int depth, int max)
         return movelists[depth].size;
     }
     U64 nodesIt = 0;
-    for (int i = 0; i < movelists[depth].size; i++)
+    for (auto extmove : movelists[depth])
     {
-        Move move = movelists[depth][i].move;
+        Move move = extmove.move;
         board.makeMove<false>(move);
         nodesIt += perftFunction(depth - 1, depth);
         board.unmakeMove<false>(move);
         if (depth == max)
         {
             nodes += nodesIt;
-            std::cout << uciMove(board, move) << " " << nodesIt << std::endl;
+            std::cout << uciMove(move, board.chess960) << " " << nodesIt << std::endl;
             nodesIt = 0;
         }
     }

@@ -540,7 +540,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 /// @param board
 /// @param move
 /// @return
-std::string uciMove(const Board &board, Move move);
+std::string uciMove(Move move, bool chess960);
 
 Square extractSquare(std::string_view squareStr);
 
