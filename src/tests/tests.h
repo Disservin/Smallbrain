@@ -6,8 +6,8 @@
 #include "../randomFen.h"
 #include <functional>
 
-// #define unit_test(func, return_value, ...)                                                                             \
-//     std::cout << "Running " << __func__ << std::endl;                                                                  \
+// #define unit_test(func, return_value, ...)
+//     std::cout << "Running " << __func__ << std::endl;
 //     assert(func(__VA_OPT__(__VA_ARGS__)) == return_value);
 
 // void unit_test(auto &&func, auto &&return_value, auto &&...args)

@@ -837,6 +837,8 @@ U64 Board::zobristHash() const
 void Board::initializeLookupTables()
 {
     // initialize squares between table
+    std::array<std::array<U64, MAX_SQ>, MAX_SQ> arr = {};
+
     U64 sqs;
     for (Square sq1 = SQ_A1; sq1 <= SQ_H8; ++sq1)
     {
@@ -846,11 +848,13 @@ void Board::initializeLookupTables()
             if (sq1 == sq2)
                 SQUARES_BETWEEN_BB[sq1][sq2] = 0ull;
             else if (square_file(sq1) == square_file(sq2) || square_rank(sq1) == square_rank(sq2))
-                SQUARES_BETWEEN_BB[sq1][sq2] = RookAttacks(sq1, sqs) & RookAttacks(sq2, sqs);
+                arr[sq1][sq2] = RookAttacks(sq1, sqs) & RookAttacks(sq2, sqs);
             else if (diagonal_of(sq1) == diagonal_of(sq2) || anti_diagonal_of(sq1) == anti_diagonal_of(sq2))
-                SQUARES_BETWEEN_BB[sq1][sq2] = BishopAttacks(sq1, sqs) & BishopAttacks(sq2, sqs);
+                arr[sq1][sq2] = BishopAttacks(sq1, sqs) & BishopAttacks(sq2, sqs);
         }
     }
+
+    SQUARES_BETWEEN_BB = arr;
 }
 
 U64 Board::updateKeyPiece(Piece piece, Square sq) const

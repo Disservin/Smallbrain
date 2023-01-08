@@ -96,7 +96,7 @@ class Board
     // current hashkey
     U64 hashKey;
 
-    U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ];
+    std::array<std::array<U64, MAX_SQ>, MAX_SQ> SQUARES_BETWEEN_BB;
 
     std::vector<State> stateHistory;
 
