@@ -431,8 +431,7 @@ moves:
     uint8_t madeMoves = 0;
     bool doFullSearch = false;
 
-    MovePick<ABSEARCH> mp(*this, ss, ss->moves, ttMove);
-    mp.stage = ttHit ? TT_MOVE : GENERATE;
+    MovePick<ABSEARCH> mp(*this, ss, ss->moves, searchmoves, RootNode, ttMove, ttHit ? TT_MOVE : GENERATE);
 
     /********************
      * Movepicker fetches the next move that we should search.

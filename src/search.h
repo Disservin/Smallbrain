@@ -48,6 +48,8 @@ class Search
     std::array<uint8_t, MAX_PLY> pvLength = {};
     std::array<std::array<Move, MAX_PLY>, MAX_PLY> pvTable = {};
 
+    Movelist searchmoves = {};
+
     // Mainthread limits
     Limits limit = {};
 

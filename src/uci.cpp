@@ -383,6 +383,19 @@ void UCI::startSearch(const std::vector<std::string> &tokens, const std::string 
     info.nodes = (limit == "nodes") ? findElement<int>("nodes", tokens) : 0;
     info.time.maximum = info.time.optimum = (limit == "movetime") ? findElement<int>("movetime", tokens) : 0;
 
+    searchmoves.size = 0;
+
+    const std::string keyword = "searchmoves";
+    if (contains(tokens, keyword))
+    {
+        std::size_t index = std::find(tokens.begin(), tokens.end(), keyword) - tokens.begin() + 1;
+        for (; index < tokens.size(); index++)
+        {
+            Move move = convertUciToMove(board, tokens[index]);
+            searchmoves.Add(move);
+        }
+    }
+
     std::string side_str = board.sideToMove == White ? "wtime" : "btime";
     std::string inc_str = board.sideToMove == White ? "winc" : "binc";
 
@@ -405,7 +418,7 @@ void UCI::startSearch(const std::vector<std::string> &tokens, const std::string 
     }
 
     // start search
-    Threads.start_threads(board, info, threadCount, useTB);
+    Threads.start_threads(board, info, searchmoves, threadCount, useTB);
 }
 
 void UCI::setPosition(const std::vector<std::string> &tokens, const std::string &command)

@@ -32,6 +32,8 @@ class UCI
     uciOptions options = uciOptions();
     Datagen::TrainingData datagen = Datagen::TrainingData();
 
+    Movelist searchmoves;
+
     int threadCount;
     bool useTB;
 

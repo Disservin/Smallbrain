@@ -14,6 +14,8 @@ template <SearchType st> class MovePick
 {
   public:
     MovePick(Search &sh, Stack *s, Movelist &moves, const Move move);
+    MovePick(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves, bool rootNode, const Move move,
+             Staging entry);
 
     Move nextMove();
 
@@ -41,6 +43,30 @@ MovePick<st>::MovePick(Search &sh, Stack *s, Movelist &moves, const Move move)
     stage = TT_MOVE;
     movelist.size = 0;
     played = 0;
+}
+
+template <SearchType st>
+MovePick<st>::MovePick(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves, bool rootNode,
+                       const Move move, Staging entry)
+    : search(sh), ss(s), movelist(moves), ttMove(move)
+{
+    movelist.size = 0;
+    played = 0;
+    stage = entry;
+
+    if (rootNode && searchmoves.size)
+    {
+        movelist = searchmoves;
+        stage = PICK_NEXT;
+
+        for (auto &ext : movelist)
+        {
+            if (ext.move == ttMove)
+                ext.value = 10'000'000;
+            else
+                ext.value = scoreMove(ext.move);
+        }
+    }
 }
 
 template <SearchType st> template <bool score> Move MovePick<st>::orderNext()
