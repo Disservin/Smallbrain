@@ -57,6 +57,7 @@ template <SearchType st> template <bool score> Move MovePick<st>::orderNext()
         if (movelist[i] > movelist[index])
             index = i;
     }
+
     std::swap(movelist[index], movelist[played]);
 
     return movelist[played++].move;

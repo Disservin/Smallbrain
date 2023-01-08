@@ -42,9 +42,9 @@ template <Movetype type> void Search::updateHistory(Move bestmove, int bonus, in
     if (depth > 1)
         updateHistoryBonus<type>(bestmove, bonus);
 
-    for (int i = 0; i < movelist.size; i++)
+    for (auto ext : movelist)
     {
-        const Move move = movelist[i].move;
+        const Move move = ext.move;
         if (move == bestmove)
             continue;
 
@@ -893,9 +893,9 @@ Move Search::probeDTZ()
     Movelist legalmoves;
     Movegen::legalmoves<Movetype::ALL>(board, legalmoves);
 
-    for (int i = 0; i < legalmoves.size; i++)
+    for (auto ext : legalmoves)
     {
-        Move move = legalmoves[i].move;
+        const Move move = ext.move;
         if (from(move) == sqFrom && to(move) == sqTo)
         {
             if ((promoTranslation[promo] == NONETYPE && !promoted(move)) ||
@@ -907,6 +907,7 @@ Move Search::probeDTZ()
             }
         }
     }
+
     std::cout << " something went wrong playing dtz :" << promoTranslation[promo] << " : " << promo << " : "
               << std::endl;
     exit(0);

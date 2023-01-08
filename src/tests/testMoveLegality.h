@@ -52,7 +52,8 @@ void testAllMoveLegality()
                                       "4kbnr/5ppp/4p3/1R1pnb2/8/6P1/5P1P/2B1K2R b Kk - 0 20",
                                       "3r2k1/2r2ppp/p3p1b1/B2p4/3NnP2/P7/6PP/4QR1K b - - 2 25"
                                       "4nk2/pp1r1pp1/4b2n/1Pp5/P1P3PB/5N1P/8/KB2R3 w - - 3 38",
-                                      "3n4/5k2/6p1/1P1b2P1/P7/2K5/8/4R3 b - - 2 52"};
+                                      "3n4/5k2/6p1/1P1b2P1/P7/2K5/8/4R3 b - - 2 52",
+                                      "r1bqk1r1/1p1p1n2/p1n2pN1/2p1b2Q/2P1Pp2/1PN5/PB4PP/R4RK1 w q - 0 1"};
 
     std::vector<std::string> tests960 = {DEFAULT_POS,
                                          "1rqbkrbn/1ppppp1p/1n6/p1N3p1/8/2P4P/PP1PPPP1/1RQBKRBN w FBfb - 0 9",
