@@ -97,18 +97,7 @@ void UCI::processCommand(std::string command)
     }
     else if (tokens[0] == "position")
     {
-        bool hasMoves = contains(tokens, "moves");
-
-        if (tokens[1] == "fen")
-            board.applyFen(command.substr(command.find("fen") + 4), false);
-        else
-            board.applyFen(DEFAULT_POS, false);
-
-        if (hasMoves)
-            uciMoves(tokens);
-
-        // setup accumulator with the correct board
-        board.accumulate();
+        setPosition(tokens, command);
     }
     else if (contains(command, "go perft"))
     {
@@ -119,44 +108,7 @@ void UCI::processCommand(std::string command)
     }
     else if (tokens[0] == "go")
     {
-        Limits info;
-        std::string limit;
-
-        Threads.stop_threads();
-
-        if (tokens.size() == 1)
-            limit = "";
-        else
-            limit = tokens[1];
-
-        info.depth = (limit == "depth") ? findElement<int>("depth", tokens) : MAX_PLY - 1;
-        info.depth = (limit == "infinite" || command == "go") ? MAX_PLY - 1 : info.depth;
-        info.nodes = (limit == "nodes") ? findElement<int>("nodes", tokens) : 0;
-        info.time.maximum = info.time.optimum = (limit == "movetime") ? findElement<int>("movetime", tokens) : 0;
-
-        std::string side_str = board.sideToMove == White ? "wtime" : "btime";
-        std::string inc_str = board.sideToMove == White ? "winc" : "binc";
-
-        if (contains(tokens, side_str))
-        {
-            int64_t timegiven = findElement<int>(side_str, tokens);
-            int64_t inc = 0;
-            int64_t mtg = 0;
-
-            // Increment
-            if (contains(tokens, inc_str))
-                inc = findElement<int>(inc_str, tokens);
-
-            // Moves to next time control
-            if (contains(tokens, "movestogo"))
-                mtg = findElement<int>("movestogo", tokens);
-
-            // Calculate search time
-            info.time = optimumTime(timegiven, inc, mtg);
-        }
-
-        // start search
-        Threads.start_threads(board, info, threadCount, useTB);
+        startSearch(tokens, command);
     }
     else if (command == "print")
     {
@@ -224,9 +176,33 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
     std::vector<std::string> allArgs(argv + 1, argv + argc);
 
     // ./smallbrain bench
+    if (contains(allArgs, "go"))
+    {
+        board.applyFen("r2qk2r/1p1n1pp1/p2p4/3Pp2p/8/1N1QbP2/PPP3PP/1K1R3R w kq - 0 16");
+        std::stringstream ss;
+
+        for (auto str : allArgs)
+            ss << str;
+
+        startSearch(allArgs, ss.str());
+
+        // wait for finish
+        while (!stopped)
+        {
+        };
+
+        Threads.stop_threads();
+
+        Bench::startBench(12);
+
+        quit();
+
+        return true;
+    }
+
     if (contains(allArgs, "bench"))
     {
-        Bench::startBench();
+        Bench::startBench(contains(allArgs, "depth") ? findElement<int>("depth", allArgs) : 12);
         quit();
         return true;
     }
@@ -379,7 +355,7 @@ const std::string UCI::getVersion()
     return ss.str();
 }
 
-void UCI::uciMoves(std::vector<std::string> &tokens)
+void UCI::uciMoves(const std::vector<std::string> &tokens)
 {
     std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();
     index++;
@@ -388,4 +364,62 @@ void UCI::uciMoves(std::vector<std::string> &tokens)
         Move move = convertUciToMove(board, tokens[index]);
         board.makeMove<false>(move);
     }
+}
+
+void UCI::startSearch(const std::vector<std::string> &tokens, const std::string &command)
+{
+    Limits info;
+    std::string limit;
+
+    Threads.stop_threads();
+
+    if (tokens.size() == 1)
+        limit = "";
+    else
+        limit = tokens[1];
+
+    info.depth = (limit == "depth") ? findElement<int>("depth", tokens) : MAX_PLY - 1;
+    info.depth = (limit == "infinite" || command == "go") ? MAX_PLY - 1 : info.depth;
+    info.nodes = (limit == "nodes") ? findElement<int>("nodes", tokens) : 0;
+    info.time.maximum = info.time.optimum = (limit == "movetime") ? findElement<int>("movetime", tokens) : 0;
+
+    std::string side_str = board.sideToMove == White ? "wtime" : "btime";
+    std::string inc_str = board.sideToMove == White ? "winc" : "binc";
+
+    if (contains(tokens, side_str))
+    {
+        int64_t timegiven = findElement<int>(side_str, tokens);
+        int64_t inc = 0;
+        int64_t mtg = 0;
+
+        // Increment
+        if (contains(tokens, inc_str))
+            inc = findElement<int>(inc_str, tokens);
+
+        // Moves to next time control
+        if (contains(tokens, "movestogo"))
+            mtg = findElement<int>("movestogo", tokens);
+
+        // Calculate search time
+        info.time = optimumTime(timegiven, inc, mtg);
+    }
+
+    // start search
+    Threads.start_threads(board, info, threadCount, useTB);
+}
+
+void UCI::setPosition(const std::vector<std::string> &tokens, const std::string &command)
+{
+    bool hasMoves = contains(tokens, "moves");
+
+    if (tokens[1] == "fen")
+        board.applyFen(command.substr(command.find("fen") + 4), false);
+    else
+        board.applyFen(DEFAULT_POS, false);
+
+    if (hasMoves)
+        uciMoves(tokens);
+
+    // setup accumulator with the correct board
+    board.accumulate();
 }

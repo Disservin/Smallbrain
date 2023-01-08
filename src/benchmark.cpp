@@ -5,12 +5,12 @@ extern std::atomic_bool stopped;
 namespace Bench
 {
 
-int startBench()
+int startBench(int depth)
 {
     U64 totalNodes = 0;
 
     Limits limit;
-    limit.depth = 12;
+    limit.depth = depth;
     limit.nodes = 0;
     limit.time = Time();
 
