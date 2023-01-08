@@ -40,6 +40,16 @@ struct Movelist
     {
         return list[i];
     }
+
+    inline constexpr int find(Move m)
+    {
+        for (int i = 0; i < size; i++)
+        {
+            if (list[i].move == m)
+                return i;
+        }
+        return -1;
+    }
 };
 
 namespace Movegen

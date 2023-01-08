@@ -117,7 +117,7 @@ ifneq ($(GIT_DATE), )
 	CXXFLAGS += -DGIT_DATE=\"$(GIT_DATE)\"
 endif
 
-SOURCES := $(wildcard *.cpp) syzygy/Fathom/src/tbprobe.cpp
+SOURCES := $(wildcard *.cpp) syzygy/Fathom/src/tbprobe.cpp tests/tests.cpp
 OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 EXE     := $(NAME)$(ARCH)$(SUFFIX)

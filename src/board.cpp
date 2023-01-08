@@ -540,6 +540,9 @@ bool Board::isPseudoLegal(const Move move)
     const bool isCastlingBlack =
         (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
 
+    if (piece(move) >= NONETYPE)
+        return false;
+
     if (p != pieceAtB(from_sq) && !promoted(move))
         return false;
 

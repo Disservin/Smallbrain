@@ -4,7 +4,7 @@
 #include "nnue.h"
 #include "perft.h"
 #include "syzygy/Fathom/src/tbprobe.h"
-#include "tests.h"
+#include "tests/tests.h"
 #include "thread.h"
 #include "tt.h"
 

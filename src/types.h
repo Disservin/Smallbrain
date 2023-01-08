@@ -204,28 +204,31 @@ INCR_OP_ON(Piece)
 INCR_OP_ON(Square)
 INCR_OP_ON(PieceType)
 INCR_OP_ON(Staging)
+INCR_OP_ON(File)
+INCR_OP_ON(Rank)
 
 #undef INCR_OP_ON
 
-#define BASE_OP_ON(T)                                                                                                  \
-    inline constexpr Square operator+(Square s, T d)                                                                   \
+#define BASE_OP_ON(N, T)                                                                                               \
+    inline constexpr N operator+(N s, T d)                                                                             \
     {                                                                                                                  \
-        return Square(int(s) + int(d));                                                                                \
+        return N(int(s) + int(d));                                                                                     \
     }                                                                                                                  \
-    inline constexpr Square operator-(Square s, T d)                                                                   \
+    inline constexpr N operator-(N s, T d)                                                                             \
     {                                                                                                                  \
-        return Square(int(s) - int(d));                                                                                \
+        return N(int(s) - int(d));                                                                                     \
     }                                                                                                                  \
-    inline constexpr Square &operator+=(Square &s, T d)                                                                \
+    inline constexpr N &operator+=(N &s, T d)                                                                          \
     {                                                                                                                  \
         return s = s + d;                                                                                              \
     }                                                                                                                  \
-    inline constexpr Square &operator-=(Square &s, T d)                                                                \
+    inline constexpr N &operator-=(N &s, T d)                                                                          \
     {                                                                                                                  \
         return s = s - d;                                                                                              \
     }
 
-BASE_OP_ON(Direction)
+BASE_OP_ON(Square, Direction)
+BASE_OP_ON(Rank, File)
 
 #undef BASE_OP_ON
 
