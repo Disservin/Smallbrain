@@ -442,3 +442,15 @@ template <PieceType piece, bool promoted> Move make(Square source = NO_SQ, Squar
 {
     return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
 }
+
+inline std::ostream &operator<<(std::ostream &os, const Move move)
+{
+    // clang-format off
+    os << " From: "    << int(from(move)) 
+       << " To: "      << int(to(move)) 
+       << " Piece: "   << int(piece(move))
+       << "Promoted: " << int(promoted(move));
+    // clang-format on
+    os << std::endl;
+    return os;
+}

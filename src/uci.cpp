@@ -168,7 +168,7 @@ void UCI::processCommand(std::string command)
         Movegen::legalmoves<Movetype::CAPTURE>(board, moves);
 
         for (auto ext : moves)
-            std::cout << uciMove(board, ext.move) << std::endl;
+            std::cout << uciMove(ext.move, board.chess960) << std::endl;
 
         std::cout << "count: " << signed(moves.size) << std::endl;
     }
@@ -178,7 +178,7 @@ void UCI::processCommand(std::string command)
         Movegen::legalmoves<Movetype::ALL>(board, moves);
 
         for (auto ext : moves)
-            std::cout << uciMove(board, ext.move) << std::endl;
+            std::cout << uciMove(ext.move, board.chess960) << std::endl;
 
         std::cout << "count: " << signed(moves.size) << std::endl;
     }

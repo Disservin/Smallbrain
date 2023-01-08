@@ -450,8 +450,8 @@ moves:
          * Print currmove information.
          *******************/
         if (id == 0 && RootNode && normalSearch && !stopped.load(std::memory_order_relaxed) && getTime() > 10000)
-            std::cout << "info depth " << depth - inCheck << " currmove " << uciMove(board, move) << " currmovenumber "
-                      << signed(madeMoves) << std::endl;
+            std::cout << "info depth " << depth - inCheck << " currmove " << uciMove(move, board.chess960)
+                      << " currmovenumber " << signed(madeMoves) << std::endl;
 
         /********************
          * Play the move on the internal board.
@@ -724,7 +724,7 @@ SearchResult Search::iterativeDeepening()
      *******************/
     if (id == 0 && normalSearch)
     {
-        std::cout << "bestmove " << uciMove(board, bestmove) << std::endl;
+        std::cout << "bestmove " << uciMove(bestmove, board.chess960) << std::endl;
         stopped = true;
     }
 
@@ -754,7 +754,7 @@ void Search::startThinking()
         Move dtzMove = probeDTZ();
         if (dtzMove != NO_MOVE)
         {
-            std::cout << "bestmove " << uciMove(board, dtzMove) << std::endl;
+            std::cout << "bestmove " << uciMove(dtzMove, board.chess960) << std::endl;
             stopped = true;
             return;
         }
@@ -799,7 +799,7 @@ std::string Search::getPV()
 
     for (int i = 0; i < pvLength[0]; i++)
     {
-        ss << " " << uciMove(board, pvTable[0][i]);
+        ss << " " << uciMove(pvTable[0][i], board.chess960);
     }
 
     return ss.str();
@@ -902,7 +902,7 @@ Move Search::probeDTZ()
                 (promo < 5 && promoTranslation[promo] == piece(move) && promoted(move)))
             {
                 uciOutput(s, static_cast<int>(dtz), 1, Threads.getNodes(), Threads.getTbHits(), getTime(),
-                          " " + uciMove(board, move), TTable.hashfull());
+                          " " + uciMove(move, board.chess960), TTable.hashfull());
                 return move;
             }
         }

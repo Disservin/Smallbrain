@@ -1,13 +1,6 @@
 #pragma once
 
 #include "tests.h"
-std::string infoMove(Move move)
-{
-    std::stringstream ss;
-    ss << "Promoted: " << int(promoted(move)) << " Piece: " << int(piece(move)) << " from: " << int(from(move))
-       << " to: " << int(to(move)) << std::endl;
-    return ss.str();
-}
 
 bool testIsPseudoLegalAndIsLegal(const std::string &fen)
 {
@@ -23,12 +16,12 @@ bool testIsPseudoLegalAndIsLegal(const std::string &fen)
 
         if (moves.find(m) == -1 && (b.isPseudoLegal(m) && b.isLegal(m)))
         {
-            std::cout << infoMove(m) << uciMove(b, m) << std::endl;
+            std::cout << m << uciMove(m, b.chess960) << std::endl;
             return false;
         }
         else if (moves.find(m) >= 0 && !(b.isPseudoLegal(m) && b.isLegal(m)))
         {
-            std::cout << infoMove(m) << uciMove(b, m) << std::endl;
+            std::cout << m << uciMove(m, b.chess960) << std::endl;
             return false;
         }
     }
