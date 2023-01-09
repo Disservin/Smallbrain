@@ -1,6 +1,7 @@
-#include "nnue.h"
 
 #include <iostream>
+
+#include "nnue.h"
 
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"

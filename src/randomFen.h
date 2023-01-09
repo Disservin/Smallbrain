@@ -1,21 +1,13 @@
 #pragma once
 
-#include "attacks.h"
-#include "helper.h"
-#include "sliders.hpp"
-#include "types.h"
-
 #include <array>
 #include <iostream>
 #include <random>
 
-extern std::random_device rd;
-extern std::mt19937 e;
-
-inline constexpr char piece_to_char[] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '-'};
-inline constexpr int max_pieces[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-
-inline constexpr int piece_values_random[] = {100, 320, 330, 500, 900, 20000, -100, -320, -330, -500, -900, -20000, 0};
+#include "attacks.h"
+#include "helper.h"
+#include "sliders.hpp"
+#include "types.h"
 
 class randomFenBoard
 {
@@ -23,6 +15,14 @@ class randomFenBoard
     std::string generateRandomFen();
 
   private:
+    const char piece_to_char[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '-'};
+    const int max_pieces[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+    const int piece_values_random[13] = {100, 320, 330, 500, 900, 20000, -100, -320, -330, -500, -900, -20000, 0};
+
+    std::random_device rd;
+    std::mt19937 e;
+
     std::array<Piece, 64> board{};
     std::array<int, 12> piece_count{};
     std::array<U64, 12> bitboards{};
@@ -37,8 +37,6 @@ class randomFenBoard
     U64 All();
 
     bool isAttacked(int sq, Color c);
-
-    void printBoard();
 };
 
 // get a random fen matching the current config

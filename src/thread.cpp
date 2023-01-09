@@ -1,6 +1,9 @@
+#include <iostream>
+
 #include "thread.h"
 
-#include <iostream>
+extern std::atomic_bool stopped;
+extern std::atomic_bool UCI_FORCE_STOP;
 
 void Thread::start_thinking()
 {

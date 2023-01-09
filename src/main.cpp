@@ -1,5 +1,4 @@
 #include <atomic>
-#include <signal.h>
 
 #include "thread.h"
 #include "uci.h"

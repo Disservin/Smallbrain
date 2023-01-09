@@ -1,10 +1,10 @@
 #pragma once
 
+#include <iterator>
+
 #include "board.h"
 #include "helper.h"
 #include "types.h"
-
-#include <iterator>
 
 struct ExtMove
 {
