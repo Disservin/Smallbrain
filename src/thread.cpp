@@ -59,18 +59,12 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, int work
     pool.emplace_back(mainThread);
 
     // start at index 1 to keep "mainthread" data alive
-    Thread th;
-    th.search.board = board;
-    th.search.limit = limit;
-    th.search.useTB = useTB;
-    th.search.nodes = 0;
-    th.search.tbhits = 0;
 
     for (int i = 1; i < workerCount; i++)
     {
-        th.search.id = i;
+        mainThread.search.id = i;
 
-        pool.emplace_back(th);
+        pool.emplace_back(mainThread);
     }
 
     for (int i = 0; i < workerCount; i++)
