@@ -64,7 +64,7 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, int work
     {
         mainThread.search.id = i;
 
-        pool.emplace_back(th);
+        pool.emplace_back(mainThread);
     }
 
     for (int i = 0; i < workerCount; i++)
