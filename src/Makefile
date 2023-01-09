@@ -140,3 +140,10 @@ $(TARGET): $(OBJECTS)
 # Force recompilation of ucicommands to include latest version string
 uci.o: FORCE
 FORCE:
+
+pgo:
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -fprofile-generate -lgcov -DEVALFILE=\"$(EVALFILE)\" -flto -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
+	./$(EXE) go depth 20
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -fprofile-use -DEVALFILE=\"$(EVALFILE)\" -flto -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
+	@rm -f *.gcda 
+	rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o

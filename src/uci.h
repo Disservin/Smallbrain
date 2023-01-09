@@ -54,5 +54,9 @@ class UCI
 
     const std::string getVersion();
 
-    void uciMoves(std::vector<std::string> &tokens);
+    void uciMoves(const std::vector<std::string> &tokens);
+
+    void startSearch(const std::vector<std::string> &tokens, const std::string &command);
+
+    void setPosition(const std::vector<std::string> &tokens, const std::string &command);
 };
