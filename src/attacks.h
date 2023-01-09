@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
 #include "sliders.hpp"
 #include "types.h"
-#include <cstdint>
 
 // clang-format off
 

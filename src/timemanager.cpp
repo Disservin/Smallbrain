@@ -1,6 +1,6 @@
-#include "timemanager.h"
-
 #include <algorithm>
+
+#include "timemanager.h"
 
 Time optimumTime(int64_t availableTime, int inc, int movestogo)
 {

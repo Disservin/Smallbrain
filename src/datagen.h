@@ -6,9 +6,7 @@
 
 #include "board.h"
 #include "movegen.h"
-#include "randomFen.h"
 #include "search.h"
-#include "syzygy/Fathom/src/tbprobe.h"
 #include "types.h"
 
 extern std::atomic_bool UCI_FORCE_STOP;
@@ -29,6 +27,9 @@ std::string stringFenData(const fenData &fenData, double score);
 class TrainingData
 {
     std::vector<std::string> openingBook;
+
+    // random number generator
+    std::random_device rd;
 
   public:
     /// @brief entry function

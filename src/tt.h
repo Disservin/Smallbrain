@@ -1,8 +1,8 @@
 #pragma once
 
-#include "types.h"
-
 #include <vector>
+
+#include "types.h"
 
 PACK(struct TEntry {
     U64 key = 0;
