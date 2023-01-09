@@ -525,26 +525,36 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, S
     U64 moves = KingAttacks(sq) & bb & ~board.seen;
     U64 emptyAndNotAttacked = ~board.seen & ~board.occAll;
 
+    // clang-format off
     switch (c)
     {
     case White:
-        if (board.castlingRights & wk && emptyAndNotAttacked & (1ULL << SQ_F1) && emptyAndNotAttacked & (1ull << SQ_G1))
+        if (    board.castlingRights & wk 
+            &&  emptyAndNotAttacked & (1ULL << SQ_F1) 
+            &&  emptyAndNotAttacked & (1ull << SQ_G1))
             moves |= (1ULL << SQ_H1);
-        if (board.castlingRights & wq && emptyAndNotAttacked & (1ULL << SQ_D1) &&
-            emptyAndNotAttacked & (1ull << SQ_C1) && (1ull << SQ_B1) & ~board.occAll)
+        if (    board.castlingRights & wq 
+            &&  emptyAndNotAttacked & (1ULL << SQ_D1) 
+            &&  emptyAndNotAttacked & (1ull << SQ_C1) 
+            &&  (1ull << SQ_B1) & ~board.occAll)
             moves |= (1ULL << SQ_A1);
         break;
     case Black:
-        if (board.castlingRights & bk && emptyAndNotAttacked & (1ULL << SQ_F8) && emptyAndNotAttacked & (1ull << SQ_G8))
+        if (    board.castlingRights & bk 
+            &&  emptyAndNotAttacked & (1ULL << SQ_F8) 
+            &&  emptyAndNotAttacked & (1ull << SQ_G8))
             moves |= (1ULL << SQ_H8);
-        if (board.castlingRights & bq && emptyAndNotAttacked & (1ULL << SQ_D8) &&
-            emptyAndNotAttacked & (1ull << SQ_C8) && (1ull << SQ_B8) & ~board.occAll)
+        if (    board.castlingRights & bq 
+            &&  emptyAndNotAttacked & (1ULL << SQ_D8) 
+            &&  emptyAndNotAttacked & (1ull << SQ_C8)
+            &&  (1ull << SQ_B8) & ~board.occAll)
             moves |= (1ULL << SQ_A8);
 
         break;
     default:
         return moves;
     }
+    // clang-format on
 
     return moves;
 }
@@ -560,6 +570,7 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
 
     U64 moves = KingAttacks(sq) & bb & ~board.seen;
 
+    // clang-format off
     switch (c)
     {
     case White: {
@@ -571,12 +582,12 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
             U64 withoutRook = board.occAll & ~(1ull << side);
             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << side));
 
-            if (side != NO_FILE &&
-                (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) ==
-                    board.SQUARES_BETWEEN_BB[sq][destKing] &&
-                (board.SQUARES_BETWEEN_BB[sq][side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][side] &&
-                !((1ull << side) & board.pinHV & MASK_RANK[RANK_1]) && !((1ull << destRook) & withoutRook) &&
-                !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
+            if (    side != NO_FILE 
+                &&  (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
+                &&  (board.SQUARES_BETWEEN_BB[sq][side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][side] 
+                &&  !((1ull << side) & board.pinHV & MASK_RANK[RANK_1]) 
+                &&  !((1ull << destRook) & withoutRook) 
+                &&  !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
                 moves |= (1ULL << side);
         }
         break;
@@ -591,12 +602,12 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
             U64 withoutRook = board.occAll & ~(1ull << (56 + side));
             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << (56 + side)));
 
-            if (side != NO_FILE &&
-                (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) ==
-                    board.SQUARES_BETWEEN_BB[sq][destKing] &&
-                (board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] &&
-                !((1ull << (56 + side)) & board.pinHV & MASK_RANK[RANK_8]) && !((1ull << destRook) & withoutRook) &&
-                !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
+            if (    side != NO_FILE 
+                &&  (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
+                &&  (board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] 
+                &&  !((1ull << (56 + side)) & board.pinHV & MASK_RANK[RANK_8]) 
+                &&  !((1ull << destRook) & withoutRook) 
+                &&  !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
                 moves |= (1ULL << (56 + side));
         }
         break;
@@ -605,6 +616,8 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling960(const Board &board
     default:
         return moves;
     }
+    // clang-format on
+
     return moves;
 }
 

@@ -118,9 +118,13 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
 
     TEntry *tte = TTable.probeTT(ttHit, ttMove, board.hashKey);
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
-
-    if (ttHit && !PvNode && ttScore != VALUE_NONE && tte->flag != NONEBOUND)
+    // clang-format off
+    if (    ttHit 
+        &&  !PvNode 
+        &&  ttScore != VALUE_NONE 
+        &&  tte->flag != NONEBOUND)
     {
+        // clang-format on
         if (tte->flag == EXACTBOUND)
             return ttScore;
         else if (tte->flag == LOWERBOUND && ttScore >= beta)
@@ -143,8 +147,13 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
         if (bestValue > VALUE_TB_LOSS_IN_MAX_PLY)
         {
             // delta pruning, if the move + a large margin is still less then alpha we can safely skip this
-            if (captured != NONETYPE && !inCheck && bestValue + 400 + piece_values[EG][captured] < alpha &&
-                !promoted(move) && board.nonPawnMat(color))
+            // clang-format off
+            if (    captured != NONETYPE 
+                &&  !inCheck 
+                &&  bestValue + 400 + piece_values[EG][captured] < alpha 
+                &&  !promoted(move) 
+                &&  board.nonPawnMat(color))
+                // clang-format on
                 continue;
 
             // see based capture pruning
@@ -270,9 +279,15 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      * Adjust alpha and beta for non PV nodes
      *******************/
 
-    if (!RootNode && !PvNode && ttHit && tte->depth >= depth && (ss - 1)->currentmove != NULL_MOVE &&
-        ttScore != VALUE_NONE)
+    // clang-format off
+    if (    !RootNode 
+        &&  !PvNode 
+        &&  ttHit 
+        &&  tte->depth >= depth 
+        &&  (ss - 1)->currentmove != NULL_MOVE 
+        &&  ttScore != VALUE_NONE)
     {
+        // clang-format on
         if (tte->flag == EXACTBOUND)
             return ttScore;
         else if (tte->flag == LOWERBOUND)
@@ -383,8 +398,13 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     /********************
      * Null move pruning
      *******************/
-    if (board.nonPawnMat(color) && (ss - 1)->currentmove != NULL_MOVE && depth >= 3 && staticEval >= beta)
+    // clang-format off
+    if (    board.nonPawnMat(color) 
+        &&  (ss - 1)->currentmove != NULL_MOVE 
+        && depth >= 3 
+        && staticEval >= beta)
     {
+        // clang-format on
         int R = 5 + std::min(4, depth / 5) + std::min(3, (staticEval - beta) / 214);
 
         board.makeNullMove();
@@ -435,13 +455,19 @@ moves:
         if (!RootNode && best > VALUE_TB_LOSS_IN_MAX_PLY)
         {
             // late move pruning/movecount pruning
-            if (!capture && !inCheck && !PvNode && !promoted(move) && depth <= 4 &&
-                ss->quietMoves.size > (4 + depth * depth))
+            // clang-format off
+            if (    !capture 
+                &&  !inCheck 
+                &&  !PvNode 
+                &&  !promoted(move) 
+                &&  depth <= 4
+                &&  ss->quietMoves.size > (4 + depth * depth))
                 continue;
 
             // SEE pruning
             if (depth < 6 && !board.see(move, -(depth * 97)))
                 continue;
+            // clang-format on
         }
 
         nodes++;
@@ -449,9 +475,16 @@ moves:
         /********************
          * Print currmove information.
          *******************/
-        if (id == 0 && RootNode && normalSearch && !stopped.load(std::memory_order_relaxed) && getTime() > 10000)
-            std::cout << "info depth " << depth - inCheck << " currmove " << uciMove(move, board.chess960)
+        // clang-format off
+        if (    id == 0 
+            &&  RootNode 
+            &&  normalSearch 
+            &&  !stopped.load(std::memory_order_relaxed) 
+            &&  getTime() > 10000)
+            std::cout << "info depth " << depth - inCheck 
+                      << " currmove " << uciMove(move, board.chess960)
                       << " currmovenumber " << signed(madeMoves) << std::endl;
+        // clang-format on
 
         /********************
          * Play the move on the internal board.
