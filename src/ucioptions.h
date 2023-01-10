@@ -58,6 +58,6 @@ class uciOptions
     /// @param v
     void uciChess960(Board &board, std::string_view v);
 
-    void addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max);
-    void addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max);
+    bool addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max);
+    bool addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max);
 };

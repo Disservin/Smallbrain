@@ -65,14 +65,16 @@ void uciOptions::uciChess960(Board &board, std::string_view v)
     board.chess960 = v == "true";
 }
 
-void uciOptions::addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max)
+bool uciOptions::addIntTuneOption(std::string name, std::string type, int defaultValue, int min, int max)
 {
     optionsPrint.emplace_back(
         optionType(name, type, std::to_string(defaultValue), std::to_string(min), std::to_string(max)));
+    return true;
 }
 
-void uciOptions::addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max)
+bool uciOptions::addDoubleTuneOption(std::string name, std::string type, double defaultValue, double min, double max)
 {
     optionsPrint.emplace_back(
         optionType(name, type, std::to_string(defaultValue), std::to_string(min), std::to_string(max)));
+    return true;
 }
