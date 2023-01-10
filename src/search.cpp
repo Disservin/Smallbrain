@@ -27,7 +27,7 @@ void init_reductions()
 
 int bonus(int depth)
 {
-    return std::min(2000, depth * 150);
+    return std::min(2000, depth * 155);
 }
 
 template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus)
@@ -368,7 +368,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     /********************
      * Internal Iterative Reductions (IIR)
      *******************/
-    if (depth >= 4 && !ttHit)
+    if (depth >= 3 && !ttHit)
         depth--;
 
     if (PvNode && !ttHit)
@@ -385,14 +385,14 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     /********************
      * Razoring
      *******************/
-    if (depth < 3 && staticEval + 120 < alpha)
+    if (depth < 3 && staticEval + 129 < alpha)
         return qsearch<NonPV>(alpha, beta, ss);
 
     /********************
      * Reverse futility pruning
      *******************/
     if (std::abs(beta) < VALUE_TB_WIN_IN_MAX_PLY)
-        if (depth < 6 && staticEval - 61 * depth + 73 * improving >= beta)
+        if (depth < 7 && staticEval - 64 * depth + 71 * improving >= beta)
             return beta;
 
     /********************
@@ -453,19 +453,29 @@ moves:
          *******************/
         if (!RootNode && best > VALUE_TB_LOSS_IN_MAX_PLY)
         {
-            // late move pruning/movecount pruning
             // clang-format off
-            if (    !capture 
-                &&  !inCheck 
-                &&  !PvNode 
-                &&  !promoted(move) 
-                &&  depth <= 4
-                &&  ss->quietMoves.size > (4 + depth * depth))
-                continue;
+            if (capture)
+            {
+                // SEE pruning
+                if (    depth < 6 
+                    &&  !board.see(move, -(depth * 92)))
+                    continue;
+            }
+            else
+            {
+                // late move pruning/movecount pruning
+                if (    !inCheck 
+                    &&  !PvNode 
+                    &&  !promoted(move) 
+                    &&  depth <= 5
+                    &&  ss->quietMoves.size > (4 + depth * depth))
 
-            // SEE pruning
-            if (depth < 6 && !board.see(move, -(depth * 97)))
-                continue;
+                    continue;
+                // SEE pruning
+                if (    depth < 7 
+                    &&  !board.see(move, -(depth * 93)))
+                    continue;
+            }
             // clang-format on
         }
 
