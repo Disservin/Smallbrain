@@ -6,19 +6,25 @@
 #include "timemanager.h"
 #include "ucioptions.h"
 
-#define TUNE_INT(x, min, max)                                                                                          \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        extern int x;                                                                                                  \
-        options.addIntTuneOption(#x, "spin", x, min, max);                                                             \
-    } while (0);
+#define CONCAT_(prefix, suffix) prefix##suffix
+/// Concatenate `prefix, suffix` into `prefixsuffix`
+#define CONCAT(prefix, suffix) CONCAT_(prefix, suffix)
 
-#define TUNE_DOUBLE(x, min, max)                                                                                       \
-    do                                                                                                                 \
+#define UNIQUE_VAR(prefix) CONCAT(prefix##_, __COUNTER__)
+
+#define TUNE_INT(x)                                                                                                    \
+    extern int x;                                                                                                      \
+    bool UNIQUE_VAR(Unique) = options.addIntTuneOption(#x, "spin", x, 0, x * 2);
+
+#define TUNE_DOUBLE(x)                                                                                                 \
+    extern double x;                                                                                                   \
+    bool UNIQUE_VAR(Unique) = options.addDoubleTuneOption(#x, "spin", x, 0, x * 2);
+
+#define ASSIGN_VALUE(option, var, value)                                                                               \
+    if (option == #var)                                                                                                \
     {                                                                                                                  \
-        extern double x;                                                                                               \
-        options.addDoubleTuneOption(#x, "spin", x, min, max);                                                          \
-    } while (0);
+        var = std::stoi(value);                                                                                        \
+    }
 
 class UCI
 {

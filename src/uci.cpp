@@ -13,6 +13,12 @@ extern std::atomic_bool UCI_FORCE_STOP;
 extern TranspositionTable TTable;
 extern ThreadPool Threads;
 
+uciOptions options = uciOptions();
+
+// START OF TUNE
+// TUNE_INT(BONUS);
+// END OF TUNE
+
 UCI::UCI()
 {
     useTB = false;
