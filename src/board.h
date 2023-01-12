@@ -12,10 +12,10 @@
 #include "zobrist.h"
 
 extern TranspositionTable TTable;
-extern uint8_t inputValues[INPUT_WEIGHTS];
-extern int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
-extern int16_t hiddenBias[HIDDEN_BIAS];
-extern int16_t hiddenWeights[HIDDEN_WEIGHTS * 2];
+extern uint8_t inputValues[FEATURE_SIZE];
+extern int16_t inputWeights[FEATURE_SIZE * N_HIDDEN_SIZE];
+extern int16_t hiddenBias[N_HIDDEN_SIZE];
+extern int16_t hiddenWeights[N_HIDDEN_SIZE * 2];
 extern int32_t outputBias[OUTPUT_BIAS];
 
 struct State
