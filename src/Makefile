@@ -1,6 +1,8 @@
+NETWORK_NAME = nn-a4b00a38bc00253.nnue
+
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
-EVALFILE   = $(_ROOT)/default.nnue
+EVALFILE   = $(_ROOT)/$(NETWORK_NAME)
 CXX       := g++
 TARGET    := smallbrain
 CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra -DNDEBUG
@@ -47,12 +49,6 @@ ifeq ($(build), x86-64)
 	NATIVE       = -mtune=znver1
 	INSTRUCTIONS = -msse -msse2 -mpopcnt
 	ARCH         = -x86-64
-endif
-
-ifeq ($(build), x86-64-modern)
-	NATIVE       = -mtune=znver2
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt
-	ARCH         = -x86-64-modern
 endif
 
 ifeq ($(build), x86-64-avx2)
@@ -117,6 +113,9 @@ ifneq ($(GIT_DATE), )
 	CXXFLAGS += -DGIT_DATE=\"$(GIT_DATE)\"
 endif
 
+# Add network name and Evalfile
+CXXFLAGS += -DNETWORK_NAME=\"$(NETWORK_NAME)\" -DEVALFILE=\"$(EVALFILE)\"
+
 SOURCES := $(wildcard *.cpp) syzygy/Fathom/src/tbprobe.cpp tests/tests.cpp
 OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
@@ -135,15 +134,16 @@ $(TARGET): $(OBJECTS)
 -include $(DEPENDS)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -DEVALFILE=\"$(EVALFILE)\" -flto -MMD -MP -c -o $@ $< $(FLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3  -flto -MMD -MP -c -o $@ $< $(FLAGS)
 
 # Force recompilation of ucicommands to include latest version string
 uci.o: FORCE
 FORCE:
 
+# Profile Guided Optimizations for gcc, largely depends on compiler version
 pgo:
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -fprofile-generate -lgcov -DEVALFILE=\"$(EVALFILE)\" -flto -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -fprofile-generate -lgcov -flto -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
 	./$(EXE) go depth 20
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -fprofile-use -DEVALFILE=\"$(EVALFILE)\" -flto -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -fprofile-use -flto -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
 	@rm -f *.gcda 
 	rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o

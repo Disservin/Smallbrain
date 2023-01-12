@@ -32,9 +32,10 @@ Board::Board()
 
 void Board::accumulate()
 {
-    for (int i = 0; i < HIDDEN_BIAS; i++)
+    for (int i = 0; i < N_HIDDEN_SIZE; i++)
     {
-        accumulator[i] = hiddenBias[i];
+        accumulator[White][i] = hiddenBias[i];
+        accumulator[Black][i] = hiddenBias[i];
     }
 
     for (Square i = SQ_A1; i < NO_SQ; i++)

@@ -7,21 +7,20 @@
 
 #include "types.h"
 
-#define INPUT_WEIGHTS 64 * 12
-#define HIDDEN_BIAS 512
-#define HIDDEN_WEIGHTS 512
+#define FEATURE_SIZE 64 * 12
+#define N_HIDDEN_SIZE 512
 #define OUTPUT_BIAS 1
 
-/// HIDDEN_BIAS/HIDDEN_WEIGHTS is basically the width of the hidden layer.
-extern uint8_t inputValues[INPUT_WEIGHTS];
-extern int16_t inputWeights[INPUT_WEIGHTS * HIDDEN_WEIGHTS];
-extern int16_t hiddenBias[HIDDEN_BIAS];
-extern int16_t hiddenWeights[HIDDEN_WEIGHTS];
+/// N_HIDDEN_SIZE/N_HIDDEN_SIZE is basically the width of the hidden layer.
+extern uint8_t inputValues[FEATURE_SIZE];
+extern int16_t inputWeights[FEATURE_SIZE * N_HIDDEN_SIZE];
+extern int16_t hiddenBias[N_HIDDEN_SIZE];
+extern int16_t hiddenWeights[N_HIDDEN_SIZE * 2];
 extern int32_t outputBias[OUTPUT_BIAS];
 
 namespace NNUE
 {
-using accumulator = std::array<int16_t, HIDDEN_BIAS>;
+using accumulator = std::array<std::array<int16_t, N_HIDDEN_SIZE>, 2>;
 
 int16_t relu(int16_t x);
 
@@ -38,5 +37,5 @@ void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p);
 void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p);
 
 // return the nnue evaluation
-int32_t output(const NNUE::accumulator &accumulator);
+int32_t output(const NNUE::accumulator &accumulator, Color side);
 } // namespace NNUE

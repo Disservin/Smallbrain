@@ -3,7 +3,7 @@
 // clang-format off
 std::vector<optionType> optionsPrint{
     optionType("Hash",         "spin",   "400",          "1", "57344"),
-    optionType("EvalFile",     "string", "default.nnue", "",  ""),
+    optionType("EvalFile",     "string", NETWORK_NAME,   "",  ""),
     optionType("Threads",      "spin",   "1",            "1", "256"),
     optionType("SyzygyPath",   "string", "<empty>",      "",  ""),
     optionType("UCI_Chess960", "check",  "false",        "",  "")
