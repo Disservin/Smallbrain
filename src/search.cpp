@@ -749,7 +749,7 @@ SearchResult Search::iterativeDeepening()
      * Dont stop analysis in infinite mode when max depth is reached
      * wait for uci stop or quit
      *******************/
-    while (normalSearch && depth == MAX_PLY + 1 && limit.nodes == 0 && limit.time.optimum == 0 &&
+    while (normalSearch && depth == MAX_PLY && limit.nodes == 0 && limit.time.optimum == 0 &&
            !stopped.load(std::memory_order_relaxed))
     {
     }
