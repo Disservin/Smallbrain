@@ -10,12 +10,11 @@ My first try was [cppsmallbrain](https://github.com/Disservin/cppsmallbrain), th
 So I started [Smallbrain](https://github.com/Disservin/Smallbrain) from scratch, during that time, I also joined Stockfish development. <br>
 
 After some time I began implementing a NNUE into Smallbrain, with the help of Luecx from [Koivisto](https://github.com/Luecx/Koivisto).<br>
-As of now Smallbrain has a NNUE trained on 500m depth 9 fens generated with the built in data generator and using [CudAD trainer](https://github.com/Luecx/CudAD) to ultimately train the network.
+As of now Smallbrain has a NNUE trained on 1 billion depth 9 + depth 7 + 150 million depth 9 DFRC fens generated with the built in data generator and using [CudAD trainer](https://github.com/Luecx/CudAD) to ultimately train the network.
 
 ## News
 
-The latest development version support for FRC has been added, the neural network has been retrained <br>
-with additional FRC data while being on par in classical.
+The latest development versions support FRC.
 
 ## Compile
 
@@ -35,11 +34,17 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 
 
 ## Elo
+
+#### [CCRL 40/2 FRC](https://ccrl.chessdom.com/ccrl/404FRC/)
+| Name  	          | Elo  	  | +    	| -  	  |
+|---	              |---	    |---	  |---	  |
+| Smallbrain dev-22-12-04  	| 3438  	| +15  	| 15  	|
+
 #### [CCRL 40/15](http://ccrl.chessdom.com/ccrl/4040/) 
 
 | Name  	              | Elo  	  | +    	| -  	  |
 |---	                  |---	    |---	  |---	  |
-| Smallbrain 6.0 4CPU  	| 3309  	| +24  	| −23  	|
+| Smallbrain 6.0 4CPU  	| 3307  	| +23  	| −23  	|
 | Smallbrain 6.0  	    | 3227  	| +23  	| −23  	|
 | Smallbrain 5.0 4CPU  	| 3211  	| +23  	| −23  	|
 | Smallbrain 5.0  	    | 3137  	| +20  	| −20  	|
@@ -51,7 +56,7 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 #### [CCRL Blitz 2'+1" (Blitz)](http://ccrl.chessdom.com/ccrl/404/)
 | Name  	          | Elo  	  | +    	| -  	  |
 |---	              |---	    |---	  |---	  |
-| Smallbrain 6.0  	| 3336  	| +18  	| −18  	|
+| Smallbrain 6.0  	| 3336  	| +17  	| −17  	|
 | Smallbrain 5.0  	| 3199  	| +18  	| −18  	|
 | Smallbrain 4.0  	| 3005  	| +18  	| −18  	|
 | Smallbrain 3.0  	| 2921  	| +20  	| −20  	|
