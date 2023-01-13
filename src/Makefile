@@ -1,4 +1,4 @@
-NETWORK_NAME = nn-a4b00a38bc00253.nnue
+NETWORK_NAME = nn-dfb6dafd17fab88-380.nnue
 
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
