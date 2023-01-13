@@ -112,7 +112,11 @@ void Board::applyFen(const std::string &fen, bool updateAcc)
     const std::vector<std::string> allowedCastlingFiles{"A", "B", "C", "D", "E", "F", "G", "H",
                                                         "a", "b", "c", "d", "e", "f", "g", "h"};
 
-    chess960 = chess960 || contains(allowedCastlingFiles, castling);
+    for (auto &&element : castling)
+    {
+        if (contains(allowedCastlingFiles, std::string(1, element)))
+            chess960 = true;
+    }
 
     removeCastlingRightsAll(White);
     removeCastlingRightsAll(Black);
