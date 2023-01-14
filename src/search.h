@@ -14,8 +14,6 @@ using nodeTable = std::array<std::array<U64, MAX_SQ>, MAX_SQ>;
 
 struct Stack
 {
-    Movelist moves;
-    Movelist quietMoves;
     int eval;
     Move currentmove;
     Move excludedMove;

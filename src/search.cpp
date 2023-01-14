@@ -133,7 +133,8 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
             return ttScore;
     }
 
-    MovePick<QSEARCH> mp(*this, ss, ss->moves, ttMove);
+    Movelist moves;
+    MovePick<QSEARCH> mp(*this, ss, moves, ttMove);
     mp.stage = ttHit ? TT_MOVE : GENERATE;
 
     /********************
@@ -427,8 +428,8 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     }
 
 moves:
-    // reset movelists
-    ss->quietMoves.size = 0;
+    Movelist moves;
+    Movelist quietMoves;
 
     Score score = VALUE_NONE;
     Move bestMove = NO_MOVE;
@@ -436,7 +437,7 @@ moves:
     uint8_t madeMoves = 0;
     bool doFullSearch = false;
 
-    MovePick<ABSEARCH> mp(*this, ss, ss->moves, searchmoves, RootNode, ttMove, ttHit ? TT_MOVE : GENERATE);
+    MovePick<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, ttMove, ttHit ? TT_MOVE : GENERATE);
 
     /********************
      * Movepicker fetches the next move that we should search.
@@ -474,7 +475,7 @@ moves:
                     &&  !PvNode 
                     &&  !promoted(move) 
                     &&  depth <= 5
-                    &&  ss->quietMoves.size > (4 + depth * depth))
+                    &&  quietMoves.size > (4 + depth * depth))
 
                     continue;
                 // SEE pruning
@@ -613,13 +614,13 @@ moves:
                 if (score >= beta)
                 {
                     // update history heuristic
-                    updateAllHistories(bestMove, best, beta, depth, ss->quietMoves, ss);
+                    updateAllHistories(bestMove, best, beta, depth, quietMoves, ss);
                     break;
                 }
             }
         }
         if (!capture)
-            ss->quietMoves.Add(move);
+            quietMoves.Add(move);
     }
 
     /********************
@@ -724,7 +725,6 @@ SearchResult Search::iterativeDeepening()
     for (int i = -2; i <= MAX_PLY + 1; ++i)
     {
         (ss + i)->ply = i;
-        (ss + i)->moves.size = 0;
         (ss + i)->currentmove = NO_MOVE;
         (ss + i)->eval = 0;
         (ss + i)->excludedMove = NO_MOVE;
