@@ -86,10 +86,10 @@ class Search
     /// @param bonus
     /// @param depth
     /// @param movelist movelist of moves to update
-    template <Movetype type> void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist);
+    template <Movetype type> void updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount);
 
     // update all history + other move ordering
-    void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, Stack *ss);
+    void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Move *quiets, int quietCount, Stack *ss);
 
     // main search functions
 

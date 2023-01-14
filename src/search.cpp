@@ -37,14 +37,14 @@ template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus)
         history[board.sideToMove][from(move)][to(move)] += hhBonus;
 }
 
-template <Movetype type> void Search::updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist)
+template <Movetype type> void Search::updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount)
 {
     if (depth > 1)
         updateHistoryBonus<type>(bestmove, bonus);
 
-    for (auto ext : movelist)
+    for (int i = 0; i < quietCount; i++)
     {
-        const Move move = ext.move;
+        const Move move = quiets[i];
         if (move == bestmove)
             continue;
 
@@ -52,7 +52,8 @@ template <Movetype type> void Search::updateHistory(Move bestmove, int bonus, in
     }
 }
 
-void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, Stack *ss)
+void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth, Move *quiets, int quietCount,
+                                Stack *ss)
 {
     if (best < beta)
         return;
@@ -68,7 +69,7 @@ void Search::updateAllHistories(Move bestMove, Score best, Score beta, int depth
         killerMoves[1][ss->ply] = killerMoves[0][ss->ply];
         killerMoves[0][ss->ply] = bestMove;
 
-        updateHistory<Movetype::QUIET>(bestMove, depthBonus, depth, quietMoves);
+        updateHistory<Movetype::QUIET>(bestMove, depthBonus, depth, quiets, quietCount);
     }
 }
 
@@ -429,11 +430,12 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
 moves:
     Movelist moves;
-    Movelist quietMoves;
+    Move quiets[64];
 
     Score score = VALUE_NONE;
     Move bestMove = NO_MOVE;
     Move move = NO_MOVE;
+    uint8_t quietCount = 0;
     uint8_t madeMoves = 0;
     bool doFullSearch = false;
 
@@ -475,7 +477,7 @@ moves:
                     &&  !PvNode 
                     &&  !promoted(move) 
                     &&  depth <= 5
-                    &&  quietMoves.size > (4 + depth * depth))
+                    &&  quietCount > (4 + depth * depth))
 
                     continue;
                 // SEE pruning
@@ -614,13 +616,13 @@ moves:
                 if (score >= beta)
                 {
                     // update history heuristic
-                    updateAllHistories(bestMove, best, beta, depth, quietMoves, ss);
+                    updateAllHistories(bestMove, best, beta, depth, quiets, quietCount, ss);
                     break;
                 }
             }
         }
         if (!capture)
-            quietMoves.Add(move);
+            quiets[quietCount++] = move;
     }
 
     /********************
