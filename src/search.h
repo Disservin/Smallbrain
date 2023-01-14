@@ -14,10 +14,9 @@ using nodeTable = std::array<std::array<U64, MAX_SQ>, MAX_SQ>;
 
 struct Stack
 {
-    Movelist moves;
-    Movelist quietMoves;
     int eval;
     Move currentmove;
+    Move excludedMove;
     uint16_t ply;
 };
 
@@ -87,10 +86,10 @@ class Search
     /// @param bonus
     /// @param depth
     /// @param movelist movelist of moves to update
-    template <Movetype type> void updateHistory(Move bestmove, int bonus, int depth, Movelist &movelist);
+    template <Movetype type> void updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount);
 
     // update all history + other move ordering
-    void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Movelist &quietMoves, Stack *ss);
+    void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Move *quiets, int quietCount, Stack *ss);
 
     // main search functions
 
