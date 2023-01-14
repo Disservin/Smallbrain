@@ -216,6 +216,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     Score best = -VALUE_INFINITE;
     Score maxValue = VALUE_MATE;
     Score staticEval;
+    Move excludedMove = ss->excludedMove;
 
     const bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
     bool improving;
@@ -260,6 +261,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     assert(PvNode || (alpha == beta - 1));
     assert(0 < depth && depth < MAX_PLY);
 
+    (ss + 1)->excludedMove = NO_MOVE;
     /********************
      * Selective depth (heighest depth we have ever reached)
      *******************/
@@ -281,6 +283,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     // clang-format off
     if (    !RootNode 
+        &&  !excludedMove
         &&  !PvNode 
         &&  ttHit 
         &&  tte->depth >= depth 
@@ -400,9 +403,10 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      *******************/
     // clang-format off
     if (    board.nonPawnMat(color) 
+        &&  !excludedMove
         &&  (ss - 1)->currentmove != NULL_MOVE 
-        && depth >= 3 
-        && staticEval >= beta)
+        &&  depth >= 3 
+        &&  staticEval >= beta)
     {
         // clang-format on
         int R = 5 + std::min(4, depth / 5) + std::min(3, (staticEval - beta) / 214);
@@ -440,13 +444,14 @@ moves:
      *******************/
     while ((move = mp.nextMove()) != NO_MOVE)
     {
+        if (move == excludedMove)
+            continue;
+
         madeMoves++;
 
         int extension = 0;
 
         const bool capture = board.pieceAtB(to(move)) != None;
-
-        int newDepth = depth - 1 + extension;
 
         /********************
          * Various pruning techniques.
@@ -479,7 +484,31 @@ moves:
             // clang-format on
         }
 
-        nodes++;
+        // clang-format off
+        if (    !RootNode 
+            &&  depth >= 8 
+            &&  ttHit 
+            &&  ttMove == move 
+            &&  !excludedMove
+            &&  std::abs(ttScore) < 10000
+            &&  tte->flag & LOWERBOUND
+            &&  tte->depth >= depth - 3)
+        {
+            // clang-format on
+            int singularBeta = ttScore - 3 * depth;
+            int singularDepth = (depth - 1) / 2;
+
+            ss->excludedMove = move;
+            int value = absearch<NonPV>(singularDepth, singularBeta - 1, singularBeta, ss);
+            ss->excludedMove = NO_MOVE;
+
+            if (value < singularBeta)
+                extension = 1;
+            else if (singularBeta >= beta)
+                return singularBeta;
+        }
+
+        int newDepth = depth - 1 + extension;
 
         /********************
          * Print currmove information.
@@ -498,6 +527,7 @@ moves:
         /********************
          * Play the move on the internal board.
          *******************/
+        nodes++;
         board.makeMove<true>(move);
 
         U64 nodeCount = nodes;
@@ -595,7 +625,7 @@ moves:
      * If the move list is empty, we are in checkmate or stalemate.
      *******************/
     if (madeMoves == 0)
-        best = inCheck ? mated_in(ss->ply) : 0;
+        best = excludedMove ? alpha : inCheck ? mated_in(ss->ply) : 0;
 
     if (PvNode)
         best = std::min(best, maxValue);
@@ -607,7 +637,7 @@ moves:
     // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
-    if (!normalSearch || !stopped.load(std::memory_order_relaxed))
+    if (!excludedMove && (!normalSearch || !stopped.load(std::memory_order_relaxed)))
         TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, board.hashKey, bestMove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
@@ -694,8 +724,9 @@ SearchResult Search::iterativeDeepening()
     {
         (ss + i)->ply = i;
         (ss + i)->moves.size = 0;
-        (ss + i)->currentmove = Move(0);
+        (ss + i)->currentmove = NO_MOVE;
         (ss + i)->eval = 0;
+        (ss + i)->excludedMove = NO_MOVE;
     }
 
     int bestmoveChanges = 0;

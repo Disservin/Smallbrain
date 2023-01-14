@@ -18,6 +18,7 @@ struct Stack
     Movelist quietMoves;
     int eval;
     Move currentmove;
+    Move excludedMove;
     uint16_t ply;
 };
 
