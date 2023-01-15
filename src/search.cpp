@@ -226,8 +226,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (ss->ply >= MAX_PLY)
         return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(board) : 0;
 
-    if (PvNode)
-        pvLength[ss->ply] = ss->ply;
+    pvLength[ss->ply] = ss->ply;
 
     /********************
      * Draw detection and mate pruning
