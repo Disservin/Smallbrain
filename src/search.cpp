@@ -768,10 +768,10 @@ SearchResult Search::iterativeDeepening()
             if (depth > 10 && limit.time.optimum * (110 - std::min(effort, 90)) / 100 < now)
                 break;
 
-            if (result > -200 && result + 30 < evalAverage / depth)
+            if (result + 30 < evalAverage / depth)
                 limit.time.optimum *= 1.10;
 
-            if (result - previousResult < -20)
+            if (result > -200 && result - previousResult < -20)
                 limit.time.optimum *= 1.10;
 
             // stop if we have searched for more than 75% of our max time.
