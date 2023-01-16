@@ -739,6 +739,7 @@ SearchResult Search::iterativeDeepening()
      *******************/
     for (depth = 1; depth <= limit.depth; depth++)
     {
+        int previousResult = result;
         seldepth = 0;
         result = aspirationSearch(depth, result, ss);
         evalAverage += result;
@@ -768,6 +769,9 @@ SearchResult Search::iterativeDeepening()
                 break;
 
             if (result + 30 < evalAverage / depth)
+                limit.time.optimum *= 1.10;
+
+            if (result > -200 && result - previousResult < -20)
                 limit.time.optimum *= 1.10;
 
             // stop if we have searched for more than 75% of our max time.
