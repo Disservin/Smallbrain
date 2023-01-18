@@ -89,7 +89,7 @@ class Search
     template <Movetype type> void updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount);
 
     // update all history + other move ordering
-    void updateAllHistories(Move bestMove, Score best, Score beta, int depth, Move *quiets, int quietCount, Stack *ss);
+    void updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss);
 
     // main search functions
 
