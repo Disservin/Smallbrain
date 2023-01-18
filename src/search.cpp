@@ -103,12 +103,6 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
     if (state != Result::NONE)
         return state == Result::LOST ? mated_in(ss->ply) : 0;
 
-    Score bestValue = Eval::evaluation(board);
-    if (bestValue >= beta)
-        return bestValue;
-    if (bestValue > alpha)
-        alpha = bestValue;
-
     /********************
      * Look up in the TT
      * Adjust alpha and beta for non PV Nodes.
@@ -133,6 +127,12 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
         else if (tte->flag == UPPERBOUND && ttScore <= alpha)
             return ttScore;
     }
+
+    Score bestValue = Eval::evaluation(board);
+    if (bestValue >= beta)
+        return bestValue;
+    if (bestValue > alpha)
+        alpha = bestValue;
 
     Movelist moves;
     MovePick<QSEARCH> mp(*this, ss, moves, ttMove);
@@ -307,48 +307,45 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      *  Tablebase probing
      *******************/
 
-    if (!RootNode && normalSearch && useTB)
+    Score tbRes = RootNode ? Score(VALUE_NONE) : probeWDL();
+
+    if (tbRes != VALUE_NONE)
     {
-        Score tbRes = probeTB();
+        Flag flag = NONEBOUND;
+        tbhits++;
 
-        if (tbRes != VALUE_NONE)
+        switch (tbRes)
         {
-            Flag flag = NONEBOUND;
-            tbhits++;
+        case VALUE_TB_WIN:
+            tbRes = VALUE_MATE_IN_PLY - ss->ply - 1;
+            flag = LOWERBOUND;
+            break;
+        case VALUE_TB_LOSS:
+            tbRes = VALUE_MATED_IN_PLY + ss->ply + 1;
+            flag = UPPERBOUND;
+            break;
+        default:
+            tbRes = 0;
+            flag = EXACTBOUND;
+            break;
+        }
 
-            switch (tbRes)
+        if (flag == EXACTBOUND || (flag == LOWERBOUND && tbRes >= beta) || (flag == UPPERBOUND && tbRes <= alpha))
+        {
+            TTable.storeEntry(depth + 6, scoreToTT(tbRes, ss->ply), flag, board.hashKey, NO_MOVE);
+            return tbRes;
+        }
+
+        if (PvNode)
+        {
+            if (flag == LOWERBOUND)
             {
-            case VALUE_TB_WIN:
-                tbRes = VALUE_MATE_IN_PLY - ss->ply - 1;
-                flag = LOWERBOUND;
-                break;
-            case VALUE_TB_LOSS:
-                tbRes = VALUE_MATED_IN_PLY + ss->ply + 1;
-                flag = UPPERBOUND;
-                break;
-            default:
-                tbRes = 0;
-                flag = EXACTBOUND;
-                break;
+                best = tbRes;
+                alpha = std::max(alpha, best);
             }
-
-            if (flag == EXACTBOUND || (flag == LOWERBOUND && tbRes >= beta) || (flag == UPPERBOUND && tbRes <= alpha))
+            else
             {
-                TTable.storeEntry(depth + 6, scoreToTT(tbRes, ss->ply), flag, board.hashKey, NO_MOVE);
-                return tbRes;
-            }
-
-            if (PvNode)
-            {
-                if (flag == LOWERBOUND)
-                {
-                    best = tbRes;
-                    alpha = std::max(alpha, best);
-                }
-                else
-                {
-                    maxValue = tbRes;
-                }
+                maxValue = tbRes;
             }
         }
     }
@@ -890,8 +887,11 @@ int64_t Search::getTime()
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 }
 
-Score Search::probeTB()
+Score Search::probeWDL()
 {
+    if (!normalSearch || !useTB)
+        return VALUE_NONE;
+
     U64 white = board.Us<White>();
     U64 black = board.Us<Black>();
 

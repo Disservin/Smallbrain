@@ -104,7 +104,7 @@ class Search
     int64_t getTime();
 
     // check TB WDL during search
-    Score probeTB();
+    Score probeWDL();
 
     /// @brief check DTZ at root node
     /// @return return DTZ Move
