@@ -59,7 +59,9 @@ int UCI::uciLoop(int argc, char **argv)
             return 0;
         }
         else
+        {
             processCommand(input);
+        }
     }
 
     return 0;
@@ -307,7 +309,6 @@ void UCI::ucinewgameInput()
 
 void UCI::quit()
 {
-
     Threads.stop_threads();
 
     for (std::thread &th : datagen.threads)
@@ -429,6 +430,8 @@ void UCI::startSearch(const std::vector<std::string> &tokens, const std::string 
 
 void UCI::setPosition(const std::vector<std::string> &tokens, const std::string &command)
 {
+    Threads.stop_threads();
+
     bool hasMoves = contains(tokens, "moves");
 
     if (tokens[1] == "fen")

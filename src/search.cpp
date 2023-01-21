@@ -696,8 +696,10 @@ Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss)
     }
 
     if (id == 0 && normalSearch)
+    {
         uciOutput(result, depth, seldepth, Threads.getNodes(), Threads.getTbHits(), getTime(), getPV(),
                   TTable.hashfull());
+    }
 
     return result;
 }
@@ -810,16 +812,13 @@ void Search::startThinking()
      * Various Limits that only the MainThread needs to know
      * and initialise.
      *******************/
-    if (id == 0)
-    {
-        t0 = TimePoint::now();
-        checkTime = 0;
-    }
+    t0 = TimePoint::now();
+    checkTime = 0;
 
     /********************
      * Play dtz move when time is limited
      *******************/
-    if (limit.time.optimum != 0)
+    if (id == 0 && limit.time.optimum != 0)
     {
         Move dtzMove = probeDTZ();
         if (dtzMove != NO_MOVE)
