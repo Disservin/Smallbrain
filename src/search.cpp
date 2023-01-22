@@ -49,10 +49,11 @@ template <Movetype type> void Search::updateHistory(Move bestmove, int bonus, in
     }
 }
 
-void Search::updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss)
+void Search::updateAllHistories(Move prevMove, Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss)
 {
     int depthBonus = bonus(depth);
 
+    counters[from(prevMove)][to(prevMove)] = bestMove;
     /********************
      * Update Quiet Moves
      *******************/
@@ -605,7 +606,7 @@ moves:
                 if (score >= beta)
                 {
                     // update history heuristic
-                    updateAllHistories(bestMove, depth, quiets, quietCount, ss);
+                    updateAllHistories((ss - 1)->currentmove, bestMove, depth, quiets, quietCount, ss);
                     break;
                 }
             }
