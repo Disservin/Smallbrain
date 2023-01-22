@@ -8,6 +8,7 @@
 #include "movegen.h"
 #include "timemanager.h"
 
+using counterTable = std::array<std::array<Move, MAX_SQ>, MAX_SQ>;
 using historyTable = std::array<std::array<std::array<int, MAX_SQ>, MAX_SQ>, 2>;
 using killerTable = std::array<std::array<Move, MAX_PLY + 1>, 2>;
 using nodeTable = std::array<std::array<U64, MAX_SQ>, MAX_SQ>;
@@ -33,6 +34,8 @@ class Search
     TimePoint::time_point t0;
 
     Board board = Board();
+
+    counterTable counters = {};
 
     // [sideToMove][from][to]
     historyTable history = {};
@@ -89,7 +92,7 @@ class Search
     template <Movetype type> void updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount);
 
     // update all history + other move ordering
-    void updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss);
+    void updateAllHistories(Move prevMove, Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss);
 
     // main search functions
 
