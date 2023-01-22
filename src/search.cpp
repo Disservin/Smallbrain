@@ -106,11 +106,10 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
     bool ttHit = false;
 
     TEntry *tte = TTable.probeTT(ttHit, ttMove, board.hashKey);
-    Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+    Score ttScore = ttHit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     // clang-format off
     if (    ttHit 
         &&  !PvNode 
-        &&  ttScore != VALUE_NONE 
         &&  tte->flag != NONEBOUND)
     {
         // clang-format on
@@ -123,6 +122,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
     }
 
     Score bestValue = Eval::evaluation(board);
+
     if (bestValue >= beta)
         return bestValue;
     if (bestValue > alpha)
@@ -211,7 +211,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
 
     Score best = -VALUE_INFINITE;
     Score maxValue = VALUE_MATE;
-    Score staticEval;
     Move excludedMove = ss->excludedMove;
 
     const bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
@@ -270,7 +269,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     bool ttHit = false;
 
     TEntry *tte = TTable.probeTT(ttHit, ttMove, board.hashKey);
-    Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+    Score ttScore = ttHit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     /********************
      * Look up in the TT
@@ -283,8 +282,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         &&  !PvNode 
         &&  ttHit 
         &&  tte->depth >= depth 
-        &&  (ss - 1)->currentmove != NULL_MOVE 
-        &&  ttScore != VALUE_NONE)
+        &&  (ss - 1)->currentmove != NULL_MOVE )
     {
         // clang-format on
         if (tte->flag == EXACTBOUND)
@@ -347,16 +345,16 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     if (inCheck)
     {
         improving = false;
-        staticEval = VALUE_NONE;
+        ss->eval = VALUE_NONE;
         goto moves;
     }
 
-    // Typically people save the evaluation call in the TT, however
-    // I dont and use the TT search score instead, this somehow seems to gain
-    ss->eval = staticEval = ttHit ? tte->score : Eval::evaluation(board);
+    // Use the ttscore as a better evaluation of the position, other engines
+    // typically have eval and staticEval. In Smallbrain its just eval.
+    ss->eval = ttHit ? ttScore : Eval::evaluation(board);
 
     // improving boolean
-    improving = (ss - 2)->eval != VALUE_NONE ? staticEval > (ss - 2)->eval : false;
+    improving = (ss - 2)->eval != VALUE_NONE ? ss->eval > (ss - 2)->eval : false;
 
     if (RootNode)
         goto moves;
@@ -381,14 +379,14 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     /********************
      * Razoring
      *******************/
-    if (depth < 3 && staticEval + 129 < alpha)
+    if (depth < 3 && ss->eval + 129 < alpha)
         return qsearch<NonPV>(alpha, beta, ss);
 
     /********************
      * Reverse futility pruning
      *******************/
     if (std::abs(beta) < VALUE_TB_WIN_IN_MAX_PLY)
-        if (depth < 7 && staticEval - 64 * depth + 71 * improving >= beta)
+        if (depth < 7 && ss->eval - 64 * depth + 71 * improving >= beta)
             return beta;
 
     /********************
@@ -399,10 +397,10 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         &&  !excludedMove
         &&  (ss - 1)->currentmove != NULL_MOVE 
         &&  depth >= 3 
-        &&  staticEval >= beta)
+        &&  ss->eval >= beta)
     {
         // clang-format on
-        int R = 5 + std::min(4, depth / 5) + std::min(3, (staticEval - beta) / 214);
+        int R = 5 + std::min(4, depth / 5) + std::min(3, (ss->eval - beta) / 214);
 
         board.makeNullMove();
         (ss)->currentmove = NULL_MOVE;
