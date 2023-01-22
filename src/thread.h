@@ -21,6 +21,8 @@ class Thread
 class ThreadPool
 {
   public:
+    std::atomic_bool stop;
+
     std::vector<Thread> pool;
     std::vector<std::thread> runningThreads;
 

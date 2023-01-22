@@ -9,7 +9,6 @@
 
 extern ThreadPool Threads;
 extern TranspositionTable TTable;
-extern std::atomic_bool stopped;
 
 // Initialize reduction table
 int reductions[MAX_PLY][MAX_MOVES];
@@ -189,7 +188,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
 
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
-    if (!normalSearch || !stopped.load(std::memory_order_relaxed))
+    if (!normalSearch || !Threads.stop.load(std::memory_order_relaxed))
         TTable.storeEntry(0, scoreToTT(bestValue, ss->ply), b, board.hashKey, bestMove);
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
@@ -511,7 +510,7 @@ moves:
         if (    id == 0 
             &&  RootNode 
             &&  normalSearch 
-            &&  !stopped.load(std::memory_order_relaxed) 
+            &&  !Threads.stop.load(std::memory_order_relaxed) 
             &&  getTime() > 10000)
             std::cout << "info depth " << depth - inCheck 
                       << " currmove " << uciMove(move, board.chess960)
@@ -631,7 +630,7 @@ moves:
     // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
-    if (!excludedMove && (!normalSearch || !stopped.load(std::memory_order_relaxed)))
+    if (!excludedMove && (!normalSearch || !Threads.stop.load(std::memory_order_relaxed)))
         TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, board.hashKey, bestMove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
@@ -668,7 +667,7 @@ Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss)
 
         result = absearch<Root>(depth, alpha, beta, ss);
 
-        if (stopped.load(std::memory_order_relaxed))
+        if (Threads.stop.load(std::memory_order_relaxed))
             return 0;
 
         if (id == 0 && limit.nodes != 0 && nodes >= limit.nodes)
@@ -779,8 +778,7 @@ SearchResult Search::iterativeDeepening()
      * Dont stop analysis in infinite mode when max depth is reached
      * wait for uci stop or quit
      *******************/
-    while (normalSearch && depth == MAX_PLY && limit.nodes == 0 && limit.time.optimum == 0 &&
-           !stopped.load(std::memory_order_relaxed))
+    while (limit.infinite && !Threads.stop.load(std::memory_order_relaxed))
     {
     }
 
@@ -797,7 +795,7 @@ SearchResult Search::iterativeDeepening()
     if (id == 0 && normalSearch)
     {
         std::cout << "bestmove " << uciMove(bestmove, board.chess960) << std::endl;
-        stopped = true;
+        Threads.stop = true;
     }
 
     print_mean();
@@ -824,7 +822,7 @@ void Search::startThinking()
         if (dtzMove != NO_MOVE)
         {
             std::cout << "bestmove " << uciMove(dtzMove, board.chess960) << std::endl;
-            stopped = true;
+            Threads.stop = true;
             return;
         }
     }
@@ -834,7 +832,7 @@ void Search::startThinking()
 
 bool Search::limitReached()
 {
-    if (normalSearch && stopped.load(std::memory_order_relaxed))
+    if (normalSearch && Threads.stop.load(std::memory_order_relaxed))
         return true;
 
     if (id != 0)
@@ -854,7 +852,7 @@ bool Search::limitReached()
 
         if (ms >= limit.time.maximum)
         {
-            stopped = true;
+            Threads.stop = true;
 
             return true;
         }

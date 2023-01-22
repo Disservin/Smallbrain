@@ -8,13 +8,12 @@
 TranspositionTable TTable{};
 ThreadPool Threads;
 
-std::atomic_bool stopped;
 std::atomic_bool UCI_FORCE_STOP;
 
 int main(int argc, char **argv)
 {
+    Threads.stop = false;
     UCI_FORCE_STOP = false;
-    stopped = false;
 
     // Initialize NNUE
     // This either loads the weights from a file or makes use of the weights in the binary file that it was compiled
