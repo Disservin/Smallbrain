@@ -150,6 +150,10 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         board.doubleCheck++;
     }
+
+    if (!checks)
+        return DEFAULT_CHECKMASK;
+
     return checks;
 }
 
@@ -163,28 +167,36 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
  * the possible pinner. We do this by simply using the popcount
  * of our pieces that lay on the pin mask, if it is only 1 piece then that piece is pinned.
  *******************/
-template <Color c> void DoPinMask(Board &board, Square sq)
+template <Color c> U64 DoPinMaskRooks(Board &board, Square sq)
 {
-    U64 them = board.occEnemy;
-    U64 rook_mask = (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, them);
-    U64 bishop_mask = (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & BishopAttacks(sq, them);
+    U64 rook_mask = (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, board.occEnemy);
 
-    board.pinD = 0ULL;
-    board.pinHV = 0ULL;
+    U64 pinHV = 0ULL;
     while (rook_mask)
     {
-        Square index = poplsb(rook_mask);
-        U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+        const Square index = poplsb(rook_mask);
+        const U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (popcount(possible_pin & board.occUs) == 1)
-            board.pinHV |= possible_pin;
+            pinHV |= possible_pin;
     }
+    return pinHV;
+}
+
+template <Color c> U64 DoPinMaskBishops(Board &board, Square sq)
+{
+    U64 bishop_mask = (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & BishopAttacks(sq, board.occEnemy);
+
+    U64 pinD = 0ULL;
+
     while (bishop_mask)
     {
-        Square index = poplsb(bishop_mask);
-        U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+        const Square index = poplsb(bishop_mask);
+        const U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (popcount(possible_pin & board.occUs) == 1)
-            board.pinD |= possible_pin;
+            pinD |= possible_pin;
     }
+
+    return pinD;
 }
 
 /********************
@@ -192,43 +204,44 @@ template <Color c> void DoPinMask(Board &board, Square sq)
  * We keep track of all attacked squares by the enemy
  * this is used for king move generation.
  *******************/
-template <Color c> void seenSquares(Board &board)
+template <Color c> U64 seenSquares(Board &board)
 {
+    const Square kSq = board.KingSQ(~c);
+
     U64 pawns = board.pieces<PAWN, c>();
     U64 knights = board.pieces<KNIGHT, c>();
     U64 queens = board.pieces<QUEEN, c>();
     U64 bishops = board.pieces<BISHOP, c>() | queens;
     U64 rooks = board.pieces<ROOK, c>() | queens;
 
-    board.seen = 0ULL;
-
     // Remove our king
-    Square kSq = board.KingSQ(~c);
     board.occAll &= ~(1ULL << kSq);
 
-    board.seen |= pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
+    U64 seen = pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
 
     while (knights)
     {
         Square index = poplsb(knights);
-        board.seen |= KnightAttacks(index);
+        seen |= KnightAttacks(index);
     }
     while (bishops)
     {
         Square index = poplsb(bishops);
-        board.seen |= BishopAttacks(index, board.occAll);
+        seen |= BishopAttacks(index, board.occAll);
     }
     while (rooks)
     {
         Square index = poplsb(rooks);
-        board.seen |= RookAttacks(index, board.occAll);
+        seen |= RookAttacks(index, board.occAll);
     }
 
     Square index = lsb(board.pieces<KING, c>());
-    board.seen |= KingAttacks(index);
+    seen |= KingAttacks(index);
 
     // Place our King back
     board.occAll |= (1ULL << kSq);
+
+    return seen;
 }
 
 /********************
@@ -242,11 +255,10 @@ template <Color c> void init(Board &board, Square sq)
     board.occAll = board.occUs | board.occEnemy;
     board.enemyEmptyBB = ~board.occUs;
 
-    seenSquares<~c>(board);
-
-    U64 newMask = DoCheckmask<c>(board, sq);
-    board.checkMask = newMask ? newMask : DEFAULT_CHECKMASK;
-    DoPinMask<c>(board, sq);
+    board.seen = seenSquares<~c>(board);
+    board.checkMask = DoCheckmask<c>(board, sq);
+    board.pinHV = DoPinMaskRooks<c>(board, sq);
+    board.pinD = DoPinMaskBishops<c>(board, sq);
 }
 
 /// @brief shift a mask in a direction
