@@ -8,7 +8,6 @@
 #include "thread.h"
 #include "tt.h"
 
-extern std::atomic_bool stopped;
 extern std::atomic_bool UCI_FORCE_STOP;
 extern TranspositionTable TTable;
 extern ThreadPool Threads;
@@ -195,7 +194,7 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
         startSearch(allArgs, ss.str());
 
         // wait for finish
-        while (!stopped)
+        while (!Threads.stop)
         {
         };
 
@@ -386,7 +385,8 @@ void UCI::startSearch(const std::vector<std::string> &tokens, const std::string 
         limit = tokens[1];
 
     info.depth = (limit == "depth") ? findElement<int>("depth", tokens) : MAX_PLY - 1;
-    info.depth = (limit == "infinite" || command == "go") ? MAX_PLY - 1 : info.depth;
+    info.depth = command == "go" ? MAX_PLY - 1 : info.depth;
+    info.infinite = limit == "infinite";
     info.nodes = (limit == "nodes") ? findElement<int>("nodes", tokens) : 0;
     info.time.maximum = info.time.optimum = (limit == "movetime") ? findElement<int>("movetime", tokens) : 0;
 

@@ -328,6 +328,7 @@ struct Limits
     Time time;
     U64 nodes = 0;
     int depth = MAX_PLY;
+    bool infinite = false;
 };
 
 inline Score mate_in(int ply)

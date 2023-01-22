@@ -2,7 +2,6 @@
 
 #include "thread.h"
 
-extern std::atomic_bool stopped;
 extern std::atomic_bool UCI_FORCE_STOP;
 
 void Thread::start_thinking()
@@ -39,7 +38,7 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, const Mo
 {
     assert(runningThreads.size() == 0);
 
-    stopped = UCI_FORCE_STOP = false;
+    stop = false;
 
     Thread mainThread;
 
@@ -77,7 +76,7 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, const Mo
 
 void ThreadPool::stop_threads()
 {
-    stopped = UCI_FORCE_STOP = true;
+    stop = UCI_FORCE_STOP = true;
 
     for (auto &th : runningThreads)
         if (th.joinable())

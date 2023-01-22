@@ -1,6 +1,7 @@
 #include "benchmark.h"
+#include "thread.h"
 
-extern std::atomic_bool stopped;
+extern ThreadPool Threads;
 
 namespace Bench
 {
@@ -22,7 +23,7 @@ int startBench(int depth)
     {
         std::cout << "\nPosition: " << i++ << "/" << benchmarkfens.size() << " " << fen << std::endl;
 
-        stopped = false;
+        Threads.stop = false;
 
         Search searcher;
 
