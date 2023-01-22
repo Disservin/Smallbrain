@@ -166,7 +166,7 @@ template <SearchType st> int MovePick<st>::scoreMove(const Move move) const
         {
             return KILLER_TWO_SCORE;
         }
-        else if (search.counters[(ss - 1)->currentmove][(ss - 1)->currentmove] == move)
+        else if (search.counters[from((ss - 1)->currentmove)][to((ss - 1)->currentmove)] == move)
         {
             return COUNTER_SCORE;
         }
