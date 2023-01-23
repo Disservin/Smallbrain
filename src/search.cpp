@@ -29,31 +29,59 @@ int bonus(int depth)
     return std::min(2000, depth * 155);
 }
 
-template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus)
+template <History type> void Search::updateHistoryBonus(Move move, Move secondMove, int bonus)
 {
-    int hhBonus = bonus - getHistory<type>(move, *this) * std::abs(bonus) / 16384;
-    if constexpr (type == Movetype::QUIET)
+    int hhBonus = bonus - getHistory<type>(move, secondMove, *this) * std::abs(bonus) / 16384;
+
+    if constexpr (type == History::HH)
         history[board.sideToMove][from(move)][to(move)] += hhBonus;
+    else if constexpr (type == History::CONST)
+        consthist[board.pieceAtB(from(secondMove))][to(secondMove)][board.pieceAtB(from(move))][to(move)] += hhBonus;
 }
 
-template <Movetype type> void Search::updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount)
+template <History type>
+void Search::updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount, Stack *ss)
 {
-    if (depth > 1)
-        updateHistoryBonus<type>(bestmove, bonus);
+    if constexpr (type == History::HH)
+    {
+        if (depth > 1)
+            updateHistoryBonus<type>(bestmove, NO_MOVE, bonus);
+    }
+
+    if constexpr (type == History::CONST)
+    {
+        if (ss->ply > 0)
+        {
+            updateHistoryBonus<type>(bestmove, (ss - 1)->currentmove, bonus);
+            if (ss->ply > 1)
+                updateHistoryBonus<type>(bestmove, (ss - 2)->currentmove, bonus);
+        }
+    }
 
     for (int i = 0; i < quietCount; i++)
     {
         const Move move = quiets[i];
 
-        updateHistoryBonus<type>(move, -bonus);
+        if constexpr (type == History::CONST)
+        {
+            if (ss->ply > 0)
+            {
+                updateHistoryBonus<type>(move, (ss - 1)->currentmove, -bonus);
+                if (ss->ply > 1)
+                    updateHistoryBonus<type>(move, (ss - 2)->currentmove, -bonus);
+            }
+        }
+        else
+            updateHistoryBonus<type>(move, NO_MOVE, -bonus);
     }
 }
 
-void Search::updateAllHistories(Move prevMove, Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss)
+void Search::updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss)
 {
     int depthBonus = bonus(depth);
 
-    counters[from(prevMove)][to(prevMove)] = bestMove;
+    counters[from((ss - 1)->currentmove)][to((ss - 1)->currentmove)] = bestMove;
+
     /********************
      * Update Quiet Moves
      *******************/
@@ -63,7 +91,8 @@ void Search::updateAllHistories(Move prevMove, Move bestMove, int depth, Move *q
         killerMoves[1][ss->ply] = killerMoves[0][ss->ply];
         killerMoves[0][ss->ply] = bestMove;
 
-        updateHistory<Movetype::QUIET>(bestMove, depthBonus, depth, quiets, quietCount);
+        updateHistory<History::HH>(bestMove, depthBonus, depth, quiets, quietCount, ss);
+        updateHistory<History::CONST>(bestMove, depthBonus, depth, quiets, quietCount, ss);
     }
 }
 
@@ -604,7 +633,7 @@ moves:
                 if (score >= beta)
                 {
                     // update history heuristic
-                    updateAllHistories((ss - 1)->currentmove, bestMove, depth, quiets, quietCount, ss);
+                    updateAllHistories(bestMove, depth, quiets, quietCount, ss);
                     break;
                 }
             }

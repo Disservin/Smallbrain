@@ -61,6 +61,13 @@ struct SearchResult
     Score score;
 };
 
+enum class History
+{
+    HH,
+    COUNTER,
+    CONST
+};
+
 class Search
 {
   public:
@@ -68,6 +75,8 @@ class Search
     TimePoint::time_point t0;
 
     Board board = Board();
+
+    Table<int, N_PIECES + 1, 64, N_PIECES + 1, 64> consthist;
 
     // Counter moves for quiet move ordering
     Table<Move, MAX_SQ, MAX_SQ> counters = {};
@@ -116,7 +125,7 @@ class Search
 
   private:
     // update move history
-    template <Movetype type> void updateHistoryBonus(Move move, int bonus);
+    template <History type> void updateHistoryBonus(Move move, Move secondMove, int bonus);
 
     /// @brief update history for all moves
     /// @tparam type
@@ -124,10 +133,11 @@ class Search
     /// @param bonus
     /// @param depth
     /// @param movelist movelist of moves to update
-    template <Movetype type> void updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount);
+    template <History type>
+    void updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount, Stack *ss);
 
     // update all history + other move ordering
-    void updateAllHistories(Move prevMove, Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss);
+    void updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss);
 
     // main search functions
 
@@ -153,10 +163,16 @@ class Search
 /// @tparam type
 /// @param move
 /// @return
-template <Movetype type> int getHistory(Move move, Search &search)
+template <History type> int getHistory(Move move, Move secondMove, Search &search)
 {
-    if constexpr (type == Movetype::QUIET)
+
+    if constexpr (type == History::HH)
         return search.history[search.board.sideToMove][from(move)][to(move)];
+    else if constexpr (type == History::COUNTER)
+        return search.counters[from(move)][to(move)];
+    else if constexpr (type == History::CONST)
+        return search.consthist[search.board.pieceAtB(from(secondMove))][to(secondMove)]
+                               [search.board.pieceAtB(from(move))][to(move)];
 }
 
 static constexpr int mvvlvaArray[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
