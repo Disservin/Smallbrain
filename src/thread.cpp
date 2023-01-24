@@ -6,7 +6,7 @@ extern std::atomic_bool UCI_FORCE_STOP;
 
 void Thread::start_thinking()
 {
-    search.startThinking();
+    search->startThinking();
 }
 
 uint64_t ThreadPool::getNodes()
@@ -15,7 +15,7 @@ uint64_t ThreadPool::getNodes()
 
     for (auto &th : pool)
     {
-        total += th.search.nodes;
+        total += th.search->nodes;
     }
 
     return total;
@@ -27,7 +27,7 @@ uint64_t ThreadPool::getTbHits()
 
     for (auto &th : pool)
     {
-        total += th.search.tbhits;
+        total += th.search->tbhits;
     }
 
     return total;
@@ -48,14 +48,14 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, const Mo
     pool.clear();
 
     // update with info
-    mainThread.search.id = 0;
-    mainThread.search.board = board;
-    mainThread.search.limit = limit;
-    mainThread.search.useTB = useTB;
-    mainThread.search.nodes = 0;
-    mainThread.search.tbhits = 0;
-    mainThread.search.spentEffort.fill({});
-    mainThread.search.searchmoves = searchmoves;
+    mainThread.search->id = 0;
+    mainThread.search->board = board;
+    mainThread.search->limit = limit;
+    mainThread.search->useTB = useTB;
+    mainThread.search->nodes = 0;
+    mainThread.search->tbhits = 0;
+    mainThread.search->spentEffort.reset();
+    mainThread.search->searchmoves = searchmoves;
 
     pool.emplace_back(mainThread);
 
@@ -63,7 +63,7 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, const Mo
 
     for (int i = 1; i < workerCount; i++)
     {
-        mainThread.search.id = i;
+        mainThread.search->id = i;
 
         pool.emplace_back(mainThread);
     }

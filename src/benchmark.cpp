@@ -25,17 +25,17 @@ int startBench(int depth)
 
         Threads.stop = false;
 
-        Search searcher;
+        std::unique_ptr<Search> searcher = std::make_unique<Search>();
 
-        searcher.id = 0;
-        searcher.useTB = false;
-        searcher.board.applyFen(fen);
-        searcher.limit = limit;
-        searcher.id = 0;
+        searcher->id = 0;
+        searcher->useTB = false;
+        searcher->board.applyFen(fen);
+        searcher->limit = limit;
+        searcher->id = 0;
 
-        searcher.startThinking();
+        searcher->startThinking();
 
-        totalNodes += searcher.nodes;
+        totalNodes += searcher->nodes;
     }
 
     auto t2 = TimePoint::now();
