@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <iomanip> // std::setprecision
+#include <memory>  // unique_ptr
 #include <random>
 
 #include "board.h"
@@ -50,7 +51,8 @@ class TrainingData
     /// @param board
     /// @param Movelist
     /// @param search
-    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, bool useTB);
+    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, std::unique_ptr<Search> &search,
+                       bool useTB);
     std::vector<std::thread> threads;
 };
 
