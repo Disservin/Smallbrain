@@ -92,7 +92,9 @@ void Search::updateAllHistories(Move bestMove, int depth, Move *quiets, int quie
         killerMoves[0][ss->ply] = bestMove;
 
         updateHistory<History::HH>(bestMove, depthBonus, depth, quiets, quietCount, ss);
-        updateHistory<History::CONST>(bestMove, depthBonus, depth, quiets, quietCount, ss);
+
+        int constbonus = std::min(4 * depth * depth * depth, 1500);
+        updateHistory<History::CONST>(bestMove, constbonus, depth, quiets, quietCount, ss);
     }
 }
 
