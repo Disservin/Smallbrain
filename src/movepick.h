@@ -166,10 +166,12 @@ template <SearchType st> int MovePick<st>::scoreMove(const Move move) const
         {
             return KILLER_TWO_SCORE;
         }
-        else if (search.counters[from((ss - 1)->currentmove)][to((ss - 1)->currentmove)] == move)
+        else if (getHistory<History::COUNTER>((ss - 1)->currentmove, NO_MOVE, search) == move)
         {
             return COUNTER_SCORE;
         }
-        return getHistory<Movetype::QUIET>(move, search);
+        return getHistory<History::HH>(move, NO_MOVE, search) +
+               2 * (getHistory<History::CONST>(move, (ss - 1)->currentmove, search) +
+                    getHistory<History::CONST>(move, (ss - 2)->currentmove, search));
     }
 }

@@ -29,31 +29,59 @@ int bonus(int depth)
     return std::min(2000, depth * 155);
 }
 
-template <Movetype type> void Search::updateHistoryBonus(Move move, int bonus)
+template <History type> void Search::updateHistoryBonus(Move move, Move secondMove, int bonus)
 {
-    int hhBonus = bonus - getHistory<type>(move, *this) * std::abs(bonus) / 16384;
-    if constexpr (type == Movetype::QUIET)
+    int hhBonus = bonus - getHistory<type>(move, secondMove, *this) * std::abs(bonus) / 16384;
+
+    if constexpr (type == History::HH)
         history[board.sideToMove][from(move)][to(move)] += hhBonus;
+    else if constexpr (type == History::CONST)
+        consthist[board.pieceAtB(from(secondMove))][to(secondMove)][board.pieceAtB(from(move))][to(move)] += hhBonus;
 }
 
-template <Movetype type> void Search::updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount)
+template <History type>
+void Search::updateHistory(Move bestmove, int bonus, int depth, Move *moves, int moveCount, Stack *ss)
 {
-    if (depth > 1)
-        updateHistoryBonus<type>(bestmove, bonus);
-
-    for (int i = 0; i < quietCount; i++)
+    if constexpr (type == History::HH)
     {
-        const Move move = quiets[i];
+        if (depth > 1)
+            updateHistoryBonus<type>(bestmove, NO_MOVE, bonus);
+    }
 
-        updateHistoryBonus<type>(move, -bonus);
+    if constexpr (type == History::CONST)
+    {
+        if (ss->ply > 0)
+        {
+            updateHistoryBonus<type>(bestmove, (ss - 1)->currentmove, bonus);
+            if (ss->ply > 1)
+                updateHistoryBonus<type>(bestmove, (ss - 2)->currentmove, bonus);
+        }
+    }
+
+    for (int i = 0; i < moveCount; i++)
+    {
+        const Move move = moves[i];
+
+        if constexpr (type == History::CONST)
+        {
+            if (ss->ply > 0)
+            {
+                updateHistoryBonus<type>(move, (ss - 1)->currentmove, -bonus);
+                if (ss->ply > 1)
+                    updateHistoryBonus<type>(move, (ss - 2)->currentmove, -bonus);
+            }
+        }
+        else
+            updateHistoryBonus<type>(move, NO_MOVE, -bonus);
     }
 }
 
-void Search::updateAllHistories(Move prevMove, Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss)
+void Search::updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss)
 {
     int depthBonus = bonus(depth);
 
-    counters[from(prevMove)][to(prevMove)] = bestMove;
+    counters[from((ss - 1)->currentmove)][to((ss - 1)->currentmove)] = bestMove;
+
     /********************
      * Update Quiet Moves
      *******************/
@@ -63,7 +91,10 @@ void Search::updateAllHistories(Move prevMove, Move bestMove, int depth, Move *q
         killerMoves[1][ss->ply] = killerMoves[0][ss->ply];
         killerMoves[0][ss->ply] = bestMove;
 
-        updateHistory<Movetype::QUIET>(bestMove, depthBonus, depth, quiets, quietCount);
+        updateHistory<History::HH>(bestMove, depthBonus, depth, quiets, quietCount, ss);
+
+        int constbonus = std::min(4 * depth * depth * depth, 1500);
+        updateHistory<History::CONST>(bestMove, constbonus, depth, quiets, quietCount, ss);
     }
 }
 
@@ -257,10 +288,11 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     assert(0 < depth && depth < MAX_PLY);
 
     (ss + 1)->excludedMove = NO_MOVE;
-    /********************
-     * Selective depth (heighest depth we have ever reached)
-     *******************/
 
+    /********************
+     * Selective depth
+     * Heighest depth a pvnode has reached
+     *******************/
     if (PvNode && ss->ply > seldepth)
         seldepth = ss->ply;
 
@@ -275,7 +307,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      * Look up in the TT
      * Adjust alpha and beta for non PV nodes
      *******************/
-
     // clang-format off
     if (    !RootNode 
         &&  !excludedMove
@@ -298,7 +329,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     /********************
      *  Tablebase probing
      *******************/
-
     Score tbRes = RootNode ? Score(VALUE_NONE) : probeWDL();
 
     if (tbRes != VALUE_NONE)
@@ -604,7 +634,7 @@ moves:
                 if (score >= beta)
                 {
                     // update history heuristic
-                    updateAllHistories((ss - 1)->currentmove, bestMove, depth, quiets, quietCount, ss);
+                    updateAllHistories(bestMove, depth, quiets, quietCount, ss);
                     break;
                 }
             }
