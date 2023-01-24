@@ -189,7 +189,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
 
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
-    if (!normalSearch || !Threads.stop.load(std::memory_order_relaxed))
+    if (!Threads.stop.load(std::memory_order_relaxed))
         TTable.storeEntry(0, scoreToTT(bestValue, ss->ply), b, board.hashKey, bestMove);
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
@@ -210,7 +210,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     Color color = board.sideToMove;
 
     Score best = -VALUE_INFINITE;
-    Score maxValue = VALUE_MATE;
+    Score maxValue = VALUE_INFINITE;
     Move excludedMove = ss->excludedMove;
 
     const bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color));
@@ -629,7 +629,7 @@ moves:
     // Transposition table flag
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
-    if (!excludedMove && (!normalSearch || !Threads.stop.load(std::memory_order_relaxed)))
+    if (!excludedMove && !Threads.stop.load(std::memory_order_relaxed))
         TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, board.hashKey, bestMove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
