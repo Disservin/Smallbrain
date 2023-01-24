@@ -8,6 +8,10 @@
 #include "movegen.h"
 #include "timemanager.h"
 
+/// @brief Table template class for creating N-dimensional arrays.
+/// @tparam T
+/// @tparam N
+/// @tparam ...Dims
 template <typename T, size_t N, size_t... Dims> struct Table
 {
     std::array<Table<T, Dims...>, N> data;
