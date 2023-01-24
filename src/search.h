@@ -98,9 +98,12 @@ class Search
     Table<uint8_t, MAX_PLY> pvLength = {};
     Table<Move, MAX_PLY, MAX_PLY> pvTable = {};
 
+    // GUI might send
+    // go searchmoves e2e4
+    // in which case the root movelist should only include this move
     Movelist searchmoves = {};
 
-    // Mainthread limits
+    // Limits parsed from UCI
     Limits limit = {};
 
     // nodes searched
@@ -128,19 +131,14 @@ class Search
     SearchResult iterativeDeepening();
 
   private:
-    // update move history
+    // update history for one move
     template <History type> void updateHistoryBonus(Move move, Move secondMove, int bonus);
 
-    /// @brief update history for all moves
-    /// @tparam type
-    /// @param bestmove
-    /// @param bonus
-    /// @param depth
-    /// @param movelist movelist of moves to update
+    // update history a movelist
     template <History type>
-    void updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount, Stack *ss);
+    void updateHistory(Move bestmove, int bonus, int depth, Move *moves, int moveCount, Stack *ss);
 
-    // update all history + other move ordering
+    // update all histories + other move ordering
     void updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss);
 
     // main search functions

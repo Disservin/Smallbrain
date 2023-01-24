@@ -40,7 +40,7 @@ template <History type> void Search::updateHistoryBonus(Move move, Move secondMo
 }
 
 template <History type>
-void Search::updateHistory(Move bestmove, int bonus, int depth, Move *quiets, int quietCount, Stack *ss)
+void Search::updateHistory(Move bestmove, int bonus, int depth, Move *moves, int moveCount, Stack *ss)
 {
     if constexpr (type == History::HH)
     {
@@ -58,9 +58,9 @@ void Search::updateHistory(Move bestmove, int bonus, int depth, Move *quiets, in
         }
     }
 
-    for (int i = 0; i < quietCount; i++)
+    for (int i = 0; i < moveCount; i++)
     {
-        const Move move = quiets[i];
+        const Move move = moves[i];
 
         if constexpr (type == History::CONST)
         {
@@ -288,10 +288,11 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     assert(0 < depth && depth < MAX_PLY);
 
     (ss + 1)->excludedMove = NO_MOVE;
-    /********************
-     * Selective depth (heighest depth we have ever reached)
-     *******************/
 
+    /********************
+     * Selective depth
+     * Heighest depth a pvnode has reached
+     *******************/
     if (PvNode && ss->ply > seldepth)
         seldepth = ss->ply;
 
@@ -306,7 +307,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
      * Look up in the TT
      * Adjust alpha and beta for non PV nodes
      *******************/
-
     // clang-format off
     if (    !RootNode 
         &&  !excludedMove
@@ -329,7 +329,6 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     /********************
      *  Tablebase probing
      *******************/
-
     Score tbRes = RootNode ? Score(VALUE_NONE) : probeWDL();
 
     if (tbRes != VALUE_NONE)
