@@ -57,11 +57,12 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
 
     while (!UCI_FORCE_STOP)
     {
-        Search search = Search();
-        search.normalSearch = false;
-        search.useTB = false;
-        search.id = 0;
-        search.limit = limit;
+        std::unique_ptr<Search> search = std::make_unique<Search>();
+
+        search->normalSearch = false;
+        search->useTB = false;
+        search->id = 0;
+        search->limit = limit;
 
         randomPlayout(file, board, movelist, search, useTB);
     }
@@ -69,7 +70,8 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, Search &search, bool useTB)
+void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, std::unique_ptr<Search> &search,
+                                 bool useTB)
 {
     std::vector<fenData> fens;
     std::mt19937 generator(rd());
@@ -99,7 +101,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     {
         board.clearStacks();
 
-        search.nodes = 0;
+        search->nodes = 0;
         movelist.size = 0;
 
         Movegen::legalmoves<Movetype::ALL>(board, movelist);
@@ -129,13 +131,13 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     int drawCount = 0;
     int winCount = 0;
 
-    search.board = board;
+    search->board = board;
 
     while (true)
     {
         board.clearStacks();
 
-        search.nodes = 0;
+        search->nodes = 0;
         movelist.size = 0;
 
         const bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
@@ -153,7 +155,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             break;
         }
 
-        SearchResult result = search.iterativeDeepening();
+        SearchResult result = search->iterativeDeepening();
 
         // CATCH BUGS
         if (result.score == VALUE_NONE)
@@ -210,7 +212,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         ply++;
         board.makeMove<true>(result.move);
-        search.board = board;
+        search->board = board;
     }
 
     U64 white = board.Us<White>();
