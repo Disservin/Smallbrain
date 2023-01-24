@@ -141,6 +141,7 @@ template <Node node> Score Search::qsearch(Score alpha, Score beta, Stack *ss)
     // clang-format off
     if (    ttHit 
         &&  !PvNode 
+        &&  ttScore != VALUE_NONE
         &&  tte->flag != NONEBOUND)
     {
         // clang-format on
@@ -312,6 +313,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
         &&  !excludedMove
         &&  !PvNode 
         &&  ttHit 
+        &&  ttScore != VALUE_NONE
         &&  tte->depth >= depth 
         &&  (ss - 1)->currentmove != NULL_MOVE )
     {
@@ -507,9 +509,10 @@ moves:
         }
 
         // clang-format off
+        // Singular extensions
         if (    !RootNode 
             &&  depth >= 8 
-            &&  ttHit 
+            &&  ttHit  // ttScore cannot be VALUE_NONE!
             &&  ttMove == move 
             &&  !excludedMove
             &&  std::abs(ttScore) < 10000
