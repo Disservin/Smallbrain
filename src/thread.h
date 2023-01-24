@@ -13,8 +13,30 @@ class Thread
 {
   public:
     void start_thinking();
+    std::unique_ptr<Search> search;
 
-    Search search;
+    Thread()
+    {
+        search = std::make_unique<Search>();
+    }
+
+    Thread(const Thread &other)
+    {
+        search = std::make_unique<Search>(*other.search);
+    }
+
+    Thread &operator=(const Thread &other)
+    {
+        // protect against invalid self-assignment
+        if (this != &other)
+        {
+            search = std::make_unique<Search>(*other.search);
+        }
+        // by convention, always return *this
+        return *this;
+    }
+
+    ~Thread() = default;
 };
 
 // Holds all currently running threads and their data

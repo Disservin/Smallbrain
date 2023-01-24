@@ -712,7 +712,7 @@ SearchResult Search::iterativeDeepening()
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
 
-    spentEffort.fill({});
+    spentEffort.reset();
 
     for (int i = -2; i <= MAX_PLY + 1; ++i)
     {

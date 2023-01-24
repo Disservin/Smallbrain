@@ -8,10 +8,44 @@
 #include "movegen.h"
 #include "timemanager.h"
 
-using counterTable = std::array<std::array<Move, MAX_SQ>, MAX_SQ>;
-using historyTable = std::array<std::array<std::array<int, MAX_SQ>, MAX_SQ>, 2>;
-using killerTable = std::array<std::array<Move, MAX_PLY + 1>, 2>;
-using nodeTable = std::array<std::array<U64, MAX_SQ>, MAX_SQ>;
+template <typename T, size_t N, size_t... Dims> struct Table
+{
+    std::array<Table<T, Dims...>, N> data;
+    Table()
+    {
+        data.fill({});
+    }
+    Table<T, Dims...> &operator[](size_t index)
+    {
+        return data[index];
+    }
+    const Table<T, Dims...> &operator[](size_t index) const
+    {
+        return data[index];
+    }
+
+    void reset()
+    {
+        data.fill({});
+    }
+};
+
+template <typename T, size_t N> struct Table<T, N>
+{
+    std::array<T, N> data;
+    Table()
+    {
+        data.fill({});
+    }
+    T &operator[](size_t index)
+    {
+        return data[index];
+    }
+    const T &operator[](size_t index) const
+    {
+        return data[index];
+    }
+};
 
 struct Stack
 {
@@ -35,20 +69,21 @@ class Search
 
     Board board = Board();
 
-    counterTable counters = {};
+    // Counter moves for quiet move ordering
+    Table<Move, MAX_SQ, MAX_SQ> counters = {};
 
-    // [sideToMove][from][to]
-    historyTable history = {};
+    // history heuristic for quiet move ordering
+    Table<int16_t, 2, MAX_SQ, MAX_SQ> history = {};
 
-    // [sideToMove][ply]
-    killerTable killerMoves = {};
+    // Killer moves for quiet move ordering
+    Table<Move, 2, MAX_PLY + 1> killerMoves = {};
 
     // node count logic
-    nodeTable spentEffort = {};
+    Table<U64, MAX_SQ, MAX_SQ> spentEffort = {};
 
     // pv collection
-    std::array<uint8_t, MAX_PLY> pvLength = {};
-    std::array<std::array<Move, MAX_PLY>, MAX_PLY> pvTable = {};
+    Table<uint8_t, MAX_PLY> pvLength = {};
+    Table<Move, MAX_PLY, MAX_PLY> pvTable = {};
 
     Movelist searchmoves = {};
 
