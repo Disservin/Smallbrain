@@ -60,6 +60,9 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, const Mo
     pool.emplace_back(mainThread);
 
     // start at index 1 to keep "mainthread" data alive
+    mainThread.search->consthist.reset();
+    mainThread.search->history.reset();
+    mainThread.search->counters.reset();
 
     for (int i = 1; i < workerCount; i++)
     {
