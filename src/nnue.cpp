@@ -8,7 +8,6 @@
 
 INCBIN(Eval, EVALFILE);
 
-uint8_t inputValues[FEATURE_SIZE];
 int16_t inputWeights[FEATURE_SIZE * N_HIDDEN_SIZE];
 int16_t hiddenBias[N_HIDDEN_SIZE];
 int16_t hiddenWeights[N_HIDDEN_SIZE * 2];

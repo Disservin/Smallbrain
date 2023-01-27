@@ -12,7 +12,6 @@
 #define OUTPUT_BIAS 1
 
 /// N_HIDDEN_SIZE/N_HIDDEN_SIZE is basically the width of the hidden layer.
-extern uint8_t inputValues[FEATURE_SIZE];
 extern int16_t inputWeights[FEATURE_SIZE * N_HIDDEN_SIZE];
 extern int16_t hiddenBias[N_HIDDEN_SIZE];
 extern int16_t hiddenWeights[N_HIDDEN_SIZE * 2];
