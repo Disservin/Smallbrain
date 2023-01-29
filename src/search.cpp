@@ -838,6 +838,20 @@ SearchResult Search::iterativeDeepening()
     return sr;
 }
 
+void Search::reset()
+{
+    consthist.reset();
+    counters.reset();
+    history.reset();
+    killerMoves.reset();
+    spentEffort.reset();
+    pvLength.reset();
+    pvTable.reset();
+
+    nodes = 0;
+    tbhits = 0;
+}
+
 void Search::startThinking()
 {
     /********************

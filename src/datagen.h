@@ -20,7 +20,6 @@ struct fenData
     std::string fen;
     Score score;
     Move move;
-    bool use;
 };
 
 std::string stringFenData(const fenData &fenData, double score);
