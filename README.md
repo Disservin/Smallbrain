@@ -119,7 +119,7 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 
 ## Datageneration
 ```
-* .\smallbrain.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int>
+* .\smallbrain.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int> -hash \<int>
 ```
 
 * Example: 
@@ -127,6 +127,7 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
 .\smallbrain.exe -gen -threads 30 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
 ```
 ```
+.\smallbrain.exe -gen -threads 30 -depth 7 -hash 256 -tb H:/Chess/345
 .\smallbrain.exe -gen -threads 30 -depth 9 -tb H:/Chess/345
 .\smallbrain.exe -gen -threads 30 -nodes 5000 -tb H:/Chess/345
 ```

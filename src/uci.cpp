@@ -233,6 +233,7 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
         int depth = 7;
         int nodes = 0;
         bool useTB = false;
+        int hash = 16;
 
         if (contains(allArgs, "-threads"))
         {
@@ -261,7 +262,12 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
             nodes = findElement<int>("-nodes", allArgs);
         }
 
-        static constexpr int ttsize = 16 * 1024 * 1024 / sizeof(TEntry); // 16 MiB
+        if (contains(allArgs, "-hash"))
+        {
+            hash = findElement<int>("-hash", allArgs);
+        }
+
+        int ttsize = hash * 1024 * 1024 / sizeof(TEntry); // 16 MiB
         TTable.allocateTT(ttsize * workers);
 
         UCI_FORCE_STOP = false;
@@ -270,7 +276,7 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
 
         std::cout << "Data generation started" << std::endl;
         std::cout << "Workers: " << workers << "\nBookPath: " << bookPath << "\nDepth: " << depth
-                  << "\nNodes: " << nodes << "\nUseTb: " << useTB << std::endl;
+                  << "\nNodes: " << nodes << "\nUseTb: " << useTB << "\nHash: " << hash << std::endl;
 
         return false;
     }
