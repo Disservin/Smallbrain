@@ -333,10 +333,9 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     fullMoveNumber++;
 
     bool ep = to_sq == enPassantSquare;
-    const bool isCastlingWhite =
-        (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
-    const bool isCastlingBlack =
-        (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
+
+    // Castling is encoded as king captures rook
+    const bool isCastling = pt == KING && type_of_piece(capture) == ROOK && colorOf(from_sq) == colorOf(to_sq);
 
     // *****************************
     // UPDATE HASH
@@ -346,14 +345,15 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     if (enPassantSquare != NO_SQ)
         hashKey ^= updateKeyEnPassant(enPassantSquare);
-    enPassantSquare = NO_SQ;
 
     hashKey ^= updateKeyCastling();
 
-    if (isCastlingWhite || isCastlingBlack)
+    enPassantSquare = NO_SQ;
+
+    if (isCastling)
     {
-        Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        Square rookSQ = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+        const Square rookSQ = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
 
         assert(type_of_piece(pieceAtB(to_sq)) == ROOK);
         hashKey ^= updateKeyPiece(rook, to_sq);
@@ -388,7 +388,7 @@ template <bool updateNNUE> void Board::makeMove(Move move)
         }
     }
 
-    if (capture != None && !(isCastlingWhite || isCastlingBlack))
+    if (capture != None && !isCastling)
     {
         halfMoveClock = 0;
         hashKey ^= updateKeyPiece(capture, to_sq);
@@ -418,15 +418,14 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     // UPDATE PIECES AND NNUE
     // *****************************
 
-    if (isCastlingWhite || isCastlingBlack)
+    if (isCastling)
     {
-        Square rookToSq;
-        Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
 
         removePiece<updateNNUE>(p, from_sq);
         removePiece<updateNNUE>(rook, to_sq);
 
-        rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
         placePiece<updateNNUE>(p, to_sq);
@@ -438,13 +437,14 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
         removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8));
     }
-    else if (capture != None && !(isCastlingWhite || isCastlingBlack))
+    else if (capture != None && !isCastling)
     {
         assert(pieceAtB(to_sq) != None);
 
         removePiece<updateNNUE>(capture, to_sq);
     }
 
+    // The move is differently encoded for promotions to it requires some special care.
     if (promoted(move))
     {
         assert(pieceAtB(to_sq) == None);
@@ -452,7 +452,8 @@ template <bool updateNNUE> void Board::makeMove(Move move)
         removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
         placePiece<updateNNUE>(p, to_sq);
     }
-    else if (!(isCastlingWhite || isCastlingBlack))
+    // We already updated castling moves
+    else if (!isCastling)
     {
         assert(pieceAtB(to_sq) == None);
 
@@ -493,12 +494,9 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
     PieceType pt = piece(move);
     Piece p = makePiece(pt, sideToMove);
 
-    const bool isCastlingWhite =
-        (p == WhiteKing && capture == WhiteRook) || (p == WhiteKing && square_distance(to_sq, from_sq) >= 2);
-    const bool isCastlingBlack =
-        (p == BlackKing && capture == BlackRook) || (p == BlackKing && square_distance(to_sq, from_sq) >= 2);
+    const bool isCastling = (p == WhiteKing && capture == WhiteRook) || (p == BlackKing && capture == BlackRook);
 
-    if ((isCastlingWhite || isCastlingBlack))
+    if (isCastling)
     {
         Square rookToSq = to_sq;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
@@ -527,10 +525,10 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
     if (to_sq == enPassantSquare && pt == PAWN)
     {
-        int8_t offset = sideToMove == White ? -8 : 8;
+        const int8_t offset = sideToMove == White ? -8 : 8;
         placePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(enPassantSquare + offset));
     }
-    else if (capture != None && !(isCastlingWhite || isCastlingBlack))
+    else if (capture != None && !isCastling)
     {
         placePiece<updateNNUE>(capture, to_sq);
     }
