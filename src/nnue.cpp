@@ -8,7 +8,7 @@
 
 INCBIN(Eval, EVALFILE);
 
-int16_t inputWeights[FEATURE_SIZE * N_HIDDEN_SIZE];
+int16_t inputWeights[BUCKETS * FEATURE_SIZE * N_HIDDEN_SIZE];
 int16_t hiddenBias[N_HIDDEN_SIZE];
 int16_t hiddenWeights[N_HIDDEN_SIZE * 2];
 int32_t outputBias[OUTPUT_BIAS];
@@ -16,11 +16,11 @@ int32_t outputBias[OUTPUT_BIAS];
 namespace NNUE
 {
 
-int idx(Color side, Square sq, Piece p)
+int idx(Color side, Square sq, Piece p, int ksq)
 {
     if (side == White)
     {
-        return sq + p * 64;
+        return sq + p * 64 + KING_BUCKET[ksq] * FEATURE_SIZE;
     }
     else
     {
@@ -28,15 +28,15 @@ int idx(Color side, Square sq, Piece p)
         const Piece mirrorPiece = flippedPiece[p];
         const int input = mirrorSquare + mirrorPiece * 64;
 
-        return input;
+        return input + KING_BUCKET[ksq ^ 56] * FEATURE_SIZE;
     }
 }
 
-void activate(NNUE::accumulator &accumulator, Square sq, Piece p)
+void activate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_White, Square kSq_Black)
 {
     for (auto side : {White, Black})
     {
-        const int input = idx(side, sq, p);
+        const int input = idx(side, sq, p, side == White ? kSQ_White : kSq_Black);
         for (int chunks = 0; chunks < N_HIDDEN_SIZE / 256; chunks++)
         {
             const int offset = chunks * 256;
@@ -48,11 +48,11 @@ void activate(NNUE::accumulator &accumulator, Square sq, Piece p)
     }
 }
 
-void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p)
+void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_White, Square kSq_Black)
 {
     for (auto side : {White, Black})
     {
-        const int input = idx(side, sq, p);
+        const int input = idx(side, sq, p, side == White ? kSQ_White : kSq_Black);
         for (int chunks = 0; chunks < N_HIDDEN_SIZE / 256; chunks++)
         {
             const int offset = chunks * 256;
@@ -64,12 +64,12 @@ void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p)
     }
 }
 
-void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p)
+void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p, Square kSQ_White, Square kSq_Black)
 {
     for (auto side : {White, Black})
     {
-        const int inputClear = idx(side, from_sq, p);
-        const int inputAdd = idx(side, to_sq, p);
+        const int inputClear = idx(side, from_sq, p, side == White ? kSQ_White : kSq_Black);
+        const int inputAdd = idx(side, to_sq, p, side == White ? kSQ_White : kSq_Black);
 
         for (int chunks = 0; chunks < N_HIDDEN_SIZE / 256; chunks++)
         {
@@ -124,7 +124,7 @@ void init(const char *filename)
     int readElements = 0;
     if (f != NULL)
     {
-        readElements += fread(inputWeights, sizeof(int16_t), FEATURE_SIZE * N_HIDDEN_SIZE, f);
+        readElements += fread(inputWeights, sizeof(int16_t), BUCKETS * FEATURE_SIZE * N_HIDDEN_SIZE, f);
         readElements += fread(hiddenBias, sizeof(int16_t), N_HIDDEN_SIZE, f);
         readElements += fread(hiddenWeights, sizeof(int16_t), 2 * N_HIDDEN_SIZE, f);
         readElements += fread(outputBias, sizeof(int32_t), OUTPUT_BIAS, f);
@@ -141,8 +141,8 @@ void init(const char *filename)
     else
     {
         int memoryIndex = 0;
-        std::memcpy(inputWeights, &gEvalData[memoryIndex], FEATURE_SIZE * N_HIDDEN_SIZE * sizeof(int16_t));
-        memoryIndex += FEATURE_SIZE * N_HIDDEN_SIZE * sizeof(int16_t);
+        std::memcpy(inputWeights, &gEvalData[memoryIndex], BUCKETS * FEATURE_SIZE * N_HIDDEN_SIZE * sizeof(int16_t));
+        memoryIndex += BUCKETS * FEATURE_SIZE * N_HIDDEN_SIZE * sizeof(int16_t);
         std::memcpy(hiddenBias, &gEvalData[memoryIndex], N_HIDDEN_SIZE * sizeof(int16_t));
         memoryIndex += N_HIDDEN_SIZE * sizeof(int16_t);
 
