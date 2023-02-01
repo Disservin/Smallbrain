@@ -13,11 +13,6 @@
 
 extern TranspositionTable TTable;
 
-extern int16_t inputWeights[FEATURE_SIZE * N_HIDDEN_SIZE];
-extern int16_t hiddenBias[N_HIDDEN_SIZE];
-extern int16_t hiddenWeights[N_HIDDEN_SIZE * 2];
-extern int32_t outputBias[OUTPUT_BIAS];
-
 struct State
 {
     Square enPassant{};
@@ -101,13 +96,13 @@ class Board
     std::vector<State> stateHistory;
 
     U64 piecesBB[12] = {};
-    Piece board[MAX_SQ];
+    std::array<Piece, MAX_SQ> board;
 
     /// @brief constructor for the board, loads startpos and initializes SQUARES_BETWEEN_BB array
     Board();
 
     /// @brief reload the entire nnue
-    void accumulate();
+    void refresh();
 
     /// @brief Finds what piece is on the square using bitboards (slow)
     /// @param sq
@@ -216,20 +211,23 @@ class Board
     /// @tparam update true = update nnue
     /// @param piece
     /// @param sq
-    template <bool updateNNUE> void removePiece(Piece piece, Square sq);
+    template <bool updateNNUE>
+    void removePiece(Piece piece, Square sq, Square kSQ_White = SQ_A1, Square kSQ_Black = SQ_A1);
 
     /// @brief Place a Piece on the board
     /// @tparam update
     /// @param piece
     /// @param sq
-    template <bool updateNNUE> void placePiece(Piece piece, Square sq);
+    template <bool updateNNUE>
+    void placePiece(Piece piece, Square sq, Square kSQ_White = SQ_A1, Square kSQ_Black = SQ_A1);
 
     /// @brief Move a piece on the board
     /// @tparam updateNNUE
     /// @param piece
     /// @param fromSq
     /// @param toSq
-    template <bool updateNNUE> void movePiece(Piece piece, Square fromSq, Square toSq);
+    template <bool updateNNUE>
+    void movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White = SQ_A1, Square kSQ_Black = SQ_A1);
 
     bool isLegal(const Move move);
 
@@ -273,35 +271,46 @@ class Board
     void removeCastlingRightsRook(Square sq);
 };
 
-template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq)
+template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black)
 {
     piecesBB[piece] &= ~(1ULL << sq);
     board[sq] = None;
+
     if constexpr (updateNNUE)
     {
-        NNUE::deactivate(accumulator, sq, piece);
+        NNUE::deactivate(accumulator, sq, piece, kSQ_White, kSQ_Black);
     }
 }
 
-template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq)
+template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black)
 {
     piecesBB[piece] |= (1ULL << sq);
     board[sq] = piece;
+
     if constexpr (updateNNUE)
     {
-        NNUE::activate(accumulator, sq, piece);
+        NNUE::activate(accumulator, sq, piece, kSQ_White, kSQ_Black);
     }
 }
 
-template <bool updateNNUE> void Board::movePiece(Piece piece, Square fromSq, Square toSq)
+template <bool updateNNUE>
+void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black)
 {
     piecesBB[piece] &= ~(1ULL << fromSq);
     piecesBB[piece] |= (1ULL << toSq);
     board[fromSq] = None;
     board[toSq] = piece;
+
     if constexpr (updateNNUE)
     {
-        NNUE::move(accumulator, fromSq, toSq, piece);
+        if (type_of_piece(piece) == KING && NNUE::KING_BUCKET[fromSq] != NNUE::KING_BUCKET[toSq])
+        {
+            refresh();
+        }
+        else
+        {
+            NNUE::move(accumulator, fromSq, toSq, piece, kSQ_White, kSQ_Black);
+        }
     }
 }
 
@@ -412,6 +421,9 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     hashKey ^= updateKeySideToMove();
     hashKey ^= updateKeyCastling();
 
+    const Square kSQ_White = lsb(pieces<KING, White>());
+    const Square kSQ_Black = lsb(pieces<KING, Black>());
+
     TTable.prefetchTT(hashKey);
 
     // *****************************
@@ -421,27 +433,42 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     if (isCastling)
     {
         const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-
-        removePiece<updateNNUE>(p, from_sq);
-        removePiece<updateNNUE>(rook, to_sq);
-
         Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
-        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+        Square kingToSq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
-        placePiece<updateNNUE>(p, to_sq);
-        placePiece<updateNNUE>(rook, rookToSq);
+        if (updateNNUE && NNUE::KING_BUCKET[from_sq] != NNUE::KING_BUCKET[kingToSq])
+        {
+            removePiece<false>(p, from_sq, kSQ_White, kSQ_Black);
+            removePiece<false>(rook, to_sq, kSQ_White, kSQ_Black);
+
+            placePiece<false>(p, kingToSq, kSQ_White, kSQ_Black);
+            placePiece<false>(rook, rookToSq, kSQ_White, kSQ_Black);
+
+            refresh();
+        }
+        else
+        {
+            removePiece<updateNNUE>(p, from_sq, kSQ_White, kSQ_Black);
+            removePiece<updateNNUE>(rook, to_sq, kSQ_White, kSQ_Black);
+
+            placePiece<updateNNUE>(p, kingToSq, kSQ_White, kSQ_Black);
+            placePiece<updateNNUE>(rook, rookToSq, kSQ_White, kSQ_Black);
+        }
+
+        to_sq = kingToSq;
     }
     else if (pt == PAWN && ep)
     {
         assert(pieceAtB(Square(to_sq - (sideToMove * -2 + 1) * 8)) != None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8));
+        removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8), kSQ_White,
+                                kSQ_Black);
     }
     else if (capture != None && !isCastling)
     {
         assert(pieceAtB(to_sq) != None);
 
-        removePiece<updateNNUE>(capture, to_sq);
+        removePiece<updateNNUE>(capture, to_sq, kSQ_White, kSQ_Black);
     }
 
     // The move is differently encoded for promotions to it requires some special care.
@@ -449,15 +476,15 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     {
         assert(pieceAtB(to_sq) == None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
-        placePiece<updateNNUE>(p, to_sq);
+        removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq, kSQ_White, kSQ_Black);
+        placePiece<updateNNUE>(p, to_sq, kSQ_White, kSQ_Black);
     }
     // We already updated castling moves
     else if (!isCastling)
     {
         assert(pieceAtB(to_sq) == None);
 
-        movePiece<updateNNUE>(p, from_sq, to_sq);
+        movePiece<updateNNUE>(p, from_sq, to_sq, kSQ_White, kSQ_Black);
     }
 
     sideToMove = ~sideToMove;

@@ -168,7 +168,7 @@ void UCI::processCommand(std::string command)
             for (; index < tokens.size(); index++)
             {
                 Move move = convertUciToMove(board, tokens[index]);
-                board.makeMove<false>(move);
+                board.makeMove<true>(move);
             }
         }
     }
@@ -449,5 +449,5 @@ void UCI::setPosition(const std::vector<std::string> &tokens, const std::string 
         uciMoves(tokens);
 
     // setup accumulator with the correct board
-    board.accumulate();
+    board.refresh();
 }

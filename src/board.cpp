@@ -30,7 +30,7 @@ Board::Board()
     std::fill(std::begin(board), std::end(board), None);
 }
 
-void Board::accumulate()
+void Board::refresh()
 {
     for (int i = 0; i < N_HIDDEN_SIZE; i++)
     {
@@ -38,13 +38,15 @@ void Board::accumulate()
         accumulator[Black][i] = hiddenBias[i];
     }
 
+    const Square kSQ_White = lsb(pieces<KING, White>());
+    const Square kSQ_Black = lsb(pieces<KING, Black>());
+
     for (Square i = SQ_A1; i < NO_SQ; i++)
     {
         Piece p = board[i];
-        bool input = p != None;
-        if (!input)
+        if (p == None)
             continue;
-        NNUE::activate(accumulator, i, p);
+        NNUE::activate(accumulator, i, p, kSQ_White, kSQ_Black);
     }
 }
 
@@ -106,7 +108,7 @@ void Board::applyFen(const std::string &fen, bool updateAcc)
 
     if (updateAcc)
     {
-        accumulate();
+        refresh();
     }
 
     const std::vector<std::string> allowedCastlingFiles{"A", "B", "C", "D", "E", "F", "G", "H",
