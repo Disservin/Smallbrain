@@ -96,16 +96,27 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case TT_MOVE:
         stage++;
 
-        if (search.board.isPseudoLegal(ttMove) && (st == ABSEARCH || (search.board.pieceAtB(to(ttMove)) != None)) &&
-            search.board.isLegal(ttMove))
+        if constexpr (st == ABSEARCH)
         {
-            playedTT = true;
-            return ttMove;
+            if (search.board.isPseudoLegal(ttMove) && search.board.isLegal(ttMove))
+            {
+                playedTT = true;
+                return ttMove;
+            }
+        }
+        else
+        {
+            if (search.board.pieceAtB(to(ttMove)) != None && search.board.isPseudoLegal(ttMove) &&
+                search.board.isLegal(ttMove))
+            {
+                playedTT = true;
+                return ttMove;
+            }
         }
 
         [[fallthrough]];
     case GENERATE:
-        if (st == ABSEARCH)
+        if constexpr (st == ABSEARCH)
             Movegen::legalmoves<Movetype::ALL>(search.board, movelist);
         else
             Movegen::legalmoves<Movetype::CAPTURE>(search.board, movelist);
