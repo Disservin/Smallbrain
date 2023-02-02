@@ -382,14 +382,14 @@ template <bool updateNNUE> void Board::makeMove(Move move)
         halfMoveClock = 0;
         if (ep)
         {
-            hashKey ^= updateKeyPiece(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8));
+            hashKey ^= updateKeyPiece(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8));
         }
         else if (std::abs(from_sq - to_sq) == 16)
         {
-            U64 epMask = PawnAttacks(Square(to_sq - (sideToMove * -2 + 1) * 8), sideToMove);
+            U64 epMask = PawnAttacks(Square(to_sq ^ 8), sideToMove);
             if (epMask & pieces(PAWN, ~sideToMove))
             {
-                enPassantSquare = Square(to_sq - (sideToMove * -2 + 1) * 8);
+                enPassantSquare = Square(to_sq ^ 8);
                 hashKey ^= updateKeyEnPassant(enPassantSquare);
 
                 assert(pieceAtB(enPassantSquare) == None);
@@ -459,10 +459,9 @@ template <bool updateNNUE> void Board::makeMove(Move move)
     }
     else if (pt == PAWN && ep)
     {
-        assert(pieceAtB(Square(to_sq - (sideToMove * -2 + 1) * 8)) != None);
+        assert(pieceAtB(Square(to_sq ^ 8)) != None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq - (sideToMove * -2 + 1) * 8), kSQ_White,
-                                kSQ_Black);
+        removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8), kSQ_White, kSQ_Black);
     }
     else if (capture != None && !isCastling)
     {
@@ -552,8 +551,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move)
 
     if (to_sq == enPassantSquare && pt == PAWN)
     {
-        const int8_t offset = sideToMove == White ? -8 : 8;
-        placePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(enPassantSquare + offset));
+        placePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(enPassantSquare ^ 8));
     }
     else if (capture != None && !isCastling)
     {
