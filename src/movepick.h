@@ -27,6 +27,7 @@ template <SearchType st> class MovePick
     Movelist &movelist;
     Move ttMove;
 
+    bool playedTT = false;
     int played = 0;
 
     template <bool score> Move orderNext();
