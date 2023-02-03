@@ -573,6 +573,8 @@ moves:
 
             rdepth -= PvNode;
 
+            rdepth -= capture;
+
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
             score = -absearch<NonPV>(rdepth, -alpha - 1, -alpha, ss + 1);
