@@ -117,7 +117,7 @@ template <SearchType st> Move MovePick<st>::nextMove()
         {
             Move move = played == 0 ? orderNext<true>() : orderNext<false>();
 
-            if (move == ttMove)
+            if (move == ttMove && playedTT)
                 continue;
 
             assert(move == NO_MOVE || search.board.isPseudoLegal(move) && search.board.isLegal(move));
