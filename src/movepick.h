@@ -27,8 +27,8 @@ template <SearchType st> class MovePick
     Movelist &movelist;
     Move ttMove;
 
-    int played = 0;
     bool playedTT = false;
+    int played = 0;
 
     template <bool score> Move orderNext();
 
@@ -96,22 +96,11 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case TT_MOVE:
         stage++;
 
-        if constexpr (st == ABSEARCH)
+        if ((st == ABSEARCH ? true : search.board.pieceAtB(to(ttMove)) != None) && search.board.isPseudoLegal(ttMove) &&
+            search.board.isLegal(ttMove))
         {
-            if (search.board.isPseudoLegal(ttMove) && search.board.isLegal(ttMove))
-            {
-                playedTT = true;
-                return ttMove;
-            }
-        }
-        else
-        {
-            if (search.board.pieceAtB(to(ttMove)) != None && search.board.isPseudoLegal(ttMove) &&
-                search.board.isLegal(ttMove))
-            {
-                playedTT = true;
-                return ttMove;
-            }
+            playedTT = true;
+            return ttMove;
         }
 
         [[fallthrough]];
@@ -126,26 +115,18 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case PICK_NEXT:
         while (played < movelist.size)
         {
-            Move move = NO_MOVE;
-            if (played == 0)
-                move = orderNext<true>();
-            else
-                move = orderNext<false>();
+            Move move = played == 0 ? orderNext<true>() : orderNext<false>();
 
-            if (move == ttMove && playedTT)
+            if (move == ttMove)
                 continue;
 
             assert(move == NO_MOVE || search.board.isPseudoLegal(move) && search.board.isLegal(move));
             return move;
         }
 
-        stage++;
-        [[fallthrough]];
-    case OTHER:
-        return NO_MOVE;
-    default:
         return NO_MOVE;
     }
+
     return NO_MOVE;
 }
 
