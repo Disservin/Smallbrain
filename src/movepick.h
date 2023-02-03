@@ -95,7 +95,8 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case TT_MOVE:
         stage++;
 
-        if (search.board.isPseudoLegal(ttMove) && search.board.isLegal(ttMove))
+        if ((st == ABSEARCH ? true : search.board.pieceAtB(to(ttMove)) != None) && search.board.isPseudoLegal(ttMove) &&
+            search.board.isLegal(ttMove))
             return ttMove;
 
         [[fallthrough]];
@@ -110,6 +111,7 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case PICK_NEXT:
         if (played == 0)
             return orderNext<true>();
+
         while (played < movelist.size)
         {
             Move move = orderNext<false>();
