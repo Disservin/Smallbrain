@@ -112,9 +112,6 @@ template <SearchType st> Move MovePick<st>::nextMove()
         stage++;
         [[fallthrough]];
     case PICK_NEXT:
-        if (played == 0)
-            return orderNext<true>();
-
         while (played < movelist.size)
         {
             Move move = played == 0 ? orderNext<true>() : orderNext<false>();
