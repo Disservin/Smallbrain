@@ -146,8 +146,7 @@ enum Staging
 {
     TT_MOVE,
     GENERATE,
-    PICK_NEXT,
-    OTHER
+    PICK_NEXT
 };
 
 enum Node
