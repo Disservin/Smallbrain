@@ -96,8 +96,11 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case TT_MOVE:
         stage++;
 
-        if ((st == ABSEARCH ? true : search.board.pieceAtB(to(ttMove)) != None) && search.board.isPseudoLegal(ttMove) &&
-            search.board.isLegal(ttMove))
+        // clang-format off
+        if (    (st == ABSEARCH ? true : search.board.pieceAtB(to(ttMove)) != None) 
+            &&  search.board.isPseudoLegal(ttMove) 
+            &&  search.board.isLegal(ttMove))
+        // clang-format on
         {
             playedTT = true;
             return ttMove;
@@ -115,7 +118,7 @@ template <SearchType st> Move MovePick<st>::nextMove()
     case PICK_NEXT:
         while (played < movelist.size)
         {
-            Move move = played == 0 ? orderNext<true>() : orderNext<false>();
+            const Move move = played == 0 ? orderNext<true>() : orderNext<false>();
 
             if (move == ttMove && playedTT)
                 continue;
@@ -139,13 +142,12 @@ template <SearchType st> int MovePick<st>::mvvlva(Move move) const
 
 template <SearchType st> int MovePick<st>::scoreMove(const Move move) const
 {
-    if (search.board.pieceAtB(to(move)) != None)
+    if constexpr (st == QSEARCH)
     {
-        if (st == QSEARCH)
-        {
-            return CAPTURE_SCORE + mvvlva(move);
-        }
-
+        return CAPTURE_SCORE + mvvlva(move);
+    }
+    else if (search.board.pieceAtB(to(move)) != None)
+    {
         return search.board.see(move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
     }
     else
