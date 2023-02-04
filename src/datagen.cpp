@@ -135,7 +135,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         ply++;
     }
 
-    board.accumulate();
+    board.refresh();
     board.hashHistory.clear();
 
     Color winningSide = NO_COLOR;
