@@ -349,6 +349,9 @@ inline Score scoreToTT(Score s, int plies)
 
 inline Score scoreFromTT(Score s, int plies)
 {
+    if (s == VALUE_NONE)
+        return VALUE_NONE;
+
     return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s - plies : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies : s);
 }
 

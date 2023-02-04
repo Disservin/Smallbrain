@@ -302,7 +302,7 @@ template <Node node> Score Search::absearch(int depth, Score alpha, Score beta, 
     bool ttHit = false;
 
     TEntry *tte = TTable.probeTT(ttHit, ttMove, board.hashKey);
-    Score ttScore = ttHit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+    Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     /********************
      * Look up in the TT
