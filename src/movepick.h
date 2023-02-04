@@ -142,7 +142,7 @@ template <SearchType st> int MovePick<st>::mvvlva(Move move) const
 
 template <SearchType st> int MovePick<st>::scoreMove(const Move move) const
 {
-    if (st == QSEARCH)
+    if constexpr (st == QSEARCH)
     {
         return CAPTURE_SCORE + mvvlva(move);
     }
