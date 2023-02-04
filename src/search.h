@@ -49,6 +49,11 @@ template <typename T, size_t N> struct Table<T, N>
     {
         return data[index];
     }
+
+    void reset()
+    {
+        data.fill({});
+    }
 };
 
 struct Stack
@@ -129,6 +134,8 @@ class Search
 
     // data generation entry function
     SearchResult iterativeDeepening();
+
+    void reset();
 
   private:
     // update history for one move
