@@ -113,6 +113,16 @@ ifneq ($(GIT_DATE), )
 	CXXFLAGS += -DGIT_DATE=\"$(GIT_DATE)\"
 endif
 
+# PGO
+ifneq ($(findstring gcc, $(CXX)),)
+	PGO_GEN = -fprofile-generate
+	PGO_USE = -fprofile-use
+else ifneq ($(findstring clang, $(CXX)),)
+	PGO_MERGE = llvm-profdata merge -output=profdata *.profraw
+	PGO_GEN = -fprofile-instr-generate
+	PGO_USE = -fprofile-instr-use=profdata
+endif
+
 # Add network name and Evalfile
 CXXFLAGS += -DNETWORK_NAME=\"$(NETWORK_NAME)\" -DEVALFILE=\"$(EVALFILE)\"
 
@@ -125,7 +135,7 @@ EXE     := $(NAME)$(ARCH)$(SUFFIX)
 
 all: $(TARGET)
 clean:
-	rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o
+	@rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o profdata *.gcda *.profraw
 
 # Linking the executable from the object files
 $(TARGET): $(OBJECTS)
@@ -142,8 +152,8 @@ FORCE:
 
 # Profile Guided Optimizations for gcc, largely depends on compiler version
 pgo:
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -fprofile-generate -lgcov -flto -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
-	./$(EXE) go depth 20
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -fprofile-use -flto -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
-	@rm -f *.gcda 
-	rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -lgcov -flto $(PGO_GEN) -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
+	./$(EXE) bench depth 20
+	$(PGO_MERGE)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -flto $(PGO_USE) -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
+	@rm -f *.gcda *.profraw *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o profdata
