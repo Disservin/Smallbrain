@@ -104,11 +104,6 @@ class Board
     /// @brief reload the entire nnue
     void refresh();
 
-    /// @brief Finds what piece is on the square using bitboards (slow)
-    /// @param sq
-    /// @return found piece otherwise None
-    Piece pieceAtBB(Square sq) const;
-
     /// @brief Finds what piece is on the square using the board (more performant)
     /// @param sq
     /// @return found piece otherwise None
@@ -170,12 +165,6 @@ class Board
     /// @return
     Color colorOf(Square loc) const;
 
-    /// @brief is square attacked by color c
-    /// @param c
-    /// @param sq
-    /// @return
-    bool isSquareAttacked(Color c, Square sq) const;
-
     /// @brief
     /// @param c
     /// @param sq
@@ -234,8 +223,6 @@ class Board
     bool isLegal(const Move move);
 
     bool isPseudoLegal(const Move move);
-
-    U64 attacksByPiece(PieceType pt, Square sq, Color c);
 
     U64 attacksByPiece(PieceType pt, Square sq, Color c, U64 occupied);
 

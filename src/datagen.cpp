@@ -152,8 +152,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         search->nodes = 0;
         movelist.size = 0;
 
-        const bool inCheck =
-            search->board.isSquareAttacked(~search->board.sideToMove, search->board.KingSQ(search->board.sideToMove));
+        const bool inCheck = search->board.isSquareAttacked(
+            ~search->board.sideToMove, search->board.KingSQ(search->board.sideToMove), search->board.All());
 
         Movegen::legalmoves<Movetype::ALL>(search->board, movelist);
 

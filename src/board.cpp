@@ -50,17 +50,6 @@ void Board::refresh()
     }
 }
 
-Piece Board::pieceAtBB(Square sq) const
-{
-    for (Piece p = WhitePawn; p < None; p++)
-    {
-        if (piecesBB[p] & (1ULL << sq))
-            return p;
-    }
-
-    return None;
-}
-
 Piece Board::pieceAtB(Square sq) const
 {
     return board[sq];
@@ -337,21 +326,6 @@ Color Board::colorOf(Square loc) const
     return Color((pieceAtB(loc) / 6));
 }
 
-bool Board::isSquareAttacked(Color c, Square sq) const
-{
-    if (pieces(PAWN, c) & PawnAttacks(sq, ~c))
-        return true;
-    if (pieces(KNIGHT, c) & KnightAttacks(sq))
-        return true;
-    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & BishopAttacks(sq, All()))
-        return true;
-    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & RookAttacks(sq, All()))
-        return true;
-    if (pieces(KING, c) & KingAttacks(sq))
-        return true;
-    return false;
-}
-
 bool Board::isSquareAttacked(Color c, Square sq, U64 occ) const
 {
     if (pieces(PAWN, c) & PawnAttacks(sq, ~c))
@@ -479,7 +453,7 @@ bool Board::isLegal(const Move move)
         piecesBB[p] |= (1ull << destKing);
         piecesBB[rook] |= (1ull << rookToSq);
 
-        bool isAttacked = isSquareAttacked(~color, destKing);
+        bool isAttacked = isSquareAttacked(~color, destKing, All());
 
         piecesBB[rook] &= ~(1ull << rookToSq);
         piecesBB[p] &= ~(1ull << destKing);
@@ -512,7 +486,7 @@ bool Board::isLegal(const Move move)
     if (capture != None)
         piecesBB[capture] &= ~(1ull << to_sq);
 
-    const bool isAttacked = isSquareAttacked(~color, kSQ);
+    const bool isAttacked = isSquareAttacked(~color, kSQ, All());
 
     if (capture != None)
         piecesBB[capture] |= (1ull << to_sq);
@@ -665,29 +639,6 @@ bool Board::isPseudoLegal(const Move move)
         return false;
 
     return true;
-}
-
-U64 Board::attacksByPiece(PieceType pt, Square sq, Color c)
-{
-    switch (pt)
-    {
-    case PAWN:
-        return PawnAttacks(sq, c);
-    case KNIGHT:
-        return KnightAttacks(sq);
-    case BISHOP:
-        return BishopAttacks(sq, All());
-    case ROOK:
-        return RookAttacks(sq, All());
-    case QUEEN:
-        return QueenAttacks(sq, All());
-    case KING:
-        return KingAttacks(sq);
-    case NONETYPE:
-        return 0ULL;
-    default:
-        return 0ULL;
-    }
 }
 
 U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ)
@@ -965,7 +916,7 @@ Move convertUciToMove(const Board &board, const std::string &input)
 {
     Square source = extractSquare(input.substr(0, 2));
     Square target = extractSquare(input.substr(2, 2));
-    PieceType piece = type_of_piece(board.pieceAtBB(source));
+    PieceType piece = type_of_piece(board.pieceAtB(source));
 
     // convert to king captures rook
     if (!board.chess960 && piece == KING && square_distance(target, source) == 2)
