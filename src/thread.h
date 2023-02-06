@@ -5,7 +5,6 @@
 #include <thread>
 #include <vector>
 
-#include "board.h"
 #include "search.h"
 
 // A wrapper class to start the search

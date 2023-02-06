@@ -6,9 +6,7 @@
 #include <random>
 
 #include "board.h"
-#include "movegen.h"
 #include "search.h"
-#include "types.h"
 
 extern std::atomic_bool UCI_FORCE_STOP;
 

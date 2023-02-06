@@ -1,5 +1,6 @@
 #include <vector>
 
+#include "movegen.h"
 #include "perft.h"
 
 U64 Perft::perftFunction(int depth, int max)

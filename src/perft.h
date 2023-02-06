@@ -1,7 +1,6 @@
 #pragma once
 
 #include "board.h"
-#include "movegen.h"
 
 class Perft
 {

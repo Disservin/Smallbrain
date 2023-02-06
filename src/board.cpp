@@ -1,5 +1,6 @@
 #include "board.h"
 #include "movegen.h"
+#include "zobrist.h"
 
 Board::Board()
 {

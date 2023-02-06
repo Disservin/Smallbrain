@@ -1,4 +1,7 @@
 #include "randomFen.h"
+#include "attacks.h"
+#include "helper.h"
+#include "sliders.hpp"
 
 /*
 This was written very poorly but it does the job.

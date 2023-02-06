@@ -3,10 +3,6 @@
 #include <algorithm>
 
 #include "board.h"
-#include "helper.h"
-#include "nnue.h"
-#include "syzygy/Fathom/src/tbprobe.h"
-#include "tt.h"
 #include "types.h"
 
 // 57344 MiB = 2^32 * 14B / (1024 * 1024)
