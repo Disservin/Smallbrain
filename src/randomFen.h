@@ -4,9 +4,6 @@
 #include <iostream>
 #include <random>
 
-#include "attacks.h"
-#include "helper.h"
-#include "sliders.hpp"
 #include "types.h"
 
 class randomFenBoard

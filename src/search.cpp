@@ -1,6 +1,8 @@
 #include <algorithm> // clamp
 #include <cmath>
 
+#include "syzygy/Fathom/src/tbprobe.h"
+
 #include "evaluation.h"
 #include "movepick.h"
 #include "search.h"

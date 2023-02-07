@@ -2,8 +2,6 @@
 
 #include <thread>
 
-#include "syzygy/Fathom/src/tbprobe.h"
-
 #include "board.h"
 #include "movegen.h"
 #include "timemanager.h"

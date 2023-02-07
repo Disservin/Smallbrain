@@ -1,4 +1,5 @@
 #include "uci.h"
+#include "benchmark.h"
 #include "evaluation.h"
 #include "helper.h"
 #include "nnue.h"

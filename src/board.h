@@ -9,7 +9,6 @@
 #include "nnue.h"
 #include "tt.h"
 #include "types.h"
-#include "zobrist.h"
 
 extern TranspositionTable TTable;
 

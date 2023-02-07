@@ -1,4 +1,5 @@
 #include "benchmark.h"
+#include "search.h"
 #include "thread.h"
 
 extern ThreadPool Threads;

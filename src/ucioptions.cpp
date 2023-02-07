@@ -1,3 +1,5 @@
+#include "syzygy/Fathom/src/tbprobe.h"
+
 #include "ucioptions.h"
 
 // clang-format off

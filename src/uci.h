@@ -1,6 +1,5 @@
 #pragma once
 
-#include "benchmark.h"
 #include "board.h"
 #include "datagen.h"
 #include "timemanager.h"
