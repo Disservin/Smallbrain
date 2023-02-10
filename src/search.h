@@ -83,7 +83,7 @@ class Search
 
     Board board = Board();
 
-    Table<int, N_PIECES + 1, 64, N_PIECES + 1, 64> consthist;
+    Table<int16_t, N_PIECES + 1, 64, N_PIECES + 1, 64> consthist;
 
     // Counter moves for quiet move ordering
     Table<Move, MAX_SQ, MAX_SQ> counters = {};

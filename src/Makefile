@@ -135,7 +135,7 @@ clean:
 
 # Linking the executable from the object files
 $(TARGET): $(OBJECTS)
-	$(CXX) -o $(EXE) -flto $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) $^ 
+	$(CXX) -o $(EXE) $^ $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) -flto
 
 -include $(DEPENDS)
 
