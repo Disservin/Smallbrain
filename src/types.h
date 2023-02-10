@@ -460,3 +460,6 @@ inline std::ostream &operator<<(std::ostream &os, const Move move)
     os << std::endl;
     return os;
 }
+
+static constexpr int piece_values[2][7] = {{98, 337, 365, 477, 1025, 0, 0}, {114, 281, 297, 512, 936, 0, 0}};
+static constexpr int pieceValuesDefault[7] = {100, 320, 330, 500, 900, 0, 0};

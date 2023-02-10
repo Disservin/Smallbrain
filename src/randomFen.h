@@ -4,18 +4,18 @@
 #include <iostream>
 #include <random>
 
+#include "rand.h"
 #include "types.h"
 
 class randomFenBoard
 {
   public:
-    std::string generateRandomFen();
+    std::stringstream generateRandomFen();
 
   private:
-    const char piece_to_char[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '-'};
-    const int max_pieces[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    const int max_pieces[12] = {8, 1, 1, 1, 1, 1, 8, 1, 1, 1, 1, 1};
 
-    const int piece_values_random[13] = {100, 320, 330, 500, 900, 20000, -100, -320, -330, -500, -900, -20000, 0};
+    const int randValues[13] = {0, 320, 330, 500, 900, 20000, -0, -320, -330, -500, -900, -20000, 0};
 
     std::random_device rd;
     std::mt19937 e;

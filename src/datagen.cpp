@@ -92,7 +92,6 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
 void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, std::unique_ptr<Search> &search,
                                  bool useTB)
 {
-    std::mt19937 generator(rd());
 
     std::vector<fenData> fens;
     fens.reserve(40);
@@ -100,20 +99,18 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     int ply = 0;
     int randomMoves = 10;
 
+    // ply = randomMoves;
+    // board.applyFen(getRandomfen());
+
     if (openingBook.size() != 0)
     {
         std::uniform_int_distribution<std::mt19937::result_type> maxLines{
             0, static_cast<std::mt19937::result_type>(openingBook.size() - 1)};
 
-        uint64_t randLine = maxLines(generator);
+        uint64_t randLine = maxLines(Random::generator);
 
         board.applyFen(openingBook[randLine], false);
     }
-    // else if (maxLines(e) == 1)
-    // {
-    //     ply = randomMoves;
-    //     board.applyFen(getRandomfen());
-    // }
 
     while (ply < randomMoves)
     {
@@ -128,7 +125,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         std::uniform_int_distribution<std::mt19937::result_type> randomNum{
             0, static_cast<std::mt19937::result_type>(movelist.size - 1)};
 
-        int index = randomNum(generator);
+        int index = randomNum(Random::generator);
 
         Move move = movelist[index].move;
         board.makeMove<false>(move);

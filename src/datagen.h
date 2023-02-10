@@ -3,7 +3,6 @@
 #include <cstring>
 #include <iomanip> // std::setprecision
 #include <memory>  // unique_ptr
-#include <random>
 
 #include "board.h"
 #include "search.h"
@@ -25,9 +24,6 @@ std::string stringFenData(const fenData &fenData, double score);
 class TrainingData
 {
     std::vector<std::string> openingBook;
-
-    // random number generator
-    std::random_device rd;
 
   public:
     /// @brief entry function

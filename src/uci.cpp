@@ -122,6 +122,10 @@ void UCI::processCommand(std::string command)
     {
         std::cout << board << std::endl;
     }
+    else if (command == "fen")
+    {
+        std::cout << getRandomfen() << std::endl;
+    }
     else if (command == "captures")
     {
         Movelist moves;

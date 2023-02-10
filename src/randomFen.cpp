@@ -60,27 +60,25 @@ bool randomFenBoard::isAttacked(int sq, Color c)
     return false;
 }
 
-std::string randomFenBoard::generateRandomFen()
+std::stringstream randomFenBoard::generateRandomFen()
 {
     board.fill({});
     piece_count.fill({});
     bitboards.fill({});
 
-    std::uniform_int_distribution<int> distPieceCount{4, 32};
-    std::uniform_int_distribution<int> distPiece{0, 30};
-    std::uniform_int_distribution<int> distSquare{0, 63};
-    std::uniform_int_distribution<int> distStm{0, 1};
+    std::uniform_int_distribution<> distPiece{0, 25};
+    std::uniform_int_distribution<> distSquare{0, 63};
+    std::uniform_int_distribution<> distStm{0, 1};
 
-    std::string fen = "";
-    int placedPieces = 0;
-    int allowedPieces = 6;
+    std::stringstream ss;
 
+    int placedPieces = 2;
+    int allowedPieces = 32;
     int emptySquares = 0;
-    int i = 56;
-    int end = 64;
+    int matScore = 0;
 
-    int WhiteKingSq = distSquare(e);
-    int BlackKingSq = distSquare(e);
+    int WhiteKingSq = distSquare(Random::generator);
+    int BlackKingSq = distSquare(Random::generator);
 
     board[WhiteKingSq] = WhiteKing;
     board[BlackKingSq] = BlackKing;
@@ -88,48 +86,59 @@ std::string randomFenBoard::generateRandomFen()
     bitboards[WhiteKing] |= 1ULL << WhiteKingSq;
     bitboards[BlackKing] |= 1ULL << BlackKingSq;
 
-    int matScore = 0;
+    int i = 56;
+    int end = 64;
 
     for (; i <= end && i >= 0; i++)
     {
-        int num = distPiece(e);
+        int num = distPiece(Random::generator);
 
         if (BlackKingSq == i || WhiteKingSq == i)
         {
+            // write previous empty squares to fen
             if (emptySquares != 0)
             {
-                fen += std::to_string(emptySquares);
+                ss << std::to_string(emptySquares);
                 emptySquares = 0;
             }
 
-            fen += piece_to_char[board[i]];
-            matScore += piece_values_random[board[i]];
+            // add peice to fen
+            ss << pieceToChar[Piece(board[i])];
+            matScore += randValues[Piece(board[i])];
 
             goto skip;
         }
 
-        while (num == WhiteKing || num == BlackKing || num == WhitePawn || num == BlackPawn)
+        // we already placed kigns at the start
+        while (num == WhiteKing || num == BlackKing || // dont place pawns on the first or last rank
+               ((num == WhitePawn || num == BlackPawn) && (i >= 55 || i <= 8)))
         {
-            num = distPiece(e);
+            num = distPiece(Random::generator);
         }
 
-        if (num < 12 && placedPieces < allowedPieces && piece_count[num] < max_pieces[num] &&
-            !((num == WhitePawn || num == BlackPawn) && (i >= 55 || i <= 8)) &&
-            (popcount(MASK_FILE[i] & bitboards[num]) == 0))
+        // clang-format off
+        // check if piece is valid
+        if (    num < None 
+            &&  placedPieces <= allowedPieces 
+            &&  piece_count[num] < max_pieces[num] 
+            )
         {
+            // clang-format on
             if (emptySquares != 0)
             {
-                fen += std::to_string(emptySquares);
+                ss << std::to_string(emptySquares);
                 emptySquares = 0;
             }
 
-            board[i] = static_cast<Piece>(num);
-            piece_count[num]++;
             placedPieces++;
+            piece_count[num]++;
 
+            board[i] = Piece(num);
             bitboards[num] |= 1ULL << i;
-            fen += piece_to_char[num];
-            matScore += piece_values_random[board[i]];
+
+            matScore += randValues[Piece(board[i])];
+
+            ss << pieceToChar[Piece(num)];
         }
         else
         {
@@ -141,46 +150,47 @@ std::string randomFenBoard::generateRandomFen()
         if (square_file(Square(i)) == 7)
         {
             if (emptySquares != 0)
-                fen += std::to_string(emptySquares);
+                ss << std::to_string(emptySquares);
 
             emptySquares = 0;
-            fen += i != 7 ? "/" : "";
+            ss << (i != 7 ? "/" : "");
 
             i -= 16;
             end -= 8;
         }
     }
 
-    if (isAttacked(WhiteKingSq, Black))
-        return "";
-    if (isAttacked(BlackKingSq, White))
-        return "";
     if (std::abs(matScore) > 1500)
-        return "";
-    // if (std::abs(piece_count[WhitePawn] + piece_count[BlackPawn]) < 4)
-    //     return "";
-    // if (square_rank(WhiteKingSq) == square_rank(BlackKingSq))
-    //     return "";
-    // if (square_rank(WhiteKingSq) >= 3)
-    //     return "";
-    // if (square_rank(BlackKingSq) <= 4)
-    //     return "";
+    {
+        return std::stringstream("");
+    }
+    if (isAttacked(WhiteKingSq, Black))
+    {
+        return std::stringstream("");
+    }
+
+    if (isAttacked(BlackKingSq, White))
+    {
+        return std::stringstream("");
+    }
 
     static constexpr char stm[] = {'w', 'b'};
-    fen += " ";
-    fen += stm[distStm(e)];
-    fen += " - -";
-    return fen;
+    ss << " ";
+    ss << stm[distStm(Random::generator)];
+    ss << " - -";
+
+    return ss;
 }
 
 std::string getRandomfen()
 {
     randomFenBoard b;
-    while (true)
+    std::stringstream fen = b.generateRandomFen();
+
+    while (fen.str() == "")
     {
-        std::string fen = b.generateRandomFen();
-        if (fen != "")
-            return fen;
+        fen = b.generateRandomFen();
     }
-    return "";
+
+    return fen.str();
 }
