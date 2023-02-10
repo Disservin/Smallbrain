@@ -135,7 +135,7 @@ clean:
 
 # Linking the executable from the object files
 $(TARGET): $(OBJECTS)
-	$(CXX) -o $(EXE) $^ $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) -flto
+	$(CXX) -o $(EXE) -flto $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) $^ 
 
 -include $(DEPENDS)
 
@@ -148,8 +148,8 @@ FORCE:
 
 # Profile Guided Optimizations for gcc, largely depends on compiler version
 pgo:
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -lgcov -flto $(PGO_GEN) -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
-	./$(EXE) bench depth 20
+	$(CXX) $(PGO_GEN) -MMD -MP -o $(EXE) -flto $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 -lgcov $(SOURCES) $(FLAGS)
+	./$(EXE) bench depth 15
 	$(PGO_MERGE)
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -flto $(PGO_USE) -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 $(PGO_USE) -MMD -MP -o $(EXE) -flto $(SOURCES) $(FLAGS)
 	@rm -f *.gcda *.profraw *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o profdata
