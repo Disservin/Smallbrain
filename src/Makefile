@@ -10,22 +10,21 @@ NATIVE     = -march=native
 COMP       =
 
 # engine name
-NAME      := smallbrain
+NAME     := smallbrain
+SUFFIX   := .exe
+FLAGS     = -pthread -lstdc++ -static -Wl,--no-as-needed
+
+# all bmi2 instructions
+INSTRUCTIONS_BMI2 = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
 
 # Detect Windows
 ifeq ($(OS), Windows_NT)
-	uname_S := Windows
-	SUFFIX  := .exe
-	FLAGS    = -pthread -lstdc++ -static
-	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	uname_S  := Windows
 else
 ifeq ($(COMP), MINGW)
-	uname_S := Windows
-	SUFFIX  := .exe
-	FLAGS    = -pthread -lstdc++ -static
-	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	uname_S  := Windows
 else
-	FLAGS   = -lpthread -lstdc++
+	FLAGS   := -lpthread -lstdc++
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
 endif
@@ -35,9 +34,6 @@ endif
 ifdef build
 	NATIVE =
 endif
-
-# all bmi2 instructions
-INSTRUCTIONS_BMI2 = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
 
 # SPECIFIC BUILDS
 ifeq ($(build), native)
@@ -144,7 +140,7 @@ $(TARGET): $(OBJECTS)
 -include $(DEPENDS)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3  -flto -MMD -MP -c -o $@ $< $(FLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3  -flto -MMD -MP -c -o $@ $<
 
 # Force recompilation of ucicommands to include latest version string
 uci.o: FORCE
@@ -152,8 +148,8 @@ FORCE:
 
 # Profile Guided Optimizations for gcc, largely depends on compiler version
 pgo:
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -lgcov -flto $(PGO_GEN) -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
-	./$(EXE) bench depth 20
+	$(CXX) $(PGO_GEN) -MMD -MP -o $(EXE) -flto $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 -lgcov $(SOURCES) $(FLAGS)
+	./$(EXE) bench depth 15
 	$(PGO_MERGE)
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -flto $(PGO_USE) -MMD -MP -o $(EXE) $(SOURCES) $(FLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 $(PGO_USE) -MMD -MP -o $(EXE) -flto $(SOURCES) $(FLAGS)
 	@rm -f *.gcda *.profraw *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o profdata
