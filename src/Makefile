@@ -148,7 +148,7 @@ FORCE:
 
 # Profile Guided Optimizations for gcc, largely depends on compiler version
 pgo:
-	$(CXX) $(PGO_GEN) -MMD -MP -o $(EXE) -flto $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 -lgcov $(SOURCES) $(FLAGS)
+	$(CXX) $(PGO_GEN) -MMD -MP -o $(EXE) -flto $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 $(SOURCES) $(FLAGS)
 	./$(EXE) bench depth 15
 	$(PGO_MERGE)
 	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 $(PGO_USE) -MMD -MP -o $(EXE) -flto $(SOURCES) $(FLAGS)
