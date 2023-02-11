@@ -15,7 +15,7 @@ std::string stringFenData(const fenData &fenData, double score)
     return sstream.str();
 }
 
-void TrainingData::generate(int workers, std::string book, int depth, int nodes, bool useTB)
+void TrainingData::generate(int workers, std::string book, int depth, int nodes, bool useTB, int randLimit)
 {
     if (book != "")
     {
@@ -33,11 +33,11 @@ void TrainingData::generate(int workers, std::string book, int depth, int nodes,
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, useTB);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, randLimit, useTB);
     }
 }
 
-void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
+void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimit, bool useTB)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
@@ -75,7 +75,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
 
         board.applyFen(DEFAULT_POS, false);
 
-        randomPlayout(file, board, movelist, search, useTB);
+        randomPlayout(file, board, movelist, search, randLimit, useTB);
         games++;
 
         if (threadId == 0 && games % 100 == 0)
@@ -90,7 +90,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool useTB)
 }
 
 void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, std::unique_ptr<Search> &search,
-                                 bool useTB)
+                                 int randLimit, bool useTB)
 {
 
     std::vector<fenData> fens;
@@ -99,48 +99,51 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     int ply = 0;
     int randomMoves = 10;
 
-    // ply = randomMoves;
-    // board.applyFen(getRandomfen());
-
     if (openingBook.size() != 0)
     {
-        std::uniform_int_distribution<std::mt19937::result_type> maxLines{
-            0, static_cast<std::mt19937::result_type>(openingBook.size() - 1)};
+        std::uniform_int_distribution<> maxLines{0, int(openingBook.size() - 1)};
 
-        uint64_t randLine = maxLines(Random::generator);
+        auto randLine = maxLines(Random::generator);
 
         board.applyFen(openingBook[randLine], false);
     }
 
-    while (ply < randomMoves)
+    std::uniform_int_distribution<> distRandomFen{0, randLimit};
+    if (distRandomFen(Random::generator) == 1)
     {
-        movelist.size = 0;
-        board.clearStacks();
+        ply = randomMoves;
+        board.applyFen(getRandomfen());
+    }
+    else
+    {
+        while (ply < randomMoves)
+        {
+            movelist.size = 0;
+            board.clearStacks();
 
-        Movegen::legalmoves<Movetype::ALL>(board, movelist);
+            Movegen::legalmoves<Movetype::ALL>(board, movelist);
 
-        if (movelist.size == 0)
-            return;
+            if (movelist.size == 0)
+                return;
 
-        std::uniform_int_distribution<std::mt19937::result_type> randomNum{
-            0, static_cast<std::mt19937::result_type>(movelist.size - 1)};
+            std::uniform_int_distribution<> randomNum{0, int(movelist.size - 1)};
 
-        int index = randomNum(Random::generator);
+            auto index = randomNum(Random::generator);
 
-        Move move = movelist[index].move;
-        board.makeMove<false>(move);
-        ply++;
+            Move move = movelist[index].move;
+            board.makeMove<false>(move);
+            ply++;
+        }
     }
 
     board.refresh();
     board.hashHistory.clear();
+    search->board = board;
 
-    Color winningSide = NO_COLOR;
+    fenData sfens;
     int drawCount = 0;
     int winCount = 0;
-    fenData sfens;
-
-    search->board = board;
+    Color winningSide = NO_COLOR;
 
     while (true)
     {
@@ -156,12 +159,15 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         if (movelist.size == 0)
         {
-            winningSide = inCheck ? ((search->board.sideToMove == White) ? Black : White) : NO_COLOR;
+            winningSide = inCheck ? ~search->board.sideToMove : NO_COLOR;
             break;
         }
-        else if (search->board.isRepetition(2) || search->board.halfMoveClock >= 100)
+
+        auto drawn = search->board.isDrawn(inCheck);
+
+        if (drawn != Result::NONE)
         {
-            winningSide = NO_COLOR;
+            winningSide = drawn == Result::LOST ? ~search->board.sideToMove : NO_COLOR;
             break;
         }
 
@@ -238,15 +244,15 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
                          search->board.pieces<WhitePawn>() | search->board.pieces<BlackPawn>(), 0, 0, ep,
                          search->board.sideToMove == White); //  * - turn: true=white, false=black
 
-        if (TBresult == TB_LOSS)
+        if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)
         {
             winningSide = ~search->board.sideToMove;
         }
-        else if (TBresult == TB_WIN)
+        else if (TBresult == TB_WIN || TBresult == TB_CURSED_WIN)
         {
             winningSide = search->board.sideToMove;
         }
-        else if (TBresult == TB_DRAW || TB_BLESSED_LOSS || TB_CURSED_WIN)
+        else if (TBresult == TB_DRAW)
         {
             winningSide = NO_COLOR;
         }
