@@ -1,5 +1,6 @@
 #include <atomic>
 
+#include "rand.h"
 #include "thread.h"
 #include "uci.h"
 

@@ -3,7 +3,6 @@
 #include <cstring>
 #include <iomanip> // std::setprecision
 #include <memory>  // unique_ptr
-#include <random>
 
 #include "board.h"
 #include "search.h"
@@ -26,21 +25,19 @@ class TrainingData
 {
     std::vector<std::string> openingBook;
 
-    // random number generator
-    std::random_device rd;
-
   public:
     /// @brief entry function
     /// @param workers
     /// @param book
     /// @param depth
-    void generate(int workers = 4, std::string book = "", int depth = 7, int nodes = 0, bool useTB = false);
+    void generate(int workers = 4, std::string book = "", int depth = 7, int nodes = 0, bool useTB = false,
+                  int randLimit = 0);
 
     /// @brief repeats infinite random playouts
     /// @param threadId
     /// @param book
     /// @param depth
-    void infinitePlay(int threadId, int depth, int nodes, bool useTB);
+    void infinitePlay(int threadId, int depth, int nodes, int randLimit, bool useTB);
 
     /// @brief starts one selfplay game
     /// @param file
@@ -49,7 +46,7 @@ class TrainingData
     /// @param Movelist
     /// @param search
     void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, std::unique_ptr<Search> &search,
-                       bool useTB);
+                       int randLimit, bool useTB);
     std::vector<std::thread> threads;
 };
 

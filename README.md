@@ -118,9 +118,53 @@ Ordered by performance you should try x86-64-avx2 first then x86-64-modern and a
   * As of v6.0 the NNUE training dataset was regenerated using depth 9 selfplay games + random 8 piece combinations.
 
 ## Datageneration
-```
-* .\smallbrain.exe -gen -threads \<int> -book \<path/to/book> -tb \<path/to/tb> -depth \<int> -hash \<int>
-```
+
+* Starts the data generation.
+  ```
+  -gen
+  ```
+
+* Specify the number of threads to use.
+  default: 1
+  ```
+  -threads <int> 
+  ```
+
+* If you want to start from a book instead of using random playout.
+  default: ""
+  ```
+  -book <path/to/book> 
+  ```
+
+* Path to TB, only used for adjudication.
+  default: ""
+  ```
+  -tb <path/to/tb> 
+  ```
+
+* Analysis depth, values between 7-9 are good.
+  default: 7
+  ```
+  -depth <int> 
+  ```
+
+* Analysis nodes, values between 2500-10000 are good.
+  default: 0
+  ```
+  -nodes <int> 
+  ```
+
+* The amount of hash in MB. This gets multiplied by the number of threads.
+  default: 16
+  ```
+  -hash <int>
+  ```
+
+* With a possibility of 1/random start from a random position.
+  default: 0 to turn this off.
+  ``` 
+  -random <int>
+  ```
 
 * Example: 
 ```

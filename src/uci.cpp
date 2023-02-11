@@ -122,6 +122,10 @@ void UCI::processCommand(std::string command)
     {
         std::cout << board << std::endl;
     }
+    else if (command == "fen")
+    {
+        std::cout << getRandomfen() << std::endl;
+    }
     else if (command == "captures")
     {
         Movelist moves;
@@ -233,8 +237,9 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
         int workers = 1;
         int depth = 7;
         int nodes = 0;
-        bool useTB = false;
         int hash = 16;
+        int random = 0;
+        bool useTB = false;
 
         if (contains(allArgs, "-threads"))
         {
@@ -268,12 +273,17 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
             hash = findElement<int>("-hash", allArgs);
         }
 
+        if (contains(allArgs, "-random"))
+        {
+            random = findElement<int>("-random", allArgs);
+        }
+
         int ttsize = hash * 1024 * 1024 / sizeof(TEntry); // 16 MiB
         TTable.allocateTT(ttsize * workers);
 
         UCI_FORCE_STOP = false;
 
-        datagen.generate(workers, bookPath, depth, nodes, useTB);
+        datagen.generate(workers, bookPath, depth, nodes, useTB, random);
 
         std::cout << "Data generation started" << std::endl;
         std::cout << "Workers: " << workers << "\nBookPath: " << bookPath << "\nDepth: " << depth
