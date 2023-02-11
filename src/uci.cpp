@@ -287,7 +287,8 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
 
         std::cout << "Data generation started" << std::endl;
         std::cout << "Workers: " << workers << "\nBookPath: " << bookPath << "\nDepth: " << depth
-                  << "\nNodes: " << nodes << "\nUseTb: " << useTB << "\nHash: " << hash << std::endl;
+                  << "\nNodes: " << nodes << "\nUseTb: " << useTB << "\nHash: " << hash << "\nRandom: " << random
+                  << std::endl;
 
         return false;
     }
