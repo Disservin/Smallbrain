@@ -767,8 +767,9 @@ SearchResult Search::iterativeDeepening()
      *******************/
     for (depth = 1; depth <= limit.depth; depth++)
     {
-        int previousResult = result;
         seldepth = 0;
+
+        auto previousResult = result;
         result = aspirationSearch(depth, result, ss);
         evalAverage += result;
 
@@ -796,16 +797,20 @@ SearchResult Search::iterativeDeepening()
             if (depth > 10 && limit.time.optimum * (110 - std::min(effort, 90)) / 100 < now)
                 break;
 
+            // increase optimum time if score is increasing
             if (result + 30 < evalAverage / depth)
                 limit.time.optimum *= 1.10;
 
+            // increase optimum time if score is dropping
             if (result > -200 && result - previousResult < -20)
                 limit.time.optimum *= 1.10;
 
-            // stop if we have searched for more than 75% of our max time.
+            // increase optimum time if bestmove fluctates
             if (bestmoveChanges > 4)
                 limit.time.optimum = limit.time.maximum * 0.75;
-            else if (depth > 10 && now * 10 > limit.time.optimum * 6)
+
+            // stop if we have searched for more than 75% of our max time.
+            if (depth > 10 && now * 100 > limit.time.maximum * 75)
                 break;
         }
     }
