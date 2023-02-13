@@ -810,7 +810,7 @@ SearchResult Search::iterativeDeepening()
                 limit.time.optimum = limit.time.maximum * 0.75;
 
             // stop if we have searched for more than 75% of our max time.
-            if (depth > 10 && now * 100 > limit.time.maximum * 75)
+            if (depth > 10 && now * 10 > limit.time.maximum * 6)
                 break;
         }
     }
