@@ -26,15 +26,13 @@ uint8_t square_distance(Square a, Square b)
 
 Square lsb(U64 b)
 {
-    if (!b)
-        return NO_SQ;
+    assert(b);
     return Square(__builtin_ctzll(b));
 }
 
 Square msb(U64 b)
 {
-    if (!b)
-        return NO_SQ;
+    assert(b);
     return Square(63 ^ __builtin_clzll(b));
 }
 
@@ -98,7 +96,7 @@ Square msb(U64 b)
 
 #endif
 
-uint8_t popcount(U64 mask)
+int popcount(U64 mask)
 {
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 

@@ -56,7 +56,7 @@ Square msb(U64 mask);
 /// @brief Counts the set bits
 /// @param mask
 /// @return the count
-uint8_t popcount(U64 mask);
+int popcount(U64 mask);
 
 /// @brief remove the lsb and return it
 /// @param mask
