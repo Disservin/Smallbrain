@@ -1,5 +1,7 @@
 #pragma once
 
+#pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+
 #include <array>
 #include <iostream>
 #include <string>
@@ -432,10 +434,10 @@ template <bool updateNNUE> void Board::makeMove(Move move)
 
     updateHash(move, isCastling, ep);
 
+    TTable.prefetchTT(hashKey);
+
     const Square kSQ_White = lsb(pieces<KING, White>());
     const Square kSQ_Black = lsb(pieces<KING, Black>());
-
-    TTable.prefetchTT(hashKey);
 
     // *****************************
     // UPDATE PIECES AND NNUE
