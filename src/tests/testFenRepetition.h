@@ -54,7 +54,7 @@ inline void repetition2()
 inline void repetition3()
 {
     std::string input =
-        "position fen rn2k1nr/pp2bppp/2p5/q3p3/2B5/P1N2b1P/1PPP1PP1/R1BQ1RK1 w ah - 0 1 moves d1f3 g8f6 c3e2 e8h8 "
+        "position fen rn2k1nr/pp2bppp/2p5/q3p3/2B5/P1N2b1P/1PPP1PP1/R1BQ1RK1 w - - 0 1 moves d1f3 g8f6 c3e2 e8h8 "
         "e2g3 b8d7 d2d3 a5c7 g3f5 e7d8 c4a2 a7a5 f3g3 f6h5 g3f3 h5f6 f3g3 f6h5 g3f3 h5f6";
 
     expect(testFenRepetition(input), true, "Repetition 3");
@@ -64,7 +64,7 @@ inline void repetition4()
 {
 
     std::string input =
-        "position fen rnbqk2r/1pp2ppp/p2bpn2/8/2NP1B2/3B1N2/PPP2PPP/R2QK2R w AHah - 0 1 moves c4d6 c7d6 c2c4 e8h8 "
+        "position fen rnbqk2r/1pp2ppp/p2bpn2/8/2NP1B2/3B1N2/PPP2PPP/R2QK2R w - - 0 1 moves c4d6 c7d6 c2c4 e8h8 "
         "e1h1 b7b6 f1e1 c8b7 f4g3 f8e8 a1c1 h7h6 d3b1 b6b5 b2b3 b5c4 b3c4 d8b6 c4c5 d6c5 d4c5 b6c6 b1c2 c6d5 g3d6 "
         "e8c8 c2b3 d5d1 e1d1 a6a5 f3d4 a5a4 b3c4 b7d5 a2a3 b8c6 c4d5 f6d5 d4c6 c8c6 c1c4 d5c7 d1b1 c7e8 d6f4 a8c8 "
         "b1b8 c8b8 f4b8 f7f6 g1f1 g8f7 f2f4 g7g5 g2g3 f7g6 f1e2 c6c8 b8a7 e8c7 e2d3 c8d8 d3e4 f6f5 e4e3 d8a8 a7b6 "

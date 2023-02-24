@@ -45,13 +45,16 @@ int UCI::uciLoop(int argc, char **argv)
 
     // END OF TUNE
 
+    // catching inputs
+    std::string input;
+
     while (true)
     {
-        // catching inputs
-        std::string input;
 
-        if (!std::getline(std::cin, input) && argc == 1)
-            input = "quit";
+        if (!std::getline(std::cin, input) && std::cin.eof())
+        {
+            input == "quit";
+        }
 
         if (input == "quit")
         {
