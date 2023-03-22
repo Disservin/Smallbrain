@@ -108,11 +108,16 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         board.applyFen(openingBook[randLine], false);
     }
 
-    std::uniform_int_distribution<> distRandomFen{0, randLimit};
-    if (distRandomFen(Random::generator) == 1)
+    board.applyFen(DEFAULT_POS, true);
+
+    if (randLimit > 0)
     {
-        ply = randomMoves;
-        board.applyFen(getRandomfen());
+        std::uniform_int_distribution<> distRandomFen{0, randLimit};
+        if (distRandomFen(Random::generator) == 1)
+        {
+            ply = randomMoves;
+            board.applyFen(getRandomfen());
+        }
     }
     else
     {
