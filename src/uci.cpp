@@ -47,6 +47,7 @@ int UCI::uciLoop(int argc, char **argv)
 
     // catching inputs
     std::string input;
+    std::cin >> std::ws;
 
     while (true)
     {
