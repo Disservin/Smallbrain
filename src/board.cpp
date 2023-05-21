@@ -681,6 +681,8 @@ void Board::initializeLookupTables() {
 }
 
 U64 Board::updateKeyPiece(Piece piece, Square sq) const {
+    assert(piece < None);
+    assert(sq < NO_SQ);
     return RANDOM_ARRAY[64 * hash_piece[piece] + sq];
 }
 
