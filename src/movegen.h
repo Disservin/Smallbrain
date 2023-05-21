@@ -473,99 +473,141 @@ U64 LegalKingMoves(const Board &board, Square sq) {
     return KingAttacks(sq) & bb & ~board.seen;
 }
 
+constexpr Square relativeSquare(Color c, Square s) {
+    return Square(s ^ (static_cast<int>(c) * 56));
+}
+
 template <Color c, Movetype mt>
-U64 LegalKingMovesCastling(const Board &board) {
+inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pinHV) {
+    if constexpr (mt == Movetype::CAPTURE) return 0ull;
+    const auto rights = board.castlingRights;
+
     U64 moves = 0ull;
-    U64 emptyAndNotAttacked = ~board.seen & ~board.occAll;
 
-    // clang-format off
-    switch (c)
-    {
-    case White:
-        if (    board.castlingRights & wk 
-            &&  emptyAndNotAttacked & (1ULL << SQ_F1) 
-            &&  emptyAndNotAttacked & (1ull << SQ_G1))
-            moves |= (1ULL << SQ_H1);
-        if (    board.castlingRights & wq 
-            &&  emptyAndNotAttacked & (1ULL << SQ_D1) 
-            &&  emptyAndNotAttacked & (1ull << SQ_C1) 
-            &&  (1ull << SQ_B1) & ~board.occAll)
-            moves |= (1ULL << SQ_A1);
-        break;
-    case Black:
-        if (    board.castlingRights & bk 
-            &&  emptyAndNotAttacked & (1ULL << SQ_F8) 
-            &&  emptyAndNotAttacked & (1ull << SQ_G8))
-            moves |= (1ULL << SQ_H8);
-        if (    board.castlingRights & bq 
-            &&  emptyAndNotAttacked & (1ULL << SQ_D8) 
-            &&  emptyAndNotAttacked & (1ull << SQ_C8)
-            &&  (1ull << SQ_B8) & ~board.occAll)
-            moves |= (1ULL << SQ_A8);
+    for (const auto side : {CastleSide::KING_SIDE, CastleSide::QUEEN_SIDE}) {
+        if (!rights.hasCastlingRight(c, side)) continue;
 
-        break;
-    default:
-        return moves;
+        const auto end_king_sq =
+            relativeSquare(c, side == CastleSide::KING_SIDE ? Square::SQ_G1 : Square::SQ_C1);
+        const auto end_rook_sq =
+            relativeSquare(c, side == CastleSide::KING_SIDE ? Square::SQ_F1 : Square::SQ_D1);
+
+        const auto from_rook_sq = file_rank_square(rights.getRookFile(c, side), square_rank(sq));
+
+        const U64 not_occ_path = board.SQUARES_BETWEEN_BB[sq][from_rook_sq];
+        const U64 not_attacked_path = board.SQUARES_BETWEEN_BB[sq][end_king_sq];
+        const U64 empty_not_attacked = ~seen & ~(board.occAll & ~(1ull << from_rook_sq));
+        const U64 withoutRook = board.occAll & ~(1ull << from_rook_sq);
+
+        if ((not_attacked_path & empty_not_attacked) == not_attacked_path &&
+            ((not_occ_path & ~board.occAll) == not_occ_path) &&
+            !((1ull << from_rook_sq) & pinHV & MASK_RANK[static_cast<int>(square_rank(sq))]) &&
+            !((1ull << end_rook_sq) & withoutRook) &&
+            !((1ull << end_king_sq) & (seen | (withoutRook & ~(1ull << sq))))) {
+            moves |= (1ull << from_rook_sq);
+        }
     }
-    // clang-format on
 
     return moves;
 }
 
-template <Color c, Movetype mt>
-U64 LegalKingMovesCastling960(const Board &board, Square sq) {
-    U64 moves = 0ull;
+// template <Color c, Movetype mt>
+// U64 LegalKingMovesCastling(const Board &board) {
+//     U64 moves = 0ull;
+//     U64 emptyAndNotAttacked = ~board.seen & ~board.occAll;
 
-    // clang-format off
-    switch (c)
-    {
-    case White: {
-        for (int i = 0; i < 2; i++)
-        {
-            int side = board.castlingRights960White[i];
-            Square destRook = side >= square_file(sq) ? SQ_F1 : SQ_D1;
-            Square destKing = side >= square_file(sq) ? SQ_G1 : SQ_C1;
-            U64 withoutRook = board.occAll & ~(1ull << side);
-            U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << side));
+//     // clang-format off
+//     switch (c)
+//     {
+//     case White:
+//         if (    board.castlingRights & wk
+//             &&  emptyAndNotAttacked & (1ULL << SQ_F1)
+//             &&  emptyAndNotAttacked & (1ull << SQ_G1))
+//             moves |= (1ULL << SQ_H1);
+//         if (    board.castlingRights & wq
+//             &&  emptyAndNotAttacked & (1ULL << SQ_D1)
+//             &&  emptyAndNotAttacked & (1ull << SQ_C1)
+//             &&  (1ull << SQ_B1) & ~board.occAll)
+//             moves |= (1ULL << SQ_A1);
+//         break;
+//     case Black:
+//         if (    board.castlingRights & bk
+//             &&  emptyAndNotAttacked & (1ULL << SQ_F8)
+//             &&  emptyAndNotAttacked & (1ull << SQ_G8))
+//             moves |= (1ULL << SQ_H8);
+//         if (    board.castlingRights & bq
+//             &&  emptyAndNotAttacked & (1ULL << SQ_D8)
+//             &&  emptyAndNotAttacked & (1ull << SQ_C8)
+//             &&  (1ull << SQ_B8) & ~board.occAll)
+//             moves |= (1ULL << SQ_A8);
 
-            if (    side != NO_FILE 
-                &&  (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
-                &&  (board.SQUARES_BETWEEN_BB[sq][side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][side] 
-                &&  !((1ull << side) & board.pinHV & MASK_RANK[RANK_1]) 
-                &&  !((1ull << destRook) & withoutRook) 
-                &&  !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
-                moves |= (1ULL << side);
-        }
-        break;
-    }
+//         break;
+//     default:
+//         return moves;
+//     }
+//     // clang-format on
 
-    case Black: {
-        for (int i = 0; i < 2; i++)
-        {
-            File side = board.castlingRights960Black[i];
-            Square destRook = side >= square_file(sq) ? SQ_F8 : SQ_D8;
-            Square destKing = side >= square_file(sq) ? SQ_G8 : SQ_C8;
-            U64 withoutRook = board.occAll & ~(1ull << (56 + side));
-            U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << (56 + side)));
+//     return moves;
+// }
 
-            if (    side != NO_FILE 
-                &&  (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) == board.SQUARES_BETWEEN_BB[sq][destKing] 
-                &&  (board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) == board.SQUARES_BETWEEN_BB[sq][56 + side] 
-                &&  !((1ull << (56 + side)) & board.pinHV & MASK_RANK[RANK_8]) 
-                &&  !((1ull << destRook) & withoutRook) 
-                &&  !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
-                moves |= (1ULL << (56 + side));
-        }
-        break;
-    }
+// template <Color c, Movetype mt>
+// U64 LegalKingMovesCastling960(const Board &board, Square sq) {
+//     U64 moves = 0ull;
 
-    default:
-        return moves;
-    }
-    // clang-format on
+//     // clang-format off
+//     switch (c)
+//     {
+//     case White: {
+//         for (int i = 0; i < 2; i++)
+//         {
+//             int side = board.castlingRights960White[i];
+//             Square destRook = side >= square_file(sq) ? SQ_F1 : SQ_D1;
+//             Square destKing = side >= square_file(sq) ? SQ_G1 : SQ_C1;
+//             U64 withoutRook = board.occAll & ~(1ull << side);
+//             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << side));
 
-    return moves;
-}
+//             if (    side != NO_FILE
+//                 &&  (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) ==
+//                 board.SQUARES_BETWEEN_BB[sq][destKing]
+//                 &&  (board.SQUARES_BETWEEN_BB[sq][side] & ~board.occAll) ==
+//                 board.SQUARES_BETWEEN_BB[sq][side]
+//                 &&  !((1ull << side) & board.pinHV & MASK_RANK[RANK_1])
+//                 &&  !((1ull << destRook) & withoutRook)
+//                 &&  !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
+//                 moves |= (1ULL << side);
+//         }
+//         break;
+//     }
+
+//     case Black: {
+//         for (int i = 0; i < 2; i++)
+//         {
+//             File side = board.castlingRights960Black[i];
+//             Square destRook = side >= square_file(sq) ? SQ_F8 : SQ_D8;
+//             Square destKing = side >= square_file(sq) ? SQ_G8 : SQ_C8;
+//             U64 withoutRook = board.occAll & ~(1ull << (56 + side));
+//             U64 emptyAndNotAttacked = ~board.seen & ~(board.occAll & ~(1ull << (56 + side)));
+
+//             if (    side != NO_FILE
+//                 &&  (board.SQUARES_BETWEEN_BB[sq][destKing] & emptyAndNotAttacked) ==
+//                 board.SQUARES_BETWEEN_BB[sq][destKing]
+//                 &&  (board.SQUARES_BETWEEN_BB[sq][56 + side] & ~board.occAll) ==
+//                 board.SQUARES_BETWEEN_BB[sq][56 + side]
+//                 &&  !((1ull << (56 + side)) & board.pinHV & MASK_RANK[RANK_8])
+//                 &&  !((1ull << destRook) & withoutRook)
+//                 &&  !((1ull << destKing) & (board.seen | (withoutRook & ~(1ull << sq)))))
+//                 moves |= (1ULL << (56 + side));
+//         }
+//         break;
+//     }
+
+//     default:
+//         return moves;
+//     }
+//     // clang-format on
+
+//     return moves;
+// }
 
 // all legal moves for a position
 template <Color c, Movetype mt>
@@ -603,11 +645,9 @@ void legalmoves(Board &board, Movelist &movelist) {
         movelist.Add(make(from, to));
     }
 
-    if (!(mt == Movetype::CAPTURE || board.checkMask != DEFAULT_CHECKMASK)) {
-        if (board.chess960) {
-            moves = LegalKingMovesCastling960<c, mt>(board, from);
-        } else
-            moves = LegalKingMovesCastling<c, mt>(board);
+    if (mt != Movetype::CAPTURE && square_rank(from) == (c == White ? RANK_1 : RANK_8) &&
+        board.castlingRights.hasCastlingRight(c) && board.checkMask == DEFAULT_CHECKMASK) {
+        moves = legalCastleMoves<c, mt>(board, from, board.seen, board.pinHV);
 
         while (moves) {
             Square to = poplsb(moves);
@@ -706,21 +746,18 @@ bool hasLegalMoves(Board &board) {
     U64 movableSquare = board.checkMask & board.enemyEmptyBB;
 
     Square from = board.KingSQ(c);
-    U64 moves;
+    U64 moves = LegalKingMoves<Movetype::ALL>(board, from);
 
-    if (board.chess960) {
-        if (board.checkMask != DEFAULT_CHECKMASK)
-            moves = LegalKingMoves<Movetype::ALL>(board, from);
-        else
-            moves = LegalKingMovesCastling960<c, Movetype::ALL>(board, from);
-    } else {
-        if (!board.castlingRights || board.checkMask != DEFAULT_CHECKMASK)
-            moves = LegalKingMoves<Movetype::ALL>(board, from);
-        else
-            moves = LegalKingMovesCastling<c, Movetype::ALL>(board);
+    if (moves) {
+        return true;
     }
 
-    if (moves) return true;
+    if (square_rank(from) == (c == White ? RANK_1 : RANK_8) &&
+        board.castlingRights.hasCastlingRight(c) && board.checkMask == DEFAULT_CHECKMASK) {
+        moves = legalCastleMoves<c, Movetype::ALL>(board, from, board.seen, board.pinHV);
+
+        if (moves) return true;
+    }
 
     if (board.doubleCheck == 2) return false;
 

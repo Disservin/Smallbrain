@@ -10,7 +10,7 @@ Board::Board() {
 
     sideToMove = White;
     enPassantSquare = NO_SQ;
-    castlingRights = wk | wq | bk | bq;
+    castlingRights.clearAllCastlingRights();
     halfMoveClock = 0;
     fullMoveNumber = 1;
 
@@ -28,6 +28,29 @@ Board::Board() {
     enemyEmptyBB = ~occUs;
 
     std::fill(std::begin(board), std::end(board), None);
+}
+
+std::string Board::getCastleString() const {
+    std::stringstream ss;
+
+    if (chess960) {
+        // loop to cleanup
+        if (castlingRights.hasCastlingRight(White, CastleSide::KING_SIDE))
+            ss << char(char(castlingRights.getRookFile(White, CastleSide::KING_SIDE)) + 65);
+        if (castlingRights.hasCastlingRight(White, CastleSide::QUEEN_SIDE))
+            ss << char(char(castlingRights.getRookFile(White, CastleSide::QUEEN_SIDE)) + 65);
+        if (castlingRights.hasCastlingRight(Black, CastleSide::KING_SIDE))
+            ss << char(char(castlingRights.getRookFile(Black, CastleSide::KING_SIDE)) + 97);
+        if (castlingRights.hasCastlingRight(Black, CastleSide::QUEEN_SIDE))
+            ss << char(char(castlingRights.getRookFile(Black, CastleSide::QUEEN_SIDE)) + 97);
+    } else {
+        if (castlingRights.hasCastlingRight(White, CastleSide::KING_SIDE)) ss << "K";
+        if (castlingRights.hasCastlingRight(White, CastleSide::QUEEN_SIDE)) ss << "Q";
+        if (castlingRights.hasCastlingRight(Black, CastleSide::KING_SIDE)) ss << "k";
+        if (castlingRights.hasCastlingRight(Black, CastleSide::QUEEN_SIDE)) ss << "q";
+    }
+
+    return ss.str();
 }
 
 void Board::refresh() {
@@ -86,34 +109,25 @@ void Board::applyFen(const std::string &fen, bool updateAcc) {
         refresh();
     }
 
-    const std::vector<std::string> allowedCastlingFiles{"A", "B", "C", "D", "E", "F", "G", "H",
-                                                        "a", "b", "c", "d", "e", "f", "g", "h"};
+    castlingRights.clearAllCastlingRights();
 
-    for (auto &&element : castling) {
-        if (contains(allowedCastlingFiles, std::string(1, element))) chess960 = true;
-    }
-
-    removeCastlingRightsAll(White);
-    removeCastlingRightsAll(Black);
-
-    if (!chess960) {
-        for (size_t i = 0; i < castling.size(); i++) {
-            if (readCastleString.find(castling[i]) != readCastleString.end())
-                castlingRights |= readCastleString[castling[i]];
-        }
-    } else {
-        int indexWhite = 0;
-        int indexBlack = 0;
-        for (size_t i = 0; i < castling.size(); i++) {
-            if (!contains(allowedCastlingFiles, std::string{castling[i]})) continue;
-
-            if (isupper(castling[i])) {
-                castlingRights |= 1ull << indexWhite;
-                castlingRights960White[indexWhite++] = File(castling[i] - 65);
-            } else {
-                castlingRights |= 1ull << (2 + indexBlack);
-                castlingRights960Black[indexBlack++] = File(castling[i] - 97);
-            }
+    for (char i : castling) {
+        if (!chess960) {
+            if (i == 'K')
+                castlingRights.setCastlingRight<White, CastleSide::KING_SIDE, File::FILE_H>();
+            if (i == 'Q')
+                castlingRights.setCastlingRight<White, CastleSide::QUEEN_SIDE, File::FILE_A>();
+            if (i == 'k')
+                castlingRights.setCastlingRight<Black, CastleSide::KING_SIDE, File::FILE_H>();
+            if (i == 'q')
+                castlingRights.setCastlingRight<Black, CastleSide::QUEEN_SIDE, File::FILE_A>();
+        } else {
+            const auto color = isupper(i) ? White : Black;
+            const auto king_sq = lsb(pieces(KING, color));
+            const auto file = static_cast<File>(tolower(i) - 97);
+            const auto side = int(file) > int(square_file(king_sq)) ? CastleSide::KING_SIDE
+                                                                    : CastleSide::QUEEN_SIDE;
+            castlingRights.setCastlingRight(color, side, file);
         }
     }
 
@@ -187,11 +201,8 @@ std::string Board::getFen() const {
 
     // Append the appropriate characters to the FEN string to indicate
     // whether or not castling is allowed for each player
-    if (castlingRights & wk) ss << "K";
-    if (castlingRights & wq) ss << "Q";
-    if (castlingRights & bk) ss << "k";
-    if (castlingRights & bq) ss << "q";
-    if (castlingRights == 0) ss << "-";
+    ss << getCastleString();
+    if (castlingRights.isEmpty()) ss << "-";
 
     // Append information about the en passant square (if any)
     // and the halfmove clock and fullmove number to the FEN string
@@ -292,8 +303,7 @@ U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) {
 }
 
 void Board::makeNullMove() {
-    stateHistory.emplace_back(enPassantSquare, castlingRights, halfMoveClock, None,
-                              castlingRights960White, castlingRights960Black);
+    stateHistory.emplace_back(enPassantSquare, castlingRights, halfMoveClock, None);
     sideToMove = ~sideToMove;
 
     // Update the hash key
@@ -314,8 +324,6 @@ void Board::unmakeNullMove() {
     enPassantSquare = restore.enPassant;
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
-    castlingRights960White = restore.chess960White;
-    castlingRights960Black = restore.chess960Black;
 
     hashKey ^= updateKeySideToMove();
     if (enPassantSquare != NO_SQ) hashKey ^= updateKeyEnPassant(enPassantSquare);
@@ -472,18 +480,12 @@ bool Board::isPseudoLegal(const Move move) {
             if (isSquareAttacked(~color, sq, occ)) return false;
         }
 
-        const uint8_t rights = color == White    ? to_sq > from_sq ? wk : wq
-                               : to_sq > from_sq ? bk
-                                                 : bq;
+        const auto rights = to_sq > from_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
 
-        if (!chess960 && !(rights & castlingRights)) return false;
+        if (!chess960 && !castlingRights.hasCastlingRight(color, rights)) return false;
 
         if (chess960) {
-            const bool rights960 = color == White
-                                       ? castlingRights960White[0] == square_file(to_sq) ||
-                                             castlingRights960White[1] == square_file(to_sq)
-                                       : castlingRights960Black[0] == square_file(to_sq) ||
-                                             castlingRights960Black[1] == square_file(to_sq);
+            const auto rights960 = castlingRights.hasCastlingRight(color, rights);
             if (!rights960) return false;
         }
 
@@ -611,19 +613,13 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     os << "\n\n";
     os << "Fen: " << b.getFen() << "\n";
     os << "Side to move: " << static_cast<int>(b.sideToMove) << "\n";
-    os << "Castling rights: " << static_cast<int>(b.castlingRights) << "\n";
+    // os << "Castling rights: " << static_cast<int>(b.castlingRights) << "\n";
     os << "Halfmoves: " << static_cast<int>(b.halfMoveClock) << "\n";
     os << "Fullmoves: " << static_cast<int>(b.fullMoveNumber) / 2 << "\n";
     os << "EP: " << static_cast<int>(b.enPassantSquare) << "\n";
     os << "Hash: " << b.hashKey << "\n";
     os << "Chess960: " << b.chess960;
 
-    for (int j = 0; j < 2; j++) {
-        os << " WhiteRights: " << b.castlingRights960White[j];
-    }
-    for (int j = 0; j < 2; j++) {
-        os << " BlackRights: " << b.castlingRights960Black[j];
-    }
     os << std::endl;
     return os;
 }
@@ -688,46 +684,9 @@ U64 Board::updateKeyPiece(Piece piece, Square sq) const {
 
 U64 Board::updateKeyEnPassant(Square sq) const { return RANDOM_ARRAY[772 + square_file(sq)]; }
 
-U64 Board::updateKeyCastling() const { return castlingKey[castlingRights]; }
+U64 Board::updateKeyCastling() const { return castlingKey[castlingRights.getHashIndex()]; }
 
 U64 Board::updateKeySideToMove() const { return RANDOM_ARRAY[780]; }
-
-void Board::removeCastlingRightsAll(Color c) {
-    if (c == White) {
-        castlingRights &= ~(wk | wq);
-        castlingRights960White[0] = NO_FILE;
-        castlingRights960White[1] = NO_FILE;
-    } else {
-        castlingRights &= ~(bk | bq);
-        castlingRights960Black[0] = NO_FILE;
-        castlingRights960Black[1] = NO_FILE;
-    }
-}
-
-void Board::removeCastlingRightsRook(Square sq) {
-    if (chess960) {
-        castlingRights960White[0] =
-            castlingRights960White[0] == square_file(sq) && square_rank(sq) == RANK_1
-                ? NO_FILE
-                : castlingRights960White[0];
-        castlingRights960White[1] =
-            castlingRights960White[1] == square_file(sq) && square_rank(sq) == RANK_1
-                ? NO_FILE
-                : castlingRights960White[1];
-        castlingRights960Black[0] =
-            castlingRights960Black[0] == square_file(sq) && square_rank(sq) == RANK_8
-                ? NO_FILE
-                : castlingRights960Black[0];
-        castlingRights960Black[1] =
-            castlingRights960Black[1] == square_file(sq) && square_rank(sq) == RANK_8
-                ? NO_FILE
-                : castlingRights960Black[1];
-    }
-
-    if (castlingMapRook.find(sq) != castlingMapRook.end()) {
-        castlingRights &= ~castlingMapRook[sq];
-    }
-}
 
 std::string uciMove(Move move, bool chess960) {
     std::stringstream ss;

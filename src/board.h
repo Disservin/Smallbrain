@@ -14,43 +14,132 @@
 
 extern TranspositionTable TTable;
 
+// *******************
+// CASTLING
+// *******************
+class BitField16 {
+   public:
+    BitField16() : value_(0) {}
+
+    // Sets the value of the specified group to the given value
+    void setGroupValue(uint16_t group_index, uint16_t group_value) {
+        assert(group_value < 16 && "group_value must be less than 16");
+        assert(group_index < 4 && "group_index must be less than 4");
+
+        // calculate the bit position of the start of the group you want to set
+        uint16_t startBit = group_index * group_size_;
+        uint16_t setMask = static_cast<uint16_t>(group_value << startBit);
+
+        // clear the bits in the group
+        value_ &= ~(0xF << startBit);
+
+        // set the bits in the group
+        value_ |= setMask;
+    }
+
+    uint16_t getGroup(uint16_t group_index) const {
+        assert(group_index < 4 && "group_index must be less than 4");
+        uint16_t startBit = group_index * group_size_;
+        return (value_ >> startBit) & 0xF;
+    }
+
+    void clear() { value_ = 0; }
+    uint16_t get() const { return value_; }
+
+   private:
+    static constexpr uint16_t group_size_ = 4;  // size of each group
+    uint16_t value_;
+};
+
+enum class CastleSide : uint8_t { KING_SIDE, QUEEN_SIDE };
+
+class CastlingRights {
+   public:
+    template <Color color, CastleSide castle, File rook_file>
+    void setCastlingRight() {
+        int file = static_cast<uint16_t>(rook_file) + 1;
+
+        castling_rights.setGroupValue(2 * static_cast<int>(color) + static_cast<int>(castle),
+                                      static_cast<uint16_t>(file));
+    }
+
+    void setCastlingRight(Color color, CastleSide castle, File rook_file) {
+        int file = static_cast<uint16_t>(rook_file) + 1;
+
+        castling_rights.setGroupValue(2 * static_cast<int>(color) + static_cast<int>(castle),
+                                      static_cast<uint16_t>(file));
+    }
+
+    void clearAllCastlingRights() { castling_rights.clear(); }
+
+    void clearCastlingRight(Color color, CastleSide castle) {
+        castling_rights.setGroupValue(2 * static_cast<int>(color) + static_cast<int>(castle), 0);
+    }
+
+    void clearCastlingRight(Color color) {
+        castling_rights.setGroupValue(2 * static_cast<int>(color), 0);
+        castling_rights.setGroupValue(2 * static_cast<int>(color) + 1, 0);
+    }
+
+    bool isEmpty() const { return castling_rights.get() == 0; }
+
+    bool hasCastlingRight(Color color) const {
+        return castling_rights.getGroup(2 * static_cast<int>(color)) != 0 ||
+               castling_rights.getGroup(2 * static_cast<int>(color) + 1) != 0;
+    }
+
+    bool hasCastlingRight(Color color, CastleSide castle) const {
+        return castling_rights.getGroup(2 * static_cast<int>(color) + static_cast<int>(castle)) !=
+               0;
+    }
+
+    File getRookFile(Color color, CastleSide castle) const {
+        assert(hasCastlingRight(color, castle) && "Castling right does not exist");
+        return static_cast<File>(
+            castling_rights.getGroup(2 * static_cast<int>(color) + static_cast<int>(castle)) - 1);
+    }
+
+    int getHashIndex() const {
+        return hasCastlingRight(White, CastleSide::KING_SIDE) +
+               2 * hasCastlingRight(White, CastleSide::QUEEN_SIDE) +
+               4 * hasCastlingRight(Black, CastleSide::KING_SIDE) +
+               8 * hasCastlingRight(Black, CastleSide::QUEEN_SIDE);
+    }
+
+   private:
+    /*
+     denotes the file of the rook that we castle to
+     1248 1248 1248 1248
+     0000 0000 0000 0000
+     bq   bk   wq   wk
+     3    2    1    0
+     */
+    BitField16 castling_rights;
+};
+
 struct State {
     Square enPassant{};
-    uint8_t castling{};
+    CastlingRights castling{};
     uint8_t halfMove{};
     Piece capturedPiece = None;
-    std::array<File, 2> chess960White = {};
-    std::array<File, 2> chess960Black = {};
-    State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, uint8_t halfMoveCopy = {},
-          Piece capturedPieceCopy = None, std::array<File, 2> c960W = {NO_FILE},
-          std::array<File, 2> c960B = {NO_FILE})
+    State(Square enpassantCopy = {}, CastlingRights castlingRightsCopy = {},
+          uint8_t halfMoveCopy = {}, Piece capturedPieceCopy = None)
         : enPassant(enpassantCopy),
           castling(castlingRightsCopy),
           halfMove(halfMoveCopy),
-          capturedPiece(capturedPieceCopy),
-          chess960White(c960W),
-          chess960Black(c960B) {}
+          capturedPiece(capturedPieceCopy) {}
 };
 
 class Board {
    public:
     bool chess960 = false;
-    std::array<File, 2> castlingRights960White = {NO_FILE};
-    std::array<File, 2> castlingRights960Black = {NO_FILE};
 
     Color sideToMove;
 
     // NO_SQ when enpassant is not possible
     Square enPassantSquare;
 
-    // castling right is encoded in 8bit
-    // wk = 1
-    // wq = 2
-    // bk = 4
-    // bq = 8
-    // 0  0  0  0  0  0  0  0
-    // wk wq bk bq
-    uint8_t castlingRights;
+    CastlingRights castlingRights;
 
     // halfmoves start at 0
     uint8_t halfMoveClock;
@@ -102,6 +191,8 @@ class Board {
 
     /// @brief constructor for the board, loads startpos and initializes SQUARES_BETWEEN_BB array
     Board();
+
+    std::string getCastleString() const;
 
     /// @brief reload the entire nnue
     void refresh();
@@ -258,9 +349,6 @@ class Board {
     U64 updateKeyCastling() const;
     U64 updateKeyEnPassant(Square sq) const;
     U64 updateKeySideToMove() const;
-
-    void removeCastlingRightsAll(Color c);
-    void removeCastlingRightsRook(Square sq);
 };
 
 template <bool updateNNUE>
@@ -305,6 +393,7 @@ inline void Board::updateHash(Move move, bool isCastling, bool ep) {
     Square from_sq = from(move);
     Square to_sq = to(move);
     Piece capture = board[to_sq];
+    const auto rank = square_rank(to_sq);
 
     hashHistory.emplace_back(hashKey);
 
@@ -315,7 +404,7 @@ inline void Board::updateHash(Move move, bool isCastling, bool ep) {
     enPassantSquare = NO_SQ;
 
     if (pt == KING) {
-        removeCastlingRightsAll(sideToMove);
+        castlingRights.clearCastlingRight(sideToMove);
 
         if (typeOf(move) == CASTLING) {
             const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
@@ -336,8 +425,12 @@ inline void Board::updateHash(Move move, bool isCastling, bool ep) {
 
             return;
         }
-    } else if (pt == ROOK) {
-        removeCastlingRightsRook(from_sq);
+    } else if (pt == ROOK && ((square_rank(from_sq) == Rank::RANK_8 && sideToMove == Black) ||
+                              (square_rank(from_sq) == Rank::RANK_1 && sideToMove == White))) {
+        const auto king_sq = lsb(pieces(KING, sideToMove));
+
+        castlingRights.clearCastlingRight(
+            sideToMove, from_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
     } else if (pt == PAWN) {
         halfMoveClock = 0;
         if (typeOf(move) == ENPASSANT) {
@@ -356,7 +449,13 @@ inline void Board::updateHash(Move move, bool isCastling, bool ep) {
     if (capture != None) {
         halfMoveClock = 0;
         hashKey ^= updateKeyPiece(capture, to_sq);
-        if (type_of_piece(capture) == ROOK) removeCastlingRightsRook(to_sq);
+        if (type_of_piece(capture) == ROOK && ((rank == Rank::RANK_1 && sideToMove == Black) ||
+                                               (rank == Rank::RANK_8 && sideToMove == White))) {
+            const auto king_sq = lsb(pieces(KING, ~sideToMove));
+
+            castlingRights.clearCastlingRight(
+                ~sideToMove, to_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
+        }
     }
 
     if (typeOf(move) == PROMOTION) {
@@ -397,8 +496,7 @@ void Board::makeMove(Move move) {
     // STORE STATE HISTORY
     // *****************************
 
-    stateHistory.emplace_back(enPassantSquare, castlingRights, halfMoveClock, capture,
-                              castlingRights960White, castlingRights960Black);
+    stateHistory.emplace_back(enPassantSquare, castlingRights, halfMoveClock, capture);
 
     if constexpr (updateNNUE) accumulatorStack.emplace_back(accumulator);
 
@@ -492,8 +590,6 @@ void Board::unmakeMove(Move move) {
     castlingRights = restore.castling;
     halfMoveClock = restore.halfMove;
     Piece capture = restore.capturedPiece;
-    castlingRights960White = restore.chess960White;
-    castlingRights960Black = restore.chess960Black;
 
     fullMoveNumber--;
 
