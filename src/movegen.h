@@ -71,35 +71,35 @@ U64 pawnRightAttacks(const U64 pawns) {
  * When there is no check at all all bits are set (DEFAULT_CHECKMASK)
  *******************/
 template <Color c>
-U64 DoCheckmask(Board &board, Square sq) {
-    U64 Occ = board.occAll;
+U64 checkMask(const Board &board, Square sq, U64 occAll, int &doubleCheck) {
     U64 checks = 0ULL;
     U64 pawn_mask = board.pieces<PAWN, ~c>() & PawnAttacks(sq, c);
     U64 knight_mask = board.pieces<KNIGHT, ~c>() & KnightAttacks(sq);
     U64 bishop_mask =
-        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & BishopAttacks(sq, Occ);
-    U64 rook_mask = (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, Occ);
+        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & BishopAttacks(sq, occAll);
+    U64 rook_mask =
+        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, occAll);
 
     /********************
      * We keep track of the amount of checks, in case there are
      * two checks on the board only the king can move!
      *******************/
-    board.doubleCheck = 0;
+    doubleCheck = 0;
 
     if (pawn_mask) {
         checks |= pawn_mask;
-        board.doubleCheck++;
+        doubleCheck++;
     }
     if (knight_mask) {
         checks |= knight_mask;
-        board.doubleCheck++;
+        doubleCheck++;
     }
     if (bishop_mask) {
         int8_t index = lsb(bishop_mask);
 
         // Now we add the path!
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
-        board.doubleCheck++;
+        doubleCheck++;
     }
     if (rook_mask) {
         /********************
@@ -109,7 +109,7 @@ U64 DoCheckmask(Board &board, Square sq) {
          * because king moves dont require the checkmask.
          *******************/
         if (popcount(rook_mask) > 1) {
-            board.doubleCheck = 2;
+            doubleCheck = 2;
             return checks;
         }
 
@@ -117,7 +117,7 @@ U64 DoCheckmask(Board &board, Square sq) {
 
         // Now we add the path!
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
-        board.doubleCheck++;
+        doubleCheck++;
     }
 
     if (!checks) return DEFAULT_CHECKMASK;
@@ -136,30 +136,30 @@ U64 DoCheckmask(Board &board, Square sq) {
  * of our pieces that lay on the pin mask, if it is only 1 piece then that piece is pinned.
  *******************/
 template <Color c>
-U64 DoPinMaskRooks(Board &board, Square sq) {
+U64 pinMaskRooks(const Board &board, Square sq, U64 occUs, U64 occEnemy) {
     U64 rook_mask =
-        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, board.occEnemy);
+        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, occEnemy);
 
     U64 pinHV = 0ULL;
     while (rook_mask) {
         const Square index = poplsb(rook_mask);
         const U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
-        if (popcount(possible_pin & board.occUs) == 1) pinHV |= possible_pin;
+        if (popcount(possible_pin & occUs) == 1) pinHV |= possible_pin;
     }
     return pinHV;
 }
 
 template <Color c>
-U64 DoPinMaskBishops(Board &board, Square sq) {
-    U64 bishop_mask = (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) &
-                      BishopAttacks(sq, board.occEnemy);
+U64 pinMaskBishops(const Board &board, Square sq, U64 occUs, U64 occEnemy) {
+    U64 bishop_mask =
+        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & BishopAttacks(sq, occEnemy);
 
     U64 pinD = 0ULL;
 
     while (bishop_mask) {
         const Square index = poplsb(bishop_mask);
         const U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
-        if (popcount(possible_pin & board.occUs) == 1) pinD |= possible_pin;
+        if (popcount(possible_pin & occUs) == 1) pinD |= possible_pin;
     }
 
     return pinD;
@@ -171,7 +171,7 @@ U64 DoPinMaskBishops(Board &board, Square sq) {
  * this is used for king move generation.
  *******************/
 template <Color c>
-U64 seenSquares(Board &board) {
+U64 seenSquares(const Board &board, U64 occAll) {
     const Square kSq = board.KingSQ(~c);
 
     U64 pawns = board.pieces<PAWN, c>();
@@ -181,7 +181,7 @@ U64 seenSquares(Board &board) {
     U64 rooks = board.pieces<ROOK, c>() | queens;
 
     // Remove our king
-    board.occAll &= ~(1ULL << kSq);
+    occAll &= ~(1ULL << kSq);
 
     U64 seen = pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
 
@@ -191,37 +191,17 @@ U64 seenSquares(Board &board) {
     }
     while (bishops) {
         Square index = poplsb(bishops);
-        seen |= BishopAttacks(index, board.occAll);
+        seen |= BishopAttacks(index, occAll);
     }
     while (rooks) {
         Square index = poplsb(rooks);
-        seen |= RookAttacks(index, board.occAll);
+        seen |= RookAttacks(index, occAll);
     }
 
     Square index = lsb(board.pieces<KING, c>());
     seen |= KingAttacks(index);
 
-    // Place our King back
-    board.occAll |= (1ULL << kSq);
-
     return seen;
-}
-
-/********************
- * Creates the pinmask and checkmask
- * setup important variables that we use for move generation.
- *******************/
-template <Color c>
-void init(Board &board, Square sq) {
-    board.occUs = board.Us<c>();
-    board.occEnemy = board.Us<~c>();
-    board.occAll = board.occUs | board.occEnemy;
-    board.enemyEmptyBB = ~board.occUs;
-
-    board.seen = seenSquares<~c>(board);
-    board.checkMask = DoCheckmask<c>(board, sq);
-    board.pinHV = DoPinMaskRooks<c>(board, sq);
-    board.pinD = DoPinMaskBishops<c>(board, sq);
 }
 
 /// @brief shift a mask in a direction
@@ -258,7 +238,8 @@ constexpr U64 shift(const U64 b) {
 /// @param board
 /// @param movelist
 template <Color c, Movetype mt>
-void LegalPawnMovesAll(Board &board, Movelist &movelist) {
+void LegalPawnMovesAll(const Board &board, Movelist &movelist, U64 occAll, U64 occEnemy,
+                       U64 checkMask, U64 pinHV, U64 pinD) {
     const U64 pawns_mask = board.pieces<PAWN, c>();
 
     constexpr Direction UP = c == White ? NORTH : SOUTH;
@@ -270,36 +251,35 @@ void LegalPawnMovesAll(Board &board, Movelist &movelist) {
     constexpr U64 doublePushRank = c == White ? MASK_RANK[RANK_3] : MASK_RANK[RANK_6];
 
     // These pawns can maybe take Left or Right
-    const U64 pawnsLR = pawns_mask & ~board.pinHV;
+    const U64 pawnsLR = pawns_mask & ~pinHV;
 
-    const U64 unpinnedpawnsLR = pawnsLR & ~board.pinD;
-    const U64 pinnedpawnsLR = pawnsLR & board.pinD;
+    const U64 unpinnedpawnsLR = pawnsLR & ~pinD;
+    const U64 pinnedpawnsLR = pawnsLR & pinD;
 
-    U64 Lpawns =
-        (pawnLeftAttacks<c>(unpinnedpawnsLR)) | (pawnLeftAttacks<c>(pinnedpawnsLR) & board.pinD);
+    U64 Lpawns = (pawnLeftAttacks<c>(unpinnedpawnsLR)) | (pawnLeftAttacks<c>(pinnedpawnsLR) & pinD);
     U64 Rpawns =
-        (pawnRightAttacks<c>(unpinnedpawnsLR)) | (pawnRightAttacks<c>(pinnedpawnsLR) & board.pinD);
+        (pawnRightAttacks<c>(unpinnedpawnsLR)) | (pawnRightAttacks<c>(pinnedpawnsLR) & pinD);
 
     // Prune moves that dont capture a piece and are not on the checkmask.
-    Lpawns &= board.occEnemy & board.checkMask;
-    Rpawns &= board.occEnemy & board.checkMask;
+    Lpawns &= occEnemy & checkMask;
+    Rpawns &= occEnemy & checkMask;
 
     // These pawns can walk Forward
-    const U64 pawnsHV = pawns_mask & ~board.pinD;
+    const U64 pawnsHV = pawns_mask & ~pinD;
 
-    const U64 pawnsPinnedHV = pawnsHV & board.pinHV;
-    const U64 pawnsUnPinnedHV = pawnsHV & ~board.pinHV;
+    const U64 pawnsPinnedHV = pawnsHV & pinHV;
+    const U64 pawnsUnPinnedHV = pawnsHV & ~pinHV;
 
     // Prune moves that are blocked by a piece
-    const U64 singlePushUnpinned = shift<UP>(pawnsUnPinnedHV) & ~board.occAll;
-    const U64 singlePushPinned = shift<UP>(pawnsPinnedHV) & board.pinHV & ~board.occAll;
+    const U64 singlePushUnpinned = shift<UP>(pawnsUnPinnedHV) & ~occAll;
+    const U64 singlePushPinned = shift<UP>(pawnsPinnedHV) & pinHV & ~occAll;
 
     // Prune moves that are not on the checkmask.
-    U64 singlePush = (singlePushUnpinned | singlePushPinned) & board.checkMask;
+    U64 singlePush = (singlePushUnpinned | singlePushPinned) & checkMask;
 
-    U64 doublePush = ((shift<UP>(singlePushUnpinned & doublePushRank) & ~board.occAll) |
-                      (shift<UP>(singlePushPinned & doublePushRank) & ~board.occAll)) &
-                     board.checkMask;
+    U64 doublePush = ((shift<UP>(singlePushUnpinned & doublePushRank) & ~occAll) |
+                      (shift<UP>(singlePushPinned & doublePushRank) & ~occAll)) &
+                     checkMask;
 
     /********************
      * Add promotion moves.
@@ -386,7 +366,7 @@ void LegalPawnMovesAll(Board &board, Movelist &movelist) {
          * that just moved are not on the checkmask
          * en passant is not available.
          *******************/
-        if ((board.checkMask & epMask) == 0) return;
+        if ((checkMask & epMask) == 0) return;
 
         const Square kSQ = board.KingSQ(c);
         const U64 kingMask = (1ull << kSQ) & MASK_RANK[square_rank(epPawn)];
@@ -406,7 +386,7 @@ void LegalPawnMovesAll(Board &board, Movelist &movelist) {
              * If the pawn is pinned but the en passant square is not on the
              * pin mask then the move is illegal.
              *******************/
-            if ((1ULL << from) & board.pinD && !(board.pinD & (1ull << ep))) continue;
+            if ((1ULL << from) & pinD && !(pinD & (1ull << ep))) continue;
 
             const U64 connectingPawns = (1ull << epPawn) | (1ull << from);
 
@@ -419,7 +399,7 @@ void LegalPawnMovesAll(Board &board, Movelist &movelist) {
              * If thats the case then the move is illegal and we can break immediately.
              *******************/
             if (isPossiblePin &&
-                (RookAttacks(kSQ, board.occAll & ~connectingPawns) & enemyQueenRook) != 0)
+                (RookAttacks(kSQ, occAll & ~connectingPawns) & enemyQueenRook) != 0)
                 break;
 
             movelist.Add(make<ENPASSANT>(from, to));
@@ -431,46 +411,35 @@ inline U64 LegalKnightMoves(Square sq, U64 movableSquare) {
     return KnightAttacks(sq) & movableSquare;
 }
 
-inline U64 LegalBishopMoves(const Board &board, Square sq, U64 movableSquare) {
+inline U64 LegalBishopMoves(Square sq, U64 movableSquare, U64 pinMask, U64 occAll) {
     // The Bishop is pinned diagonally thus can only move diagonally.
-    if (board.pinD & (1ULL << sq))
-        return BishopAttacks(sq, board.occAll) & movableSquare & board.pinD;
-    return BishopAttacks(sq, board.occAll) & movableSquare;
+    if (pinMask & (1ULL << sq)) return BishopAttacks(sq, occAll) & movableSquare & pinMask;
+    return BishopAttacks(sq, occAll) & movableSquare;
 }
 
-inline U64 LegalRookMoves(const Board &board, Square sq, U64 movableSquare) {
+inline U64 LegalRookMoves(Square sq, U64 movableSquare, U64 pinMask, U64 occAll) {
     // The Rook is pinned horizontally thus can only move horizontally.
-    if (board.pinHV & (1ULL << sq))
-        return RookAttacks(sq, board.occAll) & movableSquare & board.pinHV;
-    return RookAttacks(sq, board.occAll) & movableSquare;
+    if (pinMask & (1ULL << sq)) return RookAttacks(sq, occAll) & movableSquare & pinMask;
+    return RookAttacks(sq, occAll) & movableSquare;
 }
 
-inline U64 LegalQueenMoves(const Board &board, Square sq, U64 movableSquare) {
+inline U64 LegalQueenMoves(Square sq, U64 movableSquare, U64 pinD, U64 pinHV, U64 occAll) {
     U64 moves = 0ULL;
-    if (board.pinD & (1ULL << sq))
-        moves |= BishopAttacks(sq, board.occAll) & movableSquare & board.pinD;
-    else if (board.pinHV & (1ULL << sq))
-        moves |= RookAttacks(sq, board.occAll) & movableSquare & board.pinHV;
+    if (pinD & (1ULL << sq))
+        moves |= BishopAttacks(sq, occAll) & movableSquare & pinD;
+    else if (pinHV & (1ULL << sq))
+        moves |= RookAttacks(sq, occAll) & movableSquare & pinHV;
     else {
-        moves |= RookAttacks(sq, board.occAll) & movableSquare;
-        moves |= BishopAttacks(sq, board.occAll) & movableSquare;
+        moves |= RookAttacks(sq, occAll) & movableSquare;
+        moves |= BishopAttacks(sq, occAll) & movableSquare;
     }
 
     return moves;
 }
 
 template <Movetype mt>
-U64 LegalKingMoves(const Board &board, Square sq) {
-    U64 bb;
-
-    if (mt == Movetype::ALL)
-        bb = board.enemyEmptyBB;
-    else if (mt == Movetype::CAPTURE)
-        bb = board.occEnemy;
-    else
-        bb = ~board.occAll;
-
-    return KingAttacks(sq) & bb & ~board.seen;
+U64 LegalKingMoves(Square sq, U64 movableSquare, U64 seen) {
+    return KingAttacks(sq) & movableSquare & ~seen;
 }
 
 constexpr Square relativeSquare(Color c, Square s) {
@@ -478,7 +447,7 @@ constexpr Square relativeSquare(Color c, Square s) {
 }
 
 template <Color c, Movetype mt>
-inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pinHV) {
+inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pinHV, U64 occAll) {
     if constexpr (mt == Movetype::CAPTURE) return 0ull;
     const auto rights = board.castlingRights;
 
@@ -496,11 +465,11 @@ inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pinHV) 
 
         const U64 not_occ_path = board.SQUARES_BETWEEN_BB[sq][from_rook_sq];
         const U64 not_attacked_path = board.SQUARES_BETWEEN_BB[sq][end_king_sq];
-        const U64 empty_not_attacked = ~seen & ~(board.occAll & ~(1ull << from_rook_sq));
-        const U64 withoutRook = board.occAll & ~(1ull << from_rook_sq);
+        const U64 empty_not_attacked = ~seen & ~(occAll & ~(1ull << from_rook_sq));
+        const U64 withoutRook = occAll & ~(1ull << from_rook_sq);
 
         if ((not_attacked_path & empty_not_attacked) == not_attacked_path &&
-            ((not_occ_path & ~board.occAll) == not_occ_path) &&
+            ((not_occ_path & ~occAll) == not_occ_path) &&
             !((1ull << from_rook_sq) & pinHV & MASK_RANK[static_cast<int>(square_rank(sq))]) &&
             !((1ull << end_rook_sq) & withoutRook) &&
             !((1ull << end_king_sq) & (seen | (withoutRook & ~(1ull << sq))))) {
@@ -520,72 +489,85 @@ void legalmoves(Board &board, Movelist &movelist) {
      * you to append new move types to any movelist.
      *******************/
 
-    init<c>(board, board.KingSQ(c));
+    Square king_sq = board.KingSQ(c);
 
-    assert(board.doubleCheck <= 2);
+    int doubleCheck = 0;
+
+    U64 occUs = board.Us<c>();
+    U64 occEnemy = board.Us<~c>();
+    U64 occAll = occUs | occEnemy;
+    U64 enemyEmptyBB = ~occUs;
+
+    U64 seen = seenSquares<~c>(board, occAll);
+    U64 check_mask = checkMask<c>(board, king_sq, occAll, doubleCheck);
+    U64 pinHV = pinMaskRooks<c>(board, king_sq, occUs, occEnemy);
+    U64 pinD = pinMaskBishops<c>(board, king_sq, occUs, occEnemy);
+
+    assert(doubleCheck <= 2);
 
     /********************
-     * Moves have to be on the checkmask
+     * Moves have to be on the check_mask
      *******************/
-    U64 movableSquare = board.checkMask;
+    U64 movableSquare;
 
     /********************
      * Slider, Knights and King moves can only go to enemy or empty squares.
      *******************/
     if (mt == Movetype::ALL)
-        movableSquare &= board.enemyEmptyBB;
+        movableSquare = enemyEmptyBB;
     else if (mt == Movetype::CAPTURE)
-        movableSquare &= board.occEnemy;
+        movableSquare = occEnemy;
     else  // QUIET moves
-        movableSquare &= ~board.occAll;
+        movableSquare = ~occAll;
 
-    Square from = board.KingSQ(c);
-    U64 moves = LegalKingMoves<mt>(board, from);
+    U64 moves = LegalKingMoves<mt>(king_sq, movableSquare, seen);
+
+    movableSquare &= check_mask;
 
     while (moves) {
         Square to = poplsb(moves);
-        movelist.Add(make(from, to));
+        movelist.Add(make(king_sq, to));
     }
 
-    if (mt != Movetype::CAPTURE && square_rank(from) == (c == White ? RANK_1 : RANK_8) &&
-        board.castlingRights.hasCastlingRight(c) && board.checkMask == DEFAULT_CHECKMASK) {
-        moves = legalCastleMoves<c, mt>(board, from, board.seen, board.pinHV);
+    if (mt != Movetype::CAPTURE && square_rank(king_sq) == (c == White ? RANK_1 : RANK_8) &&
+        board.castlingRights.hasCastlingRight(c) && check_mask == DEFAULT_CHECKMASK) {
+        moves = legalCastleMoves<c, mt>(board, king_sq, seen, pinHV, occAll);
 
         while (moves) {
             Square to = poplsb(moves);
-            movelist.Add(make<CASTLING>(from, to));
+            movelist.Add(make<CASTLING>(king_sq, to));
         }
     }
 
     /********************
      * Early return for double check as described earlier
      *******************/
-    if (board.doubleCheck == 2) return;
+    if (doubleCheck == 2) return;
 
     /********************
      * Prune knights that are pinned since these cannot move.
      *******************/
-    U64 knights_mask = board.pieces<KNIGHT, c>() & ~(board.pinD | board.pinHV);
+    U64 knights_mask = board.pieces<KNIGHT, c>() & ~(pinD | pinHV);
 
     /********************
      * Prune horizontally pinned bishops
      *******************/
-    U64 bishops_mask = board.pieces<BISHOP, c>() & ~board.pinHV;
+    U64 bishops_mask = board.pieces<BISHOP, c>() & ~pinHV;
 
     /********************
      * Prune diagonally pinned rooks
      *******************/
-    U64 rooks_mask = board.pieces<ROOK, c>() & ~board.pinD;
+    U64 rooks_mask = board.pieces<ROOK, c>() & ~pinD;
 
     /********************
      * Prune double pinned queens
      *******************/
-    U64 queens_mask = board.pieces<QUEEN, c>() & ~(board.pinD & board.pinHV);
+    U64 queens_mask = board.pieces<QUEEN, c>() & ~(pinD & pinHV);
 
     /********************
      * Add the moves to the movelist.
      *******************/
-    LegalPawnMovesAll<c, mt>(board, movelist);
+    LegalPawnMovesAll<c, mt>(board, movelist, occAll, occEnemy, check_mask, pinHV, pinD);
 
     while (knights_mask) {
         Square from = poplsb(knights_mask);
@@ -598,7 +580,7 @@ void legalmoves(Board &board, Movelist &movelist) {
 
     while (bishops_mask) {
         Square from = poplsb(bishops_mask);
-        U64 moves = LegalBishopMoves(board, from, movableSquare);
+        U64 moves = LegalBishopMoves(from, movableSquare, pinD, occAll);
         while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make(from, to));
@@ -607,7 +589,7 @@ void legalmoves(Board &board, Movelist &movelist) {
 
     while (rooks_mask) {
         Square from = poplsb(rooks_mask);
-        U64 moves = LegalRookMoves(board, from, movableSquare);
+        U64 moves = LegalRookMoves(from, movableSquare, pinHV, occAll);
         while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make(from, to));
@@ -616,7 +598,7 @@ void legalmoves(Board &board, Movelist &movelist) {
 
     while (queens_mask) {
         Square from = poplsb(queens_mask);
-        U64 moves = LegalQueenMoves(board, from, movableSquare);
+        U64 moves = LegalQueenMoves(from, movableSquare, pinD, pinHV, occAll);
         while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make(from, to));
@@ -636,97 +618,4 @@ void legalmoves(Board &board, Movelist &movelist) {
         legalmoves<Black, mt>(board, movelist);
 }
 
-// basically a mirror of legalmoves but with early returns
-template <Color c>
-bool hasLegalMoves(Board &board) {
-    Movelist movelist;
-
-    init<c>(board, board.KingSQ(c));
-
-    assert(board.doubleCheck <= 2);
-
-    U64 movableSquare = board.checkMask & board.enemyEmptyBB;
-
-    Square from = board.KingSQ(c);
-    U64 moves = LegalKingMoves<Movetype::ALL>(board, from);
-
-    if (moves) {
-        return true;
-    }
-
-    if (square_rank(from) == (c == White ? RANK_1 : RANK_8) &&
-        board.castlingRights.hasCastlingRight(c) && board.checkMask == DEFAULT_CHECKMASK) {
-        moves = legalCastleMoves<c, Movetype::ALL>(board, from, board.seen, board.pinHV);
-
-        if (moves) return true;
-    }
-
-    if (board.doubleCheck == 2) return false;
-
-    U64 knights_mask = board.pieces<KNIGHT, c>() & ~(board.pinD | board.pinHV);
-    U64 bishops_mask = board.pieces<BISHOP, c>() & ~board.pinHV;
-    U64 rooks_mask = board.pieces<ROOK, c>() & ~board.pinD;
-    U64 queens_mask = board.pieces<QUEEN, c>() & ~(board.pinD & board.pinHV);
-
-    LegalPawnMovesAll<c, Movetype::ALL>(board, movelist);
-
-    while (knights_mask) {
-        Square from = poplsb(knights_mask);
-        U64 moves = LegalKnightMoves(from, movableSquare);
-        if (moves) return true;
-    }
-
-    while (bishops_mask) {
-        Square from = poplsb(bishops_mask);
-        U64 moves = LegalBishopMoves(board, from, movableSquare);
-        if (moves) return true;
-    }
-
-    while (rooks_mask) {
-        Square from = poplsb(rooks_mask);
-        U64 moves = LegalRookMoves(board, from, movableSquare);
-        if (moves) return true;
-    }
-
-    while (queens_mask) {
-        Square from = poplsb(queens_mask);
-        U64 moves = LegalQueenMoves(board, from, movableSquare);
-        if (moves) return true;
-    }
-
-    return false;
-}
-
-bool hasLegalMoves(Board &board);
-
-// pseudo legal moves number estimation
-template <Color c>
-int pseudoLegalMovesNumber(const Board &board) {
-    int total = 0;
-
-    U64 knights_mask = board.pieces<KNIGHT, c>();
-    U64 bishops_mask = board.pieces<BISHOP, c>();
-    U64 rooks_mask = board.pieces<ROOK, c>();
-    U64 queens_mask = board.pieces<QUEEN, c>();
-
-    while (knights_mask) {
-        Square from = poplsb(knights_mask);
-        total += popcount(KnightAttacks(from) & board.enemyEmptyBB);
-    }
-    while (bishops_mask) {
-        Square from = poplsb(bishops_mask);
-        total += popcount(BishopAttacks(from, board.occAll) & board.enemyEmptyBB);
-    }
-    while (rooks_mask) {
-        Square from = poplsb(rooks_mask);
-        total += popcount(RookAttacks(from, board.occAll) & board.enemyEmptyBB);
-    }
-    while (queens_mask) {
-        Square from = poplsb(queens_mask);
-        total += popcount(QueenAttacks(from, board.occAll) & board.enemyEmptyBB);
-    }
-    Square from = board.KingSQ(c);
-    total += popcount(KingAttacks(from) & board.enemyEmptyBB);
-    return total;
-}
 }  // namespace Movegen

@@ -14,18 +14,7 @@ Board::Board() {
     halfMoveClock = 0;
     fullMoveNumber = 1;
 
-    pinHV = 0;
-    pinD = 0;
-    doubleCheck = 0;
-    checkMask = DEFAULT_CHECKMASK;
-    seen = 0;
-
     applyFen(DEFAULT_POS, true);
-
-    occEnemy = Enemy(sideToMove);
-    occUs = Us(sideToMove);
-    occAll = All();
-    enemyEmptyBB = ~occUs;
 
     std::fill(std::begin(board), std::end(board), None);
 }
@@ -231,7 +220,9 @@ bool Board::isRepetition(int draw) const {
 
 Result Board::isDrawn(bool inCheck) {
     if (halfMoveClock >= 100) {
-        if (inCheck && !Movegen::hasLegalMoves(*this)) return Result::LOST;
+        Movelist movelist;
+        Movegen::legalmoves<Movetype::ALL>(*this, movelist);
+        if (inCheck && movelist.size == 0) return Result::LOST;
         return Result::DRAWN;
     }
 

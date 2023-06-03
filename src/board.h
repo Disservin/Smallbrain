@@ -151,34 +151,6 @@ class Board {
     // repetition detection
     std::vector<U64> hashHistory;
 
-    // keeps track on how many checks there currently are
-    // 2 = only king moves are valid
-    // 1 = king move, block/capture
-    uint8_t doubleCheck;
-
-    // the path between horizontal/vertical pinners and
-    // the pinned is set
-    U64 pinHV;
-
-    // the path between diagonal pinners and
-    // the pinned is set
-    U64 pinD;
-
-    // all bits set if we are not in check
-    // otherwise the path between the king and the checker
-    // in case of knights giving check only the knight square
-    // is checked
-    U64 checkMask = DEFAULT_CHECKMASK;
-
-    // all squares that are seen by an enemy piece
-    U64 seen;
-
-    // Occupation bitboards
-    U64 occEnemy;
-    U64 occUs;
-    U64 occAll;
-    U64 enemyEmptyBB;
-
     // current hashkey
     U64 hashKey;
 
@@ -266,7 +238,7 @@ class Board {
     U64 allAttackers(Square sq, U64 occupiedBB);
     U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
 
-    void updateHash(Move move, bool isCastling, bool ep);
+    void updateHash(Move move);
 
     /// @brief plays the move on the internal board
     /// @tparam updateNNUE update true = update nnue
@@ -387,7 +359,7 @@ void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White,
     }
 }
 
-inline void Board::updateHash(Move move, bool isCastling, bool ep) {
+inline void Board::updateHash(Move move) {
     PieceType pt = type_of_piece(pieceAtB(from(move)));
     Piece p = makePiece(pt, sideToMove);
     Square from_sq = from(move);
@@ -511,7 +483,7 @@ void Board::makeMove(Move move) {
     // UPDATE HASH
     // *****************************
 
-    updateHash(move, typeOf(move) == CASTLING, ep);
+    updateHash(move);
 
     TTable.prefetchTT(hashKey);
 
@@ -600,8 +572,6 @@ void Board::unmakeMove(Move move) {
     sideToMove = ~sideToMove;
     PieceType pt = type_of_piece(pieceAtB(to_sq));
     Piece p = makePiece(pt, sideToMove);
-
-    const bool isCastling = typeOf(move) == CASTLING;
 
     if (typeOf(move) == CASTLING) {
         Square rookToSq = to_sq;
