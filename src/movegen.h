@@ -116,7 +116,7 @@ U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
         double_check++;
     }
     if (bishop_mask) {
-        int8_t index = lsb(bishop_mask);
+        int8_t index = builtin::lsb(bishop_mask);
 
         // Now we add the path!
         checks |= SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
@@ -129,12 +129,12 @@ U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
          * in that case we have a double check and can return early
          * because king moves dont require the checkmask.
          *******************/
-        if (popcount(rook_mask) > 1) {
+        if (builtin::popcount(rook_mask) > 1) {
             double_check = 2;
             return checks;
         }
 
-        int8_t index = lsb(rook_mask);
+        int8_t index = builtin::lsb(rook_mask);
 
         // Now we add the path!
         checks |= SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
@@ -153,7 +153,7 @@ U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
  * We assume that the king can do rook and bishop moves and generate the attacks
  * for these in case we hit an enemy rook/bishop/queen we might have a possible pin.
  * We need to confirm the pin because there could be 2 or more pieces from our king to
- * the possible pinner. We do this by simply using the popcount
+ * the possible pinner. We do this by simply using the builtin::popcount
  * of our pieces that lay on the pin mask, if it is only 1 piece then that piece is pinned.
  *******************/
 template <Color c>
@@ -163,9 +163,9 @@ U64 pinMaskRooks(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
 
     U64 pin_hv = 0ULL;
     while (rook_mask) {
-        const Square index = poplsb(rook_mask);
+        const Square index = builtin::poplsb(rook_mask);
         const U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
-        if (popcount(possible_pin & occ_us) == 1) pin_hv |= possible_pin;
+        if (builtin::popcount(possible_pin & occ_us) == 1) pin_hv |= possible_pin;
     }
     return pin_hv;
 }
@@ -178,9 +178,9 @@ U64 pinMaskBishops(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
     U64 pin_d = 0ULL;
 
     while (bishop_mask) {
-        const Square index = poplsb(bishop_mask);
+        const Square index = builtin::poplsb(bishop_mask);
         const U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
-        if (popcount(possible_pin & occ_us) == 1) pin_d |= possible_pin;
+        if (builtin::popcount(possible_pin & occ_us) == 1) pin_d |= possible_pin;
     }
 
     return pin_d;
@@ -207,19 +207,19 @@ U64 seenSquares(const Board &board, U64 occ_all) {
     U64 seen = pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
 
     while (knights) {
-        Square index = poplsb(knights);
+        Square index = builtin::poplsb(knights);
         seen |= KnightAttacks(index);
     }
     while (bishops) {
-        Square index = poplsb(bishops);
+        Square index = builtin::poplsb(bishops);
         seen |= BishopAttacks(index, occ_all);
     }
     while (rooks) {
-        Square index = poplsb(rooks);
+        Square index = builtin::poplsb(rooks);
         seen |= RookAttacks(index, occ_all);
     }
 
-    Square index = lsb(board.pieces<KING, c>());
+    Square index = builtin::lsb(board.pieces<KING, c>());
     seen |= KingAttacks(index);
 
     return seen;
@@ -313,7 +313,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
         U64 Promote_Move = singlePush & RANK_PROMO;
 
         while (Promote_Move) {
-            Square to = poplsb(Promote_Move);
+            Square to = builtin::poplsb(Promote_Move);
             movelist.Add(make<PROMOTION>(to + DOWN, to, QUEEN));
             movelist.Add(make<PROMOTION>(to + DOWN, to, ROOK));
             movelist.Add(make<PROMOTION>(to + DOWN, to, KNIGHT));
@@ -321,7 +321,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
         }
 
         while (Promote_Right) {
-            Square to = poplsb(Promote_Right);
+            Square to = builtin::poplsb(Promote_Right);
             movelist.Add(make<PROMOTION>(to + DOWN_LEFT, to, QUEEN));
             movelist.Add(make<PROMOTION>(to + DOWN_LEFT, to, ROOK));
             movelist.Add(make<PROMOTION>(to + DOWN_LEFT, to, KNIGHT));
@@ -329,7 +329,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
         }
 
         while (Promote_Left) {
-            Square to = poplsb(Promote_Left);
+            Square to = builtin::poplsb(Promote_Left);
             movelist.Add(make<PROMOTION>(to + DOWN_RIGHT, to, QUEEN));
             movelist.Add(make<PROMOTION>(to + DOWN_RIGHT, to, ROOK));
             movelist.Add(make<PROMOTION>(to + DOWN_RIGHT, to, KNIGHT));
@@ -346,7 +346,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
      * Add single pushs.
      *******************/
     while (mt != Movetype::CAPTURE && singlePush) {
-        Square to = poplsb(singlePush);
+        Square to = builtin::poplsb(singlePush);
         movelist.Add(make(to + DOWN, to));
     }
 
@@ -354,7 +354,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
      * Add double pushs.
      *******************/
     while (mt != Movetype::CAPTURE && doublePush) {
-        Square to = poplsb(doublePush);
+        Square to = builtin::poplsb(doublePush);
         movelist.Add(make(to + DOWN + DOWN, to));
     }
 
@@ -362,7 +362,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
      * Add right pawn captures.
      *******************/
     while (mt != Movetype::QUIET && Rpawns) {
-        Square to = poplsb(Rpawns);
+        Square to = builtin::poplsb(Rpawns);
         movelist.Add(make(to + DOWN_LEFT, to));
     }
 
@@ -370,7 +370,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
      * Add left pawn captures.
      *******************/
     while (mt != Movetype::QUIET && Lpawns) {
-        Square to = poplsb(Lpawns);
+        Square to = builtin::poplsb(Lpawns);
         movelist.Add(make(to + DOWN_RIGHT, to));
     }
 
@@ -401,7 +401,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
          * For one en passant square two pawns could potentially take there.
          *******************/
         while (epBB) {
-            Square from = poplsb(epBB);
+            Square from = builtin::poplsb(epBB);
             Square to = ep;
 
             /********************
@@ -547,7 +547,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
     movable_square &= check_mask;
 
     while (moves) {
-        Square to = poplsb(moves);
+        Square to = builtin::poplsb(moves);
         movelist.Add(make(king_sq, to));
     }
 
@@ -556,7 +556,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         moves = legalCastleMoves<c, mt>(board, king_sq, seen, pin_hv, occ_all);
 
         while (moves) {
-            Square to = poplsb(moves);
+            Square to = builtin::poplsb(moves);
             movelist.Add(make<CASTLING>(king_sq, to));
         }
     }
@@ -592,37 +592,37 @@ void legalmoves(const Board &board, Movelist &movelist) {
     legalPawnMovesAll<c, mt>(board, movelist, occ_all, occ_enemy, check_mask, pin_hv, pin_d);
 
     while (knights_mask) {
-        Square from = poplsb(knights_mask);
+        Square from = builtin::poplsb(knights_mask);
         U64 moves = legalKnightMoves(from, movable_square);
         while (moves) {
-            Square to = poplsb(moves);
+            Square to = builtin::poplsb(moves);
             movelist.Add(make(from, to));
         }
     }
 
     while (bishops_mask) {
-        Square from = poplsb(bishops_mask);
+        Square from = builtin::poplsb(bishops_mask);
         U64 moves = legalBishopMoves(from, movable_square, pin_d, occ_all);
         while (moves) {
-            Square to = poplsb(moves);
+            Square to = builtin::poplsb(moves);
             movelist.Add(make(from, to));
         }
     }
 
     while (rooks_mask) {
-        Square from = poplsb(rooks_mask);
+        Square from = builtin::poplsb(rooks_mask);
         U64 moves = legalRookMoves(from, movable_square, pin_hv, occ_all);
         while (moves) {
-            Square to = poplsb(moves);
+            Square to = builtin::poplsb(moves);
             movelist.Add(make(from, to));
         }
     }
 
     while (queens_mask) {
-        Square from = poplsb(queens_mask);
+        Square from = builtin::poplsb(queens_mask);
         U64 moves = legalQueenMoves(from, movable_square, pin_d, pin_hv, occ_all);
         while (moves) {
-            Square to = poplsb(moves);
+            Square to = builtin::poplsb(moves);
             movelist.Add(make(from, to));
         }
     }

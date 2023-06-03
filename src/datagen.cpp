@@ -225,7 +225,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             fens.emplace_back(sfens);
         }
 
-        if (useTB && search->board.halfMoveClock >= 40 && popcount(search->board.All()) <= 6)
+        if (useTB && search->board.halfMoveClock >= 40 && builtin::popcount(search->board.All()) <= 6)
             break;
 
         ply++;
@@ -235,8 +235,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     U64 white = search->board.Us<White>();
     U64 black = search->board.Us<Black>();
 
-    // Set correct winningSide for if (useTB && search->board.halfMoveClock >= 40 && popcount(search->board.All()) <= 6)
-    if (useTB && popcount(white | black) <= 6)
+    // Set correct winningSide for if (useTB && search->board.halfMoveClock >= 40 && builtin::popcount(search->board.All()) <= 6)
+    if (useTB && builtin::popcount(white | black) <= 6)
     {
         Square ep = search->board.enPassantSquare <= 63 ? search->board.enPassantSquare : Square(0);
 

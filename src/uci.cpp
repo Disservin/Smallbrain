@@ -283,7 +283,7 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options)
         }
 
         int ttsize = hash * 1024 * 1024 / sizeof(TEntry); // 16 MiB
-        TTable.allocateTT(ttsize * workers);
+        TTable.allocate(ttsize * workers);
 
         UCI_FORCE_STOP = false;
 
@@ -325,7 +325,7 @@ void UCI::ucinewgameInput()
 {
     board.applyFen(DEFAULT_POS);
     Threads.stop_threads();
-    TTable.clearTT();
+    TTable.clear();
 }
 
 void UCI::quit()

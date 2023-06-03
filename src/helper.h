@@ -23,6 +23,7 @@ inline constexpr File square_file(Square sq) { return File(sq & 7); }
 /// @return
 uint8_t square_distance(Square a, Square b);
 
+namespace builtin {
 /// @brief least significant bit instruction
 /// @param mask
 /// @return the least significant bit as the Square
@@ -43,6 +44,11 @@ int popcount(U64 mask);
 /// @return the lsb
 Square poplsb(U64 &mask);
 
+/// @brief prefetches a memory address
+/// @param addr
+void prefetch(const void *addr);
+}  // namespace builtin
+
 // returns diagonal of given square
 inline constexpr uint8_t diagonal_of(Square sq) { return 7 + square_rank(sq) - square_file(sq); }
 
@@ -60,10 +66,6 @@ bool get_square_color(Square square);
 /// @param piece
 /// @return the piecetype
 inline constexpr PieceType type_of_piece(const Piece piece) { return PieceToPieceType[piece]; }
-
-/// @brief prefetches a memory address
-/// @param addr
-void prefetch(const void *addr);
 
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];

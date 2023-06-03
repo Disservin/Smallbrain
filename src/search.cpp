@@ -118,7 +118,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Move ttMove = NO_MOVE;
     bool ttHit = false;
 
-    TEntry *tte = TTable.probeTT(ttHit, ttMove, board.hashKey);
+    TEntry *tte = TTable.probe(ttHit, ttMove, board.hashKey);
     Score ttScore =
         ttHit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     // clang-format off
@@ -198,7 +198,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
     if (!Threads.stop.load(std::memory_order_relaxed))
-        TTable.storeEntry(0, scoreToTT(bestValue, ss->ply), b, board.hashKey, bestMove);
+        TTable.store(0, scoreToTT(bestValue, ss->ply), b, board.hashKey, bestMove);
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
     return bestValue;
@@ -268,7 +268,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     Move ttMove = NO_MOVE;
     bool ttHit = false;
 
-    TEntry *tte = TTable.probeTT(ttHit, ttMove, board.hashKey);
+    TEntry *tte = TTable.probe(ttHit, ttMove, board.hashKey);
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     /********************
@@ -320,7 +320,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
         if (flag == EXACTBOUND || (flag == LOWERBOUND && tbRes >= beta) ||
             (flag == UPPERBOUND && tbRes <= alpha)) {
-            TTable.storeEntry(depth + 6, scoreToTT(tbRes, ss->ply), flag, board.hashKey, NO_MOVE);
+            TTable.store(depth + 6, scoreToTT(tbRes, ss->ply), flag, board.hashKey, NO_MOVE);
             return tbRes;
         }
 
@@ -601,7 +601,7 @@ moves:
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excludedMove && !Threads.stop.load(std::memory_order_relaxed))
-        TTable.storeEntry(depth, scoreToTT(best, ss->ply), b, board.hashKey, bestMove);
+        TTable.store(depth, scoreToTT(best, ss->ply), b, board.hashKey, bestMove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
     return best;
@@ -831,7 +831,7 @@ Score Search::probeWDL() {
     U64 white = board.Us<White>();
     U64 black = board.Us<Black>();
 
-    if (popcount(white | black) > (signed)TB_LARGEST) return VALUE_NONE;
+    if (builtin::popcount(white | black) > (signed)TB_LARGEST) return VALUE_NONE;
 
     Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 
@@ -857,7 +857,7 @@ Score Search::probeWDL() {
 Move Search::probeDTZ() {
     U64 white = board.Us<White>();
     U64 black = board.Us<Black>();
-    if (popcount(white | black) > (signed)TB_LARGEST) return NO_MOVE;
+    if (builtin::popcount(white | black) > (signed)TB_LARGEST) return NO_MOVE;
 
     Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
 

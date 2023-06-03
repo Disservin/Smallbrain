@@ -394,7 +394,7 @@ inline void Board::updateHash(Move move) {
         }
     } else if (pt == ROOK && ((square_rank(from_sq) == Rank::RANK_8 && sideToMove == Black) ||
                               (square_rank(from_sq) == Rank::RANK_1 && sideToMove == White))) {
-        const auto king_sq = lsb(pieces(KING, sideToMove));
+        const auto king_sq = builtin::lsb(pieces(KING, sideToMove));
 
         castlingRights.clearCastlingRight(
             sideToMove, from_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
@@ -418,7 +418,7 @@ inline void Board::updateHash(Move move) {
         hashKey ^= updateKeyPiece(capture, to_sq);
         if (type_of_piece(capture) == ROOK && ((rank == Rank::RANK_1 && sideToMove == Black) ||
                                                (rank == Rank::RANK_8 && sideToMove == White))) {
-            const auto king_sq = lsb(pieces(KING, ~sideToMove));
+            const auto king_sq = builtin::lsb(pieces(KING, ~sideToMove));
 
             castlingRights.clearCastlingRight(
                 ~sideToMove, to_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
@@ -480,10 +480,10 @@ void Board::makeMove(Move move) {
 
     updateHash(move);
 
-    TTable.prefetchTT(hashKey);
+    TTable.prefetch(hashKey);
 
-    const Square kSQ_White = lsb(pieces<KING, White>());
-    const Square kSQ_Black = lsb(pieces<KING, Black>());
+    const Square kSQ_White = builtin::lsb(pieces<KING, White>());
+    const Square kSQ_Black = builtin::lsb(pieces<KING, Black>());
 
     // *****************************
     // UPDATE PIECES AND NNUE

@@ -47,8 +47,8 @@ void Board::refresh() {
         accumulator[Black][i] = hiddenBias[i];
     }
 
-    const Square kSQ_White = lsb(pieces<KING, White>());
-    const Square kSQ_Black = lsb(pieces<KING, Black>());
+    const Square kSQ_White = builtin::lsb(pieces<KING, White>());
+    const Square kSQ_Black = builtin::lsb(pieces<KING, Black>());
 
     for (Square i = SQ_A1; i < NO_SQ; i++) {
         Piece p = board[i];
@@ -111,7 +111,7 @@ void Board::applyFen(const std::string &fen, bool updateAcc) {
                 castlingRights.setCastlingRight<Black, CastleSide::QUEEN_SIDE, File::FILE_A>();
         } else {
             const auto color = isupper(i) ? White : Black;
-            const auto king_sq = lsb(pieces(KING, color));
+            const auto king_sq = builtin::lsb(pieces(KING, color));
             const auto file = static_cast<File>(tolower(i) - 97);
             const auto side = int(file) > int(square_file(king_sq)) ? CastleSide::KING_SIDE
                                                                     : CastleSide::QUEEN_SIDE;
@@ -225,7 +225,7 @@ Result Board::isDrawn(bool inCheck) {
         return Result::DRAWN;
     }
 
-    const auto count = popcount(All());
+    const auto count = builtin::popcount(All());
 
     if (count == 2) return Result::DRAWN;
 
@@ -236,7 +236,7 @@ Result Board::isDrawn(bool inCheck) {
 
     if (count == 4) {
         if (pieces<WhiteBishop>() && pieces<BlackBishop>() &&
-            sameColor(lsb(pieces<WhiteBishop>()), lsb(pieces<BlackBishop>())))
+            sameColor(builtin::lsb(pieces<WhiteBishop>()), builtin::lsb(pieces<BlackBishop>())))
             return Result::DRAWN;
     }
 
@@ -247,7 +247,7 @@ bool Board::nonPawnMat(Color c) const {
     return pieces(KNIGHT, c) | pieces(BISHOP, c) | pieces(ROOK, c) | pieces(QUEEN, c);
 }
 
-Square Board::KingSQ(Color c) const { return lsb(pieces(KING, c)); }
+Square Board::KingSQ(Color c) const { return builtin::lsb(pieces(KING, c)); }
 
 U64 Board::Enemy(Color c) const { return Us(~c); }
 
@@ -300,7 +300,7 @@ void Board::makeNullMove() {
     hashKey ^= updateKeySideToMove();
     if (enPassantSquare != NO_SQ) hashKey ^= updateKeyEnPassant(enPassantSquare);
 
-    TTable.prefetchTT(hashKey);
+    TTable.prefetch(hashKey);
 
     // Set the en passant square to NO_SQ and increment the full move number
     enPassantSquare = NO_SQ;
@@ -458,7 +458,7 @@ bool Board::isPseudoLegal(const Move move) {
         occCopy &= ~(1ull << from_sq);
 
         while (copy) {
-            const Square sq = poplsb(copy);
+            const Square sq = builtin::poplsb(copy);
             if ((1ull << sq) & occCopy) return false;
         }
 
@@ -466,7 +466,7 @@ bool Board::isPseudoLegal(const Move move) {
 
         copy = SQUARES_BETWEEN_BB[from_sq][destKing];
         while (copy) {
-            const Square sq = poplsb(copy);
+            const Square sq = builtin::poplsb(copy);
             if (isSquareAttacked(~color, sq, occ)) return false;
         }
 
@@ -579,7 +579,7 @@ bool Board::see(Move move, int threshold) {
             break;
         }
 
-        occ ^= (1ULL << (lsb(myAttackers & (piecesBB[pt] | piecesBB[pt + 6]))));
+        occ ^= (1ULL << (builtin::lsb(myAttackers & (piecesBB[pt] | piecesBB[pt + 6]))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
             attackers |= BishopAttacks(to_sq, occ) & bishops;
@@ -620,11 +620,11 @@ U64 Board::zobristHash() const {
     U64 bPieces = Us<Black>();
     // Piece hashes
     while (wPieces) {
-        Square sq = poplsb(wPieces);
+        Square sq = builtin::poplsb(wPieces);
         hash ^= updateKeyPiece(pieceAtB(sq), sq);
     }
     while (bPieces) {
-        Square sq = poplsb(bPieces);
+        Square sq = builtin::poplsb(bPieces);
         hash ^= updateKeyPiece(pieceAtB(sq), sq);
     }
     // Ep hash
