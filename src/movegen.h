@@ -238,7 +238,7 @@ constexpr U64 shift(const U64 b) {
 /// @param board
 /// @param movelist
 template <Color c, Movetype mt>
-void LegalPawnMovesAll(const Board &board, Movelist &movelist, U64 occAll, U64 occEnemy,
+void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occAll, U64 occEnemy,
                        U64 checkMask, U64 pinHV, U64 pinD) {
     const U64 pawns_mask = board.pieces<PAWN, c>();
 
@@ -407,23 +407,23 @@ void LegalPawnMovesAll(const Board &board, Movelist &movelist, U64 occAll, U64 o
     }
 }
 
-inline U64 LegalKnightMoves(Square sq, U64 movableSquare) {
+inline U64 legalKnightMoves(Square sq, U64 movableSquare) {
     return KnightAttacks(sq) & movableSquare;
 }
 
-inline U64 LegalBishopMoves(Square sq, U64 movableSquare, U64 pinMask, U64 occAll) {
+inline U64 legalBishopMoves(Square sq, U64 movableSquare, U64 pinMask, U64 occAll) {
     // The Bishop is pinned diagonally thus can only move diagonally.
     if (pinMask & (1ULL << sq)) return BishopAttacks(sq, occAll) & movableSquare & pinMask;
     return BishopAttacks(sq, occAll) & movableSquare;
 }
 
-inline U64 LegalRookMoves(Square sq, U64 movableSquare, U64 pinMask, U64 occAll) {
+inline U64 legalRookMoves(Square sq, U64 movableSquare, U64 pinMask, U64 occAll) {
     // The Rook is pinned horizontally thus can only move horizontally.
     if (pinMask & (1ULL << sq)) return RookAttacks(sq, occAll) & movableSquare & pinMask;
     return RookAttacks(sq, occAll) & movableSquare;
 }
 
-inline U64 LegalQueenMoves(Square sq, U64 movableSquare, U64 pinD, U64 pinHV, U64 occAll) {
+inline U64 legalQueenMoves(Square sq, U64 movableSquare, U64 pinD, U64 pinHV, U64 occAll) {
     U64 moves = 0ULL;
     if (pinD & (1ULL << sq))
         moves |= BishopAttacks(sq, occAll) & movableSquare & pinD;
@@ -438,7 +438,7 @@ inline U64 LegalQueenMoves(Square sq, U64 movableSquare, U64 pinD, U64 pinHV, U6
 }
 
 template <Movetype mt>
-U64 LegalKingMoves(Square sq, U64 movableSquare, U64 seen) {
+U64 legalKingMoves(Square sq, U64 movableSquare, U64 seen) {
     return KingAttacks(sq) & movableSquare & ~seen;
 }
 
@@ -482,7 +482,7 @@ inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pinHV, 
 
 // all legal moves for a position
 template <Color c, Movetype mt>
-void legalmoves(Board &board, Movelist &movelist) {
+void legalmoves(const Board &board, Movelist &movelist) {
     /********************
      * The size of the movelist might not
      * be 0! This is done on purpose since it enables
@@ -520,7 +520,7 @@ void legalmoves(Board &board, Movelist &movelist) {
     else  // QUIET moves
         movableSquare = ~occAll;
 
-    U64 moves = LegalKingMoves<mt>(king_sq, movableSquare, seen);
+    U64 moves = legalKingMoves<mt>(king_sq, movableSquare, seen);
 
     movableSquare &= check_mask;
 
@@ -567,11 +567,11 @@ void legalmoves(Board &board, Movelist &movelist) {
     /********************
      * Add the moves to the movelist.
      *******************/
-    LegalPawnMovesAll<c, mt>(board, movelist, occAll, occEnemy, check_mask, pinHV, pinD);
+    legalPawnMovesAll<c, mt>(board, movelist, occAll, occEnemy, check_mask, pinHV, pinD);
 
     while (knights_mask) {
         Square from = poplsb(knights_mask);
-        U64 moves = LegalKnightMoves(from, movableSquare);
+        U64 moves = legalKnightMoves(from, movableSquare);
         while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make(from, to));
@@ -580,7 +580,7 @@ void legalmoves(Board &board, Movelist &movelist) {
 
     while (bishops_mask) {
         Square from = poplsb(bishops_mask);
-        U64 moves = LegalBishopMoves(from, movableSquare, pinD, occAll);
+        U64 moves = legalBishopMoves(from, movableSquare, pinD, occAll);
         while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make(from, to));
@@ -589,7 +589,7 @@ void legalmoves(Board &board, Movelist &movelist) {
 
     while (rooks_mask) {
         Square from = poplsb(rooks_mask);
-        U64 moves = LegalRookMoves(from, movableSquare, pinHV, occAll);
+        U64 moves = legalRookMoves(from, movableSquare, pinHV, occAll);
         while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make(from, to));
@@ -598,7 +598,7 @@ void legalmoves(Board &board, Movelist &movelist) {
 
     while (queens_mask) {
         Square from = poplsb(queens_mask);
-        U64 moves = LegalQueenMoves(from, movableSquare, pinD, pinHV, occAll);
+        U64 moves = legalQueenMoves(from, movableSquare, pinD, pinHV, occAll);
         while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make(from, to));
@@ -611,7 +611,7 @@ void legalmoves(Board &board, Movelist &movelist) {
  * Color template.
  *******************/
 template <Movetype mt>
-void legalmoves(Board &board, Movelist &movelist) {
+void legalmoves(const Board &board, Movelist &movelist) {
     if (board.sideToMove == White)
         legalmoves<White, mt>(board, movelist);
     else
