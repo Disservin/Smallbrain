@@ -403,7 +403,7 @@ inline void Board::updateHash(Move move) {
         if (typeOf(move) == ENPASSANT) {
             hashKey ^= updateKeyPiece(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8));
         } else if (std::abs(from_sq - to_sq) == 16) {
-            U64 epMask = PawnAttacks(Square(to_sq ^ 8), sideToMove);
+            U64 epMask = Attacks::Pawn(Square(to_sq ^ 8), sideToMove);
             if (epMask & pieces(PAWN, ~sideToMove)) {
                 enPassantSquare = Square(to_sq ^ 8);
                 hashKey ^= updateKeyEnPassant(enPassantSquare);

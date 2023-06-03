@@ -16,10 +16,10 @@ static auto init_squares_between = []() constexpr {
             if (sq1 == sq2)
                 squares_between_bb[sq1][sq2] = 0ull;
             else if (square_file(sq1) == square_file(sq2) || square_rank(sq1) == square_rank(sq2))
-                squares_between_bb[sq1][sq2] = RookAttacks(sq1, sqs) & RookAttacks(sq2, sqs);
+                squares_between_bb[sq1][sq2] = Attacks::Rook(sq1, sqs) & Attacks::Rook(sq2, sqs);
             else if (diagonal_of(sq1) == diagonal_of(sq2) ||
                      anti_diagonal_of(sq1) == anti_diagonal_of(sq2))
-                squares_between_bb[sq1][sq2] = BishopAttacks(sq1, sqs) & BishopAttacks(sq2, sqs);
+                squares_between_bb[sq1][sq2] = Attacks::Bishop(sq1, sqs) & Attacks::Bishop(sq2, sqs);
         }
     }
     return squares_between_bb;
@@ -94,12 +94,12 @@ U64 pawnRightAttacks(const U64 pawns) {
 template <Color c>
 U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
     U64 checks = 0ULL;
-    U64 pawn_mask = board.pieces<PAWN, ~c>() & PawnAttacks(sq, c);
-    U64 knight_mask = board.pieces<KNIGHT, ~c>() & KnightAttacks(sq);
+    U64 pawn_mask = board.pieces<PAWN, ~c>() & Attacks::Pawn(sq, c);
+    U64 knight_mask = board.pieces<KNIGHT, ~c>() & Attacks::Knight(sq);
     U64 bishop_mask =
-        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & BishopAttacks(sq, occ_all);
+        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & Attacks::Bishop(sq, occ_all);
     U64 rook_mask =
-        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, occ_all);
+        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & Attacks::Rook(sq, occ_all);
 
     /********************
      * We keep track of the amount of checks, in case there are
@@ -159,7 +159,7 @@ U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
 template <Color c>
 U64 pinMaskRooks(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
     U64 rook_mask =
-        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, occ_enemy);
+        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & Attacks::Rook(sq, occ_enemy);
 
     U64 pin_hv = 0ULL;
     while (rook_mask) {
@@ -173,7 +173,7 @@ U64 pinMaskRooks(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
 template <Color c>
 U64 pinMaskBishops(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
     U64 bishop_mask =
-        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & BishopAttacks(sq, occ_enemy);
+        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & Attacks::Bishop(sq, occ_enemy);
 
     U64 pin_d = 0ULL;
 
@@ -208,19 +208,19 @@ U64 seenSquares(const Board &board, U64 occ_all) {
 
     while (knights) {
         Square index = builtin::poplsb(knights);
-        seen |= KnightAttacks(index);
+        seen |= Attacks::Knight(index);
     }
     while (bishops) {
         Square index = builtin::poplsb(bishops);
-        seen |= BishopAttacks(index, occ_all);
+        seen |= Attacks::Bishop(index, occ_all);
     }
     while (rooks) {
         Square index = builtin::poplsb(rooks);
-        seen |= RookAttacks(index, occ_all);
+        seen |= Attacks::Rook(index, occ_all);
     }
 
     Square index = builtin::lsb(board.pieces<KING, c>());
-    seen |= KingAttacks(index);
+    seen |= Attacks::King(index);
 
     return seen;
 }
@@ -395,7 +395,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
         const U64 enemyQueenRook = board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>();
 
         const bool isPossiblePin = kingMask && enemyQueenRook;
-        U64 epBB = PawnAttacks(ep, ~c) & pawnsLR;
+        U64 epBB = Attacks::Pawn(ep, ~c) & pawnsLR;
 
         /********************
          * For one en passant square two pawns could potentially take there.
@@ -421,7 +421,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
              * If thats the case then the move is illegal and we can break immediately.
              *******************/
             if (isPossiblePin &&
-                (RookAttacks(kSQ, occ_all & ~connectingPawns) & enemyQueenRook) != 0)
+                (Attacks::Rook(kSQ, occ_all & ~connectingPawns) & enemyQueenRook) != 0)
                 break;
 
             movelist.Add(make<ENPASSANT>(from, to));
@@ -430,30 +430,30 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
 }
 
 inline U64 legalKnightMoves(Square sq, U64 movable_square) {
-    return KnightAttacks(sq) & movable_square;
+    return Attacks::Knight(sq) & movable_square;
 }
 
 inline U64 legalBishopMoves(Square sq, U64 movable_square, U64 pinMask, U64 occ_all) {
     // The Bishop is pinned diagonally thus can only move diagonally.
-    if (pinMask & (1ULL << sq)) return BishopAttacks(sq, occ_all) & movable_square & pinMask;
-    return BishopAttacks(sq, occ_all) & movable_square;
+    if (pinMask & (1ULL << sq)) return Attacks::Bishop(sq, occ_all) & movable_square & pinMask;
+    return Attacks::Bishop(sq, occ_all) & movable_square;
 }
 
 inline U64 legalRookMoves(Square sq, U64 movable_square, U64 pinMask, U64 occ_all) {
     // The Rook is pinned horizontally thus can only move horizontally.
-    if (pinMask & (1ULL << sq)) return RookAttacks(sq, occ_all) & movable_square & pinMask;
-    return RookAttacks(sq, occ_all) & movable_square;
+    if (pinMask & (1ULL << sq)) return Attacks::Rook(sq, occ_all) & movable_square & pinMask;
+    return Attacks::Rook(sq, occ_all) & movable_square;
 }
 
 inline U64 legalQueenMoves(Square sq, U64 movable_square, U64 pin_d, U64 pin_hv, U64 occ_all) {
     U64 moves = 0ULL;
     if (pin_d & (1ULL << sq))
-        moves |= BishopAttacks(sq, occ_all) & movable_square & pin_d;
+        moves |= Attacks::Bishop(sq, occ_all) & movable_square & pin_d;
     else if (pin_hv & (1ULL << sq))
-        moves |= RookAttacks(sq, occ_all) & movable_square & pin_hv;
+        moves |= Attacks::Rook(sq, occ_all) & movable_square & pin_hv;
     else {
-        moves |= RookAttacks(sq, occ_all) & movable_square;
-        moves |= BishopAttacks(sq, occ_all) & movable_square;
+        moves |= Attacks::Rook(sq, occ_all) & movable_square;
+        moves |= Attacks::Bishop(sq, occ_all) & movable_square;
     }
 
     return moves;
@@ -461,7 +461,7 @@ inline U64 legalQueenMoves(Square sq, U64 movable_square, U64 pin_d, U64 pin_hv,
 
 template <Movetype mt>
 U64 legalKingMoves(Square sq, U64 movable_square, U64 seen) {
-    return KingAttacks(sq) & movable_square & ~seen;
+    return Attacks::King(sq) & movable_square & ~seen;
 }
 
 constexpr Square relativeSquare(Color c, Square s) {

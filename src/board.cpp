@@ -261,11 +261,11 @@ U64 Board::All() const { return Us<White>() | Us<Black>(); }
 Color Board::colorOf(Square loc) const { return Color((pieceAtB(loc) / 6)); }
 
 bool Board::isSquareAttacked(Color c, Square sq, U64 occ) const {
-    if (pieces(PAWN, c) & PawnAttacks(sq, ~c)) return true;
-    if (pieces(KNIGHT, c) & KnightAttacks(sq)) return true;
-    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & BishopAttacks(sq, occ)) return true;
-    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & RookAttacks(sq, occ)) return true;
-    if (pieces(KING, c) & KingAttacks(sq)) return true;
+    if (pieces(PAWN, c) & Attacks::Pawn(sq, ~c)) return true;
+    if (pieces(KNIGHT, c) & Attacks::Knight(sq)) return true;
+    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & Attacks::Bishop(sq, occ)) return true;
+    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & Attacks::Rook(sq, occ)) return true;
+    if (pieces(KING, c) & Attacks::King(sq)) return true;
     return false;
 }
 
@@ -281,14 +281,14 @@ U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) {
     U64 attackingKing = pieces(KING, attackerColor);
     U64 attackingPawns = pieces(PAWN, attackerColor);
 
-    U64 interCardinalRays = BishopAttacks(sq, occupiedBB);
-    U64 cardinalRaysRays = RookAttacks(sq, occupiedBB);
+    U64 interCardinalRays = Attacks::Bishop(sq, occupiedBB);
+    U64 cardinalRaysRays = Attacks::Rook(sq, occupiedBB);
 
     U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
     attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
-    attackers |= KnightAttacks(sq) & attackingKnights;
-    attackers |= KingAttacks(sq) & attackingKing;
-    attackers |= PawnAttacks(sq, ~attackerColor) & attackingPawns;
+    attackers |= Attacks::Knight(sq) & attackingKnights;
+    attackers |= Attacks::King(sq) & attackingKing;
+    attackers |= Attacks::Pawn(sq, ~attackerColor) & attackingPawns;
     return attackers;
 }
 
@@ -345,8 +345,8 @@ bool Board::isLegal(const Move move) {
         bb |= 1ull << to_sq;
         bb &= ~(1ull << capSq);
 
-        return !((RookAttacks(kSQ, bb) & (pieces(ROOK, ~color) | pieces(QUEEN, ~color))) ||
-                 (BishopAttacks(kSQ, bb) & (pieces(BISHOP, ~color) | pieces(QUEEN, ~color))));
+        return !((Attacks::Rook(kSQ, bb) & (pieces(ROOK, ~color) | pieces(QUEEN, ~color))) ||
+                 (Attacks::Bishop(kSQ, bb) & (pieces(BISHOP, ~color) | pieces(QUEEN, ~color))));
     }
 
     const bool isCastlingWhite = p == WhiteKing && capture == WhiteRook;
@@ -523,17 +523,17 @@ bool Board::isPseudoLegal(const Move move) {
 U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ) {
     switch (pt) {
         case PAWN:
-            return PawnAttacks(sq, c);
+            return Attacks::Pawn(sq, c);
         case KNIGHT:
-            return KnightAttacks(sq);
+            return Attacks::Knight(sq);
         case BISHOP:
-            return BishopAttacks(sq, occ);
+            return Attacks::Bishop(sq, occ);
         case ROOK:
-            return RookAttacks(sq, occ);
+            return Attacks::Rook(sq, occ);
         case QUEEN:
-            return QueenAttacks(sq, occ);
+            return Attacks::Queen(sq, occ);
         case KING:
-            return KingAttacks(sq);
+            return Attacks::King(sq);
         case NONETYPE:
             return 0ULL;
         default:
@@ -582,8 +582,8 @@ bool Board::see(Move move, int threshold) {
         occ ^= (1ULL << (builtin::lsb(myAttackers & (piecesBB[pt] | piecesBB[pt + 6]))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
-            attackers |= BishopAttacks(to_sq, occ) & bishops;
-        if (pt == ROOK || pt == QUEEN) attackers |= RookAttacks(to_sq, occ) & rooks;
+            attackers |= Attacks::Bishop(to_sq, occ) & bishops;
+        if (pt == ROOK || pt == QUEEN) attackers |= Attacks::Rook(to_sq, occ) & rooks;
     }
     return sT != colorOf(from_sq);
 }

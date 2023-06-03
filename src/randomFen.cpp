@@ -47,13 +47,13 @@ U64 randomFenBoard::All()
 
 bool randomFenBoard::isAttacked(int sq, Color c)
 {
-    if (Pawns(c) & PawnAttacks(sq, ~c))
+    if (Pawns(c) & Attacks::Pawn(sq, ~c))
         return true;
-    if (Knights(c) & KnightAttacks(sq))
+    if (Knights(c) & Attacks::Knight(sq))
         return true;
-    if ((Bishops(c) | Queens(c)) & BishopAttacks(sq, All()))
+    if ((Bishops(c) | Queens(c)) & Attacks::Bishop(sq, All()))
         return true;
-    if ((Rooks(c) | Queens(c)) & RookAttacks(sq, All()))
+    if ((Rooks(c) | Queens(c)) & Attacks::Rook(sq, All()))
         return true;
     if (Kings(c) & KING_ATTACKS_TABLE[sq])
         return true;
