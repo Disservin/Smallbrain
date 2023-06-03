@@ -604,7 +604,7 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     os << "\n\n";
     os << "Fen: " << b.getFen() << "\n";
     os << "Side to move: " << static_cast<int>(b.sideToMove) << "\n";
-    // os << "Castling rights: " << static_cast<int>(b.castlingRights) << "\n";
+    os << "Castling: " << b.getCastleString() << "\n";
     os << "Halfmoves: " << static_cast<int>(b.halfMoveClock) << "\n";
     os << "Fullmoves: " << static_cast<int>(b.fullMoveNumber) / 2 << "\n";
     os << "EP: " << static_cast<int>(b.enPassantSquare) << "\n";
@@ -720,13 +720,18 @@ Move convertUciToMove(const Board &board, const std::string &input) {
     // convert to king captures rook
     if (!board.chess960 && piece == KING && square_distance(target, source) == 2) {
         target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
+        return make<Move::CASTLING>(source, target);
+    }
+
+    if (piece == PAWN && target == board.enPassantSquare) {
+        return make<Move::ENPASSANT>(source, target);
     }
 
     switch (input.length()) {
         case 4:
             return make(source, target);
         case 5:
-            return make(source, target, pieceToInt[input.at(4)]);
+            return make<Move::PROMOTION>(source, target, pieceToInt[input.at(4)]);
         default:
             std::cout << "FALSE INPUT" << std::endl;
             return make(NO_SQ, NO_SQ);
