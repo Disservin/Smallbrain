@@ -154,14 +154,12 @@ class Board {
     // current hashkey
     U64 hashKey;
 
-    std::array<std::array<U64, MAX_SQ>, MAX_SQ> SQUARES_BETWEEN_BB;
-
     std::vector<State> stateHistory;
 
     U64 piecesBB[12] = {};
     std::array<Piece, MAX_SQ> board;
 
-    /// @brief constructor for the board, loads startpos and initializes SQUARES_BETWEEN_BB array
+    /// @brief constructor for the board, loads startpos
     Board();
 
     std::string getCastleString() const;
@@ -311,9 +309,6 @@ class Board {
 
     /// @brief previous accumulators
     std::vector<NNUE::accumulator> accumulatorStack;
-
-    /// @brief initialize SQUARES_BETWEEN_BB array
-    void initializeLookupTables();
 
     // update the hash
 

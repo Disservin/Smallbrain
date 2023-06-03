@@ -6,6 +6,27 @@
 #include "helper.h"
 #include "types.h"
 
+static auto init_squares_between = []() constexpr {
+    // initialize squares between table
+    std::array<std::array<U64, 64>, 64> squares_between_bb{};
+    U64 sqs = 0;
+    for (Square sq1 = SQ_A1; sq1 <= SQ_H8; ++sq1) {
+        for (Square sq2 = SQ_A1; sq2 <= SQ_H8; ++sq2) {
+            sqs = (1ULL << sq1) | (1ULL << sq2);
+            if (sq1 == sq2)
+                squares_between_bb[sq1][sq2] = 0ull;
+            else if (square_file(sq1) == square_file(sq2) || square_rank(sq1) == square_rank(sq2))
+                squares_between_bb[sq1][sq2] = RookAttacks(sq1, sqs) & RookAttacks(sq2, sqs);
+            else if (diagonal_of(sq1) == diagonal_of(sq2) ||
+                     anti_diagonal_of(sq1) == anti_diagonal_of(sq2))
+                squares_between_bb[sq1][sq2] = BishopAttacks(sq1, sqs) & BishopAttacks(sq2, sqs);
+        }
+    }
+    return squares_between_bb;
+};
+
+static const std::array<std::array<U64, 64>, 64> SQUARES_BETWEEN_BB = init_squares_between();
+
 struct ExtMove {
     int value = 0;
     Move move = NO_MOVE;
@@ -98,7 +119,7 @@ U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
         int8_t index = lsb(bishop_mask);
 
         // Now we add the path!
-        checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
+        checks |= SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         double_check++;
     }
     if (rook_mask) {
@@ -116,7 +137,7 @@ U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
         int8_t index = lsb(rook_mask);
 
         // Now we add the path!
-        checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
+        checks |= SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         double_check++;
     }
 
@@ -143,7 +164,7 @@ U64 pinMaskRooks(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
     U64 pin_hv = 0ULL;
     while (rook_mask) {
         const Square index = poplsb(rook_mask);
-        const U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+        const U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (popcount(possible_pin & occ_us) == 1) pin_hv |= possible_pin;
     }
     return pin_hv;
@@ -158,7 +179,7 @@ U64 pinMaskBishops(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
 
     while (bishop_mask) {
         const Square index = poplsb(bishop_mask);
-        const U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+        const U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (popcount(possible_pin & occ_us) == 1) pin_d |= possible_pin;
     }
 
@@ -464,8 +485,8 @@ inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pin_hv,
 
         const auto from_rook_sq = file_rank_square(rights.getRookFile(c, side), square_rank(sq));
 
-        const U64 not_occ_path = board.SQUARES_BETWEEN_BB[sq][from_rook_sq];
-        const U64 not_attacked_path = board.SQUARES_BETWEEN_BB[sq][end_king_sq];
+        const U64 not_occ_path = SQUARES_BETWEEN_BB[sq][from_rook_sq];
+        const U64 not_attacked_path = SQUARES_BETWEEN_BB[sq][end_king_sq];
         const U64 empty_not_attacked = ~seen & ~(occ_all & ~(1ull << from_rook_sq));
         const U64 withoutRook = occ_all & ~(1ull << from_rook_sq);
 
