@@ -7,18 +7,16 @@
 
 class UCI {
    public:
-    UCI();
-
     int uciLoop();
 
    private:
-    Board board_ = Board();
+    Board board_ = Board(DEFAULT_POS);
     uciOptions options_ = uciOptions();
 
     Movelist searchmoves_;
 
-    int thread_count_;
-    bool use_tb_;
+    int thread_count_ = 1;
+    bool use_tb_ = false;
 
     void processCommand(std::string command);
 

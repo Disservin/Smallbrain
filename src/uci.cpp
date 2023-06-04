@@ -16,17 +16,6 @@ extern ThreadPool Threads;
 
 uciOptions options_ = uciOptions();
 
-UCI::UCI() {
-    use_tb_ = false;
-
-    thread_count_ = 1;
-
-    // load default position
-    board_.applyFen(DEFAULT_POS);
-
-    // Initialize reductions used in search
-}
-
 int UCI::uciLoop() {
     // catching inputs
     std::string input;
