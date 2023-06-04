@@ -1,7 +1,7 @@
 #pragma once
 #include <random>
 
-namespace random {
+namespace rand {
 static std::random_device rd;
 static std::mt19937 generator(rd());
-}  // namespace random
+}  // namespace rand
