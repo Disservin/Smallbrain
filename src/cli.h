@@ -63,7 +63,7 @@ class ArgumentsParser {
         return ss.str();
     }
 
-    int parse(int argc, char const *argv[]) {
+    [[nodiscard]] int parse(int argc, char const *argv[]) {
         int status = 0;
         for (int i = 1; i < argc; i++) {
             const std::string arg = argv[i];
@@ -102,26 +102,5 @@ void parseValue(int &i, int argc, const char *argv[], T &argumentValue) {
             argumentValue = std::string(argv[i]) == "true";
         else
             argumentValue = argv[i];
-    }
-}
-
-inline void parseDashArguments(int &i, int argc, char const *argv[],
-                               std::function<void(std::string, std::string)> func) {
-    while (i + 1 < argc && argv[i + 1][0] != '-' && i++) {
-        std::string param = argv[i];
-        std::size_t pos = param.find('=');
-        std::string key = param.substr(0, pos);
-        std::string value = param.substr(pos + 1);
-
-        char quote = value[0];
-
-        if (quote == '"' || quote == '\'') {
-            while (i + 1 < argc && argv[i + 1][0] != quote) {
-                i++;
-                value += " " + std::string(argv[i]);
-            }
-        }
-
-        func(key, value);
     }
 }

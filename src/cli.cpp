@@ -16,6 +16,27 @@
 extern std::atomic_bool UCI_FORCE_STOP;
 extern ThreadPool Threads;
 
+void parseDashArguments(int &i, int argc, char const *argv[],
+                        std::function<void(std::string, std::string)> func) {
+    while (i + 1 < argc && argv[i + 1][0] != '-' && i++) {
+        std::string param = argv[i];
+        std::size_t pos = param.find('=');
+        std::string key = param.substr(0, pos);
+        std::string value = param.substr(pos + 1);
+
+        char quote = value[0];
+
+        if (quote == '"' || quote == '\'') {
+            while (i + 1 < argc && argv[i + 1][0] != quote) {
+                i++;
+                value += " " + std::string(argv[i]);
+            }
+        }
+
+        func(key, value);
+    }
+}
+
 class Version : public Argument {
    public:
     int parse(int &i, int, char const *[]) override {
