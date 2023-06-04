@@ -92,7 +92,7 @@ class Search {
 
     // data generation is not allowed to print to the console
     // and sets this to false
-    bool silent = false;
+    bool silent = true;
 
     bool use_tb = false;
 
