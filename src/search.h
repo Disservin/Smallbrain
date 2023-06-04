@@ -85,7 +85,7 @@ class Search {
     int id = 0;
 
     // time will be check if == 0
-    int checkTime = 0;
+    int check_time = 0;
 
     // selective depth
     uint8_t seldepth = 0;

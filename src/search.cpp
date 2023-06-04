@@ -769,7 +769,7 @@ void Search::startThinking() {
      * and initialise.
      *******************/
     t0 = TimePoint::now();
-    checkTime = 0;
+    check_time = 0;
 
     /********************
      * Play dtz move when time is limited
@@ -793,9 +793,9 @@ bool Search::limitReached() {
 
     if (limit.nodes != 0 && nodes >= limit.nodes) return true;
 
-    if (--checkTime > 0) return false;
+    if (--check_time > 0) return false;
 
-    checkTime = 2047;
+    check_time = 2047;
 
     if (limit.time.maximum != 0) {
         auto ms = getTime();
