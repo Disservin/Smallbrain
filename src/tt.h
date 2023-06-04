@@ -14,7 +14,7 @@ PACK(struct TEntry {
 
 class TranspositionTable {
    private:
-    std::vector<TEntry> entries;
+    std::vector<TEntry> entries_;
 
    public:
     TranspositionTable();
@@ -38,7 +38,7 @@ class TranspositionTable {
     /// @return
     uint32_t index(U64 key) const;
 
-    /// @brief allocate Transposition Table and initialize entries
+    /// @brief allocate Transposition Table and initialize entries_
     void allocate(uint64_t size);
 
     /// @brief clear the TT

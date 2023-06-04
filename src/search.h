@@ -60,14 +60,14 @@ class Search {
     Table<int16_t, 2, MAX_SQ, MAX_SQ> history = {};
 
     // Killer moves for quiet move ordering
-    Table<Move, 2, MAX_PLY + 1> killerMoves = {};
+    Table<Move, 2, MAX_PLY + 1> killer_moves = {};
 
     // node count logic
-    Table<U64, MAX_SQ, MAX_SQ> spentEffort = {};
+    Table<U64, MAX_SQ, MAX_SQ> spent_effort = {};
 
     // pv collection
-    Table<uint8_t, MAX_PLY> pvLength = {};
-    Table<Move, MAX_PLY, MAX_PLY> pvTable = {};
+    Table<uint8_t, MAX_PLY> pv_length = {};
+    Table<Move, MAX_PLY, MAX_PLY> pv_table = {};
 
     // GUI might send
     // go searchmoves e2e4
@@ -92,9 +92,9 @@ class Search {
 
     // data generation is not allowed to print to the console
     // and sets this to false
-    bool normalSearch = true;
+    bool normal_search = true;
 
-    bool useTB = false;
+    bool use_tb = false;
 
     void startThinking();
 
@@ -137,7 +137,7 @@ class Search {
 template <History type>
 int getHistory(Move move, Move secondMove, Search &search) {
     if constexpr (type == History::HH)
-        return search.history[search.board.sideToMove][from(move)][to(move)];
+        return search.history[search.board.side_to_move][from(move)][to(move)];
     else if constexpr (type == History::COUNTER)
         return search.counters[from(move)][to(move)];
     else if constexpr (type == History::CONST)

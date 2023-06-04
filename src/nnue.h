@@ -1,9 +1,9 @@
 #pragma once
 
 #include <array>
-#include <cstdint> // int32_t
-#include <cstdio>  // file reading
-#include <cstring> // memcpy
+#include <cstdint>  // int32_t
+#include <cstdio>   // file reading
+#include <cstring>  // memcpy
 
 #include "types.h"
 
@@ -18,8 +18,7 @@ extern int16_t hiddenBias[N_HIDDEN_SIZE];
 extern int16_t hiddenWeights[N_HIDDEN_SIZE * 2];
 extern int32_t outputBias[OUTPUT_BIAS];
 
-namespace NNUE
-{
+namespace NNUE {
 
 // clang-format off
 constexpr int KING_BUCKET[64] {
@@ -43,14 +42,17 @@ int16_t relu(int16_t x);
 void init(const char *filename);
 
 // activate a certain input and update the accumulator
-void activate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_White, Square kSq_Black);
+void activate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_White,
+              Square kSq_Black);
 
 // deactivate a certain input and update the accumulator
-void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_White, Square kSq_Black);
+void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_White,
+                Square kSq_Black);
 
 // activate and deactivate, mirrors the logic of a move
-void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p, Square kSQ_White, Square kSq_Black);
+void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p, Square kSQ_White,
+          Square kSq_Black);
 
 // return the nnue evaluation
 int32_t output(const NNUE::accumulator &accumulator, Color side);
-} // namespace NNUE
+}  // namespace NNUE

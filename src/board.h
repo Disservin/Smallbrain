@@ -118,45 +118,45 @@ class CastlingRights {
 };
 
 struct State {
-    Square enPassant{};
+    Square en_passant{};
     CastlingRights castling{};
-    uint8_t halfMove{};
-    Piece capturedPiece = None;
-    State(Square enpassantCopy = {}, CastlingRights castlingRightsCopy = {},
-          uint8_t halfMoveCopy = {}, Piece capturedPieceCopy = None)
-        : enPassant(enpassantCopy),
-          castling(castlingRightsCopy),
-          halfMove(halfMoveCopy),
-          capturedPiece(capturedPieceCopy) {}
+    uint8_t half_move{};
+    Piece captured_piece = None;
+    State(Square enpassant_copy = {}, CastlingRights castling_rights_copy = {},
+          uint8_t half_move_copy = {}, Piece captured_piece_copy = None)
+        : en_passant(enpassant_copy),
+          castling(castling_rights_copy),
+          half_move(half_move_copy),
+          captured_piece(captured_piece_copy) {}
 };
 
 class Board {
    public:
     bool chess960 = false;
 
-    Color sideToMove;
+    Color side_to_move;
 
     // NO_SQ when enpassant is not possible
-    Square enPassantSquare;
+    Square en_passant_square;
 
-    CastlingRights castlingRights;
+    CastlingRights castling_rights;
 
     // halfmoves start at 0
-    uint8_t halfMoveClock;
+    uint8_t half_move_clock;
 
     // full moves start at 1
-    uint16_t fullMoveNumber;
+    uint16_t full_move_number;
 
     // keeps track of previous hashes, used for
     // repetition detection
-    std::vector<U64> hashHistory;
+    std::vector<U64> hash_history;
 
     // current hashkey
-    U64 hashKey;
+    U64 hash_key;
 
-    std::vector<State> stateHistory;
+    std::vector<State> state_history;
 
-    U64 piecesBB[12] = {};
+    U64 pieces_bb[12] = {};
     std::array<Piece, MAX_SQ> board;
 
     /// @brief constructor for the board, loads startpos
@@ -200,8 +200,8 @@ class Board {
     U64 Us(Color c) const;
     template <Color c>
     U64 Us() const {
-        return piecesBB[PAWN + c * 6] | piecesBB[KNIGHT + c * 6] | piecesBB[BISHOP + c * 6] |
-               piecesBB[ROOK + c * 6] | piecesBB[QUEEN + c * 6] | piecesBB[KING + c * 6];
+        return pieces_bb[PAWN + c * 6] | pieces_bb[KNIGHT + c * 6] | pieces_bb[BISHOP + c * 6] |
+               pieces_bb[ROOK + c * 6] | pieces_bb[QUEEN + c * 6] | pieces_bb[KING + c * 6];
     }
 
     U64 All() const;
@@ -210,15 +210,15 @@ class Board {
 
     template <Piece p>
     constexpr U64 pieces() const {
-        return piecesBB[p];
+        return pieces_bb[p];
     }
 
     template <PieceType p, Color c>
     constexpr U64 pieces() const {
-        return piecesBB[p + c * 6];
+        return pieces_bb[p + c * 6];
     }
 
-    constexpr U64 pieces(PieceType p, Color c) const { return piecesBB[p + c * 6]; }
+    constexpr U64 pieces(PieceType p, Color c) const { return pieces_bb[p + c * 6]; }
 
     /// @brief returns the color of a piece at a square
     /// @param loc
@@ -283,10 +283,6 @@ class Board {
     void movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White = SQ_A1,
                    Square kSQ_Black = SQ_A1);
 
-    bool isLegal(const Move move);
-
-    bool isPseudoLegal(const Move move);
-
     U64 attacksByPiece(PieceType pt, Square sq, Color c, U64 occupied);
 
     /********************
@@ -320,7 +316,7 @@ class Board {
 
 template <bool updateNNUE>
 void Board::removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black) {
-    piecesBB[piece] &= ~(1ULL << sq);
+    pieces_bb[piece] &= ~(1ULL << sq);
     board[sq] = None;
 
     if constexpr (updateNNUE) {
@@ -330,7 +326,7 @@ void Board::removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Bla
 
 template <bool updateNNUE>
 void Board::placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black) {
-    piecesBB[piece] |= (1ULL << sq);
+    pieces_bb[piece] |= (1ULL << sq);
     board[sq] = piece;
 
     if constexpr (updateNNUE) {
@@ -340,8 +336,8 @@ void Board::placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Blac
 
 template <bool updateNNUE>
 void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black) {
-    piecesBB[piece] &= ~(1ULL << fromSq);
-    piecesBB[piece] |= (1ULL << toSq);
+    pieces_bb[piece] &= ~(1ULL << fromSq);
+    pieces_bb[piece] |= (1ULL << toSq);
     board[fromSq] = None;
     board[toSq] = piece;
 
@@ -356,25 +352,25 @@ void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White,
 
 inline void Board::updateHash(Move move) {
     PieceType pt = type_of_piece(pieceAtB(from(move)));
-    Piece p = makePiece(pt, sideToMove);
+    Piece p = makePiece(pt, side_to_move);
     Square from_sq = from(move);
     Square to_sq = to(move);
     Piece capture = board[to_sq];
     const auto rank = square_rank(to_sq);
 
-    hashHistory.emplace_back(hashKey);
+    hash_history.emplace_back(hash_key);
 
-    if (enPassantSquare != NO_SQ) hashKey ^= updateKeyEnPassant(enPassantSquare);
+    if (en_passant_square != NO_SQ) hash_key ^= updateKeyEnPassant(en_passant_square);
 
-    hashKey ^= updateKeyCastling();
+    hash_key ^= updateKeyCastling();
 
-    enPassantSquare = NO_SQ;
+    en_passant_square = NO_SQ;
 
     if (pt == KING) {
-        castlingRights.clearCastlingRight(sideToMove);
+        castling_rights.clearCastlingRight(side_to_move);
 
         if (typeOf(move) == CASTLING) {
-            const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+            const Piece rook = side_to_move == White ? WhiteRook : BlackRook;
             const Square rookSQ =
                 file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
             const Square kingToSq =
@@ -382,61 +378,61 @@ inline void Board::updateHash(Move move) {
 
             assert(type_of_piece(pieceAtB(to_sq)) == ROOK);
 
-            hashKey ^= updateKeyPiece(rook, to_sq);
-            hashKey ^= updateKeyPiece(rook, rookSQ);
-            hashKey ^= updateKeyPiece(p, from_sq);
-            hashKey ^= updateKeyPiece(p, kingToSq);
+            hash_key ^= updateKeyPiece(rook, to_sq);
+            hash_key ^= updateKeyPiece(rook, rookSQ);
+            hash_key ^= updateKeyPiece(p, from_sq);
+            hash_key ^= updateKeyPiece(p, kingToSq);
 
-            hashKey ^= updateKeySideToMove();
-            hashKey ^= updateKeyCastling();
+            hash_key ^= updateKeySideToMove();
+            hash_key ^= updateKeyCastling();
 
             return;
         }
-    } else if (pt == ROOK && ((square_rank(from_sq) == Rank::RANK_8 && sideToMove == Black) ||
-                              (square_rank(from_sq) == Rank::RANK_1 && sideToMove == White))) {
-        const auto king_sq = builtin::lsb(pieces(KING, sideToMove));
+    } else if (pt == ROOK && ((square_rank(from_sq) == Rank::RANK_8 && side_to_move == Black) ||
+                              (square_rank(from_sq) == Rank::RANK_1 && side_to_move == White))) {
+        const auto king_sq = builtin::lsb(pieces(KING, side_to_move));
 
-        castlingRights.clearCastlingRight(
-            sideToMove, from_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
+        castling_rights.clearCastlingRight(
+            side_to_move, from_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
     } else if (pt == PAWN) {
-        halfMoveClock = 0;
+        half_move_clock = 0;
         if (typeOf(move) == ENPASSANT) {
-            hashKey ^= updateKeyPiece(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8));
+            hash_key ^= updateKeyPiece(makePiece(PAWN, ~side_to_move), Square(to_sq ^ 8));
         } else if (std::abs(from_sq - to_sq) == 16) {
-            U64 epMask = Attacks::Pawn(Square(to_sq ^ 8), sideToMove);
-            if (epMask & pieces(PAWN, ~sideToMove)) {
-                enPassantSquare = Square(to_sq ^ 8);
-                hashKey ^= updateKeyEnPassant(enPassantSquare);
+            U64 epMask = Attacks::Pawn(Square(to_sq ^ 8), side_to_move);
+            if (epMask & pieces(PAWN, ~side_to_move)) {
+                en_passant_square = Square(to_sq ^ 8);
+                hash_key ^= updateKeyEnPassant(en_passant_square);
 
-                assert(pieceAtB(enPassantSquare) == None);
+                assert(pieceAtB(en_passant_square) == None);
             }
         }
     }
 
     if (capture != None) {
-        halfMoveClock = 0;
-        hashKey ^= updateKeyPiece(capture, to_sq);
-        if (type_of_piece(capture) == ROOK && ((rank == Rank::RANK_1 && sideToMove == Black) ||
-                                               (rank == Rank::RANK_8 && sideToMove == White))) {
-            const auto king_sq = builtin::lsb(pieces(KING, ~sideToMove));
+        half_move_clock = 0;
+        hash_key ^= updateKeyPiece(capture, to_sq);
+        if (type_of_piece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move == Black) ||
+                                               (rank == Rank::RANK_8 && side_to_move == White))) {
+            const auto king_sq = builtin::lsb(pieces(KING, ~side_to_move));
 
-            castlingRights.clearCastlingRight(
-                ~sideToMove, to_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
+            castling_rights.clearCastlingRight(
+                ~side_to_move, to_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
         }
     }
 
     if (typeOf(move) == PROMOTION) {
-        halfMoveClock = 0;
+        half_move_clock = 0;
 
-        hashKey ^= updateKeyPiece(makePiece(PAWN, sideToMove), from_sq);
-        hashKey ^= updateKeyPiece(makePiece(promotionType(move), sideToMove), to_sq);
+        hash_key ^= updateKeyPiece(makePiece(PAWN, side_to_move), from_sq);
+        hash_key ^= updateKeyPiece(makePiece(promotionType(move), side_to_move), to_sq);
     } else {
-        hashKey ^= updateKeyPiece(p, from_sq);
-        hashKey ^= updateKeyPiece(p, to_sq);
+        hash_key ^= updateKeyPiece(p, from_sq);
+        hash_key ^= updateKeyPiece(p, to_sq);
     }
 
-    hashKey ^= updateKeySideToMove();
-    hashKey ^= updateKeyCastling();
+    hash_key ^= updateKeySideToMove();
+    hash_key ^= updateKeyCastling();
 }
 
 /// @brief
@@ -463,14 +459,14 @@ void Board::makeMove(Move move) {
     // STORE STATE HISTORY
     // *****************************
 
-    stateHistory.emplace_back(enPassantSquare, castlingRights, halfMoveClock, capture);
+    state_history.emplace_back(en_passant_square, castling_rights, half_move_clock, capture);
 
     if constexpr (updateNNUE) accumulatorStack.emplace_back(accumulator);
 
-    halfMoveClock++;
-    fullMoveNumber++;
+    half_move_clock++;
+    full_move_number++;
 
-    const bool ep = to_sq == enPassantSquare;
+    const bool ep = to_sq == en_passant_square;
 
     // Castling is encoded as king captures rook
 
@@ -480,7 +476,7 @@ void Board::makeMove(Move move) {
 
     updateHash(move);
 
-    TTable.prefetch(hashKey);
+    TTable.prefetch(hash_key);
 
     const Square kSQ_White = builtin::lsb(pieces<KING, White>());
     const Square kSQ_Black = builtin::lsb(pieces<KING, Black>());
@@ -490,7 +486,7 @@ void Board::makeMove(Move move) {
     // *****************************
 
     if (typeOf(move) == CASTLING) {
-        const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+        const Piece rook = side_to_move == White ? WhiteRook : BlackRook;
         Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         Square kingToSq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
@@ -510,13 +506,13 @@ void Board::makeMove(Move move) {
             placePiece<updateNNUE>(rook, rookToSq, kSQ_White, kSQ_Black);
         }
 
-        sideToMove = ~sideToMove;
+        side_to_move = ~side_to_move;
 
         return;
     } else if (pt == PAWN && ep) {
         assert(pieceAtB(Square(to_sq ^ 8)) != None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8), kSQ_White,
+        removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move), Square(to_sq ^ 8), kSQ_White,
                                 kSQ_Black);
     } else if (capture != None) {
         assert(pieceAtB(to_sq) != None);
@@ -528,8 +524,8 @@ void Board::makeMove(Move move) {
     if (typeOf(move) == PROMOTION) {
         assert(pieceAtB(to_sq) == None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq, kSQ_White, kSQ_Black);
-        placePiece<updateNNUE>(makePiece(promotionType(move), sideToMove), to_sq, kSQ_White,
+        removePiece<updateNNUE>(makePiece(PAWN, side_to_move), from_sq, kSQ_White, kSQ_Black);
+        placePiece<updateNNUE>(makePiece(promotionType(move), side_to_move), to_sq, kSQ_White,
                                kSQ_Black);
     } else {
         assert(pieceAtB(to_sq) == None);
@@ -537,45 +533,45 @@ void Board::makeMove(Move move) {
         movePiece<updateNNUE>(p, from_sq, to_sq, kSQ_White, kSQ_Black);
     }
 
-    sideToMove = ~sideToMove;
+    side_to_move = ~side_to_move;
 }
 
 template <bool updateNNUE>
 void Board::unmakeMove(Move move) {
-    const State restore = stateHistory.back();
-    stateHistory.pop_back();
+    const State restore = state_history.back();
+    state_history.pop_back();
 
     if (accumulatorStack.size()) {
         accumulator = accumulatorStack.back();
         accumulatorStack.pop_back();
     }
 
-    hashKey = hashHistory.back();
-    hashHistory.pop_back();
+    hash_key = hash_history.back();
+    hash_history.pop_back();
 
-    enPassantSquare = restore.enPassant;
-    castlingRights = restore.castling;
-    halfMoveClock = restore.halfMove;
-    Piece capture = restore.capturedPiece;
+    en_passant_square = restore.en_passant;
+    castling_rights = restore.castling;
+    half_move_clock = restore.half_move;
+    Piece capture = restore.captured_piece;
 
-    fullMoveNumber--;
+    full_move_number--;
 
     Square from_sq = from(move);
     Square to_sq = to(move);
     bool promotion = typeOf(move) == PROMOTION;
 
-    sideToMove = ~sideToMove;
+    side_to_move = ~side_to_move;
     PieceType pt = type_of_piece(pieceAtB(to_sq));
-    Piece p = makePiece(pt, sideToMove);
+    Piece p = makePiece(pt, side_to_move);
 
     if (typeOf(move) == CASTLING) {
         Square rookToSq = to_sq;
-        Piece rook = sideToMove == White ? WhiteRook : BlackRook;
+        Piece rook = side_to_move == White ? WhiteRook : BlackRook;
         Square rookFromSq =
             file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
-        p = makePiece(KING, sideToMove);
+        p = makePiece(KING, side_to_move);
         // We need to remove both pieces first and then place them back.
         removePiece<updateNNUE>(rook, rookFromSq);
         removePiece<updateNNUE>(p, to_sq);
@@ -585,8 +581,8 @@ void Board::unmakeMove(Move move) {
 
         return;
     } else if (promotion) {
-        removePiece<updateNNUE>(makePiece(promotionType(move), sideToMove), to_sq);
-        placePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq);
+        removePiece<updateNNUE>(makePiece(promotionType(move), side_to_move), to_sq);
+        placePiece<updateNNUE>(makePiece(PAWN, side_to_move), from_sq);
         if (capture != None) placePiece<updateNNUE>(capture, to_sq);
 
         return;
@@ -594,8 +590,8 @@ void Board::unmakeMove(Move move) {
         movePiece<updateNNUE>(p, to_sq, from_sq);
     }
 
-    if (to_sq == enPassantSquare && pt == PAWN) {
-        placePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(enPassantSquare ^ 8));
+    if (to_sq == en_passant_square && pt == PAWN) {
+        placePiece<updateNNUE>(makePiece(PAWN, ~side_to_move), Square(en_passant_square ^ 8));
     } else if (capture != None) {
         placePiece<updateNNUE>(capture, to_sq);
     }

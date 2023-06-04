@@ -31,7 +31,7 @@ void Search::updateHistoryBonus(Move move, Move secondMove, int bonus) {
     int hhBonus = bonus - getHistory<type>(move, secondMove, *this) * std::abs(bonus) / 16384;
 
     if constexpr (type == History::HH)
-        history[board.sideToMove][from(move)][to(move)] += hhBonus;
+        history[board.side_to_move][from(move)][to(move)] += hhBonus;
     else if constexpr (type == History::CONST)
         consthist[board.pieceAtB(from(secondMove))][to(secondMove)][board.pieceAtB(from(move))]
                  [to(move)] += hhBonus;
@@ -74,8 +74,8 @@ void Search::updateAllHistories(Move bestMove, int depth, Move *quiets, int quie
      *******************/
     if (board.pieceAtB(to(bestMove)) == None) {
         // update Killer Moves
-        killerMoves[1][ss->ply] = killerMoves[0][ss->ply];
-        killerMoves[0][ss->ply] = bestMove;
+        killer_moves[1][ss->ply] = killer_moves[0][ss->ply];
+        killer_moves[0][ss->ply] = bestMove;
 
         updateHistory<History::HH>(bestMove, depthBonus, depth, quiets, quietCount, ss);
 
@@ -92,7 +92,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      * Initialize various variables
      *******************/
     constexpr bool PvNode = node == PV;
-    const Color color = board.sideToMove;
+    const Color color = board.side_to_move;
     const bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color), board.All());
 
     Move bestMove = NO_MOVE;
@@ -118,7 +118,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Move ttMove = NO_MOVE;
     bool ttHit = false;
 
-    TEntry *tte = TTable.probe(ttHit, ttMove, board.hashKey);
+    TEntry *tte = TTable.probe(ttHit, ttMove, board.hash_key);
     Score ttScore =
         ttHit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     // clang-format off
@@ -143,7 +143,6 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
 
     Movelist moves;
     MovePick<QSEARCH> mp(*this, ss, moves, ttMove);
-    mp.stage = ttHit ? TT_MOVE : GENERATE;
 
     /********************
      * Search the moves
@@ -198,7 +197,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
     if (!Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(0, scoreToTT(bestValue, ss->ply), b, board.hashKey, bestMove);
+        TTable.store(0, scoreToTT(bestValue, ss->ply), b, board.hash_key, bestMove);
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
     return bestValue;
@@ -214,7 +213,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     constexpr bool RootNode = node == Root;
     constexpr bool PvNode = node != NonPV;
 
-    Color color = board.sideToMove;
+    Color color = board.side_to_move;
 
     Score best = -VALUE_INFINITE;
     Score maxValue = VALUE_INFINITE;
@@ -225,7 +224,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
     if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(board) : 0;
 
-    pvLength[ss->ply] = ss->ply;
+    pv_length[ss->ply] = ss->ply;
 
     /********************
      * Draw detection and mate pruning
@@ -268,7 +267,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     Move ttMove = NO_MOVE;
     bool ttHit = false;
 
-    TEntry *tte = TTable.probe(ttHit, ttMove, board.hashKey);
+    TEntry *tte = TTable.probe(ttHit, ttMove, board.hash_key);
     Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     /********************
@@ -298,7 +297,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
      *  Tablebase probing
      *******************/
     Score tbRes = VALUE_NONE;
-    if (!RootNode && normalSearch && useTB) tbRes = syzygy::probeWDL(board);
+    if (!RootNode && normal_search && use_tb) tbRes = syzygy::probeWDL(board);
 
     if (tbRes != VALUE_NONE) {
         Flag flag = NONEBOUND;
@@ -321,7 +320,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
         if (flag == EXACTBOUND || (flag == LOWERBOUND && tbRes >= beta) ||
             (flag == UPPERBOUND && tbRes <= alpha)) {
-            TTable.store(depth + 6, scoreToTT(tbRes, ss->ply), flag, board.hashKey, NO_MOVE);
+            TTable.store(depth + 6, scoreToTT(tbRes, ss->ply), flag, board.hash_key, NO_MOVE);
             return tbRes;
         }
 
@@ -410,8 +409,7 @@ moves:
     uint8_t madeMoves = 0;
     bool doFullSearch = false;
 
-    MovePick<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, ttMove,
-                          ttHit ? TT_MOVE : GENERATE);
+    MovePick<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, ttHit ? ttMove : NO_MOVE);
 
     /********************
      * Movepicker fetches the next move that we should search.
@@ -490,7 +488,7 @@ moves:
         // clang-format off
         if (    id == 0 
             &&  RootNode 
-            &&  normalSearch 
+            &&  normal_search 
             &&  !Threads.stop.load(std::memory_order_relaxed) 
             &&  getTime() > 10000)
             std::cout << "info depth " << depth - inCheck 
@@ -553,7 +551,7 @@ moves:
         /********************
          * Node count logic used for time control.
          *******************/
-        if (id == 0) spentEffort[from(move)][to(move)] += nodes - nodeCount;
+        if (id == 0) spent_effort[from(move)][to(move)] += nodes - nodeCount;
 
         /********************
          * Score beat best -> update PV and Bestmove.
@@ -566,13 +564,13 @@ moves:
                 bestMove = move;
 
                 // update the PV
-                pvTable[ss->ply][ss->ply] = move;
+                pv_table[ss->ply][ss->ply] = move;
 
-                for (int next_ply = ss->ply + 1; next_ply < pvLength[ss->ply + 1]; next_ply++) {
-                    pvTable[ss->ply][next_ply] = pvTable[ss->ply + 1][next_ply];
+                for (int next_ply = ss->ply + 1; next_ply < pv_length[ss->ply + 1]; next_ply++) {
+                    pv_table[ss->ply][next_ply] = pv_table[ss->ply + 1][next_ply];
                 }
 
-                pvLength[ss->ply] = pvLength[ss->ply + 1];
+                pv_length[ss->ply] = pv_length[ss->ply + 1];
 
                 /********************
                  * Score beat beta -> update histories and break.
@@ -602,7 +600,7 @@ moves:
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excludedMove && !Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(depth, scoreToTT(best, ss->ply), b, board.hashKey, bestMove);
+        TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash_key, bestMove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
     return best;
@@ -653,7 +651,7 @@ Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss) {
         }
     }
 
-    if (id == 0 && normalSearch) {
+    if (id == 0 && normal_search) {
         uciOutput(result, depth, seldepth, Threads.getNodes(), Threads.getTbHits(), getTime(),
                   getPV(), TTable.hashfull());
     }
@@ -670,7 +668,7 @@ SearchResult Search::iterativeDeepening() {
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
 
-    spentEffort.reset();
+    spent_effort.reset();
 
     for (int i = -2; i <= MAX_PLY + 1; ++i) {
         (ss + i)->ply = i;
@@ -699,16 +697,16 @@ SearchResult Search::iterativeDeepening() {
 
         sr.score = result;
 
-        if (bestmove != pvTable[0][0]) bestmoveChanges++;
+        if (bestmove != pv_table[0][0]) bestmoveChanges++;
 
-        bestmove = pvTable[0][0];
+        bestmove = pv_table[0][0];
 
         // limit type time
         if (limit.time.optimum != 0) {
             auto now = getTime();
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
-            int effort = (spentEffort[from(bestmove)][to(bestmove)] * 100) / nodes;
+            int effort = (spent_effort[from(bestmove)][to(bestmove)] * 100) / nodes;
             if (depth > 10 && limit.time.optimum * (110 - std::min(effort, 90)) / 100 < now) break;
 
             // increase optimum time if score is increasing
@@ -735,13 +733,13 @@ SearchResult Search::iterativeDeepening() {
     /********************
      * In case the depth was 1 make sure we have at least a bestmove.
      *******************/
-    if (depth == 1) bestmove = pvTable[0][0];
+    if (depth == 1) bestmove = pv_table[0][0];
 
     /********************
      * Mainthread prints bestmove.
      * Allowprint is disabled in data generation
      *******************/
-    if (id == 0 && normalSearch) {
+    if (id == 0 && normal_search) {
         std::cout << "bestmove " << uciMove(bestmove, board.chess960) << std::endl;
         Threads.stop = true;
     }
@@ -756,10 +754,10 @@ void Search::reset() {
     consthist.reset();
     counters.reset();
     history.reset();
-    killerMoves.reset();
-    spentEffort.reset();
-    pvLength.reset();
-    pvTable.reset();
+    killer_moves.reset();
+    spent_effort.reset();
+    pv_length.reset();
+    pv_table.reset();
 
     nodes = 0;
     tbhits = 0;
@@ -789,7 +787,7 @@ void Search::startThinking() {
 }
 
 bool Search::limitReached() {
-    if (normalSearch && Threads.stop.load(std::memory_order_relaxed)) return true;
+    if (normal_search && Threads.stop.load(std::memory_order_relaxed)) return true;
 
     if (id != 0) return false;
 
@@ -814,8 +812,8 @@ bool Search::limitReached() {
 std::string Search::getPV() {
     std::stringstream ss;
 
-    for (int i = 0; i < pvLength[0]; i++) {
-        ss << " " << uciMove(pvTable[0][i], board.chess960);
+    for (int i = 0; i < pv_length[0]; i++) {
+        ss << " " << uciMove(pv_table[0][i], board.chess960);
     }
 
     return ss.str();

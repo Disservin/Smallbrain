@@ -11,43 +11,41 @@
 
 #define UNIQUE_VAR(prefix) CONCAT(prefix##_, __COUNTER__)
 
-#define TUNE_INT(x)                                                                                                    \
-    extern int x;                                                                                                      \
-    bool UNIQUE_VAR(Unique) = options.addIntTuneOption(#x, "spin", x, 0, x * 2);
+#define TUNE_INT(x) \
+    extern int x;   \
+    bool UNIQUE_VAR(Unique) = options_.addIntTuneOption(#x, "spin", x, 0, x * 2);
 
-#define TUNE_DOUBLE(x)                                                                                                 \
-    extern double x;                                                                                                   \
-    bool UNIQUE_VAR(Unique) = options.addDoubleTuneOption(#x, "spin", x, 0, x * 2);
+#define TUNE_DOUBLE(x) \
+    extern double x;   \
+    bool UNIQUE_VAR(Unique) = options_.addDoubleTuneOption(#x, "spin", x, 0, x * 2);
 
-#define ASSIGN_VALUE(option, var, value)                                                                               \
-    if (option == #var)                                                                                                \
-    {                                                                                                                  \
-        var = std::stoi(value);                                                                                        \
+#define ASSIGN_VALUE(option, var, value) \
+    if (option == #var) {                \
+        var = std::stoi(value);          \
     }
 
-class UCI
-{
-  public:
+class UCI {
+   public:
     UCI();
 
     int uciLoop(int argc, char **argv);
 
-  private:
-    Board board = Board();
-    uciOptions options = uciOptions();
-    Datagen::TrainingData datagen = Datagen::TrainingData();
+   private:
+    Board board_ = Board();
+    uciOptions options_ = uciOptions();
+    Datagen::TrainingData datagen_ = Datagen::TrainingData();
 
-    Movelist searchmoves;
+    Movelist searchmoves_;
 
-    int threadCount;
-    bool useTB;
+    int thread_count_;
+    bool use_tb_;
 
     /// @brief parse custom engine commands
     /// @param argc
     /// @param argv
-    /// @param options
+    /// @param options_
     /// @return true if we should terminate after processing the command
-    bool parseArgs(int argc, char **argv, uciOptions options);
+    bool parseArgs(int argc, char **argv, uciOptions options_);
 
     void processCommand(std::string command);
 

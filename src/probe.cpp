@@ -11,7 +11,7 @@ Score probeWDL(const Board& board) {
 
     if (builtin::popcount(white | black) > (signed)TB_LARGEST) return VALUE_NONE;
 
-    Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
+    Square ep = board.en_passant_square <= 63 ? board.en_passant_square : Square(0);
 
     unsigned TBresult = tb_probe_wdl(
         white, black, board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
@@ -19,8 +19,8 @@ Score probeWDL(const Board& board) {
         board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
         board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
         board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
-        board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), board.halfMoveClock,
-        board.castlingRights.hasCastlingRight(board.sideToMove), ep, board.sideToMove == White);
+        board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), board.half_move_clock,
+        board.castling_rights.hasCastlingRight(board.side_to_move), ep, board.side_to_move == White);
 
     if (TBresult == TB_LOSS) {
         return VALUE_TB_LOSS;
@@ -37,7 +37,7 @@ Move probeDTZ(const Board& board) {
     U64 black = board.Us<Black>();
     if (builtin::popcount(white | black) > (signed)TB_LARGEST) return NO_MOVE;
 
-    Square ep = board.enPassantSquare <= 63 ? board.enPassantSquare : Square(0);
+    Square ep = board.en_passant_square <= 63 ? board.en_passant_square : Square(0);
 
     unsigned TBresult = tb_probe_root(
         white, black, board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
@@ -45,8 +45,8 @@ Move probeDTZ(const Board& board) {
         board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
         board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
         board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
-        board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), board.halfMoveClock,
-        board.castlingRights.hasCastlingRight(board.sideToMove), ep, board.sideToMove == White,
+        board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), board.half_move_clock,
+        board.castling_rights.hasCastlingRight(board.side_to_move), ep, board.side_to_move == White,
         NULL);  //  * - turn: true=white, false=black
 
     if (TBresult == TB_RESULT_FAILED || TBresult == TB_RESULT_CHECKMATE ||

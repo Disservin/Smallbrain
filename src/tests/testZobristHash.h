@@ -1,10 +1,8 @@
 #pragma once
 #include "tests.h"
 
-namespace Tests
-{
-inline bool testAllZobristHash()
-{
+namespace Tests {
+inline bool testAllZobristHash() {
     Board b;
 
     b.applyFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -42,4 +40,4 @@ inline bool testAllZobristHash()
 
     return true;
 }
-} // namespace Tests
+}  // namespace Tests

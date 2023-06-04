@@ -377,8 +377,8 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
     /********************
      * Add en passant captures.
      *******************/
-    if (mt != Movetype::QUIET && board.enPassantSquare != NO_SQ) {
-        const Square ep = board.enPassantSquare;
+    if (mt != Movetype::QUIET && board.en_passant_square != NO_SQ) {
+        const Square ep = board.en_passant_square;
         const Square epPawn = ep + DOWN;
 
         U64 epMask = (1ull << epPawn) | (1ull << ep);
@@ -471,7 +471,7 @@ constexpr Square relativeSquare(Color c, Square s) {
 template <Color c, Movetype mt>
 inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pin_hv, U64 occ_all) {
     if constexpr (mt == Movetype::CAPTURE) return 0ull;
-    const auto rights = board.castlingRights;
+    const auto rights = board.castling_rights;
 
     U64 moves = 0ull;
 
@@ -552,7 +552,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
     }
 
     if (mt != Movetype::CAPTURE && square_rank(king_sq) == (c == White ? RANK_1 : RANK_8) &&
-        board.castlingRights.hasCastlingRight(c) && check_mask == DEFAULT_CHECKMASK) {
+        board.castling_rights.hasCastlingRight(c) && check_mask == DEFAULT_CHECKMASK) {
         moves = legalCastleMoves<c, mt>(board, king_sq, seen, pin_hv, occ_all);
 
         while (moves) {
@@ -634,7 +634,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
  *******************/
 template <Movetype mt>
 void legalmoves(const Board &board, Movelist &movelist) {
-    if (board.sideToMove == White)
+    if (board.side_to_move == White)
         legalmoves<White, mt>(board, movelist);
     else
         legalmoves<Black, mt>(board, movelist);

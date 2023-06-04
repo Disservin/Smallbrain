@@ -15,7 +15,7 @@ std::string stringFenData(const fenData &fenData, double score)
     return sstream.str();
 }
 
-void TrainingData::generate(int workers, std::string book, int depth, int nodes, bool useTB, int randLimit)
+void TrainingData::generate(int workers, std::string book, int depth, int nodes, bool use_tb, int randLimit)
 {
     if (book != "")
     {
@@ -25,7 +25,7 @@ void TrainingData::generate(int workers, std::string book, int depth, int nodes,
 
         while (std::getline(openingFile, line))
         {
-            openingBook.emplace_back(line);
+            opening_book_.emplace_back(line);
         }
 
         openingFile.close();
@@ -33,11 +33,11 @@ void TrainingData::generate(int workers, std::string book, int depth, int nodes,
 
     for (int i = 0; i < workers; i++)
     {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, randLimit, useTB);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, randLimit, use_tb);
     }
 }
 
-void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimit, bool useTB)
+void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimit, bool use_tb)
 {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
@@ -66,8 +66,8 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimi
         board.clearStacks();
         search->reset();
 
-        search->normalSearch = false;
-        search->useTB = false;
+        search->normal_search = false;
+        search->use_tb = false;
         search->id = 0;
         search->limit = limit;
 
@@ -75,7 +75,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimi
 
         board.applyFen(DEFAULT_POS, false);
 
-        randomPlayout(file, board, movelist, search, randLimit, useTB);
+        randomPlayout(file, board, movelist, search, randLimit, use_tb);
         games++;
 
         if (threadId == 0 && games % 100 == 0)
@@ -90,7 +90,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimi
 }
 
 void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist, std::unique_ptr<Search> &search,
-                                 int randLimit, bool useTB)
+                                 int randLimit, bool use_tb)
 {
 
     std::vector<fenData> fens;
@@ -99,13 +99,13 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     int ply = 0;
     int randomMoves = 10;
 
-    if (openingBook.size() != 0)
+    if (opening_book_.size() != 0)
     {
-        std::uniform_int_distribution<> maxLines{0, int(openingBook.size() - 1)};
+        std::uniform_int_distribution<> maxLines{0, int(opening_book_.size() - 1)};
 
         auto randLine = maxLines(Random::generator);
 
-        board.applyFen(openingBook[randLine], false);
+        board.applyFen(opening_book_[randLine], false);
     }
 
     board.applyFen(DEFAULT_POS, true);
@@ -142,7 +142,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     }
 
     board.refresh();
-    board.hashHistory.clear();
+    board.hash_history.clear();
     search->board = board;
 
     fenData sfens;
@@ -158,13 +158,13 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         movelist.size = 0;
 
         const bool inCheck = search->board.isSquareAttacked(
-            ~search->board.sideToMove, search->board.KingSQ(search->board.sideToMove), search->board.All());
+            ~search->board.side_to_move, search->board.KingSQ(search->board.side_to_move), search->board.All());
 
         Movegen::legalmoves<Movetype::ALL>(search->board, movelist);
 
         if (movelist.size == 0)
         {
-            winningSide = inCheck ? ~search->board.sideToMove : NO_COLOR;
+            winningSide = inCheck ? ~search->board.side_to_move : NO_COLOR;
             break;
         }
 
@@ -172,7 +172,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         if (drawn != Result::NONE)
         {
-            winningSide = drawn == Result::LOST ? ~search->board.sideToMove : NO_COLOR;
+            winningSide = drawn == Result::LOST ? ~search->board.side_to_move : NO_COLOR;
             break;
         }
 
@@ -187,7 +187,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         const bool capture = search->board.pieceAtB(to(result.move)) != None;
 
-        sfens.score = search->board.sideToMove == White ? result.score : -result.score;
+        sfens.score = search->board.side_to_move == White ? result.score : -result.score;
         sfens.move = result.move;
 
         const Score absScore = std::abs(result.score);
@@ -210,7 +210,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY)
         {
-            winningSide = result.score > 0 ? search->board.sideToMove : ~search->board.sideToMove;
+            winningSide = result.score > 0 ? search->board.side_to_move : ~search->board.side_to_move;
             break;
         }
         else if (drawCount >= 12)
@@ -225,7 +225,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             fens.emplace_back(sfens);
         }
 
-        if (useTB && search->board.halfMoveClock >= 40 && builtin::popcount(search->board.All()) <= 6)
+        if (use_tb && search->board.half_move_clock >= 40 && builtin::popcount(search->board.All()) <= 6)
             break;
 
         ply++;
@@ -235,10 +235,10 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     U64 white = search->board.Us<White>();
     U64 black = search->board.Us<Black>();
 
-    // Set correct winningSide for if (useTB && search->board.halfMoveClock >= 40 && builtin::popcount(search->board.All()) <= 6)
-    if (useTB && builtin::popcount(white | black) <= 6)
+    // Set correct winningSide for if (use_tb && search->board.half_move_clock >= 40 && builtin::popcount(search->board.All()) <= 6)
+    if (use_tb && builtin::popcount(white | black) <= 6)
     {
-        Square ep = search->board.enPassantSquare <= 63 ? search->board.enPassantSquare : Square(0);
+        Square ep = search->board.en_passant_square <= 63 ? search->board.en_passant_square : Square(0);
 
         unsigned TBresult =
             tb_probe_wdl(white, black, search->board.pieces<WhiteKing>() | search->board.pieces<BlackKing>(),
@@ -247,15 +247,15 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
                          search->board.pieces<WhiteBishop>() | search->board.pieces<BlackBishop>(),
                          search->board.pieces<WhiteKnight>() | search->board.pieces<BlackKnight>(),
                          search->board.pieces<WhitePawn>() | search->board.pieces<BlackPawn>(), 0, 0, ep,
-                         search->board.sideToMove == White); //  * - turn: true=white, false=black
+                         search->board.side_to_move == White); //  * - turn: true=white, false=black
 
         if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS)
         {
-            winningSide = ~search->board.sideToMove;
+            winningSide = ~search->board.side_to_move;
         }
         else if (TBresult == TB_WIN || TBresult == TB_CURSED_WIN)
         {
-            winningSide = search->board.sideToMove;
+            winningSide = search->board.side_to_move;
         }
         else if (TBresult == TB_DRAW)
         {

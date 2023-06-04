@@ -27,7 +27,7 @@ int startBench(int depth) {
         std::unique_ptr<Search> searcher = std::make_unique<Search>();
 
         searcher->id = 0;
-        searcher->useTB = false;
+        searcher->use_tb = false;
         searcher->board.applyFen(fen);
         searcher->limit = limit;
         searcher->id = 0;
