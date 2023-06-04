@@ -297,7 +297,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
      *  Tablebase probing
      *******************/
     Score tbRes = VALUE_NONE;
-    if (!RootNode && normal_search && use_tb) tbRes = syzygy::probeWDL(board);
+    if (!RootNode && !silent && use_tb) tbRes = syzygy::probeWDL(board);
 
     if (tbRes != VALUE_NONE) {
         Flag flag = NONEBOUND;
@@ -488,7 +488,7 @@ moves:
         // clang-format off
         if (    id == 0 
             &&  RootNode 
-            &&  normal_search 
+            &&  !silent 
             &&  !Threads.stop.load(std::memory_order_relaxed) 
             &&  getTime() > 10000)
             std::cout << "info depth " << depth - inCheck 
@@ -651,7 +651,7 @@ Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss) {
         }
     }
 
-    if (id == 0 && normal_search) {
+    if (id == 0 && !silent) {
         uciOutput(result, depth, seldepth, Threads.getNodes(), Threads.getTbHits(), getTime(),
                   getPV(), TTable.hashfull());
     }
@@ -739,7 +739,7 @@ SearchResult Search::iterativeDeepening() {
      * Mainthread prints bestmove.
      * Allowprint is disabled in data generation
      *******************/
-    if (id == 0 && normal_search) {
+    if (id == 0 && !silent) {
         std::cout << "bestmove " << uciMove(bestmove, board.chess960) << std::endl;
         Threads.stop = true;
     }
@@ -787,7 +787,7 @@ void Search::startThinking() {
 }
 
 bool Search::limitReached() {
-    if (normal_search && Threads.stop.load(std::memory_order_relaxed)) return true;
+    if (!silent && Threads.stop.load(std::memory_order_relaxed)) return true;
 
     if (id != 0) return false;
 
