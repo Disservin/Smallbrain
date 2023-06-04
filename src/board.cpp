@@ -498,7 +498,8 @@ Move convertUciToMove(const Board &board, const std::string &input) {
         target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
     }
 
-    if (piece == KING && square_distance(target, source) >= 2) {
+    if (piece == KING && type_of_piece(board.pieceAtB(target)) == ROOK &&
+        board.pieceAtB(target) / 6 == board.pieceAtB(source) / 6) {
         return make<Move::CASTLING>(source, target);
     }
 
