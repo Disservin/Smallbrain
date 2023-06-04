@@ -6,5 +6,5 @@ namespace eval {
 /// @brief nnue evaluation
 /// @param board
 /// @return
-Score evaluation(const Board &board);
+Score evaluation(Board &board);
 }  // namespace eval

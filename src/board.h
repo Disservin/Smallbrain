@@ -6,6 +6,10 @@
 #include <iostream>
 #include <string>
 
+#include "types/accumulators.h"
+#include "types/castling_rights.h"
+#include "types/state.h"
+
 #include "attacks.h"
 #include "helper.h"
 #include "nnue.h"
@@ -13,122 +17,6 @@
 #include "types.h"
 
 extern TranspositionTable TTable;
-
-// *******************
-// CASTLING
-// *******************
-class BitField16 {
-   public:
-    BitField16() : value_(0) {}
-
-    // Sets the value of the specified group to the given value
-    void setGroupValue(uint16_t group_index, uint16_t group_value) {
-        assert(group_value < 16 && "group_value must be less than 16");
-        assert(group_index < 4 && "group_index must be less than 4");
-
-        // calculate the bit position of the start of the group you want to set
-        uint16_t startBit = group_index * group_size_;
-        uint16_t setMask = static_cast<uint16_t>(group_value << startBit);
-
-        // clear the bits in the group
-        value_ &= ~(0xF << startBit);
-
-        // set the bits in the group
-        value_ |= setMask;
-    }
-
-    uint16_t getGroup(uint16_t group_index) const {
-        assert(group_index < 4 && "group_index must be less than 4");
-        uint16_t startBit = group_index * group_size_;
-        return (value_ >> startBit) & 0xF;
-    }
-
-    void clear() { value_ = 0; }
-    uint16_t get() const { return value_; }
-
-   private:
-    static constexpr uint16_t group_size_ = 4;  // size of each group
-    uint16_t value_;
-};
-
-enum class CastleSide : uint8_t { KING_SIDE, QUEEN_SIDE };
-
-class CastlingRights {
-   public:
-    template <Color color, CastleSide castle, File rook_file>
-    void setCastlingRight() {
-        int file = static_cast<uint16_t>(rook_file) + 1;
-
-        castling_rights.setGroupValue(2 * static_cast<int>(color) + static_cast<int>(castle),
-                                      static_cast<uint16_t>(file));
-    }
-
-    void setCastlingRight(Color color, CastleSide castle, File rook_file) {
-        int file = static_cast<uint16_t>(rook_file) + 1;
-
-        castling_rights.setGroupValue(2 * static_cast<int>(color) + static_cast<int>(castle),
-                                      static_cast<uint16_t>(file));
-    }
-
-    void clearAllCastlingRights() { castling_rights.clear(); }
-
-    void clearCastlingRight(Color color, CastleSide castle) {
-        castling_rights.setGroupValue(2 * static_cast<int>(color) + static_cast<int>(castle), 0);
-    }
-
-    void clearCastlingRight(Color color) {
-        castling_rights.setGroupValue(2 * static_cast<int>(color), 0);
-        castling_rights.setGroupValue(2 * static_cast<int>(color) + 1, 0);
-    }
-
-    bool isEmpty() const { return castling_rights.get() == 0; }
-
-    bool hasCastlingRight(Color color) const {
-        return castling_rights.getGroup(2 * static_cast<int>(color)) != 0 ||
-               castling_rights.getGroup(2 * static_cast<int>(color) + 1) != 0;
-    }
-
-    bool hasCastlingRight(Color color, CastleSide castle) const {
-        return castling_rights.getGroup(2 * static_cast<int>(color) + static_cast<int>(castle)) !=
-               0;
-    }
-
-    File getRookFile(Color color, CastleSide castle) const {
-        assert(hasCastlingRight(color, castle) && "Castling right does not exist");
-        return static_cast<File>(
-            castling_rights.getGroup(2 * static_cast<int>(color) + static_cast<int>(castle)) - 1);
-    }
-
-    int getHashIndex() const {
-        return hasCastlingRight(White, CastleSide::KING_SIDE) +
-               2 * hasCastlingRight(White, CastleSide::QUEEN_SIDE) +
-               4 * hasCastlingRight(Black, CastleSide::KING_SIDE) +
-               8 * hasCastlingRight(Black, CastleSide::QUEEN_SIDE);
-    }
-
-   private:
-    /*
-     denotes the file of the rook that we castle to
-     1248 1248 1248 1248
-     0000 0000 0000 0000
-     bq   bk   wq   wk
-     3    2    1    0
-     */
-    BitField16 castling_rights;
-};
-
-struct State {
-    Square en_passant{};
-    CastlingRights castling{};
-    uint8_t half_move{};
-    Piece captured_piece = None;
-    State(Square enpassant_copy = {}, CastlingRights castling_rights_copy = {},
-          uint8_t half_move_copy = {}, Piece captured_piece_copy = None)
-        : en_passant(enpassant_copy),
-          castling(castling_rights_copy),
-          half_move(half_move_copy),
-          captured_piece(captured_piece_copy) {}
-};
 
 class Board {
    public:
@@ -256,8 +144,6 @@ class Board {
     /// @brief unmake a nullmove
     void unmakeNullMove();
 
-    const nnue::accumulator &getAccumulator() const;
-
     // update the internal board representation
 
     /// @brief Remove a Piece from the board
@@ -299,13 +185,10 @@ class Board {
     /// @return
     U64 zobristHash() const;
 
+    [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_.back(); }
+
    private:
-    /// @brief current accumulator
-    nnue::accumulator accumulator;
-
-    /// @brief previous accumulators
-    std::vector<nnue::accumulator> accumulatorStack;
-
+    Accumulators accumulators_;
     // update the hash
 
     U64 updateKeyPiece(Piece piece, Square sq) const;
@@ -320,7 +203,7 @@ void Board::removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Bla
     board[sq] = None;
 
     if constexpr (updateNNUE) {
-        nnue::deactivate(accumulator, sq, piece, kSQ_White, kSQ_Black);
+        nnue::deactivate(getAccumulator(), sq, piece, kSQ_White, kSQ_Black);
     }
 }
 
@@ -330,7 +213,7 @@ void Board::placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Blac
     board[sq] = piece;
 
     if constexpr (updateNNUE) {
-        nnue::activate(accumulator, sq, piece, kSQ_White, kSQ_Black);
+        nnue::activate(getAccumulator(), sq, piece, kSQ_White, kSQ_Black);
     }
 }
 
@@ -345,7 +228,7 @@ void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White,
         if (type_of_piece(piece) == KING && nnue::KING_BUCKET[fromSq] != nnue::KING_BUCKET[toSq]) {
             refresh();
         } else {
-            nnue::move(accumulator, fromSq, toSq, piece, kSQ_White, kSQ_Black);
+            nnue::move(getAccumulator(), fromSq, toSq, piece, kSQ_White, kSQ_Black);
         }
     }
 }
@@ -461,7 +344,7 @@ void Board::makeMove(Move move) {
 
     state_history.emplace_back(en_passant_square, castling_rights, half_move_clock, capture);
 
-    if constexpr (updateNNUE) accumulatorStack.emplace_back(accumulator);
+    if constexpr (updateNNUE) accumulators_.push();
 
     half_move_clock++;
     full_move_number++;
@@ -541,9 +424,8 @@ void Board::unmakeMove(Move move) {
     const State restore = state_history.back();
     state_history.pop_back();
 
-    if (accumulatorStack.size()) {
-        accumulator = accumulatorStack.back();
-        accumulatorStack.pop_back();
+    if (accumulators_.size()) {
+        accumulators_.pop();
     }
 
     hash_key = hash_history.back();

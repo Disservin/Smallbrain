@@ -5,7 +5,6 @@
 Board::Board(const std::string &fen) {
     state_history.reserve(MAX_PLY);
     hash_history.reserve(512);
-    accumulatorStack.reserve(MAX_PLY);
 
     side_to_move = White;
     en_passant_square = NO_SQ;
@@ -43,8 +42,8 @@ std::string Board::getCastleString() const {
 
 void Board::refresh() {
     for (int i = 0; i < N_HIDDEN_SIZE; i++) {
-        accumulator[White][i] = HIDDEN_BIAS[i];
-        accumulator[Black][i] = HIDDEN_BIAS[i];
+        getAccumulator()[White][i] = HIDDEN_BIAS[i];
+        getAccumulator()[Black][i] = HIDDEN_BIAS[i];
     }
 
     const Square kSQ_White = builtin::lsb(pieces<KING, White>());
@@ -53,7 +52,7 @@ void Board::refresh() {
     for (Square i = SQ_A1; i < NO_SQ; i++) {
         Piece p = board[i];
         if (p == None) continue;
-        nnue::activate(accumulator, i, p, kSQ_White, kSQ_Black);
+        nnue::activate(getAccumulator(), i, p, kSQ_White, kSQ_Black);
     }
 }
 
@@ -130,7 +129,7 @@ void Board::applyFen(const std::string &fen, bool updateAcc) {
 
     state_history.clear();
     hash_history.clear();
-    accumulatorStack.clear();
+    accumulators_.clear();
 
     hash_key = zobristHash();
 }
@@ -316,8 +315,6 @@ void Board::unmakeNullMove() {
     side_to_move = ~side_to_move;
 }
 
-const nnue::accumulator &Board::getAccumulator() const { return accumulator; }
-
 U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ) {
     switch (pt) {
         case PAWN:
@@ -387,7 +384,7 @@ bool Board::see(Move move, int threshold) {
 }
 
 void Board::clearStacks() {
-    accumulatorStack.clear();
+    accumulators_.clear();
     state_history.clear();
 }
 
