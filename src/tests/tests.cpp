@@ -15,7 +15,7 @@ bool testall() {
     testAllDraw();
 
     std::cout << "Tests run successfully" << std::endl;
-    exit(0);
+    std::exit(0);
 }
 
 }  // namespace tests

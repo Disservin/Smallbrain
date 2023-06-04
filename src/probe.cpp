@@ -95,7 +95,7 @@ Move probeDTZ(const Board& board) {
 
     std::cout << " something went wrong playing dtz :" << promoTranslation[promo] << " : " << promo
               << " : " << std::endl;
-    exit(0);
+    std::exit(0);
 
     return NO_MOVE;
 }

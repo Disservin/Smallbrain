@@ -21,7 +21,7 @@ class Version : public Argument {
     void parse(int &i, int, char const *[]) override {
         std::cout << ArgumentsParser::getVersion() << std::endl;
         i++;
-        exit(0);
+        std::exit(0);
     }
 };
 
@@ -47,7 +47,7 @@ class Perft : public Argument {
             PerftTesting perft = PerftTesting();
             perft.board = Board();
             perft.testAllPos(1);
-            exit(0);
+            std::exit(0);
         }
     }
 
@@ -83,7 +83,7 @@ class See : public Argument {
                 board = Board(fen);
             } else if (key == "move") {
                 // std::cout << board.see(uciMove(value).move(), -93) << std::endl;
-                exit(0);
+                std::exit(0);
             } else {
                 ArgumentsParser::throwMissing("eval", key, value);
             }
@@ -99,7 +99,7 @@ class Benchmark : public Argument {
     void parse(int &, int, char const *argv[]) override {
         if (std::string(argv[1]) == std::string("bench")) {
             bench::startBench(12);
-            exit(0);
+            std::exit(0);
         }
     }
 
@@ -148,7 +148,7 @@ class Generate : public Argument {
                 for (std::thread &th : datagen_.threads) {
                     if (th.joinable()) th.join();
                 }
-                exit(0);
+                std::exit(0);
             }
         }
     }

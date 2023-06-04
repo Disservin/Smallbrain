@@ -1,5 +1,7 @@
 #include <atomic>
 
+#include "syzygy/Fathom/src/tbprobe.h"
+
 #include "rand.h"
 #include "thread.h"
 #include "uci.h"
@@ -12,7 +14,15 @@ ThreadPool Threads;
 
 std::atomic_bool UCI_FORCE_STOP;
 
+void quit() {
+    Threads.stop_threads();
+    Threads.pool.clear();
+    tb_free();
+}
+
 int main(int argc, char const *argv[]) {
+    std::atexit(quit);
+
     Threads.stop = false;
     UCI_FORCE_STOP = false;
 
