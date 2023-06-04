@@ -250,7 +250,7 @@ U64 Board::Us(Color c) const {
            pieces_bb[ROOK + c * 6] | pieces_bb[QUEEN + c * 6] | pieces_bb[KING + c * 6];
 }
 
-U64 Board::all() const { return Us<White>() | Us<Black>(); }
+U64 Board::all() const { return us<White>() | us<Black>(); }
 
 Color Board::colorOf(Square loc) const { return Color((pieceAtB(loc) / 6)); }
 
@@ -414,8 +414,8 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
 
 U64 Board::zobristHash() const {
     U64 hash = 0ULL;
-    U64 wPieces = Us<White>();
-    U64 bPieces = Us<Black>();
+    U64 wPieces = us<White>();
+    U64 bPieces = us<Black>();
     // Piece hashes
     while (wPieces) {
         Square sq = builtin::poplsb(wPieces);

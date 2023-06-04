@@ -515,8 +515,8 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
     int double_check = 0;
 
-    U64 occ_us = board.Us<c>();
-    U64 occ_enemy = board.Us<~c>();
+    U64 occ_us = board.us<c>();
+    U64 occ_enemy = board.us<~c>();
     U64 occ_all = occ_us | occ_enemy;
     U64 enemy_empty_bb = ~occ_us;
 

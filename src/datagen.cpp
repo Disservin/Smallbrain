@@ -207,8 +207,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         search->board.makeMove<true>(result.move);
     }
 
-    U64 white = search->board.Us<White>();
-    U64 black = search->board.Us<Black>();
+    U64 white = search->board.us<White>();
+    U64 black = search->board.us<Black>();
 
     // Set correct winningSide for if (use_tb && search->board.half_move_clock >= 40 &&
     // builtin::popcount(search->board.all()) <= 6)
