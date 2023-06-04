@@ -23,7 +23,7 @@ int main(int argc, char const *argv[]) {
 
     init_reductions();
 
-    OptionsParser optionsParser(argc, argv);
+    ArgumentsParser optionsParser(argc, argv);
 
     UCI communication = UCI();
     communication.uciLoop();

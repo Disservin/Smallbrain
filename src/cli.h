@@ -9,19 +9,19 @@
 #include <string>
 #include <unordered_map>
 
-class Option {
+class Argument {
    public:
     virtual void parse(int &i, int argc, char const *argv[]) = 0;
 
-    virtual ~Option() = default;
+    virtual ~Argument() = default;
 };
 
-class OptionsParser {
+class ArgumentsParser {
    public:
-    OptionsParser(int argc, char const *argv[]);
+    ArgumentsParser(int argc, char const *argv[]);
 
     static void throwMissing(std::string_view name, std::string_view key, std::string_view value) {
-        std::cout << ("Unrecognized " + std::string(name) + " option: " + std::string(key) +
+        std::cout << ("Unrecognized " + std::string(name) + " argument: " + std::string(key) +
                       " with value " + std::string(value) + " parsing failed.")
                   << std::endl;
         std::terminate();
@@ -64,47 +64,47 @@ class OptionsParser {
     }
 
    private:
-    void addOption(std::string optionName, Option *option) {
-        options_.insert(std::make_pair(optionName, std::unique_ptr<Option>(option)));
+    void addArgument(std::string argumentName, Argument *argument) {
+        arguments_.insert(std::make_pair(argumentName, std::unique_ptr<Argument>(argument)));
     }
 
     void parse(int argc, char const *argv[]) {
         for (int i = 1; i < argc; i++) {
             const std::string arg = argv[i];
-            if (options_.count(arg) > 0) {
-                options_[arg]->parse(i, argc, argv);
+            if (arguments_.count(arg) > 0) {
+                arguments_[arg]->parse(i, argc, argv);
             } else {
-                std::cout << ("Unrecognized option: " + arg + " parsing failed.") << std::endl;
+                std::cout << ("Unrecognized argument: " + arg + " parsing failed.") << std::endl;
                 std::terminate();
             }
         }
     }
 
-    std::map<std::string, std::unique_ptr<Option>> options_;
+    std::map<std::string, std::unique_ptr<Argument>> arguments_;
 };
 
 // Generic function to parse a standalone value after a dash command.
 template <typename T>
-void parseValue(int &i, int argc, const char *argv[], T &optionValue) {
+void parseValue(int &i, int argc, const char *argv[], T &argumentValue) {
     i++;
     if (i < argc && argv[i][0] != '-') {
         if constexpr (std::is_same_v<T, int>)
-            optionValue = std::stoi(argv[i]);
+            argumentValue = std::stoi(argv[i]);
         else if constexpr (std::is_same_v<T, uint32_t>)
-            optionValue = std::stoul(argv[i]);
+            argumentValue = std::stoul(argv[i]);
         else if constexpr (std::is_same_v<T, float>)
-            optionValue = std::stof(argv[i]);
+            argumentValue = std::stof(argv[i]);
         else if constexpr (std::is_same_v<T, double>)
-            optionValue = std::stod(argv[i]);
+            argumentValue = std::stod(argv[i]);
         else if constexpr (std::is_same_v<T, bool>)
-            optionValue = std::string(argv[i]) == "true";
+            argumentValue = std::string(argv[i]) == "true";
         else
-            optionValue = argv[i];
+            argumentValue = argv[i];
     }
 }
 
-inline void parseDashOptions(int &i, int argc, char const *argv[],
-                             std::function<void(std::string, std::string)> func) {
+inline void parseDashArguments(int &i, int argc, char const *argv[],
+                               std::function<void(std::string, std::string)> func) {
     while (i + 1 < argc && argv[i + 1][0] != '-' && i++) {
         std::string param = argv[i];
         std::size_t pos = param.find('=');

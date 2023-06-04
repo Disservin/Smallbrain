@@ -130,7 +130,7 @@ void UCI::processCommand(std::string command) {
 }
 
 void UCI::uciInput() {
-    std::cout << "id name " << OptionsParser::getVersion() << std::endl;
+    std::cout << "id name " << ArgumentsParser::getVersion() << std::endl;
     std::cout << "id author Disservin\n" << std::endl;
     options_.printOptions();
     std::cout << "uciok" << std::endl;

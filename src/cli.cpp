@@ -16,21 +16,21 @@
 extern std::atomic_bool UCI_FORCE_STOP;
 extern ThreadPool Threads;
 
-class Version : public Option {
+class Version : public Argument {
    public:
     void parse(int &i, int, char const *[]) override {
-        std::cout << OptionsParser::getVersion() << std::endl;
+        std::cout << ArgumentsParser::getVersion() << std::endl;
         i++;
         exit(0);
     }
 };
 
-class Perft : public Option {
+class Perft : public Argument {
    public:
     void parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
-        parseDashOptions(i, argc, argv, [&](std::string key, std::string value) {
+        parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
             if (key == "fen") {
                 fen = value;
                 no_args_ = false;
@@ -55,29 +55,29 @@ class Perft : public Option {
     bool no_args_ = true;
 };
 
-class Eval : public Option {
+class Eval : public Argument {
    public:
     void parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
-        parseDashOptions(i, argc, argv, [&](std::string key, std::string value) {
+        parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
             if (key == "fen") {
                 fen = value;
                 Board board = Board(fen);
                 std::cout << nnue::output(board.getAccumulator(), board.side_to_move) << std::endl;
             } else {
-                OptionsParser::throwMissing("eval", key, value);
+                ArgumentsParser::throwMissing("eval", key, value);
             }
         });
     }
 };
 
-class See : public Option {
+class See : public Argument {
    public:
     void parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
-        parseDashOptions(i, argc, argv, [&](std::string key, std::string value) {
+        parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
             if (key == "fen") {
                 fen = value;
                 board = Board(fen);
@@ -85,7 +85,7 @@ class See : public Option {
                 // std::cout << board.see(uciMove(value).move(), -93) << std::endl;
                 exit(0);
             } else {
-                OptionsParser::throwMissing("eval", key, value);
+                ArgumentsParser::throwMissing("eval", key, value);
             }
         });
     }
@@ -94,7 +94,7 @@ class See : public Option {
     Board board;
 };
 
-class Benchmark : public Option {
+class Benchmark : public Argument {
    public:
     void parse(int &, int, char const *argv[]) override {
         if (std::string(argv[1]) == std::string("bench")) {
@@ -106,10 +106,10 @@ class Benchmark : public Option {
    private:
 };
 
-class Generate : public Option {
+class Generate : public Argument {
    public:
     void parse(int &i, int argc, char const *argv[]) override {
-        parseDashOptions(i, argc, argv, [&](std::string key, std::string value) {
+        parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
             if (key == "threads") {
                 workers_ = std::stoi(value);
             } else if (key == "book") {
@@ -125,7 +125,7 @@ class Generate : public Option {
             } else if (key == "random") {
                 random_ = std::stoi(value);
             } else {
-                OptionsParser::throwMissing("eval", key, value);
+                ArgumentsParser::throwMissing("eval", key, value);
             }
         });
 
@@ -166,21 +166,21 @@ class Generate : public Option {
     datagen::TrainingData datagen_ = datagen::TrainingData();
 };
 
-class TestRunner : public Option {
+class TestRunner : public Argument {
     void parse(int &, int, char const *[]) override { assert(tests::testall()); }
 };
 
-OptionsParser::OptionsParser(int argc, char const *argv[]) {
-    addOption("-eval", new Eval());
-    addOption("perft", new Perft());
-    addOption("-version", new Version());
-    addOption("--version", new Version());
-    addOption("-v", new Version());
-    addOption("--v", new Version());
-    addOption("bench", new Benchmark());
-    addOption("-see", new See());
-    addOption("-generate", new Generate());
-    addOption("-tests", new TestRunner());
+ArgumentsParser::ArgumentsParser(int argc, char const *argv[]) {
+    addArgument("-eval", new Eval());
+    addArgument("perft", new Perft());
+    addArgument("-version", new Version());
+    addArgument("--version", new Version());
+    addArgument("-v", new Version());
+    addArgument("--v", new Version());
+    addArgument("bench", new Benchmark());
+    addArgument("-see", new See());
+    addArgument("-generate", new Generate());
+    addArgument("-tests", new TestRunner());
 
     parse(argc, argv);
 }
