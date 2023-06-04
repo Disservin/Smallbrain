@@ -162,7 +162,7 @@ class Generate : public Argument {
 
         while (true) {
             if (!std::getline(std::cin, input) && std::cin.eof()) {
-                input == "quit";
+                input = "quit";
             }
 
             if (input == "quit") {
