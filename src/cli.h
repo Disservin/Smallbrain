@@ -11,14 +11,14 @@
 
 class Argument {
    public:
-    virtual void parse(int &i, int argc, char const *argv[]) = 0;
+    virtual int parse(int &i, int argc, char const *argv[]) = 0;
 
     virtual ~Argument() = default;
 };
 
 class ArgumentsParser {
    public:
-    ArgumentsParser(int argc, char const *argv[]);
+    ArgumentsParser();
 
     static void throwMissing(std::string_view name, std::string_view key, std::string_view value) {
         std::cout << ("Unrecognized " + std::string(name) + " argument: " + std::string(key) +
@@ -63,21 +63,23 @@ class ArgumentsParser {
         return ss.str();
     }
 
-   private:
-    void addArgument(std::string argumentName, Argument *argument) {
-        arguments_.insert(std::make_pair(argumentName, std::unique_ptr<Argument>(argument)));
-    }
-
-    void parse(int argc, char const *argv[]) {
+    int parse(int argc, char const *argv[]) {
+        int status = 0;
         for (int i = 1; i < argc; i++) {
             const std::string arg = argv[i];
             if (arguments_.count(arg) > 0) {
-                arguments_[arg]->parse(i, argc, argv);
+                status += arguments_[arg]->parse(i, argc, argv);
             } else {
                 std::cout << ("Unrecognized argument: " + arg + " parsing failed.") << std::endl;
                 std::terminate();
             }
         }
+        return status;
+    }
+
+   private:
+    void addArgument(std::string argumentName, Argument *argument) {
+        arguments_.insert(std::make_pair(argumentName, std::unique_ptr<Argument>(argument)));
     }
 
     std::map<std::string, std::unique_ptr<Argument>> arguments_;

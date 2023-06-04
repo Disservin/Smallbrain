@@ -33,7 +33,10 @@ int main(int argc, char const *argv[]) {
 
     init_reductions();
 
-    ArgumentsParser optionsParser(argc, argv);
+    ArgumentsParser optionsParser = ArgumentsParser();
+    optionsParser.parse(argc, argv);
+
+    if (optionsParser.parse(argc, argv) >= 1) return 0;
 
     UCI communication = UCI();
     communication.uciLoop();

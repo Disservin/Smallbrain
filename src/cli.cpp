@@ -18,16 +18,16 @@ extern ThreadPool Threads;
 
 class Version : public Argument {
    public:
-    void parse(int &i, int, char const *[]) override {
+    int parse(int &i, int, char const *[]) override {
         std::cout << ArgumentsParser::getVersion() << std::endl;
         i++;
-        std::exit(0);
+        return 1;
     }
 };
 
 class Perft : public Argument {
    public:
-    void parse(int &i, int argc, char const *argv[]) override {
+    int parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
         parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
@@ -47,8 +47,9 @@ class Perft : public Argument {
             PerftTesting perft = PerftTesting();
             perft.board = Board();
             perft.testAllPos(1);
-            std::exit(0);
+            return 1;
         }
+        return 0;
     }
 
    private:
@@ -57,7 +58,7 @@ class Perft : public Argument {
 
 class Eval : public Argument {
    public:
-    void parse(int &i, int argc, char const *argv[]) override {
+    int parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
         parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
@@ -69,12 +70,13 @@ class Eval : public Argument {
                 ArgumentsParser::throwMissing("eval", key, value);
             }
         });
+        return 0;
     }
 };
 
 class See : public Argument {
    public:
-    void parse(int &i, int argc, char const *argv[]) override {
+    int parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
         parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
@@ -83,11 +85,12 @@ class See : public Argument {
                 board = Board(fen);
             } else if (key == "move") {
                 // std::cout << board.see(uciMove(value).move(), -93) << std::endl;
-                std::exit(0);
+                // return 1;
             } else {
                 ArgumentsParser::throwMissing("eval", key, value);
             }
         });
+        return 0;
     }
 
    private:
@@ -96,19 +99,18 @@ class See : public Argument {
 
 class Benchmark : public Argument {
    public:
-    void parse(int &, int, char const *argv[]) override {
+    int parse(int &, int, char const *argv[]) override {
         if (std::string(argv[1]) == std::string("bench")) {
             bench::startBench(12);
-            std::exit(0);
+            return 1;
         }
+        return 0;
     }
-
-   private:
 };
 
 class Generate : public Argument {
    public:
-    void parse(int &i, int argc, char const *argv[]) override {
+    int parse(int &i, int argc, char const *argv[]) override {
         parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
             if (key == "threads") {
                 workers_ = std::stoi(value);
@@ -148,9 +150,10 @@ class Generate : public Argument {
                 for (std::thread &th : datagen_.threads) {
                     if (th.joinable()) th.join();
                 }
-                std::exit(0);
+                return 1;
             }
         }
+        return 0;
     }
 
    private:
@@ -167,10 +170,13 @@ class Generate : public Argument {
 };
 
 class TestRunner : public Argument {
-    void parse(int &, int, char const *[]) override { assert(tests::testall()); }
+    int parse(int &, int, char const *[]) override {
+        assert(tests::testall());
+        return 1;
+    }
 };
 
-ArgumentsParser::ArgumentsParser(int argc, char const *argv[]) {
+ArgumentsParser::ArgumentsParser() {
     addArgument("-eval", new Eval());
     addArgument("perft", new Perft());
     addArgument("-version", new Version());
@@ -181,6 +187,4 @@ ArgumentsParser::ArgumentsParser(int argc, char const *argv[]) {
     addArgument("-see", new See());
     addArgument("-generate", new Generate());
     addArgument("-tests", new TestRunner());
-
-    parse(argc, argv);
 }
