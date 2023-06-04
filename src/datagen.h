@@ -9,7 +9,7 @@
 
 extern std::atomic_bool UCI_FORCE_STOP;
 
-namespace Datagen {
+namespace datagen {
 
 struct fenData {
     std::string fen;
@@ -47,4 +47,4 @@ class TrainingData {
     std::vector<std::thread> threads;
 };
 
-}  // namespace Datagen
+}  // namespace datagen

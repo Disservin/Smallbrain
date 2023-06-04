@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace Bench {
+namespace bench {
 
 // Benchmarks from Bitgenie
 static const std::vector<std::string> benchmarkfens = {
@@ -65,4 +65,4 @@ static const std::vector<std::string> benchmarkfens = {
 
 int startBench(int depth = 12);
 
-}  // namespace Bench
+}  // namespace bench

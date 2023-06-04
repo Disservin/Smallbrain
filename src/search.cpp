@@ -100,7 +100,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     assert(alpha >= -VALUE_INFINITE && alpha < beta && beta <= VALUE_INFINITE);
     assert(PvNode || (alpha == beta - 1));
 
-    if (ss->ply >= MAX_PLY) return Eval::evaluation(board);
+    if (ss->ply >= MAX_PLY) return eval::evaluation(board);
 
     /********************
      * Check for repetition or 50 move rule draw
@@ -136,7 +136,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
             return ttScore;
     }
 
-    Score bestValue = Eval::evaluation(board);
+    Score bestValue = eval::evaluation(board);
 
     if (bestValue >= beta) return bestValue;
     if (bestValue > alpha) alpha = bestValue;
@@ -222,7 +222,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     const bool inCheck = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
     bool improving;
 
-    if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(board) : 0;
+    if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !inCheck) ? eval::evaluation(board) : 0;
 
     pv_length[ss->ply] = ss->ply;
 
@@ -342,7 +342,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
     // Use the ttscore as a better evaluation of the position, other engines
     // typically have eval and staticEval. In Smallbrain its just eval.
-    ss->eval = ttHit ? ttScore : Eval::evaluation(board);
+    ss->eval = ttHit ? ttScore : eval::evaluation(board);
 
     // improving boolean
     improving = (ss - 2)->eval != VALUE_NONE ? ss->eval > (ss - 2)->eval : false;

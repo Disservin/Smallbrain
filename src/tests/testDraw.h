@@ -1,7 +1,7 @@
 #pragma once
 #include "tests.h"
 
-namespace Tests {
+namespace tests {
 inline void testAllDraw() {
     Board b;
 
@@ -40,4 +40,4 @@ inline void testAllDraw() {
     expect(b.isDrawn(b.isSquareAttacked(~b.side_to_move, b.kingSQ(b.side_to_move), b.all())),
            Result::DRAWN, "Kvk");
 }
-}  // namespace Tests
+}  // namespace tests

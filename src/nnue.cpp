@@ -13,7 +13,7 @@ int16_t HIDDEN_BIAS[N_HIDDEN_SIZE];
 int16_t HIDDEN_WEIGHTS[N_HIDDEN_SIZE * 2];
 int32_t OUTPUT_BIAS[OUTPUTS];
 
-namespace NNUE {
+namespace nnue {
 
 template <Color side>
 int idx(Square sq, Piece p, int ksq) {
@@ -28,7 +28,7 @@ int idx(Square sq, Piece p, int ksq) {
     }
 }
 
-void activate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_White,
+void activate(nnue::accumulator &accumulator, Square sq, Piece p, Square kSQ_White,
               Square kSq_Black) {
     const int input_white = idx<White>(sq, p, kSQ_White);
     const int input_black = idx<Black>(sq, p, kSq_Black);
@@ -46,7 +46,7 @@ void activate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_Whi
     }
 }
 
-void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_White,
+void deactivate(nnue::accumulator &accumulator, Square sq, Piece p, Square kSQ_White,
                 Square kSq_Black) {
     const int input_white = idx<White>(sq, p, kSQ_White);
     const int input_black = idx<Black>(sq, p, kSq_Black);
@@ -63,7 +63,7 @@ void deactivate(NNUE::accumulator &accumulator, Square sq, Piece p, Square kSQ_W
     }
 }
 
-void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p, Square kSQ_White,
+void move(nnue::accumulator &accumulator, Square from_sq, Square to_sq, Piece p, Square kSQ_White,
           Square kSq_Black) {
     const int input_clear_white = idx<White>(from_sq, p, kSQ_White);
     const int input_add_white = idx<White>(to_sq, p, kSQ_White);
@@ -88,7 +88,7 @@ void move(NNUE::accumulator &accumulator, Square from_sq, Square to_sq, Piece p,
 
 int16_t relu(int16_t x) { return std::max(static_cast<int16_t>(0), x); }
 
-int32_t output(const NNUE::accumulator &accumulator, Color side) {
+int32_t output(const nnue::accumulator &accumulator, Color side) {
     int32_t output = OUTPUT_BIAS[0];
 
     for (int chunks = 0; chunks < N_HIDDEN_SIZE / 256; chunks++) {
@@ -146,4 +146,4 @@ void init(const char *filename) {
 
     std::cout << "Loaded NNUE network" << std::endl;
 }
-}  // namespace NNUE
+}  // namespace nnue

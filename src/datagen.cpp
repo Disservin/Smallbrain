@@ -4,7 +4,7 @@
 #include "randomFen.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 
-namespace Datagen {
+namespace datagen {
 
 std::string stringFenData(const fenData &fenData, double score) {
     std::ostringstream sstream;
@@ -94,7 +94,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     if (opening_book_.size() != 0) {
         std::uniform_int_distribution<> maxLines{0, int(opening_book_.size() - 1)};
 
-        auto randLine = maxLines(Random::generator);
+        auto randLine = maxLines(random::generator);
 
         board.applyFen(opening_book_[randLine], false);
     }
@@ -103,7 +103,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
     if (randLimit > 0) {
         std::uniform_int_distribution<> distRandomFen{0, randLimit};
-        if (distRandomFen(Random::generator) == 1) {
+        if (distRandomFen(random::generator) == 1) {
             ply = randomMoves;
             board.applyFen(getRandomfen());
         }
@@ -112,13 +112,13 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             movelist.size = 0;
             board.clearStacks();
 
-            Movegen::legalmoves<Movetype::ALL>(board, movelist);
+            movegen::legalmoves<Movetype::ALL>(board, movelist);
 
             if (movelist.size == 0) return;
 
             std::uniform_int_distribution<> randomNum{0, int(movelist.size - 1)};
 
-            auto index = randomNum(Random::generator);
+            auto index = randomNum(random::generator);
 
             Move move = movelist[index].move;
             board.makeMove<false>(move);
@@ -145,7 +145,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             ~search->board.side_to_move, search->board.kingSQ(search->board.side_to_move),
             search->board.all());
 
-        Movegen::legalmoves<Movetype::ALL>(search->board, movelist);
+        movegen::legalmoves<Movetype::ALL>(search->board, movelist);
 
         if (movelist.size == 0) {
             winningSide = inCheck ? ~search->board.side_to_move : NO_COLOR;
@@ -249,4 +249,4 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     file.flush();
 }
 
-}  // namespace Datagen
+}  // namespace datagen

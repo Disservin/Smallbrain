@@ -78,7 +78,7 @@ Move probeDTZ(const Board& board) {
     Square sqTo = Square(TB_GET_TO(TBresult));
 
     Movelist legalmoves;
-    Movegen::legalmoves<Movetype::ALL>(board, legalmoves);
+    movegen::legalmoves<Movetype::ALL>(board, legalmoves);
 
     for (auto ext : legalmoves) {
         const Move move = ext.move;

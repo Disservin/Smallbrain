@@ -1,7 +1,7 @@
 #pragma once
 #include "tests.h"
 
-namespace Tests {
+namespace tests {
 inline bool testFenRepetition(const std::string &input) {
     Board board;
 

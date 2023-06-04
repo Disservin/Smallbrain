@@ -33,7 +33,7 @@ void uciOptions::uciHash(int value) {
 
 void uciOptions::uciEvalFile(std::string name) {
     std::cout << "Loading eval file: " << name << std::endl;
-    NNUE::init(name.c_str());
+    nnue::init(name.c_str());
 }
 
 int uciOptions::uciThreads(int value) { return std::clamp(value, 1, 512); }

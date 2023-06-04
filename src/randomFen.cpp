@@ -34,10 +34,10 @@ U64 randomFenBoard::all() {
 }
 
 bool randomFenBoard::isAttacked(int sq, Color c) {
-    if (Pawns(c) & Attacks::Pawn(sq, ~c)) return true;
-    if (Knights(c) & Attacks::Knight(sq)) return true;
-    if ((Bishops(c) | Queens(c)) & Attacks::Bishop(sq, all())) return true;
-    if ((Rooks(c) | Queens(c)) & Attacks::Rook(sq, all())) return true;
+    if (Pawns(c) & attacks::Pawn(sq, ~c)) return true;
+    if (Knights(c) & attacks::Knight(sq)) return true;
+    if ((Bishops(c) | Queens(c)) & attacks::Bishop(sq, all())) return true;
+    if ((Rooks(c) | Queens(c)) & attacks::Rook(sq, all())) return true;
     if (Kings(c) & KING_ATTACKS_TABLE[sq]) return true;
     return false;
 }
@@ -58,8 +58,8 @@ std::stringstream randomFenBoard::generateRandomFen() {
     int emptySquares = 0;
     int matScore = 0;
 
-    int WhiteKingSq = distSquare(Random::generator);
-    int BlackKingSq = distSquare(Random::generator);
+    int WhiteKingSq = distSquare(random::generator);
+    int BlackKingSq = distSquare(random::generator);
 
     board[WhiteKingSq] = WhiteKing;
     board[BlackKingSq] = BlackKing;
@@ -71,7 +71,7 @@ std::stringstream randomFenBoard::generateRandomFen() {
     int end = 64;
 
     for (; i <= end && i >= 0; i++) {
-        int num = distPiece(Random::generator);
+        int num = distPiece(random::generator);
 
         if (BlackKingSq == i || WhiteKingSq == i) {
             // write previous empty squares to fen
@@ -91,7 +91,7 @@ std::stringstream randomFenBoard::generateRandomFen() {
         while (num == WhiteKing ||
                num == BlackKing ||  // dont place pawns on the first or last rank
                ((num == WhitePawn || num == BlackPawn) && (i >= 55 || i <= 8))) {
-            num = distPiece(Random::generator);
+            num = distPiece(random::generator);
         }
 
         // clang-format off
@@ -146,7 +146,7 @@ std::stringstream randomFenBoard::generateRandomFen() {
 
     static constexpr char stm[] = {'w', 'b'};
     ss << " ";
-    ss << stm[distStm(Random::generator)];
+    ss << stm[distStm(random::generator)];
     ss << " - -";
 
     return ss;

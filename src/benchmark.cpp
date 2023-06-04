@@ -4,7 +4,7 @@
 
 extern ThreadPool Threads;
 
-namespace Bench {
+namespace bench {
 
 int startBench(int depth) {
     U64 totalNodes = 0;
@@ -49,4 +49,4 @@ int startBench(int depth) {
     return 0;
 }
 
-}  // namespace Bench
+}  // namespace bench

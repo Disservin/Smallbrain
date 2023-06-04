@@ -160,7 +160,7 @@ class Board {
     std::array<Piece, MAX_SQ> board;
 
     /// @brief constructor for the board, loads startpos
-    Board();
+    Board(const std::string &fen = DEFAULT_POS);
 
     std::string getCastleString() const;
 
@@ -256,7 +256,7 @@ class Board {
     /// @brief unmake a nullmove
     void unmakeNullMove();
 
-    const NNUE::accumulator &getAccumulator() const;
+    const nnue::accumulator &getAccumulator() const;
 
     // update the internal board representation
 
@@ -301,10 +301,10 @@ class Board {
 
    private:
     /// @brief current accumulator
-    NNUE::accumulator accumulator;
+    nnue::accumulator accumulator;
 
     /// @brief previous accumulators
-    std::vector<NNUE::accumulator> accumulatorStack;
+    std::vector<nnue::accumulator> accumulatorStack;
 
     // update the hash
 
@@ -320,7 +320,7 @@ void Board::removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Bla
     board[sq] = None;
 
     if constexpr (updateNNUE) {
-        NNUE::deactivate(accumulator, sq, piece, kSQ_White, kSQ_Black);
+        nnue::deactivate(accumulator, sq, piece, kSQ_White, kSQ_Black);
     }
 }
 
@@ -330,7 +330,7 @@ void Board::placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Blac
     board[sq] = piece;
 
     if constexpr (updateNNUE) {
-        NNUE::activate(accumulator, sq, piece, kSQ_White, kSQ_Black);
+        nnue::activate(accumulator, sq, piece, kSQ_White, kSQ_Black);
     }
 }
 
@@ -342,10 +342,10 @@ void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White,
     board[toSq] = piece;
 
     if constexpr (updateNNUE) {
-        if (type_of_piece(piece) == KING && NNUE::KING_BUCKET[fromSq] != NNUE::KING_BUCKET[toSq]) {
+        if (type_of_piece(piece) == KING && nnue::KING_BUCKET[fromSq] != nnue::KING_BUCKET[toSq]) {
             refresh();
         } else {
-            NNUE::move(accumulator, fromSq, toSq, piece, kSQ_White, kSQ_Black);
+            nnue::move(accumulator, fromSq, toSq, piece, kSQ_White, kSQ_Black);
         }
     }
 }
@@ -399,7 +399,7 @@ inline void Board::updateHash(Move move) {
         if (typeOf(move) == ENPASSANT) {
             hash_key ^= updateKeyPiece(makePiece(PAWN, ~side_to_move), Square(to_sq ^ 8));
         } else if (std::abs(from_sq - to_sq) == 16) {
-            U64 epMask = Attacks::Pawn(Square(to_sq ^ 8), side_to_move);
+            U64 epMask = attacks::Pawn(Square(to_sq ^ 8), side_to_move);
             if (epMask & pieces(PAWN, ~side_to_move)) {
                 en_passant_square = Square(to_sq ^ 8);
                 hash_key ^= updateKeyEnPassant(en_passant_square);
@@ -490,7 +490,7 @@ void Board::makeMove(Move move) {
         Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         Square kingToSq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
-        if (updateNNUE && NNUE::KING_BUCKET[from_sq] != NNUE::KING_BUCKET[kingToSq]) {
+        if (updateNNUE && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[kingToSq]) {
             removePiece<false>(p, from_sq, kSQ_White, kSQ_Black);
             removePiece<false>(rook, to_sq, kSQ_White, kSQ_Black);
 

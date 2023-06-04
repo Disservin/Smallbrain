@@ -3,9 +3,9 @@
 #include "movegen.h"
 #include "perft.h"
 
-U64 Perft::perftFunction(int depth, int max) {
+U64 PerftTesting::perftFunction(int depth, int max) {
     movelists[depth].size = 0;
-    Movegen::legalmoves<Movetype::ALL>(board, movelists[depth]);
+    movegen::legalmoves<Movetype::ALL>(board, movelists[depth]);
     if (depth == 0)
         return 1;
     else if (depth == 1 && max != 1) {
@@ -26,7 +26,7 @@ U64 Perft::perftFunction(int depth, int max) {
     return nodesIt;
 }
 
-void Perft::perfTest(int depth, int max) {
+void PerftTesting::perfTest(int depth, int max) {
     auto t1 = TimePoint::now();
     perftFunction(depth, max);
     auto t2 = TimePoint::now();
@@ -35,7 +35,7 @@ void Perft::perfTest(int depth, int max) {
     std::cout << "Nodes: " << nodes << " nps " << ((nodes * 1000) / (ms + 1)) << std::endl;
 }
 
-void Perft::testAllPos(int n) {
+void PerftTesting::testAllPos(int n) {
     U64 mnps = 0;
     for (int runs = 0; runs < n; runs++) {
         auto t1 = TimePoint::now();

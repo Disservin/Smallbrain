@@ -8,6 +8,7 @@
 #include "tests/tests.h"
 #include "thread.h"
 #include "tt.h"
+#include "cli.h"
 
 extern std::atomic_bool UCI_FORCE_STOP;
 extern TranspositionTable TTable;
@@ -24,14 +25,9 @@ UCI::UCI() {
     board_.applyFen(DEFAULT_POS);
 
     // Initialize reductions used in search
-    init_reductions();
 }
 
-int UCI::uciLoop(int argc, char **argv) {
-    std::vector<std::string> allArgs(argv + 1, argv + argc);
-
-    if (argc > 1 && parseArgs(argc, argv, options_)) return 0;
-
+int UCI::uciLoop() {
     // catching inputs
     std::string input;
     std::cin >> std::ws;
@@ -81,7 +77,7 @@ void UCI::processCommand(std::string command) {
         setPosition(tokens, command);
     } else if (contains(command, "go perft")) {
         int depth = findElement<int>("perft", tokens);
-        Perft perft = Perft();
+        PerftTesting perft = PerftTesting();
         perft.board = board_;
         perft.perfTest(depth, depth);
     } else if (tokens[0] == "go") {
@@ -92,14 +88,14 @@ void UCI::processCommand(std::string command) {
         std::cout << getRandomfen() << std::endl;
     } else if (command == "captures") {
         Movelist moves;
-        Movegen::legalmoves<Movetype::CAPTURE>(board_, moves);
+        movegen::legalmoves<Movetype::CAPTURE>(board_, moves);
 
         for (auto ext : moves) std::cout << uciMove(ext.move, board_.chess960) << std::endl;
 
         std::cout << "count: " << signed(moves.size) << std::endl;
     } else if (command == "moves") {
         Movelist moves;
-        Movegen::legalmoves<Movetype::ALL>(board_, moves);
+        movegen::legalmoves<Movetype::ALL>(board_, moves);
 
         for (auto ext : moves) std::cout << uciMove(ext.move, board_.chess960) << std::endl;
 
@@ -111,11 +107,11 @@ void UCI::processCommand(std::string command) {
     }
 
     else if (command == "eval") {
-        std::cout << Eval::evaluation(board_) << std::endl;
+        std::cout << eval::evaluation(board_) << std::endl;
     }
 
     else if (command == "perft") {
-        Perft perft = Perft();
+        PerftTesting perft = PerftTesting();
         perft.board = board_;
         perft.testAllPos();
     } else if (contains(command, "move")) {
@@ -133,109 +129,8 @@ void UCI::processCommand(std::string command) {
     }
 }
 
-bool UCI::parseArgs(int argc, char **argv, uciOptions options_) {
-    std::vector<std::string> allArgs(argv + 1, argv + argc);
-
-    // ./smallbrain bench
-    if (contains(allArgs, "go")) {
-        board_.applyFen("r2qk2r/1p1n1pp1/p2p4/3Pp2p/8/1N1QbP2/PPP3PP/1K1R3R w kq - 0 16");
-        std::stringstream ss;
-
-        for (auto str : allArgs) ss << str;
-
-        startSearch(allArgs, ss.str());
-
-        // wait for finish
-        while (!Threads.stop) {
-        };
-
-        Threads.stop_threads();
-
-        Bench::startBench(12);
-
-        quit();
-
-        return true;
-    }
-
-    if (contains(allArgs, "bench")) {
-        Bench::startBench(contains(allArgs, "depth") ? findElement<int>("depth", allArgs) : 12);
-        quit();
-        return true;
-    } else if (contains(allArgs, "perft")) {
-        int n = 1;
-        if (contains(allArgs, "-n")) n = findElement<int>("-n", allArgs);
-
-        Perft perft = Perft();
-        perft.board = board_;
-        perft.testAllPos(n);
-        quit();
-        return true;
-    } else if (contains(allArgs, "-gen")) {
-        std::string bookPath = "";
-        std::string tbPath = "";
-        int workers = 1;
-        int depth = 7;
-        int nodes = 0;
-        int hash = 16;
-        int random = 0;
-        bool use_tb_ = false;
-
-        if (contains(allArgs, "-threads")) {
-            workers = findElement<int>("-threads", allArgs);
-        }
-
-        if (contains(allArgs, "-book")) {
-            bookPath = findElement<std::string>("-book", allArgs);
-        }
-
-        if (contains(allArgs, "-tb")) {
-            std::string s =
-                "setoption name SyzygyPath value " + findElement<std::string>("-tb", allArgs);
-            use_tb_ = options_.uciSyzygy(s);
-        }
-
-        if (contains(allArgs, "-depth")) {
-            depth = findElement<int>("-depth", allArgs);
-        }
-
-        if (contains(allArgs, "-nodes")) {
-            depth = 0;
-            nodes = findElement<int>("-nodes", allArgs);
-        }
-
-        if (contains(allArgs, "-hash")) {
-            hash = findElement<int>("-hash", allArgs);
-        }
-
-        if (contains(allArgs, "-random")) {
-            random = findElement<int>("-random", allArgs);
-        }
-
-        int ttsize = hash * 1024 * 1024 / sizeof(TEntry);  // 16 MiB
-        TTable.allocate(ttsize * workers);
-
-        UCI_FORCE_STOP = false;
-
-        datagen_.generate(workers, bookPath, depth, nodes, use_tb_, random);
-
-        std::cout << "Data generation started" << std::endl;
-        std::cout << "Workers: " << workers << "\nBookPath: " << bookPath << "\nDepth: " << depth
-                  << "\nNodes: " << nodes << "\nUseTb: " << use_tb_ << "\nHash: " << hash
-                  << "\nRandom: " << random << std::endl;
-
-        return false;
-    } else if (contains(allArgs, "-tests")) {
-        assert(Tests::testall());
-        return true;
-    } else {
-        std::cout << "Unknown argument" << std::endl;
-    }
-    return false;
-}
-
 void UCI::uciInput() {
-    std::cout << "id name " << getVersion() << std::endl;
+    std::cout << "id name " << OptionsParser::getVersion() << std::endl;
     std::cout << "id author Disservin\n" << std::endl;
     options_.printOptions();
     std::cout << "uciok" << std::endl;
@@ -252,51 +147,9 @@ void UCI::ucinewgameInput() {
 void UCI::quit() {
     Threads.stop_threads();
 
-    for (std::thread &th : datagen_.threads) {
-        if (th.joinable()) th.join();
-    }
-
     Threads.pool.clear();
-    datagen_.threads.clear();
 
     tb_free();
-}
-
-const std::string UCI::getVersion() {
-    std::unordered_map<std::string, std::string> months({{"Jan", "01"},
-                                                         {"Feb", "02"},
-                                                         {"Mar", "03"},
-                                                         {"Apr", "04"},
-                                                         {"May", "05"},
-                                                         {"Jun", "06"},
-                                                         {"Jul", "07"},
-                                                         {"Aug", "08"},
-                                                         {"Sep", "09"},
-                                                         {"Oct", "10"},
-                                                         {"Nov", "11"},
-                                                         {"Dec", "12"}});
-
-    std::string month, day, year;
-    std::stringstream ss, date(__DATE__);  // {month} {date} {year}
-
-    const std::string version = "dev";
-
-    ss << "Smallbrain " << version;
-    ss << "-";
-#ifdef GIT_DATE
-    ss << GIT_DATE;
-#else
-
-    date >> month >> day >> year;
-    if (day.length() == 1) day = "0" + day;
-    ss << year.substr(2) << months[month] << day;
-#endif
-
-#ifdef GIT_SHA
-    ss << "-" << GIT_SHA;
-#endif
-
-    return ss.str();
 }
 
 void UCI::uciMoves(const std::vector<std::string> &tokens) {

@@ -1,7 +1,7 @@
 #pragma once
 #include "tests.h"
 
-namespace Tests {
+namespace tests {
 inline bool testAllZobristHash() {
     Board b;
 
@@ -40,4 +40,4 @@ inline bool testAllZobristHash() {
 
     return true;
 }
-}  // namespace Tests
+}  // namespace tests

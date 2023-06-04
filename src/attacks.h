@@ -79,7 +79,7 @@ static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
 
 using namespace Chess_Lookup::Fancy;
 
-namespace Attacks {
+namespace attacks {
 constexpr U64 Pawn(uint8_t sq, Color c)
 {
     return PAWN_ATTACKS_TABLE[c][sq];

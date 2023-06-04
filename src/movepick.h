@@ -81,9 +81,9 @@ Move MovePick<st>::nextMove() {
     switch (stage) {
         case GENERATE:
             if constexpr (st == ABSEARCH)
-                Movegen::legalmoves<Movetype::ALL>(search.board, movelist);
+                movegen::legalmoves<Movetype::ALL>(search.board, movelist);
             else
-                Movegen::legalmoves<Movetype::CAPTURE>(search.board, movelist);
+                movegen::legalmoves<Movetype::CAPTURE>(search.board, movelist);
 
             stage++;
             [[fallthrough]];

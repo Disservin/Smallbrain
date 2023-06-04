@@ -26,8 +26,8 @@
     }
 // assert to catch file and line and function info
 
-namespace Tests {
+namespace tests {
 
 bool testall();
 
-}  // namespace Tests
+}  // namespace tests

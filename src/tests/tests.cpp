@@ -3,7 +3,7 @@
 #include "testFenRepetition.h"
 #include "testZobristHash.h"
 
-namespace Tests {
+namespace tests {
 
 bool testall() {
     std::cout << "Running tests" << std::endl;
@@ -15,7 +15,7 @@ bool testall() {
     testAllDraw();
 
     std::cout << "Tests run successfully" << std::endl;
-    return true;
+    exit(0);
 }
 
-}  // namespace Tests
+}  // namespace tests

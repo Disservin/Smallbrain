@@ -2,7 +2,7 @@
 #include "movegen.h"
 #include "zobrist.h"
 
-Board::Board() {
+Board::Board(const std::string &fen) {
     state_history.reserve(MAX_PLY);
     hash_history.reserve(512);
     accumulatorStack.reserve(MAX_PLY);
@@ -13,7 +13,7 @@ Board::Board() {
     half_move_clock = 0;
     full_move_number = 1;
 
-    applyFen(DEFAULT_POS, true);
+    applyFen(fen, true);
 
     std::fill(std::begin(board), std::end(board), None);
 }
@@ -53,7 +53,7 @@ void Board::refresh() {
     for (Square i = SQ_A1; i < NO_SQ; i++) {
         Piece p = board[i];
         if (p == None) continue;
-        NNUE::activate(accumulator, i, p, kSQ_White, kSQ_Black);
+        nnue::activate(accumulator, i, p, kSQ_White, kSQ_Black);
     }
 }
 
@@ -214,7 +214,7 @@ bool Board::isRepetition(int draw) const {
 Result Board::isDrawn(bool inCheck) {
     if (half_move_clock >= 100) {
         Movelist movelist;
-        Movegen::legalmoves<Movetype::ALL>(*this, movelist);
+        movegen::legalmoves<Movetype::ALL>(*this, movelist);
         if (inCheck && movelist.size == 0) return Result::LOST;
         return Result::DRAWN;
     }
@@ -255,11 +255,11 @@ U64 Board::all() const { return us<White>() | us<Black>(); }
 Color Board::colorOf(Square loc) const { return Color((pieceAtB(loc) / 6)); }
 
 bool Board::isSquareAttacked(Color c, Square sq, U64 occ) const {
-    if (pieces(PAWN, c) & Attacks::Pawn(sq, ~c)) return true;
-    if (pieces(KNIGHT, c) & Attacks::Knight(sq)) return true;
-    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & Attacks::Bishop(sq, occ)) return true;
-    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & Attacks::Rook(sq, occ)) return true;
-    if (pieces(KING, c) & Attacks::King(sq)) return true;
+    if (pieces(PAWN, c) & attacks::Pawn(sq, ~c)) return true;
+    if (pieces(KNIGHT, c) & attacks::Knight(sq)) return true;
+    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & attacks::Bishop(sq, occ)) return true;
+    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & attacks::Rook(sq, occ)) return true;
+    if (pieces(KING, c) & attacks::King(sq)) return true;
     return false;
 }
 
@@ -275,14 +275,14 @@ U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) {
     U64 attackingKing = pieces(KING, attackerColor);
     U64 attackingPawns = pieces(PAWN, attackerColor);
 
-    U64 interCardinalRays = Attacks::Bishop(sq, occupiedBB);
-    U64 cardinalRaysRays = Attacks::Rook(sq, occupiedBB);
+    U64 interCardinalRays = attacks::Bishop(sq, occupiedBB);
+    U64 cardinalRaysRays = attacks::Rook(sq, occupiedBB);
 
     U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
     attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
-    attackers |= Attacks::Knight(sq) & attackingKnights;
-    attackers |= Attacks::King(sq) & attackingKing;
-    attackers |= Attacks::Pawn(sq, ~attackerColor) & attackingPawns;
+    attackers |= attacks::Knight(sq) & attackingKnights;
+    attackers |= attacks::King(sq) & attackingKing;
+    attackers |= attacks::Pawn(sq, ~attackerColor) & attackingPawns;
     return attackers;
 }
 
@@ -316,22 +316,22 @@ void Board::unmakeNullMove() {
     side_to_move = ~side_to_move;
 }
 
-const NNUE::accumulator &Board::getAccumulator() const { return accumulator; }
+const nnue::accumulator &Board::getAccumulator() const { return accumulator; }
 
 U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ) {
     switch (pt) {
         case PAWN:
-            return Attacks::Pawn(sq, c);
+            return attacks::Pawn(sq, c);
         case KNIGHT:
-            return Attacks::Knight(sq);
+            return attacks::Knight(sq);
         case BISHOP:
-            return Attacks::Bishop(sq, occ);
+            return attacks::Bishop(sq, occ);
         case ROOK:
-            return Attacks::Rook(sq, occ);
+            return attacks::Rook(sq, occ);
         case QUEEN:
-            return Attacks::Queen(sq, occ);
+            return attacks::Queen(sq, occ);
         case KING:
-            return Attacks::King(sq);
+            return attacks::King(sq);
         case NONETYPE:
             return 0ULL;
         default:
@@ -380,8 +380,8 @@ bool Board::see(Move move, int threshold) {
         occ ^= (1ULL << (builtin::lsb(myAttackers & (pieces_bb[pt] | pieces_bb[pt + 6]))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
-            attackers |= Attacks::Bishop(to_sq, occ) & bishops;
-        if (pt == ROOK || pt == QUEEN) attackers |= Attacks::Rook(to_sq, occ) & rooks;
+            attackers |= attacks::Bishop(to_sq, occ) & bishops;
+        if (pt == ROOK || pt == QUEEN) attackers |= attacks::Rook(to_sq, occ) & rooks;
     }
     return sT != colorOf(from_sq);
 }
