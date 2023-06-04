@@ -17,6 +17,7 @@ extern ThreadPool Threads;
 uciOptions options_ = uciOptions();
 
 int UCI::uciLoop() {
+    board_.applyFen(DEFAULT_POS);
     // catching inputs
     std::string input;
     std::cin >> std::ws;

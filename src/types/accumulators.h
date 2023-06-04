@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../types.h"
 
 #include "../nnue.h"
