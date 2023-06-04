@@ -5,49 +5,20 @@
 #include "timemanager.h"
 #include "ucioptions.h"
 
-#define CONCAT_(prefix, suffix) prefix##suffix
-/// Concatenate `prefix, suffix` into `prefixsuffix`
-#define CONCAT(prefix, suffix) CONCAT_(prefix, suffix)
-
-#define UNIQUE_VAR(prefix) CONCAT(prefix##_, __COUNTER__)
-
-#define TUNE_INT(x)                                                                                                    \
-    extern int x;                                                                                                      \
-    bool UNIQUE_VAR(Unique) = options.addIntTuneOption(#x, "spin", x, 0, x * 2);
-
-#define TUNE_DOUBLE(x)                                                                                                 \
-    extern double x;                                                                                                   \
-    bool UNIQUE_VAR(Unique) = options.addDoubleTuneOption(#x, "spin", x, 0, x * 2);
-
-#define ASSIGN_VALUE(option, var, value)                                                                               \
-    if (option == #var)                                                                                                \
-    {                                                                                                                  \
-        var = std::stoi(value);                                                                                        \
-    }
-
-class UCI
-{
-  public:
+class UCI {
+   public:
     UCI();
 
-    int uciLoop(int argc, char **argv);
+    int uciLoop();
 
-  private:
-    Board board = Board();
-    uciOptions options = uciOptions();
-    Datagen::TrainingData datagen = Datagen::TrainingData();
+   private:
+    Board board_ = Board();
+    uciOptions options_ = uciOptions();
 
-    Movelist searchmoves;
+    Movelist searchmoves_;
 
-    int threadCount;
-    bool useTB;
-
-    /// @brief parse custom engine commands
-    /// @param argc
-    /// @param argv
-    /// @param options
-    /// @return true if we should terminate after processing the command
-    bool parseArgs(int argc, char **argv, uciOptions options);
+    int thread_count_;
+    bool use_tb_;
 
     void processCommand(std::string command);
 

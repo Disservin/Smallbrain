@@ -2,9 +2,8 @@
 
 #include "board.h"
 
-class Perft
-{
-  public:
+class PerftTesting {
+   public:
     Board board;
     int depth;
     uint64_t nodes;

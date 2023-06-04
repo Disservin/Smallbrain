@@ -14,21 +14,20 @@
 // {
 //     std::cout << "Input:" << std::endl;
 //     ((std::cout << ' ' << args << std::endl), ...);
-//     assert(std::invoke(std::forward<decltype(func)>(func), std::forward<decltype(args)>(args)...) ==
+//     assert(std::invoke(std::forward<decltype(func)>(func), std::forward<decltype(args)>(args)...)
+//     ==
 //            std::forward<decltype(return_value)>(return_value));
 // }
 
-#define expect(got, expected, input)                                                                                   \
-    if (got != expected)                                                                                               \
-    {                                                                                                                  \
-        std::cout << "Input: " << input << std::endl;                                                                  \
-        assert(got == expected);                                                                                       \
+#define expect(got, expected, input)                  \
+    if (got != expected) {                            \
+        std::cout << "Input: " << input << std::endl; \
+        assert(got == expected);                      \
     }
 // assert to catch file and line and function info
 
-namespace Tests
-{
+namespace tests {
 
-bool testAll();
+bool testall();
 
-} // namespace Tests
+}  // namespace tests

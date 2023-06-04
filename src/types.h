@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <unordered_map>
+#include <sstream>
 
 #define U64 uint64_t
 #define Score int16_t
@@ -19,35 +20,15 @@ static constexpr int N_PIECES = 12;
  * Enum Definitions
  *******************/
 
-enum class Movetype : uint8_t
-{
-    ALL,
-    CAPTURE,
-    QUIET
-};
+enum class Movetype : uint8_t { ALL, CAPTURE, QUIET };
 
-enum Color : uint8_t
-{
-    White,
-    Black,
-    NO_COLOR
-};
+enum Color : uint8_t { White, Black, NO_COLOR };
 
-enum Phase : int
-{
-    MG,
-    EG
-};
+enum Phase : int { MG, EG };
 
-enum class Result
-{
-    NONE,
-    DRAWN,
-    LOST
-};
+enum class Result { NONE, DRAWN, LOST };
 
-enum Piece : uint8_t
-{
+enum Piece : uint8_t {
     WhitePawn,
     WhiteKnight,
     WhiteBishop,
@@ -63,16 +44,7 @@ enum Piece : uint8_t
     None
 };
 
-enum PieceType : uint8_t
-{
-    PAWN,
-    KNIGHT,
-    BISHOP,
-    ROOK,
-    QUEEN,
-    KING,
-    NONETYPE
-};
+enum PieceType : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONETYPE };
 
 // clang-format off
 enum Square : uint8_t {
@@ -89,8 +61,7 @@ enum Square : uint8_t {
 
 // clang-format on
 
-enum
-{
+enum {
     VALUE_MATE = 32000,
     VALUE_INFINITE = 32001,
     VALUE_NONE = 32002,
@@ -104,24 +75,16 @@ enum
     VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY
 };
 
-enum Flag : uint8_t
-{
+enum Flag : uint8_t {
     NONEBOUND,
     UPPERBOUND,
     LOWERBOUND,
     EXACTBOUND,
 };
 
-enum CastlingRight : uint8_t
-{
-    wk = 1,
-    wq = 2,
-    bk = 4,
-    bq = 8
-};
+enum CastlingRight : uint8_t { wk = 1, wq = 2, bk = 4, bq = 8 };
 
-enum Direction : int8_t
-{
+enum Direction : int8_t {
     NORTH = 8,
     WEST = -1,
     SOUTH = -8,
@@ -132,8 +95,8 @@ enum Direction : int8_t
     SOUTH_EAST = -7
 };
 
-enum MoveScores : int
-{
+enum MoveScores : int {
+    TT_SCORE = 10'000'000,
     PROMOTION_SCORE = 9'000'000,
     CAPTURE_SCORE = 7'000'000,
     KILLER_ONE_SCORE = 6'000'000,
@@ -142,64 +105,26 @@ enum MoveScores : int
     NEGATIVE_SCORE = -10'000'000
 };
 
-enum Staging
-{
-    TT_MOVE,
-    GENERATE,
-    PICK_NEXT
-};
+enum Staging { GENERATE, PICK_NEXT };
 
-enum Node
-{
-    NonPV,
-    PV,
-    Root
-};
+enum Node { NonPV, PV, Root };
 
-enum Rank
-{
-    RANK_1,
-    RANK_2,
-    RANK_3,
-    RANK_4,
-    RANK_5,
-    RANK_6,
-    RANK_7,
-    RANK_8
-};
+enum Rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 
-enum File
-{
-    NO_FILE = -1,
-    FILE_A,
-    FILE_B,
-    FILE_C,
-    FILE_D,
-    FILE_E,
-    FILE_F,
-    FILE_G,
-    FILE_H
-};
+enum File { NO_FILE = -1, FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
 
 /********************
  * Overloading of operators
  *******************/
 
-constexpr Color operator~(Color C)
-{
-    return Color(C ^ Black);
-}
+constexpr Color operator~(Color C) { return Color(C ^ Black); }
 
-#define INCR_OP_ON(T)                                                                                                  \
-    constexpr inline T &operator++(T &p)                                                                               \
-    {                                                                                                                  \
-        return p = static_cast<T>(static_cast<int>(p) + 1);                                                            \
-    }                                                                                                                  \
-    constexpr inline T operator++(T &p, int)                                                                           \
-    {                                                                                                                  \
-        auto old = p;                                                                                                  \
-        ++p;                                                                                                           \
-        return old;                                                                                                    \
+#define INCR_OP_ON(T)                                                                            \
+    constexpr inline T &operator++(T &p) { return p = static_cast<T>(static_cast<int>(p) + 1); } \
+    constexpr inline T operator++(T &p, int) {                                                   \
+        auto old = p;                                                                            \
+        ++p;                                                                                     \
+        return old;                                                                              \
     }
 
 INCR_OP_ON(Piece)
@@ -211,23 +136,11 @@ INCR_OP_ON(Rank)
 
 #undef INCR_OP_ON
 
-#define BASE_OP_ON(N, T)                                                                                               \
-    inline constexpr N operator+(N s, T d)                                                                             \
-    {                                                                                                                  \
-        return N(int(s) + int(d));                                                                                     \
-    }                                                                                                                  \
-    inline constexpr N operator-(N s, T d)                                                                             \
-    {                                                                                                                  \
-        return N(int(s) - int(d));                                                                                     \
-    }                                                                                                                  \
-    inline constexpr N &operator+=(N &s, T d)                                                                          \
-    {                                                                                                                  \
-        return s = s + d;                                                                                              \
-    }                                                                                                                  \
-    inline constexpr N &operator-=(N &s, T d)                                                                          \
-    {                                                                                                                  \
-        return s = s - d;                                                                                              \
-    }
+#define BASE_OP_ON(N, T)                                                  \
+    inline constexpr N operator+(N s, T d) { return N(int(s) + int(d)); } \
+    inline constexpr N operator-(N s, T d) { return N(int(s) - int(d)); } \
+    inline constexpr N &operator+=(N &s, T d) { return s = s + d; }       \
+    inline constexpr N &operator-=(N &s, T d) { return s = s - d; }
 
 BASE_OP_ON(Square, Direction)
 BASE_OP_ON(Rank, File)
@@ -252,8 +165,8 @@ const std::string squareToString[64] = {
 
 // clang-format on
 
-static constexpr PieceType PieceToPieceType[13] = {PAWN,   KNIGHT, BISHOP, ROOK,  QUEEN, KING,    PAWN,
-                                                   KNIGHT, BISHOP, ROOK,   QUEEN, KING,  NONETYPE};
+static constexpr PieceType PieceToPieceType[13] = {
+    PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONETYPE};
 
 // file masks
 static constexpr U64 MASK_FILE[8] = {
@@ -262,8 +175,9 @@ static constexpr U64 MASK_FILE[8] = {
 };
 
 // rank masks
-static constexpr U64 MASK_RANK[8] = {0xff,         0xff00,         0xff0000,         0xff000000,
-                                     0xff00000000, 0xff0000000000, 0xff000000000000, 0xff00000000000000};
+static constexpr U64 MASK_RANK[8] = {
+    0xff,         0xff00,         0xff0000,         0xff000000,
+    0xff00000000, 0xff0000000000, 0xff000000000000, 0xff00000000000000};
 
 // diagonal masks
 static constexpr U64 MASK_DIAGONAL[15] = {
@@ -318,41 +232,34 @@ static constexpr Piece flippedPiece[] = {
  * Various other definitions
  *******************/
 
-struct Time
-{
+struct Time {
     int64_t optimum = 0;
     int64_t maximum = 0;
 };
 
-struct Limits
-{
+struct Limits {
     Time time;
     U64 nodes = 0;
     int depth = MAX_PLY;
     bool infinite = false;
 };
 
-inline Score mate_in(int ply)
-{
-    return (VALUE_MATE - ply);
+inline Score mate_in(int ply) { return (VALUE_MATE - ply); }
+
+inline Score mated_in(int ply) { return (ply - VALUE_MATE); }
+
+inline Score scoreToTT(Score s, int plies) {
+    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s + plies
+            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies
+                                            : s);
 }
 
-inline Score mated_in(int ply)
-{
-    return (ply - VALUE_MATE);
-}
+inline Score scoreFromTT(Score s, int plies) {
+    if (s == VALUE_NONE) return VALUE_NONE;
 
-inline Score scoreToTT(Score s, int plies)
-{
-    return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s + plies : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies : s);
-}
-
-inline Score scoreFromTT(Score s, int plies)
-{
-    if (s == VALUE_NONE)
-        return VALUE_NONE;
-
-    return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s - plies : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies : s);
+    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s - plies
+            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies
+                                            : s);
 }
 
 /********************
@@ -390,12 +297,31 @@ static std::unordered_map<char, Piece> charToPiece({{'P', WhitePawn},
 static std::unordered_map<PieceType, char> PieceTypeToPromPiece(
     {{KNIGHT, 'n'}, {BISHOP, 'b'}, {ROOK, 'r'}, {QUEEN, 'q'}});
 
-static std::unordered_map<char, PieceType> pieceToInt(
-    {{'n', KNIGHT}, {'b', BISHOP}, {'r', ROOK}, {'q', QUEEN}, {'N', KNIGHT}, {'B', BISHOP}, {'R', ROOK}, {'Q', QUEEN}});
+static std::unordered_map<char, PieceType> pieceToInt({{'n', KNIGHT},
+                                                       {'b', BISHOP},
+                                                       {'r', ROOK},
+                                                       {'q', QUEEN},
+                                                       {'N', KNIGHT},
+                                                       {'B', BISHOP},
+                                                       {'R', ROOK},
+                                                       {'Q', QUEEN}});
 
-static std::unordered_map<Square, CastlingRight> castlingMapRook({{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});
+static std::unordered_map<Square, CastlingRight> castlingMapRook(
+    {{SQ_A1, wq}, {SQ_H1, wk}, {SQ_A8, bq}, {SQ_H8, bk}});
 
-static std::unordered_map<char, CastlingRight> readCastleString({{'K', wk}, {'k', bk}, {'Q', wq}, {'q', bq}});
+static std::unordered_map<char, CastlingRight> readCastleString(
+    {{'K', wk}, {'k', bk}, {'Q', wq}, {'q', bq}});
+
+/// @brief Gets the rank index of the square where 0 is the first rank.
+/// @param sq
+/// @return the rank of the square
+inline constexpr Rank square_rank(Square sq) { return Rank(sq >> 3); }
+
+/// @brief makes a square out of rank and file
+/// @param f
+/// @param r
+/// @return
+inline constexpr Square file_rank_square(File f, Rank r) { return Square((r << 3) + f); }
 /********************
  * Packed structures
  *******************/
@@ -412,54 +338,64 @@ static std::unordered_map<char, CastlingRight> readCastleString({{'K', wk}, {'k'
  * Move Logic
  *******************/
 
-enum Move : uint16_t
-{
+enum Move : uint16_t {
     NO_MOVE = 0,
-    NULL_MOVE = 65
+    NULL_MOVE = 65,
+    PROMOTION = 1 << 14,
+    ENPASSANT = 2 << 14,
+    CASTLING = 3 << 14
 };
 
-constexpr inline Square from(Move move)
-{
-    return Square(move & 0b111111);
+template <uint16_t MoveType = 0>
+[[nodiscard]] constexpr Move make(Square source, Square target, PieceType pt = PieceType::KNIGHT) {
+    return Move(MoveType +
+                ((static_cast<uint16_t>(pt) - static_cast<uint16_t>(PieceType::KNIGHT)) << 12) +
+                static_cast<uint16_t>(source << 6) + static_cast<uint16_t>(target));
 }
 
-constexpr inline Square to(Move move)
-{
-    return Square((move & 0b111111000000) >> 6);
+[[nodiscard]] constexpr Square from(Move move) { return static_cast<Square>((move >> 6) & 0x3F); }
+
+[[nodiscard]] constexpr Square to(Move move) { return static_cast<Square>(move & 0x3F); }
+
+[[nodiscard]] constexpr uint16_t typeOf(Move move) {
+    return static_cast<uint16_t>(move & (3 << 14));
 }
 
-constexpr inline PieceType piece(Move move)
-{
-    return PieceType((move & 0b111000000000000) >> 12);
+[[nodiscard]] constexpr PieceType promotionType(Move move) {
+    return static_cast<PieceType>(((move >> 12) & 3) + static_cast<int>(PieceType::KNIGHT));
 }
 
-constexpr inline bool promoted(Move move)
-{
-    return bool((move & 0b1000000000000000) >> 15);
+[[nodiscard]] inline std::string uci(Move move, bool chess960) {
+    std::stringstream ss;
+
+    Square from_sq = from(move);
+    Square to_sq = to(move);
+
+    if (!chess960 && typeOf(move) == CASTLING) {
+        to_sq =
+            file_rank_square(to_sq > from_sq ? File::FILE_G : File::FILE_C, square_rank(from_sq));
+    }
+
+    ss << squareToString[from_sq] << squareToString[to_sq];
+
+    if (typeOf(move) == Move::PROMOTION) {
+        ss << PieceTypeToPromPiece.at(promotionType(move));
+    }
+
+    return ss.str();
 }
 
-constexpr inline Move make(PieceType piece = NONETYPE, Square source = NO_SQ, Square target = NO_SQ,
-                           bool promoted = false)
-{
-    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
-}
+inline std::ostream &operator<<(std::ostream &os, const Move move) {
+    Square from_sq = from(move);
+    Square to_sq = to(move);
 
-template <PieceType piece, bool promoted> Move make(Square source = NO_SQ, Square target = NO_SQ)
-{
-    return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
-}
-
-inline std::ostream &operator<<(std::ostream &os, const Move move)
-{
-    // clang-format off
-    os << " From: "    << int(from(move)) 
-       << " To: "      << int(to(move)) 
-       << " Piece: "   << int(piece(move))
-       << "Promoted: " << int(promoted(move));
-    // clang-format on
-    os << std::endl;
+    os << squareToString[from_sq] << squareToString[to_sq];
+    if (typeOf(move) == Move::PROMOTION) {
+        os << PieceTypeToPromPiece.at(promotionType(move));
+    }
     return os;
 }
 
-static constexpr int piece_values[2][7] = {{98, 337, 365, 477, 1025, 0, 0}, {114, 281, 297, 512, 936, 0, 0}};
+static constexpr int piece_values[2][7] = {{98, 337, 365, 477, 1025, 0, 0},
+                                           {114, 281, 297, 512, 936, 0, 0}};
 static constexpr int pieceValuesDefault[7] = {100, 320, 330, 500, 900, 0, 0};

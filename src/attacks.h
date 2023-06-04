@@ -79,32 +79,35 @@ static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
 
 using namespace Chess_Lookup::Fancy;
 
-constexpr U64 PawnAttacks(uint8_t sq, Color c)
+namespace attacks {
+constexpr U64 Pawn(uint8_t sq, Color c)
 {
     return PAWN_ATTACKS_TABLE[c][sq];
 }
 
-constexpr U64 KnightAttacks(uint8_t sq)
+constexpr U64 Knight(uint8_t sq)
 {
     return KNIGHT_ATTACKS_TABLE[sq];
 }
 
-constexpr U64 BishopAttacks(uint8_t sq, U64 occupied)
+constexpr U64 Bishop(uint8_t sq, U64 occupied)
 {
     return GetBishopAttacks(sq, occupied);
 }
 
-constexpr U64 RookAttacks(uint8_t sq, U64 occupied)
+constexpr U64 Rook(uint8_t sq, U64 occupied)
 {
     return GetRookAttacks(sq, occupied);
 }
 
-constexpr U64 QueenAttacks(uint8_t sq, U64 occupied)
+constexpr U64 Queen(uint8_t sq, U64 occupied)
 {
     return GetQueenAttacks(sq, occupied);
 }
 
-constexpr U64 KingAttacks(uint8_t sq)
+constexpr U64 King(uint8_t sq)
 {
     return KING_ATTACKS_TABLE[sq];
 }
+}
+

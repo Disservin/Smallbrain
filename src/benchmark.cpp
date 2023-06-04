@@ -4,11 +4,9 @@
 
 extern ThreadPool Threads;
 
-namespace Bench
-{
+namespace bench {
 
-int startBench(int depth)
-{
+int startBench(int depth) {
     U64 totalNodes = 0;
 
     Limits limit;
@@ -20,16 +18,16 @@ int startBench(int depth)
 
     auto t1 = TimePoint::now();
 
-    for (auto &fen : benchmarkfens)
-    {
-        std::cout << "\nPosition: " << i++ << "/" << benchmarkfens.size() << " " << fen << std::endl;
+    for (auto &fen : benchmarkfens) {
+        std::cout << "\nPosition: " << i++ << "/" << benchmarkfens.size() << " " << fen
+                  << std::endl;
 
         Threads.stop = false;
 
         std::unique_ptr<Search> searcher = std::make_unique<Search>();
 
         searcher->id = 0;
-        searcher->useTB = false;
+        searcher->use_tb = false;
         searcher->board.applyFen(fen);
         searcher->limit = limit;
         searcher->id = 0;
@@ -42,11 +40,13 @@ int startBench(int depth)
     auto t2 = TimePoint::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
-    std::cout << "\n" << totalNodes << " nodes " << signed((totalNodes / (ms + 1)) * 1000) << " nps " << std::endl;
+    std::cout << "\n"
+              << totalNodes << " nodes " << signed((totalNodes / (ms + 1)) * 1000) << " nps "
+              << std::endl;
 
     print_mean();
 
     return 0;
 }
 
-} // namespace Bench
+}  // namespace bench

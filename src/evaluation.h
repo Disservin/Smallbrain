@@ -2,10 +2,9 @@
 
 #include "board.h"
 
-namespace Eval
-{
+namespace eval {
 /// @brief nnue evaluation
 /// @param board
 /// @return
 Score evaluation(const Board &board);
-} // namespace Eval
+}  // namespace eval

@@ -51,7 +51,7 @@ class ThreadPool
     uint64_t getTbHits();
 
     void start_threads(const Board &board, const Limits &limit, const Movelist &searchmoves, int workerCount,
-                       bool useTB);
+                       bool use_tb);
 
     void stop_threads();
 };

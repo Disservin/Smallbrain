@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <type_traits> // for is_same_v
+#include <type_traits>  // for is_same_v
 #include <vector>
 
 #include "types.h"
@@ -15,27 +15,7 @@ std::vector<std::string> splitInput(const std::string &fen);
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-inline constexpr File square_file(Square sq)
-{
-    return File(sq & 7);
-}
-
-/// @brief Gets the rank index of the square where 0 is the first rank.
-/// @param sq
-/// @return the rank of the square
-inline constexpr Rank square_rank(Square sq)
-{
-    return Rank(sq >> 3);
-}
-
-/// @brief makes a square out of rank and file
-/// @param f
-/// @param r
-/// @return
-inline constexpr Square file_rank_square(File f, Rank r)
-{
-    return Square((r << 3) + f);
-}
+inline constexpr File square_file(Square sq) { return File(sq & 7); }
 
 /// @brief  distance between two squares
 /// @param a
@@ -43,6 +23,7 @@ inline constexpr Square file_rank_square(File f, Rank r)
 /// @return
 uint8_t square_distance(Square a, Square b);
 
+namespace builtin {
 /// @brief least significant bit instruction
 /// @param mask
 /// @return the least significant bit as the Square
@@ -63,17 +44,16 @@ int popcount(U64 mask);
 /// @return the lsb
 Square poplsb(U64 &mask);
 
+/// @brief prefetches a memory address
+/// @param addr
+void prefetch(const void *addr);
+}  // namespace builtin
+
 // returns diagonal of given square
-inline constexpr uint8_t diagonal_of(Square sq)
-{
-    return 7 + square_rank(sq) - square_file(sq);
-}
+inline constexpr uint8_t diagonal_of(Square sq) { return 7 + square_rank(sq) - square_file(sq); }
 
 // returns anti diagonal of given square
-inline constexpr uint8_t anti_diagonal_of(Square sq)
-{
-    return square_rank(sq) + square_file(sq);
-}
+inline constexpr uint8_t anti_diagonal_of(Square sq) { return square_rank(sq) + square_file(sq); }
 
 uint8_t manhatten_distance(Square sq1, Square sq2);
 
@@ -85,14 +65,7 @@ bool get_square_color(Square square);
 /// @brief get the piecetype of a piece
 /// @param piece
 /// @return the piecetype
-inline constexpr PieceType type_of_piece(const Piece piece)
-{
-    return PieceToPieceType[piece];
-}
-
-/// @brief prefetches a memory address
-/// @param addr
-void prefetch(const void *addr);
+inline constexpr PieceType type_of_piece(const Piece piece) { return PieceToPieceType[piece]; }
 
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];
@@ -117,7 +90,8 @@ std::string outputScore(int score);
 /// @param tbHits
 /// @param time
 /// @param pv
-void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time, std::string pv, int hashfull);
+void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time,
+               std::string pv, int hashfull);
 
 /// @brief makes a Piece from only the piece type and color
 /// @param type
@@ -133,8 +107,8 @@ void printBitboard(U64 bb);
 /// @param needle
 /// @param haystack
 /// @return
-template <typename T> T findElement(std::string_view needle, const std::vector<std::string> &haystack)
-{
+template <typename T>
+T findElement(std::string_view needle, const std::vector<std::string> &haystack) {
     int index = std::find(haystack.begin(), haystack.end(), needle) - haystack.begin();
     if constexpr (std::is_same_v<T, int>)
         return std::stoi(haystack[index + 1]);

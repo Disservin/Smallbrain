@@ -31,7 +31,7 @@ class randomFenBoard
     U64 Queens(Color color);
     U64 Kings(Color color);
 
-    U64 All();
+    U64 all();
 
     bool isAttacked(int sq, Color c);
 };

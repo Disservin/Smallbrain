@@ -34,7 +34,7 @@ uint64_t ThreadPool::getTbHits()
 }
 
 void ThreadPool::start_threads(const Board &board, const Limits &limit, const Movelist &searchmoves, int workerCount,
-                               bool useTB)
+                               bool use_tb)
 {
     assert(runningThreads.size() == 0);
 
@@ -51,10 +51,10 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, const Mo
     mainThread.search->id = 0;
     mainThread.search->board = board;
     mainThread.search->limit = limit;
-    mainThread.search->useTB = useTB;
+    mainThread.search->use_tb = use_tb;
     mainThread.search->nodes = 0;
     mainThread.search->tbhits = 0;
-    mainThread.search->spentEffort.reset();
+    mainThread.search->spent_effort.reset();
     mainThread.search->searchmoves = searchmoves;
 
     pool.emplace_back(mainThread);
