@@ -43,8 +43,8 @@ std::string Board::getCastleString() const {
 
 void Board::refresh() {
     for (int i = 0; i < N_HIDDEN_SIZE; i++) {
-        accumulator[White][i] = hiddenBias[i];
-        accumulator[Black][i] = hiddenBias[i];
+        accumulator[White][i] = HIDDEN_BIAS[i];
+        accumulator[Black][i] = HIDDEN_BIAS[i];
     }
 
     const Square kSQ_White = builtin::lsb(pieces<KING, White>());
