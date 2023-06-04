@@ -94,7 +94,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     if (opening_book_.size() != 0) {
         std::uniform_int_distribution<> maxLines{0, int(opening_book_.size() - 1)};
 
-        auto randLine = maxLines(rand::generator);
+        auto randLine = maxLines(rand_gen::generator);
 
         board.applyFen(opening_book_[randLine], false);
     }
@@ -103,7 +103,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
     if (randLimit > 0) {
         std::uniform_int_distribution<> distRandomFen{0, randLimit};
-        if (distRandomFen(rand::generator) == 1) {
+        if (distRandomFen(rand_gen::generator) == 1) {
             ply = randomMoves;
             board.applyFen(getRandomfen());
         }
@@ -118,7 +118,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
             std::uniform_int_distribution<> randomNum{0, int(movelist.size - 1)};
 
-            auto index = randomNum(rand::generator);
+            auto index = randomNum(rand_gen::generator);
 
             Move move = movelist[index].move;
             board.makeMove<false>(move);

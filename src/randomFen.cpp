@@ -58,8 +58,8 @@ std::stringstream randomFenBoard::generateRandomFen() {
     int emptySquares = 0;
     int matScore = 0;
 
-    int WhiteKingSq = distSquare(rand::generator);
-    int BlackKingSq = distSquare(rand::generator);
+    int WhiteKingSq = distSquare(rand_gen::generator);
+    int BlackKingSq = distSquare(rand_gen::generator);
 
     board[WhiteKingSq] = WhiteKing;
     board[BlackKingSq] = BlackKing;
@@ -71,7 +71,7 @@ std::stringstream randomFenBoard::generateRandomFen() {
     int end = 64;
 
     for (; i <= end && i >= 0; i++) {
-        int num = distPiece(rand::generator);
+        int num = distPiece(rand_gen::generator);
 
         if (BlackKingSq == i || WhiteKingSq == i) {
             // write previous empty squares to fen
@@ -91,7 +91,7 @@ std::stringstream randomFenBoard::generateRandomFen() {
         while (num == WhiteKing ||
                num == BlackKing ||  // dont place pawns on the first or last rank
                ((num == WhitePawn || num == BlackPawn) && (i >= 55 || i <= 8))) {
-            num = distPiece(rand::generator);
+            num = distPiece(rand_gen::generator);
         }
 
         // clang-format off
@@ -146,7 +146,7 @@ std::stringstream randomFenBoard::generateRandomFen() {
 
     static constexpr char stm[] = {'w', 'b'};
     ss << " ";
-    ss << stm[distStm(rand::generator)];
+    ss << stm[distStm(rand_gen::generator)];
     ss << " - -";
 
     return ss;
