@@ -15,10 +15,6 @@ extern ThreadPool Threads;
 
 uciOptions options_ = uciOptions();
 
-// START OF TUNE
-// TUNE_INT(BONUS);
-// END OF TUNE
-
 UCI::UCI() {
     use_tb_ = false;
 
@@ -35,12 +31,6 @@ int UCI::uciLoop(int argc, char **argv) {
     std::vector<std::string> allArgs(argv + 1, argv + argc);
 
     if (argc > 1 && parseArgs(argc, argv, options_)) return 0;
-
-    // START OF TUNE
-
-    // TUNE_INT(razorMargin, -100, 100);
-
-    // END OF TUNE
 
     // catching inputs
     std::string input;
