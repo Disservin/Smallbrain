@@ -93,7 +93,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      *******************/
     constexpr bool PvNode = node == PV;
     const Color color = board.side_to_move;
-    const bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color), board.All());
+    const bool inCheck = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
 
     Move bestMove = NO_MOVE;
 
@@ -219,7 +219,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     Score maxValue = VALUE_INFINITE;
     Move excludedMove = ss->excludedMove;
 
-    const bool inCheck = board.isSquareAttacked(~color, board.KingSQ(color), board.All());
+    const bool inCheck = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
     bool improving;
 
     if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !inCheck) ? Eval::evaluation(board) : 0;

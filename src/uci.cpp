@@ -226,7 +226,7 @@ bool UCI::parseArgs(int argc, char **argv, uciOptions options_) {
 
         return false;
     } else if (contains(allArgs, "-tests")) {
-        assert(Tests::testAll());
+        assert(Tests::testall());
         return true;
     } else {
         std::cout << "Unknown argument" << std::endl;

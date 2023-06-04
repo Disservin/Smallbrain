@@ -142,8 +142,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         movelist.size = 0;
 
         const bool inCheck = search->board.isSquareAttacked(
-            ~search->board.side_to_move, search->board.KingSQ(search->board.side_to_move),
-            search->board.All());
+            ~search->board.side_to_move, search->board.kingSQ(search->board.side_to_move),
+            search->board.all());
 
         Movegen::legalmoves<Movetype::ALL>(search->board, movelist);
 
@@ -200,7 +200,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         }
 
         if (use_tb && search->board.half_move_clock >= 40 &&
-            builtin::popcount(search->board.All()) <= 6)
+            builtin::popcount(search->board.all()) <= 6)
             break;
 
         ply++;
@@ -211,7 +211,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     U64 black = search->board.Us<Black>();
 
     // Set correct winningSide for if (use_tb && search->board.half_move_clock >= 40 &&
-    // builtin::popcount(search->board.All()) <= 6)
+    // builtin::popcount(search->board.all()) <= 6)
     if (use_tb && builtin::popcount(white | black) <= 6) {
         Square ep =
             search->board.en_passant_square <= 63 ? search->board.en_passant_square : Square(0);

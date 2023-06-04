@@ -13,14 +13,15 @@ Score probeWDL(const Board& board) {
 
     Square ep = board.en_passant_square <= 63 ? board.en_passant_square : Square(0);
 
-    unsigned TBresult = tb_probe_wdl(
-        white, black, board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
-        board.pieces<WhiteQueen>() | board.pieces<BlackQueen>(),
-        board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
-        board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
-        board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
-        board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), board.half_move_clock,
-        board.castling_rights.hasCastlingRight(board.side_to_move), ep, board.side_to_move == White);
+    unsigned TBresult =
+        tb_probe_wdl(white, black, board.pieces<WhiteKing>() | board.pieces<BlackKing>(),
+                     board.pieces<WhiteQueen>() | board.pieces<BlackQueen>(),
+                     board.pieces<WhiteRook>() | board.pieces<BlackRook>(),
+                     board.pieces<WhiteBishop>() | board.pieces<BlackBishop>(),
+                     board.pieces<WhiteKnight>() | board.pieces<BlackKnight>(),
+                     board.pieces<WhitePawn>() | board.pieces<BlackPawn>(), board.half_move_clock,
+                     board.castling_rights.hasCastlingRight(board.side_to_move), ep,
+                     board.side_to_move == White);
 
     if (TBresult == TB_LOSS) {
         return VALUE_TB_LOSS;

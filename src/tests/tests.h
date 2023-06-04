@@ -28,6 +28,6 @@
 
 namespace Tests {
 
-bool testAll();
+bool testall();
 
 }  // namespace Tests

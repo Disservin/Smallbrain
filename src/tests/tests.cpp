@@ -5,7 +5,7 @@
 
 namespace Tests {
 
-bool testAll() {
+bool testall() {
     std::cout << "Running tests" << std::endl;
     std::cout << "Running testAllFenRepetitions" << std::endl;
     testAllFenRepetitions();

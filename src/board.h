@@ -193,18 +193,18 @@ class Board {
     /// @return
     bool nonPawnMat(Color c) const;
 
-    Square KingSQ(Color c) const;
+    Square kingSQ(Color c) const;
 
-    U64 Enemy(Color c) const;
+    U64 enemy(Color c) const;
 
     U64 Us(Color c) const;
     template <Color c>
-    U64 Us() const {
+    U64 us() const {
         return pieces_bb[PAWN + c * 6] | pieces_bb[KNIGHT + c * 6] | pieces_bb[BISHOP + c * 6] |
                pieces_bb[ROOK + c * 6] | pieces_bb[QUEEN + c * 6] | pieces_bb[KING + c * 6];
     }
 
-    U64 All() const;
+    U64 all() const;
 
     // Gets individual piece bitboards
 

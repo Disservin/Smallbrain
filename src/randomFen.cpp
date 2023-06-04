@@ -26,7 +26,7 @@ U64 randomFenBoard::Queens(Color color) {
 
 U64 randomFenBoard::Kings(Color color) { return bitboards[color == Black ? BlackKing : WhiteKing]; }
 
-U64 randomFenBoard::All() {
+U64 randomFenBoard::all() {
     return bitboards[WhitePawn] | bitboards[WhiteKnight] | bitboards[WhiteBishop] |
            bitboards[WhiteRook] | bitboards[WhiteQueen] | bitboards[WhiteKing] |
            bitboards[BlackPawn] | bitboards[BlackKnight] | bitboards[BlackBishop] |
@@ -36,8 +36,8 @@ U64 randomFenBoard::All() {
 bool randomFenBoard::isAttacked(int sq, Color c) {
     if (Pawns(c) & Attacks::Pawn(sq, ~c)) return true;
     if (Knights(c) & Attacks::Knight(sq)) return true;
-    if ((Bishops(c) | Queens(c)) & Attacks::Bishop(sq, All())) return true;
-    if ((Rooks(c) | Queens(c)) & Attacks::Rook(sq, All())) return true;
+    if ((Bishops(c) | Queens(c)) & Attacks::Bishop(sq, all())) return true;
+    if ((Rooks(c) | Queens(c)) & Attacks::Rook(sq, all())) return true;
     if (Kings(c) & KING_ATTACKS_TABLE[sq]) return true;
     return false;
 }

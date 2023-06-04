@@ -219,7 +219,7 @@ Result Board::isDrawn(bool inCheck) {
         return Result::DRAWN;
     }
 
-    const auto count = builtin::popcount(All());
+    const auto count = builtin::popcount(all());
 
     if (count == 2) return Result::DRAWN;
 
@@ -241,16 +241,16 @@ bool Board::nonPawnMat(Color c) const {
     return pieces(KNIGHT, c) | pieces(BISHOP, c) | pieces(ROOK, c) | pieces(QUEEN, c);
 }
 
-Square Board::KingSQ(Color c) const { return builtin::lsb(pieces(KING, c)); }
+Square Board::kingSQ(Color c) const { return builtin::lsb(pieces(KING, c)); }
 
-U64 Board::Enemy(Color c) const { return Us(~c); }
+U64 Board::enemy(Color c) const { return Us(~c); }
 
 U64 Board::Us(Color c) const {
     return pieces_bb[PAWN + c * 6] | pieces_bb[KNIGHT + c * 6] | pieces_bb[BISHOP + c * 6] |
            pieces_bb[ROOK + c * 6] | pieces_bb[QUEEN + c * 6] | pieces_bb[KING + c * 6];
 }
 
-U64 Board::All() const { return Us<White>() | Us<Black>(); }
+U64 Board::all() const { return Us<White>() | Us<Black>(); }
 
 Color Board::colorOf(Square loc) const { return Color((pieceAtB(loc) / 6)); }
 
@@ -352,7 +352,7 @@ bool Board::see(Move move, int threshold) {
     if (swap < 0) return false;
     swap -= pieceValuesDefault[attacker];
     if (swap >= 0) return true;
-    U64 occ = (All() ^ (1ULL << from_sq)) | (1ULL << to_sq);
+    U64 occ = (all() ^ (1ULL << from_sq)) | (1ULL << to_sq);
     U64 attackers = allAttackers(to_sq, occ) & occ;
 
     U64 queens = pieces_bb[WhiteQueen] | pieces_bb[BlackQueen];

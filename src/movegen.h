@@ -193,7 +193,7 @@ U64 pinMaskBishops(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
  *******************/
 template <Color c>
 U64 seenSquares(const Board &board, U64 occ_all) {
-    const Square kSq = board.KingSQ(~c);
+    const Square kSq = board.kingSQ(~c);
 
     U64 pawns = board.pieces<PAWN, c>();
     U64 knights = board.pieces<KNIGHT, c>();
@@ -390,7 +390,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
          *******************/
         if ((check_mask & epMask) == 0) return;
 
-        const Square kSQ = board.KingSQ(c);
+        const Square kSQ = board.kingSQ(c);
         const U64 kingMask = (1ull << kSQ) & MASK_RANK[square_rank(epPawn)];
         const U64 enemyQueenRook = board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>();
 
@@ -511,7 +511,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
      * you to append new move types to any movelist.
      *******************/
 
-    Square king_sq = board.KingSQ(c);
+    Square king_sq = board.kingSQ(c);
 
     int double_check = 0;
 
