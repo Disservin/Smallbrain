@@ -114,7 +114,7 @@ int MovePick<st>::scoreMove(const Move move) const {
     if constexpr (st == QSEARCH) {
         return CAPTURE_SCORE + mvvlva(move);
     } else if (search.board.pieceAtB(to(move)) != None) {
-        return search.board.see(move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
+        return movegen::see(search.board, move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
     } else {
         if (search.killer_moves[0][ss->ply] == move) {
             return KILLER_ONE_SCORE;

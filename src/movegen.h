@@ -641,4 +641,54 @@ void legalmoves(const Board &board, Movelist &movelist) {
         legalmoves<Black, mt>(board, movelist);
 }
 
+/********************
+ * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss)
+ *licensed under GPL-3.0
+ *******************/
+inline bool see(const Board &board, Move move, int threshold) {
+    Square from_sq = from(move);
+    Square to_sq = to(move);
+    PieceType attacker = type_of_piece(board.pieceAtB(from_sq));
+    PieceType victim = type_of_piece(board.pieceAtB(to_sq));
+    int swap = pieceValuesDefault[victim] - threshold;
+    if (swap < 0) return false;
+    swap -= pieceValuesDefault[attacker];
+    if (swap >= 0) return true;
+    U64 occ = (board.all() ^ (1ULL << from_sq)) | (1ULL << to_sq);
+    U64 attackers = board.allAttackers(to_sq, occ) & occ;
+
+    U64 queens = board.pieces(WhiteQueen) | board.pieces(BlackQueen);
+
+    U64 bishops = board.pieces(WhiteBishop) | board.pieces(BlackBishop) | queens;
+    U64 rooks = board.pieces(WhiteRook) | board.pieces(BlackRook) | queens;
+
+    Color sT = ~board.colorOf(from_sq);
+
+    while (true) {
+        attackers &= occ;
+        U64 myAttackers = attackers & board.Us(sT);
+        if (!myAttackers) break;
+
+        int pt;
+        for (pt = 0; pt <= 5; pt++) {
+            if (myAttackers &
+                (board.pieces(static_cast<Piece>(pt)) | board.pieces(static_cast<Piece>(pt + 6))))
+                break;
+        }
+        sT = ~sT;
+        if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0) {
+            if (pt == KING && (attackers & board.Us(sT))) sT = ~sT;
+            break;
+        }
+
+        occ ^= (1ULL << (builtin::lsb(myAttackers & (board.pieces(static_cast<Piece>(pt)) |
+                                                     board.pieces(static_cast<Piece>(pt + 6))))));
+
+        if (pt == PAWN || pt == BISHOP || pt == QUEEN)
+            attackers |= attacks::Bishop(to_sq, occ) & bishops;
+        if (pt == ROOK || pt == QUEEN) attackers |= attacks::Rook(to_sq, occ) & rooks;
+    }
+    return sT != board.colorOf(from_sq);
+}
+
 }  // namespace movegen

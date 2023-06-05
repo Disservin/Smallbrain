@@ -164,7 +164,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
                 continue;
 
             // see based capture pruning
-            if (!inCheck && !board.see(move, 0)) continue;
+            if (!inCheck && !movegen::see(board, move, 0)) continue;
         }
 
         nodes++;
@@ -434,7 +434,7 @@ moves:
             {
                 // SEE pruning
                 if (    depth < 6 
-                    &&  !board.see(move, -(depth * 92)))
+                    &&  !movegen::see(board,move, -(depth * 92)))
                     continue;
             }
             else
@@ -449,7 +449,7 @@ moves:
                     continue;
                 // SEE pruning
                 if (    depth < 7 
-                    &&  !board.see(move, -(depth * 93)))
+                    &&  !movegen::see(board,move, -(depth * 93)))
                     continue;
             }
             // clang-format on

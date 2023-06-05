@@ -20,33 +20,6 @@ extern TranspositionTable TTable;
 
 class Board {
    public:
-    bool chess960 = false;
-
-    Color side_to_move;
-
-    // NO_SQ when enpassant is not possible
-    Square en_passant_square;
-
-    CastlingRights castling_rights;
-
-    // halfmoves start at 0
-    uint8_t half_move_clock;
-
-    // full moves start at 1
-    uint16_t full_move_number;
-
-    // keeps track of previous hashes, used for
-    // repetition detection
-    std::vector<U64> hash_history;
-
-    // current hashkey
-    U64 hash_key;
-
-    std::vector<State> state_history;
-
-    U64 pieces_bb[12] = {};
-    std::array<Piece, MAX_SQ> board;
-
     /// @brief constructor for the board, loads startpos
     Board(const std::string &fen = DEFAULT_POS);
 
@@ -96,10 +69,7 @@ class Board {
 
     // Gets individual piece bitboards
 
-    template <Piece p>
-    constexpr U64 pieces() const {
-        return pieces_bb[p];
-    }
+    constexpr U64 pieces(Piece p) const { return pieces_bb[p]; }
 
     template <PieceType p, Color c>
     constexpr U64 pieces() const {
@@ -121,8 +91,8 @@ class Board {
     bool isSquareAttacked(Color c, Square sq, U64 occ) const;
 
     // attackers used for SEE
-    U64 allAttackers(Square sq, U64 occupiedBB);
-    U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
+    U64 allAttackers(Square sq, U64 occupiedBB) const;
+    U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) const;
 
     void updateHash(Move move);
 
@@ -171,12 +141,6 @@ class Board {
 
     U64 attacksByPiece(PieceType pt, Square sq, Color c, U64 occupied);
 
-    /********************
-     * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss)
-     *licensed under GPL-3.0
-     *******************/
-    bool see(Move move, int threshold);
-
     void clearStacks();
 
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
@@ -187,8 +151,35 @@ class Board {
 
     [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_.back(); }
 
+    bool chess960 = false;
+
+    Color side_to_move;
+
+    // NO_SQ when enpassant is not possible
+    Square en_passant_square;
+
+    CastlingRights castling_rights;
+
+    // halfmoves start at 0
+    uint8_t half_move_clock;
+
+    // full moves start at 1
+    uint16_t full_move_number;
+
+    // keeps track of previous hashes, used for
+    // repetition detection
+    std::vector<U64> hash_history;
+
+    // current hashkey
+    U64 hash_key;
+
    private:
     Accumulators accumulators_;
+    std::vector<State> state_history;
+
+    U64 pieces_bb[12] = {};
+    std::array<Piece, MAX_SQ> board;
+
     // update the hash
 
     U64 updateKeyPiece(Piece piece, Square sq) const;

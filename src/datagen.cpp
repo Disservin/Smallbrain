@@ -217,12 +217,12 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             search->board.en_passant_square <= 63 ? search->board.en_passant_square : Square(0);
 
         unsigned TBresult = tb_probe_wdl(
-            white, black, search->board.pieces<WhiteKing>() | search->board.pieces<BlackKing>(),
-            search->board.pieces<WhiteQueen>() | search->board.pieces<BlackQueen>(),
-            search->board.pieces<WhiteRook>() | search->board.pieces<BlackRook>(),
-            search->board.pieces<WhiteBishop>() | search->board.pieces<BlackBishop>(),
-            search->board.pieces<WhiteKnight>() | search->board.pieces<BlackKnight>(),
-            search->board.pieces<WhitePawn>() | search->board.pieces<BlackPawn>(), 0, 0, ep,
+            white, black, search->board.pieces(WhiteKing) | search->board.pieces(BlackKing),
+            search->board.pieces(WhiteQueen) | search->board.pieces(BlackQueen),
+            search->board.pieces(WhiteRook) | search->board.pieces(BlackRook),
+            search->board.pieces(WhiteBishop) | search->board.pieces(BlackBishop),
+            search->board.pieces(WhiteKnight) | search->board.pieces(BlackKnight),
+            search->board.pieces(WhitePawn) | search->board.pieces(BlackPawn), 0, 0, ep,
             search->board.side_to_move == White);  //  * - turn: true=white, false=black
 
         if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS) {

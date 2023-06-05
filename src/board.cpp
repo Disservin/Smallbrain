@@ -223,13 +223,13 @@ Result Board::isDrawn(bool inCheck) {
     if (count == 2) return Result::DRAWN;
 
     if (count == 3) {
-        if (pieces<WhiteBishop>() || pieces<BlackBishop>()) return Result::DRAWN;
-        if (pieces<WhiteKnight>() || pieces<BlackKnight>()) return Result::DRAWN;
+        if (pieces(WhiteBishop) || pieces(BlackBishop)) return Result::DRAWN;
+        if (pieces(WhiteKnight) || pieces(BlackKnight)) return Result::DRAWN;
     }
 
     if (count == 4) {
-        if (pieces<WhiteBishop>() && pieces<BlackBishop>() &&
-            sameColor(builtin::lsb(pieces<WhiteBishop>()), builtin::lsb(pieces<BlackBishop>())))
+        if (pieces(WhiteBishop) && pieces(BlackBishop) &&
+            sameColor(builtin::lsb(pieces(WhiteBishop)), builtin::lsb(pieces(BlackBishop))))
             return Result::DRAWN;
     }
 
@@ -262,11 +262,11 @@ bool Board::isSquareAttacked(Color c, Square sq, U64 occ) const {
     return false;
 }
 
-U64 Board::allAttackers(Square sq, U64 occupiedBB) {
+U64 Board::allAttackers(Square sq, U64 occupiedBB) const {
     return attackersForSide(White, sq, occupiedBB) | attackersForSide(Black, sq, occupiedBB);
 }
 
-U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) {
+U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) const {
     U64 attackingBishops = pieces(BISHOP, attackerColor);
     U64 attackingRooks = pieces(ROOK, attackerColor);
     U64 attackingQueens = pieces(QUEEN, attackerColor);
@@ -334,53 +334,6 @@ U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ) {
         default:
             return 0ULL;
     }
-}
-
-/********************
- * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss) licensed
- *under GPL-3.0
- *******************/
-bool Board::see(Move move, int threshold) {
-    Square from_sq = from(move);
-    Square to_sq = to(move);
-    PieceType attacker = type_of_piece(pieceAtB(from_sq));
-    PieceType victim = type_of_piece(pieceAtB(to_sq));
-    int swap = pieceValuesDefault[victim] - threshold;
-    if (swap < 0) return false;
-    swap -= pieceValuesDefault[attacker];
-    if (swap >= 0) return true;
-    U64 occ = (all() ^ (1ULL << from_sq)) | (1ULL << to_sq);
-    U64 attackers = allAttackers(to_sq, occ) & occ;
-
-    U64 queens = pieces_bb[WhiteQueen] | pieces_bb[BlackQueen];
-
-    U64 bishops = pieces_bb[WhiteBishop] | pieces_bb[BlackBishop] | queens;
-    U64 rooks = pieces_bb[WhiteRook] | pieces_bb[BlackRook] | queens;
-
-    Color sT = ~colorOf(from_sq);
-
-    while (true) {
-        attackers &= occ;
-        U64 myAttackers = attackers & Us(sT);
-        if (!myAttackers) break;
-
-        int pt;
-        for (pt = 0; pt <= 5; pt++) {
-            if (myAttackers & (pieces_bb[pt] | pieces_bb[pt + 6])) break;
-        }
-        sT = ~sT;
-        if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0) {
-            if (pt == KING && (attackers & Us(sT))) sT = ~sT;
-            break;
-        }
-
-        occ ^= (1ULL << (builtin::lsb(myAttackers & (pieces_bb[pt] | pieces_bb[pt + 6]))));
-
-        if (pt == PAWN || pt == BISHOP || pt == QUEEN)
-            attackers |= attacks::Bishop(to_sq, occ) & bishops;
-        if (pt == ROOK || pt == QUEEN) attackers |= attacks::Rook(to_sq, occ) & rooks;
-    }
-    return sT != colorOf(from_sq);
 }
 
 void Board::clearStacks() {
