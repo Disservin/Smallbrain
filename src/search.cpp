@@ -142,7 +142,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     if (bestValue > alpha) alpha = bestValue;
 
     Movelist moves;
-    MovePick<QSEARCH> mp(*this, ss, moves, ttMove);
+    FastLookup<QSEARCH> mp(*this, ss, moves, ttMove);
 
     /********************
      * Search the moves
@@ -409,7 +409,7 @@ moves:
     uint8_t madeMoves = 0;
     bool doFullSearch = false;
 
-    MovePick<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, ttHit ? ttMove : NO_MOVE);
+    FastLookup<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, ttHit ? ttMove : NO_MOVE);
 
     /********************
      * Movepicker fetches the next move that we should search.
