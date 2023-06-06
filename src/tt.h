@@ -16,6 +16,9 @@ class TranspositionTable {
    private:
     std::vector<TEntry> entries_;
 
+    // 57344 MiB = 2^32 * 14B / (1024 * 1024)
+    static constexpr uint64_t MAXHASH = (1ull << 32) * sizeof(TEntry) / (1024 * 1024);
+
    public:
     TranspositionTable();
 
@@ -40,6 +43,8 @@ class TranspositionTable {
 
     /// @brief allocate Transposition Table and initialize entries_
     void allocate(uint64_t size);
+
+    void allocateMB(uint64_t size_mb);
 
     /// @brief clear the TT
     void clear();

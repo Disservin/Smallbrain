@@ -1,219 +1,168 @@
 #include "uci.h"
-#include "benchmark.h"
-#include "evaluation.h"
-#include "helper.h"
-#include "nnue.h"
-#include "perft.h"
+
 #include "syzygy/Fathom/src/tbprobe.h"
-#include "tests/tests.h"
+
+#include "cli.h"
+#include "str_utils.h"
 #include "thread.h"
 #include "tt.h"
-#include "cli.h"
+#include "evaluation.h"
+#include "perft.h"
 
-extern std::atomic_bool UCI_FORCE_STOP;
 extern TranspositionTable TTable;
 extern ThreadPool Threads;
 
-uciOptions options_ = uciOptions();
+Uci::Uci() {
+    options_ = uci::Options();
+    board_ = Board();
 
-int UCI::uciLoop() {
+    options_.add(uci::Option{"Hash", "spin", "16", "16", "1", "60129"});
+    options_.add(uci::Option{"Threads", "spin", "1", "1", "1", "256"});
+    options_.add(uci::Option{"EvalFile", "string", "", "", "", ""});
+    options_.add(uci::Option{"SyzygyPath", "string", "", "", "", ""});
+    options_.add(uci::Option{"UCI_Chess960", "check", "false", "false", "", ""});
+}
+
+void Uci::uciLoop() {
     board_.applyFen(DEFAULT_POS);
-    // catching inputs
+
     std::string input;
     std::cin >> std::ws;
 
     while (true) {
         if (!std::getline(std::cin, input) && std::cin.eof()) {
-            input = "quit";
+            input == "quit";
         }
 
         if (input == "quit") {
             quit();
-            return 0;
+            return;
         } else {
-            processCommand(input);
+            processLine(input);
         }
     }
 
-    return 0;
+    return;
 }
 
-void UCI::processCommand(std::string command) {
-    std::vector<std::string> tokens = splitInput(command);
+void Uci::processLine(const std::string& line) {
+    std::vector<std::string> tokens = StrUtil::splitString(line, ' ');
 
-    if (tokens[0] == "stop") {
-        Threads.stop_threads();
-    } else if (tokens[0] == "ucinewgame") {
-        ucinewgameInput();
-    } else if (tokens[0] == "uci") {
-        uciInput();
-    } else if (tokens[0] == "isready") {
-        isreadyInput();
-    } else if (tokens[0] == "setoption") {
-        std::string option = tokens[2];
-        std::string value = tokens[4];
-
-        if (option == "Hash")
-            options_.uciHash(std::stoi(value));
-        else if (option == "EvalFile")
-            options_.uciEvalFile(value);
-        else if (option == "Threads")
-            thread_count_ = options_.uciThreads(std::stoi(value));
-        else if (option == "SyzygyPath")
-            use_tb_ = options_.uciSyzygy(command);
-        else if (option == "UCI_Chess960")
-            options_.uciChess960(board_, value);
+    if (tokens.empty()) {
+        return;
     } else if (tokens[0] == "position") {
-        setPosition(tokens, command);
-    } else if (contains(command, "go perft")) {
-        int depth = findElement<int>("perft", tokens);
+        position(line);
+    } else if (tokens[0] == "uci") {
+        uci();
+    } else if (tokens[0] == "isready") {
+        isReady();
+    } else if (tokens[0] == "ucinewgame") {
+        uciNewGame();
+    } else if (StrUtil::contains(line, "go perft")) {
+        int depth = StrUtil::findElement<int>(tokens, "perft").value_or(1);
         PerftTesting perft = PerftTesting();
         perft.board = board_;
         perft.perfTest(depth, depth);
     } else if (tokens[0] == "go") {
-        startSearch(tokens, command);
-    } else if (command == "print") {
-        std::cout << board_ << std::endl;
-    } else if (command == "fen") {
-        std::cout << getRandomfen() << std::endl;
-    } else if (command == "captures") {
-        Movelist moves;
-        movegen::legalmoves<Movetype::CAPTURE>(board_, moves);
-
-        for (auto ext : moves) std::cout << uciMove(ext.move, board_.chess960) << std::endl;
-
-        std::cout << "count: " << signed(moves.size) << std::endl;
-    } else if (command == "moves") {
-        Movelist moves;
-        movegen::legalmoves<Movetype::ALL>(board_, moves);
-
-        for (auto ext : moves) std::cout << uciMove(ext.move, board_.chess960) << std::endl;
-
-        std::cout << "count: " << signed(moves.size) << std::endl;
-    }
-
-    else if (command == "rep") {
-        std::cout << board_.isRepetition(2) << std::endl;
-    }
-
-    else if (command == "eval") {
+        go(line);
+    } else if (tokens[0] == "stop") {
+        stop();
+    } else if (tokens[0] == "setoption") {
+        setOption(line);
+    } else if (tokens[0] == "eval") {
         std::cout << eval::evaluation(board_) << std::endl;
-    }
-
-    else if (command == "perft") {
-        PerftTesting perft = PerftTesting();
-        perft.board = board_;
-        perft.testAllPos();
-    } else if (contains(command, "move")) {
-        if (contains(tokens, "move")) {
-            std::size_t index = std::find(tokens.begin(), tokens.end(), "move") - tokens.begin();
-            index++;
-
-            for (; index < tokens.size(); index++) {
-                Move move = convertUciToMove(board_, tokens[index]);
-                board_.makeMove<true>(move);
-            }
-        }
+    } else if (tokens[0] == "print") {
+        std::cout << board_ << std::endl;
     } else {
-        std::cout << "Unknown command: " << command << std::endl;
+        std::cout << "Unknown command: " << line << std::endl;
     }
 }
 
-void UCI::uciInput() {
+void Uci::uci() {
     std::cout << "id name " << ArgumentsParser::getVersion() << std::endl;
     std::cout << "id author Disservin\n" << std::endl;
-    options_.printOptions();
+    options_.print();
     std::cout << "uciok" << std::endl;
+    applyOptions();
 }
 
-void UCI::isreadyInput() { std::cout << "readyok" << std::endl; }
+void Uci::setOption(const std::string& line) {
+    options_.set(line);
+    applyOptions();
+}
 
-void UCI::ucinewgameInput() {
-    board_.applyFen(DEFAULT_POS);
-    Threads.stop_threads();
+void Uci::applyOptions() {
+    worker_threads_ = options_.get<int>("Threads");
+    board_.chess960 = options_.get<bool>("UCI_Chess960");
+    auto path = options_.get<std::string>("SyzygyPath");
+
+    if (!path.empty()) {
+        std::cout << "info string SyzygyPath: " << path << std::endl;
+        tb_init(path.c_str());
+        use_tb_ = true;
+    }
+
+    TTable.allocateMB(options_.get<int>("Hash"));
+}
+
+void Uci::isReady() { std::cout << "readyok" << std::endl; }
+
+void Uci::uciNewGame() {
+    board_ = Board();
     TTable.clear();
-}
-
-void UCI::quit() {
     Threads.stop_threads();
-
-    Threads.pool.clear();
-
-    tb_free();
 }
 
-void UCI::uciMoves(const std::vector<std::string> &tokens) {
-    std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();
-    index++;
-    for (; index < tokens.size(); index++) {
-        Move move = convertUciToMove(board_, tokens[index]);
-        board_.makeMove<false>(move);
-    }
-}
+void Uci::position(const std::string& line) {
+    const auto fen_range = StrUtil::findRange(line, "fen", "moves");
 
-void UCI::startSearch(const std::vector<std::string> &tokens, const std::string &command) {
-    Limits info;
-    std::string limit;
+    const auto fen =
+        StrUtil::contains(line, "fen") ? line.substr(line.find("fen") + 4, fen_range) : DEFAULT_POS;
 
-    Threads.stop_threads();
+    const auto moves = StrUtil::contains(line, "moves") ? line.substr(line.find("moves") + 6) : "";
+    const auto moves_vec = StrUtil::splitString(moves, ' ');
 
-    if (tokens.size() == 1)
-        limit = "";
-    else
-        limit = tokens[1];
+    board_ = Board(fen);
 
-    info.depth = (limit == "depth") ? findElement<int>("depth", tokens) : MAX_PLY - 1;
-    info.depth = command == "go" ? MAX_PLY - 1 : info.depth;
-    info.infinite = limit == "infinite";
-    info.nodes = (limit == "nodes") ? findElement<int>("nodes", tokens) : 0;
-    info.time.maximum = info.time.optimum =
-        (limit == "movetime") ? findElement<int>("movetime", tokens) : 0;
-
-    searchmoves_.size = 0;
-
-    const std::string keyword = "searchmoves_";
-    if (contains(tokens, keyword)) {
-        std::size_t index = std::find(tokens.begin(), tokens.end(), keyword) - tokens.begin() + 1;
-        for (; index < tokens.size(); index++) {
-            Move move = convertUciToMove(board_, tokens[index]);
-            searchmoves_.Add(move);
-        }
+    for (const auto& move : moves_vec) {
+        board_.makeMove<false>(convertUciToMove(board_, move));
     }
 
-    std::string side_str = board_.side_to_move == White ? "wtime" : "btime";
-    std::string inc_str = board_.side_to_move == White ? "winc" : "binc";
-
-    if (contains(tokens, side_str)) {
-        int64_t timegiven = findElement<int>(side_str, tokens);
-        int64_t inc = 0;
-        int64_t mtg = 0;
-
-        // Increment
-        if (contains(tokens, inc_str)) inc = findElement<int>(inc_str, tokens);
-
-        // Moves to next time control
-        if (contains(tokens, "movestogo")) mtg = findElement<int>("movestogo", tokens);
-
-        // Calculate search time
-        info.time = optimumTime(timegiven, inc, mtg);
-    }
-
-    // start search
-    Threads.start_threads(board_, info, searchmoves_, thread_count_, use_tb_);
-}
-
-void UCI::setPosition(const std::vector<std::string> &tokens, const std::string &command) {
-    Threads.stop_threads();
-
-    bool hasMoves = contains(tokens, "moves");
-
-    if (tokens[1] == "fen")
-        board_.applyFen(command.substr(command.find("fen") + 4), false);
-    else
-        board_.applyFen(DEFAULT_POS, false);
-
-    if (hasMoves) uciMoves(tokens);
-
-    // setup accumulator with the correct board_
     board_.refresh();
+}
+
+void Uci::go(const std::string& line) {
+    Threads.stop_threads();
+
+    Limits limit;
+
+    const auto tokens = StrUtil::splitString(line, ' ');
+
+    if (tokens.size() == 1) limit.infinite = true;
+
+    limit.depth = StrUtil::findElement<int>(tokens, "depth").value_or(MAX_PLY);
+    limit.infinite = StrUtil::findElement<bool>(tokens, "infinite").value_or(false);
+    limit.nodes = StrUtil::findElement<int64_t>(tokens, "nodes").value_or(0);
+    limit.time.maximum = limit.time.optimum =
+        StrUtil::findElement<int64_t>(tokens, "movetime").value_or(0);
+
+    std::string uci_time = board_.side_to_move == Color::White ? "wtime" : "btime";
+    std::string uci_inc = board_.side_to_move == Color::White ? "winc" : "binc";
+
+    if (StrUtil::contains(line, uci_time)) {
+        auto time = StrUtil::findElement<int>(tokens, uci_time).value_or(0);
+        auto inc = StrUtil::findElement<int>(tokens, uci_inc).value_or(0);
+        auto mtg = StrUtil::findElement<int>(tokens, "movestogo").value_or(0);
+
+        limit.time = optimumTime(time, inc, mtg);
+    }
+
+    Threads.start_threads(board_, limit, searchmoves_ /* todo*/, worker_threads_, use_tb_);
+}
+
+void Uci::stop() { Threads.stop_threads(); }
+
+void Uci::quit() {
+    Threads.stop_threads();
+    tb_free();
 }

@@ -37,6 +37,6 @@ int main(int argc, char const *argv[]) {
 
     if (optionsParser.parse(argc, argv) >= 1) return 0;
 
-    UCI communication = UCI();
+    Uci communication = Uci();
     communication.uciLoop();
 }

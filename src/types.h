@@ -365,26 +365,6 @@ template <uint16_t MoveType = 0>
     return static_cast<PieceType>(((move >> 12) & 3) + static_cast<int>(PieceType::KNIGHT));
 }
 
-[[nodiscard]] inline std::string uci(Move move, bool chess960) {
-    std::stringstream ss;
-
-    Square from_sq = from(move);
-    Square to_sq = to(move);
-
-    if (!chess960 && typeOf(move) == CASTLING) {
-        to_sq =
-            file_rank_square(to_sq > from_sq ? File::FILE_G : File::FILE_C, square_rank(from_sq));
-    }
-
-    ss << squareToString[from_sq] << squareToString[to_sq];
-
-    if (typeOf(move) == Move::PROMOTION) {
-        ss << PieceTypeToPromPiece.at(promotionType(move));
-    }
-
-    return ss.str();
-}
-
 inline std::ostream &operator<<(std::ostream &os, const Move move) {
     Square from_sq = from(move);
     Square to_sq = to(move);

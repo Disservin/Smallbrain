@@ -482,4 +482,4 @@ Square extractSquare(std::string_view squareStr);
 /// @param board
 /// @param input
 /// @return
-Move convertUciToMove(const Board &board, const std::string &fen);
+Move convertUciToMove(const Board &board, const std::string &input);

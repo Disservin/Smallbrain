@@ -34,6 +34,16 @@ uint32_t TranspositionTable::index(U64 key) const {
 
 void TranspositionTable::allocate(uint64_t size) { entries_.resize(size, TEntry()); }
 
+void TranspositionTable::allocateMB(uint64_t size_mb) {
+    // value * 10^6 / 2^20
+    uint64_t sizeMiB = static_cast<uint64_t>(size_mb) * 1000000 / 1048576;
+    sizeMiB = std::clamp(sizeMiB, uint64_t(1), MAXHASH);
+    uint64_t elements = (static_cast<uint64_t>(sizeMiB) * 1024 * 1024) / sizeof(TEntry);
+    allocate(elements);
+    std::cout << "info string hash set to " << sizeMiB << " MiB"
+              << " " << elements << std::endl;
+}
+
 void TranspositionTable::clear() { std::fill(entries_.begin(), entries_.end(), TEntry()); }
 
 void TranspositionTable::prefetch(uint64_t key) const { builtin::prefetch(&entries_[index(key)]); }
