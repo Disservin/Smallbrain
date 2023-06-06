@@ -176,7 +176,7 @@ class FastLookup {
     Search &search;
     Stack *ss;
     Movelist &movelist;
-    Move ttMove;
+    Move ttMove = NO_MOVE;
 
     int played = 0;
 
@@ -187,57 +187,3 @@ class FastLookup {
     Move killer_move_2 = NO_MOVE;
     Move counter_move = NO_MOVE;
 };
-
-template <SearchType st>
-class MovePick {
-   public:
-    MovePick(Search &sh, Stack *s, Movelist &moves, const Move move);
-    MovePick(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves, bool rootNode,
-             const Move move);
-
-    Move nextMove();
-
-    Staging stage = GENERATE;
-
-   private:
-    Search &search;
-    Stack *ss;
-    Movelist &movelist;
-    Move ttMove;
-
-    int played = 0;
-
-    template <bool score>
-    Move orderNext();
-
-    int mvvlva(const Move move) const;
-    int scoreMove(const Move move) const;
-};
-
-template <SearchType st>
-MovePick<st>::MovePick(Search &sh, Stack *s, Movelist &moves, const Move move)
-    : search(sh), ss(s), movelist(moves), ttMove(move) {
-    stage = GENERATE;
-    movelist.size = 0;
-    played = 0;
-}
-
-template <SearchType st>
-MovePick<st>::MovePick(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves,
-                       bool rootNode, const Move move)
-    : search(sh), ss(s), movelist(moves), ttMove(move) {
-    movelist.size = 0;
-    played = 0;
-
-    if (rootNode && searchmoves.size) {
-        movelist = searchmoves;
-        stage = PICK_NEXT;
-
-        for (auto &ext : movelist) {
-            if (ext.move == ttMove)
-                ext.value = 10'000'000;
-            else
-                ext.value = scoreMove(ext.move);
-        }
-    }
-}
