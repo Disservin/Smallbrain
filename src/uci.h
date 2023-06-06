@@ -1,38 +1,41 @@
 #pragma once
 
 #include "board.h"
-#include "datagen.h"
+#include "options.h"
 #include "timemanager.h"
-#include "ucioptions.h"
+#include "movegen.h"
 
-class UCI {
+class Uci {
    public:
-    int uciLoop();
+    Uci();
+
+    void uciLoop();
+
+    void processLine(const std::string& line);
+
+    void uci();
+
+    void setOption(const std::string& line);
+    void applyOptions();
+
+    void isReady();
+
+    void uciNewGame();
+    void position(const std::string& line);
+
+    void go(const std::string& line);
+
+    void stop();
+    void quit();
 
    private:
-    Board board_ = Board(DEFAULT_POS);
-    uciOptions options_ = uciOptions();
+    uci::Options options_;
+    Board board_;
 
     Movelist searchmoves_;
 
-    int thread_count_ = 1;
+    std::size_t worker_threads_ = 1;
+    uint64_t hash_size_ = 16;
+
     bool use_tb_ = false;
-
-    void processCommand(std::string command);
-
-    void uciInput();
-
-    void isreadyInput();
-
-    void ucinewgameInput();
-
-    void quit();
-
-    const std::string getVersion();
-
-    void uciMoves(const std::vector<std::string> &tokens);
-
-    void startSearch(const std::vector<std::string> &tokens, const std::string &command);
-
-    void setPosition(const std::vector<std::string> &tokens, const std::string &command);
 };

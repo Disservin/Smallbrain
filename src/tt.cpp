@@ -1,10 +1,7 @@
 #include "tt.h"
 #include "helper.h"
 
-TranspositionTable::TranspositionTable() {
-    static constexpr uint64_t size = 16 * 1024 * 1024 / sizeof(TEntry);
-    allocate(size);
-}
+TranspositionTable::TranspositionTable() { allocateMB(16); }
 
 void TranspositionTable::store(int depth, Score bestvalue, Flag b, U64 key, Move move) {
     TEntry *tte = &entries_[index(key)];
@@ -33,6 +30,14 @@ uint32_t TranspositionTable::index(U64 key) const {
 }
 
 void TranspositionTable::allocate(uint64_t size) { entries_.resize(size, TEntry()); }
+
+void TranspositionTable::allocateMB(uint64_t size_mb) {
+    uint64_t sizeB = size_mb * 1e6;
+    sizeB = std::clamp(sizeB, uint64_t(1), uint64_t(MAXHASH * 1e6));
+    uint64_t elements = sizeB / sizeof(TEntry);
+    allocate(elements);
+    std::cout << "info string hash set to " << sizeB / 1e6 << " MB" << std::endl;
+}
 
 void TranspositionTable::clear() { std::fill(entries_.begin(), entries_.end(), TEntry()); }
 

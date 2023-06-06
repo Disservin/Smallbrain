@@ -2,7 +2,7 @@
 #include "movegen.h"
 #include "zobrist.h"
 
-Board::Board(const std::string &fen) {
+Board::Board(std::string fen) {
     state_history.reserve(MAX_PLY);
     hash_history.reserve(512);
 
@@ -12,9 +12,9 @@ Board::Board(const std::string &fen) {
     half_move_clock = 0;
     full_move_number = 1;
 
-    applyFen(fen, true);
-
     std::fill(std::begin(board), std::end(board), None);
+
+    applyFen(fen, true);
 }
 
 std::string Board::getCastleString() const {

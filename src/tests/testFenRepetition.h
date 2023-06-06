@@ -1,5 +1,6 @@
 #pragma once
 #include "tests.h"
+#include "../str_utils.h"
 
 namespace tests {
 inline bool testFenRepetition(const std::string &input) {
@@ -7,7 +8,7 @@ inline bool testFenRepetition(const std::string &input) {
 
     std::vector<std::string> tokens = splitInput(input);
 
-    bool hasMoves = contains(tokens, "moves");
+    bool hasMoves = StrUtil::contains(tokens, "moves");
 
     if (tokens[1] == "fen")
         board.applyFen(input.substr(input.find("fen") + 4), false);
@@ -79,4 +80,4 @@ inline void testAllFenRepetitions() {
     repetition4();
 }
 
-}  // namespace  Tests
+}  // namespace tests

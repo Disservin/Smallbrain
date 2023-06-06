@@ -21,7 +21,7 @@ extern TranspositionTable TTable;
 class Board {
    public:
     /// @brief constructor for the board, loads startpos
-    Board(const std::string &fen = DEFAULT_POS);
+    Board(std::string fen = DEFAULT_POS);
 
     std::string getCastleString() const;
 
@@ -482,4 +482,4 @@ Square extractSquare(std::string_view squareStr);
 /// @param board
 /// @param input
 /// @return
-Move convertUciToMove(const Board &board, const std::string &fen);
+Move convertUciToMove(const Board &board, const std::string &input);

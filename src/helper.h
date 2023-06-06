@@ -103,29 +103,4 @@ Piece makePiece(PieceType type, Color c);
 /// @param bb
 void printBitboard(U64 bb);
 
-/// @brief findElement returns the next value after a needle
-/// @param needle
-/// @param haystack
-/// @return
-template <typename T>
-T findElement(std::string_view needle, const std::vector<std::string> &haystack) {
-    int index = std::find(haystack.begin(), haystack.end(), needle) - haystack.begin();
-    if constexpr (std::is_same_v<T, int>)
-        return std::stoi(haystack[index + 1]);
-    else
-        return haystack[index + 1];
-}
-
-/// @brief
-/// @param needle
-/// @param haystack the string to search in
-/// @return
-bool contains(std::string_view haystack, std::string_view needle);
-
-/// @brief
-/// @param needle
-/// @param haystack the vector to search in
-/// @return
-bool contains(const std::vector<std::string> &haystack, std::string_view needle);
-
 bool sameColor(int sq1, int sq2);

@@ -195,12 +195,4 @@ void printBitboard(U64 bb) {
     std::cout << '\n' << std::endl;
 }
 
-bool contains(std::string_view haystack, std::string_view needle) {
-    return haystack.find(needle) != std::string::npos;
-}
-
-bool contains(const std::vector<std::string> &haystack, std::string_view needle) {
-    return std::find(haystack.begin(), haystack.end(), needle) != haystack.end();
-}
-
 bool sameColor(int sq1, int sq2) { return ((9 * (sq1 ^ sq2)) & 8) == 0; }
