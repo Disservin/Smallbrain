@@ -12,7 +12,6 @@ class FastLookup {
         : search(sh), ss(s), movelist(moves), ttMove(move) {
         movelist.size = 0;
         movegen::legalmoves<Movetype::CAPTURE>(search.board, movelist);
-        score();
     }
 
     FastLookup(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves, bool rootNode,
@@ -20,7 +19,6 @@ class FastLookup {
         : search(sh), ss(s), movelist(moves), ttMove(move) {
         movelist.size = 0;
         movegen::legalmoves<Movetype::ALL>(search.board, movelist);
-        score();
     }
 
     void score() {
@@ -28,9 +26,6 @@ class FastLookup {
             movelist[i].value = scoreMove(movelist[i].move);
 
             switch (movelist[i].value) {
-                case TT_SCORE:
-                    tt_move = movelist[i].move;
-                    break;
                 case KILLER_ONE_SCORE:
                     killer_move_1 = movelist[i].move;
                     break;
@@ -50,12 +45,18 @@ class FastLookup {
     Move nextMove() {
         switch (pick) {
             case Pick::TT:
-                pick = Pick::CAPTURES;
+                pick = Pick::SCORE;
 
-                if (tt_move != NO_MOVE) {
-                    return tt_move;
+                if (ttMove != NO_MOVE && movelist.find(ttMove) != -1) {
+                    tt_move = ttMove;
+                    return ttMove;
                 }
 
+                [[fallthrough]];
+            case Pick::SCORE:
+                pick = Pick::CAPTURES;
+
+                score();
                 [[fallthrough]];
             case Pick::CAPTURES: {
                 while (played < movelist.size) {
@@ -148,8 +149,6 @@ class FastLookup {
     }
 
     int scoreMove(const Move move) const {
-        if (move == ttMove) return TT_SCORE;
-
         if constexpr (st == QSEARCH) {
             return CAPTURE_SCORE + mvvlva(move);
         } else if (search.board.pieceAtB(to(move)) != None) {
@@ -171,7 +170,7 @@ class FastLookup {
     }
 
    private:
-    enum class Pick { TT, CAPTURES, KILLERS_1, KILLERS_2, COUNTER, QUIET };
+    enum class Pick { TT, SCORE, CAPTURES, KILLERS_1, KILLERS_2, COUNTER, QUIET };
 
     Search &search;
     Stack *ss;
