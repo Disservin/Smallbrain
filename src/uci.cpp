@@ -92,12 +92,22 @@ void Uci::setOption(const std::string& line) {
 }
 
 void Uci::applyOptions() {
-    auto path = options_.get<std::string>("SyzygyPath");
+    const auto path = options_.get<std::string>("SyzygyPath");
 
     if (!path.empty()) {
-        std::cout << "info string SyzygyPath: " << path << std::endl;
-        tb_init(path.c_str());
-        use_tb_ = true;
+        if (tb_init(path.c_str())) {
+            use_tb_ = true;
+            std::cout << "info string successfully loaded syzygy path " << path << std::endl;
+        } else {
+            std::cout << "info string failed to load syzygy path " << path << std::endl;
+        }
+    }
+
+    const auto eval_file = options_.get<std::string>("EvalFile");
+
+    if (!eval_file.empty()) {
+        std::cout << "info string EvalFile " << eval_file << std::endl;
+        nnue::init(eval_file.c_str());
     }
 
     worker_threads_ = options_.get<int>("Threads");
