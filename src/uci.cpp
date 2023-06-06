@@ -92,8 +92,6 @@ void Uci::setOption(const std::string& line) {
 }
 
 void Uci::applyOptions() {
-    worker_threads_ = options_.get<int>("Threads");
-    board_.chess960 = options_.get<bool>("UCI_Chess960");
     auto path = options_.get<std::string>("SyzygyPath");
 
     if (!path.empty()) {
@@ -101,6 +99,9 @@ void Uci::applyOptions() {
         tb_init(path.c_str());
         use_tb_ = true;
     }
+
+    worker_threads_ = options_.get<int>("Threads");
+    board_.chess960 = options_.get<bool>("UCI_Chess960");
 
     TTable.allocateMB(options_.get<int>("Hash"));
 }
