@@ -178,7 +178,7 @@ void Uci::go(const std::string& line) {
         }
     }
 
-    Threads.start_threads(board_, limit, searchmoves_ /* todo*/, worker_threads_, use_tb_);
+    Threads.start_threads(board_, limit, searchmoves_, worker_threads_, use_tb_);
 }
 
 void Uci::stop() { Threads.stop_threads(); }
