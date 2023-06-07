@@ -17,6 +17,10 @@ class MovePicker {
     MovePicker(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves, bool rootNode,
                const Move move)
         : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
+        if (rootNode && searchmoves.size > 0) {
+            movelist_ = searchmoves;
+            return;
+        }
         movelist_.size = 0;
         movegen::legalmoves<Movetype::ALL>(search_.board, movelist_);
     }
