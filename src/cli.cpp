@@ -105,7 +105,7 @@ class See : public Argument {
                 fen = value;
                 board = Board(fen);
             } else if (key == "move") {
-                // std::cout << board.see(uciMove(value).move(), -93) << std::endl;
+                // std::cout << board.see(moveToUci(value).move(), -93) << std::endl;
                 // return 1;
             } else {
                 ArgumentsParser::throwMissing("eval", key, value);

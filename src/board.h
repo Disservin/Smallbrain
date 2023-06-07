@@ -58,7 +58,7 @@ class Board {
 
     U64 enemy(Color c) const;
 
-    U64 Us(Color c) const;
+    U64 us(Color c) const;
     template <Color c>
     U64 us() const {
         return pieces_bb[PAWN + c * 6] | pieces_bb[KNIGHT + c * 6] | pieces_bb[BISHOP + c * 6] |
@@ -469,17 +469,3 @@ void Board::unmakeMove(Move move) {
         placePiece<updateNNUE>(capture, to_sq);
     }
 }
-
-/// @brief get uci representation of a move
-/// @param board
-/// @param move
-/// @return
-std::string uciMove(Move move, bool chess960);
-
-Square extractSquare(std::string_view squareStr);
-
-/// @brief convert console input to move
-/// @param board
-/// @param input
-/// @return
-Move convertUciToMove(const Board &board, const std::string &input);

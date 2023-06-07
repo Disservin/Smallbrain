@@ -5,6 +5,7 @@
 #include "timemanager.h"
 #include "movegen.h"
 
+namespace uci {
 class Uci {
    public:
     Uci();
@@ -39,3 +40,7 @@ class Uci {
 
     bool use_tb_ = false;
 };
+
+Move uciToMove(const Board& board, const std::string& input);
+std::string moveToUci(Move move, bool chess960);
+}  // namespace uci

@@ -3,6 +3,7 @@
 #include "syzygy/Fathom/src/tbprobe.h"
 
 #include "movegen.h"
+#include "uci.h"
 
 namespace syzygy {
 Score probeWDL(const Board& board) {
@@ -86,8 +87,8 @@ Move probeDTZ(const Board& board) {
             if ((promoTranslation[promo] == NONETYPE && typeOf(move) != PROMOTION) ||
                 (promo < 5 && promoTranslation[promo] == promotionType(move) &&
                  typeOf(move) == PROMOTION)) {
-                uciOutput(s, static_cast<int>(dtz), 1, 1, 1, 0, " " + uciMove(move, board.chess960),
-                          0);
+                uciOutput(s, static_cast<int>(dtz), 1, 1, 1, 0,
+                          " " + uci::moveToUci(move, board.chess960), 0);
                 return move;
             }
         }

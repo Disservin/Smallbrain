@@ -8,6 +8,7 @@
 #include "search.h"
 #include "thread.h"
 #include "tt.h"
+#include "uci.h"
 
 extern ThreadPool Threads;
 extern TranspositionTable TTable;
@@ -492,7 +493,7 @@ moves:
             &&  !Threads.stop.load(std::memory_order_relaxed) 
             &&  getTime() > 10000)
             std::cout << "info depth " << depth - inCheck 
-                      << " currmove " << uciMove(move, board.chess960)
+                      << " currmove " << uci::moveToUci(move, board.chess960)
                       << " currmovenumber " << signed(madeMoves) << std::endl;
         // clang-format on
 
@@ -740,7 +741,7 @@ SearchResult Search::iterativeDeepening() {
      * Allowprint is disabled in data generation
      *******************/
     if (id == 0 && !silent) {
-        std::cout << "bestmove " << uciMove(bestmove, board.chess960) << std::endl;
+        std::cout << "bestmove " << uci::moveToUci(bestmove, board.chess960) << std::endl;
         Threads.stop = true;
     }
 
@@ -777,7 +778,7 @@ void Search::startThinking() {
     if (id == 0 && limit.time.optimum != 0) {
         Move dtzMove = syzygy::probeDTZ(board);
         if (dtzMove != NO_MOVE) {
-            std::cout << "bestmove " << uciMove(dtzMove, board.chess960) << std::endl;
+            std::cout << "bestmove " << uci::moveToUci(dtzMove, board.chess960) << std::endl;
             Threads.stop = true;
             return;
         }
@@ -813,7 +814,7 @@ std::string Search::getPV() {
     std::stringstream ss;
 
     for (int i = 0; i < pv_length[0]; i++) {
-        ss << " " << uciMove(pv_table[0][i], board.chess960);
+        ss << " " << uci::moveToUci(pv_table[0][i], board.chess960);
     }
 
     return ss.str();

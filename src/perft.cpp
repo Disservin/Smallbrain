@@ -2,6 +2,7 @@
 
 #include "movegen.h"
 #include "perft.h"
+#include "uci.h"
 
 U64 PerftTesting::perftFunction(int depth, int max) {
     movelists[depth].size = 0;
@@ -19,7 +20,7 @@ U64 PerftTesting::perftFunction(int depth, int max) {
         board.unmakeMove<false>(move);
         if (depth == max) {
             nodes += nodesIt;
-            std::cout << uciMove(move, board.chess960) << " " << nodesIt << std::endl;
+            std::cout << uci::moveToUci(move, board.chess960) << " " << nodesIt << std::endl;
             nodesIt = 0;
         }
     }

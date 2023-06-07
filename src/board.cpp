@@ -242,9 +242,9 @@ bool Board::nonPawnMat(Color c) const {
 
 Square Board::kingSQ(Color c) const { return builtin::lsb(pieces(KING, c)); }
 
-U64 Board::enemy(Color c) const { return Us(~c); }
+U64 Board::enemy(Color c) const { return us(~c); }
 
-U64 Board::Us(Color c) const {
+U64 Board::us(Color c) const {
     return pieces_bb[PAWN + c * 6] | pieces_bb[KNIGHT + c * 6] | pieces_bb[BISHOP + c * 6] |
            pieces_bb[ROOK + c * 6] | pieces_bb[QUEEN + c * 6] | pieces_bb[KING + c * 6];
 }
@@ -388,11 +388,6 @@ U64 Board::zobristHash() const {
     return hash ^ cast_hash ^ turn_hash ^ ep_hash;
 }
 
-/**
- * PRIVATE FUNCTIONS
- *
- */
-
 U64 Board::updateKeyPiece(Piece piece, Square sq) const {
     assert(piece < None);
     assert(sq < NO_SQ);
@@ -404,66 +399,3 @@ U64 Board::updateKeyEnPassant(Square sq) const { return RANDOM_ARRAY[772 + squar
 U64 Board::updateKeyCastling() const { return castlingKey[castling_rights.getHashIndex()]; }
 
 U64 Board::updateKeySideToMove() const { return RANDOM_ARRAY[780]; }
-
-std::string uciMove(Move move, bool chess960) {
-    std::stringstream ss;
-
-    // Get the from and to squares
-    Square from_sq = from(move);
-    Square to_sq = to(move);
-
-    // If the move is not a chess960 castling move and is a king moving more than one square,
-    // update the to square to be the correct square for a regular castling move
-    if (!chess960 && typeOf(move) == CASTLING) {
-        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
-    }
-
-    // Add the from and to squares to the string stream
-    ss << squareToString[from_sq];
-    ss << squareToString[to_sq];
-
-    // If the move is a promotion, add the promoted piece to the string stream
-    if (typeOf(move) == PROMOTION) {
-        ss << PieceTypeToPromPiece[promotionType(move)];
-    }
-
-    return ss.str();
-}
-
-Square extractSquare(std::string_view squareStr) {
-    char letter = squareStr[0];
-    int file = letter - 96;
-    int rank = squareStr[1] - 48;
-    int index = (rank - 1) * 8 + file - 1;
-    return Square(index);
-}
-
-Move convertUciToMove(const Board &board, const std::string &input) {
-    Square source = extractSquare(input.substr(0, 2));
-    Square target = extractSquare(input.substr(2, 2));
-    PieceType piece = type_of_piece(board.pieceAtB(source));
-
-    // convert to king captures rook
-    if (!board.chess960 && piece == KING && square_distance(target, source) == 2) {
-        target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
-    }
-
-    if (piece == KING && type_of_piece(board.pieceAtB(target)) == ROOK &&
-        board.pieceAtB(target) / 6 == board.pieceAtB(source) / 6) {
-        return make<Move::CASTLING>(source, target);
-    }
-
-    if (piece == PAWN && target == board.en_passant_square) {
-        return make<Move::ENPASSANT>(source, target);
-    }
-
-    switch (input.length()) {
-        case 4:
-            return make(source, target);
-        case 5:
-            return make<Move::PROMOTION>(source, target, pieceToInt[input.at(4)]);
-        default:
-            std::cout << "FALSE INPUT" << std::endl;
-            return make(NO_SQ, NO_SQ);
-    }
-}

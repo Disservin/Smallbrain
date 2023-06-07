@@ -104,8 +104,6 @@ enum MoveScores : int {
     NEGATIVE_SCORE = -10'000'000
 };
 
-enum Staging { GENERATE, PICK_NEXT };
-
 enum Node { NonPV, PV, Root };
 
 enum Rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
@@ -129,7 +127,6 @@ constexpr Color operator~(Color C) { return Color(C ^ Black); }
 INCR_OP_ON(Piece)
 INCR_OP_ON(Square)
 INCR_OP_ON(PieceType)
-INCR_OP_ON(Staging)
 INCR_OP_ON(File)
 INCR_OP_ON(Rank)
 

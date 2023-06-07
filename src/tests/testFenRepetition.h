@@ -1,6 +1,8 @@
 #pragma once
+
 #include "tests.h"
 #include "../str_utils.h"
+#include "../uci.h"
 
 namespace tests {
 inline bool testFenRepetition(const std::string &input) {
@@ -19,7 +21,7 @@ inline bool testFenRepetition(const std::string &input) {
         std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();
         index++;
         for (; index < tokens.size(); index++) {
-            Move move = convertUciToMove(board, tokens[index]);
+            Move move = uci::uciToMove(board, tokens[index]);
             board.makeMove<false>(move);
         }
     }

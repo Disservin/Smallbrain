@@ -12,6 +12,7 @@
 extern TranspositionTable TTable;
 extern ThreadPool Threads;
 
+namespace uci {
 Uci::Uci() {
     options_ = uci::Options();
     board_ = Board();
@@ -136,7 +137,7 @@ void Uci::position(const std::string& line) {
     board_ = Board(fen);
 
     for (const auto& move : moves_vec) {
-        board_.makeMove<false>(convertUciToMove(board_, move));
+        board_.makeMove<false>(uciToMove(board_, move));
     }
 
     board_.refresh();
@@ -174,7 +175,7 @@ void Uci::go(const std::string& line) {
         const auto moves = StrUtil::splitString(searchmoves, ' ');
 
         for (const auto& move : moves) {
-            searchmoves_.add(convertUciToMove(board_, move));
+            searchmoves_.add(uciToMove(board_, move));
         }
     }
 
@@ -187,3 +188,68 @@ void Uci::quit() {
     Threads.stop_threads();
     tb_free();
 }
+
+Square extractSquare(std::string_view squareStr) {
+    char letter = squareStr[0];
+    int file = letter - 96;
+    int rank = squareStr[1] - 48;
+    int index = (rank - 1) * 8 + file - 1;
+    return Square(index);
+}
+
+Move uciToMove(const Board& board, const std::string& input) {
+    Square source = extractSquare(input.substr(0, 2));
+    Square target = extractSquare(input.substr(2, 2));
+    PieceType piece = type_of_piece(board.pieceAtB(source));
+
+    // convert to king captures rook
+    if (!board.chess960 && piece == KING && square_distance(target, source) == 2) {
+        target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
+    }
+
+    if (piece == KING && type_of_piece(board.pieceAtB(target)) == ROOK &&
+        board.pieceAtB(target) / 6 == board.pieceAtB(source) / 6) {
+        return make<Move::CASTLING>(source, target);
+    }
+
+    if (piece == PAWN && target == board.en_passant_square) {
+        return make<Move::ENPASSANT>(source, target);
+    }
+
+    switch (input.length()) {
+        case 4:
+            return make(source, target);
+        case 5:
+            return make<Move::PROMOTION>(source, target, pieceToInt[input.at(4)]);
+        default:
+            std::cout << "FALSE INPUT" << std::endl;
+            return make(NO_SQ, NO_SQ);
+    }
+}
+
+std::string moveToUci(Move move, bool chess960) {
+    std::stringstream ss;
+
+    // Get the from and to squares
+    Square from_sq = from(move);
+    Square to_sq = to(move);
+
+    // If the move is not a chess960 castling move and is a king moving more than one square,
+    // update the to square to be the correct square for a regular castling move
+    if (!chess960 && typeOf(move) == CASTLING) {
+        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+    }
+
+    // Add the from and to squares to the string stream
+    ss << squareToString[from_sq];
+    ss << squareToString[to_sq];
+
+    // If the move is a promotion, add the promoted piece to the string stream
+    if (typeOf(move) == PROMOTION) {
+        ss << PieceTypeToPromPiece[promotionType(move)];
+    }
+
+    return ss.str();
+}
+
+}  // namespace uci

@@ -666,7 +666,7 @@ inline bool see(const Board &board, Move move, int threshold) {
 
     while (true) {
         attackers &= occ;
-        U64 myAttackers = attackers & board.Us(sT);
+        U64 myAttackers = attackers & board.us(sT);
         if (!myAttackers) break;
 
         int pt;
@@ -677,7 +677,7 @@ inline bool see(const Board &board, Move move, int threshold) {
         }
         sT = ~sT;
         if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0) {
-            if (pt == KING && (attackers & board.Us(sT))) sT = ~sT;
+            if (pt == KING && (attackers & board.us(sT))) sT = ~sT;
             break;
         }
 
