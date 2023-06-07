@@ -45,7 +45,7 @@ struct Movelist {
     typedef ExtMove *iterator;
     typedef const ExtMove *const_iterator;
 
-    void Add(Move move) {
+    void add(Move move) {
         list[size].move = move;
         list[size].value = 0;
         size++;
@@ -315,26 +315,26 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
 
         while (Promote_Move) {
             Square to = builtin::poplsb(Promote_Move);
-            movelist.Add(make<PROMOTION>(to + DOWN, to, QUEEN));
-            movelist.Add(make<PROMOTION>(to + DOWN, to, ROOK));
-            movelist.Add(make<PROMOTION>(to + DOWN, to, KNIGHT));
-            movelist.Add(make<PROMOTION>(to + DOWN, to, BISHOP));
+            movelist.add(make<PROMOTION>(to + DOWN, to, QUEEN));
+            movelist.add(make<PROMOTION>(to + DOWN, to, ROOK));
+            movelist.add(make<PROMOTION>(to + DOWN, to, KNIGHT));
+            movelist.add(make<PROMOTION>(to + DOWN, to, BISHOP));
         }
 
         while (Promote_Right) {
             Square to = builtin::poplsb(Promote_Right);
-            movelist.Add(make<PROMOTION>(to + DOWN_LEFT, to, QUEEN));
-            movelist.Add(make<PROMOTION>(to + DOWN_LEFT, to, ROOK));
-            movelist.Add(make<PROMOTION>(to + DOWN_LEFT, to, KNIGHT));
-            movelist.Add(make<PROMOTION>(to + DOWN_LEFT, to, BISHOP));
+            movelist.add(make<PROMOTION>(to + DOWN_LEFT, to, QUEEN));
+            movelist.add(make<PROMOTION>(to + DOWN_LEFT, to, ROOK));
+            movelist.add(make<PROMOTION>(to + DOWN_LEFT, to, KNIGHT));
+            movelist.add(make<PROMOTION>(to + DOWN_LEFT, to, BISHOP));
         }
 
         while (Promote_Left) {
             Square to = builtin::poplsb(Promote_Left);
-            movelist.Add(make<PROMOTION>(to + DOWN_RIGHT, to, QUEEN));
-            movelist.Add(make<PROMOTION>(to + DOWN_RIGHT, to, ROOK));
-            movelist.Add(make<PROMOTION>(to + DOWN_RIGHT, to, KNIGHT));
-            movelist.Add(make<PROMOTION>(to + DOWN_RIGHT, to, BISHOP));
+            movelist.add(make<PROMOTION>(to + DOWN_RIGHT, to, QUEEN));
+            movelist.add(make<PROMOTION>(to + DOWN_RIGHT, to, ROOK));
+            movelist.add(make<PROMOTION>(to + DOWN_RIGHT, to, KNIGHT));
+            movelist.add(make<PROMOTION>(to + DOWN_RIGHT, to, BISHOP));
         }
     }
 
@@ -348,7 +348,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
      *******************/
     while (mt != Movetype::CAPTURE && singlePush) {
         Square to = builtin::poplsb(singlePush);
-        movelist.Add(make(to + DOWN, to));
+        movelist.add(make(to + DOWN, to));
     }
 
     /********************
@@ -356,7 +356,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
      *******************/
     while (mt != Movetype::CAPTURE && doublePush) {
         Square to = builtin::poplsb(doublePush);
-        movelist.Add(make(to + DOWN + DOWN, to));
+        movelist.add(make(to + DOWN + DOWN, to));
     }
 
     /********************
@@ -364,7 +364,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
      *******************/
     while (mt != Movetype::QUIET && Rpawns) {
         Square to = builtin::poplsb(Rpawns);
-        movelist.Add(make(to + DOWN_LEFT, to));
+        movelist.add(make(to + DOWN_LEFT, to));
     }
 
     /********************
@@ -372,7 +372,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
      *******************/
     while (mt != Movetype::QUIET && Lpawns) {
         Square to = builtin::poplsb(Lpawns);
-        movelist.Add(make(to + DOWN_RIGHT, to));
+        movelist.add(make(to + DOWN_RIGHT, to));
     }
 
     /********************
@@ -425,7 +425,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
                 (attacks::Rook(kSQ, occ_all & ~connectingPawns) & enemyQueenRook) != 0)
                 break;
 
-            movelist.Add(make<ENPASSANT>(from, to));
+            movelist.add(make<ENPASSANT>(from, to));
         }
     }
 }
@@ -549,7 +549,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
     while (moves) {
         Square to = builtin::poplsb(moves);
-        movelist.Add(make(king_sq, to));
+        movelist.add(make(king_sq, to));
     }
 
     if (mt != Movetype::CAPTURE && square_rank(king_sq) == (c == White ? RANK_1 : RANK_8) &&
@@ -558,7 +558,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.Add(make<CASTLING>(king_sq, to));
+            movelist.add(make<CASTLING>(king_sq, to));
         }
     }
 
@@ -597,7 +597,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         U64 moves = legalKnightMoves(from, movable_square);
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.Add(make(from, to));
+            movelist.add(make(from, to));
         }
     }
 
@@ -606,7 +606,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         U64 moves = legalBishopMoves(from, movable_square, pin_d, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.Add(make(from, to));
+            movelist.add(make(from, to));
         }
     }
 
@@ -615,7 +615,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         U64 moves = legalRookMoves(from, movable_square, pin_hv, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.Add(make(from, to));
+            movelist.add(make(from, to));
         }
     }
 
@@ -624,7 +624,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         U64 moves = legalQueenMoves(from, movable_square, pin_d, pin_hv, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.Add(make(from, to));
+            movelist.add(make(from, to));
         }
     }
 }

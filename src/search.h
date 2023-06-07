@@ -135,7 +135,7 @@ class Search {
 /// @param move
 /// @return
 template <History type>
-int getHistory(Move move, Move secondMove, Search &search) {
+int getHistory(Move move, Move secondMove, const Search &search) {
     if constexpr (type == History::HH)
         return search.history[search.board.side_to_move][from(move)][to(move)];
     else if constexpr (type == History::COUNTER)

@@ -168,6 +168,16 @@ void Uci::go(const std::string& line) {
         limit.time = optimumTime(time, inc, mtg);
     }
 
+    if (StrUtil::contains(line, "searchmoves")) {
+        const auto searchmoves =
+            StrUtil::findElement<std::string>(tokens, "searchmoves").value_or("");
+        const auto moves = StrUtil::splitString(searchmoves, ' ');
+
+        for (const auto& move : moves) {
+            searchmoves_.add(convertUciToMove(board_, move));
+        }
+    }
+
     Threads.start_threads(board_, limit, searchmoves_ /* todo*/, worker_threads_, use_tb_);
 }
 
