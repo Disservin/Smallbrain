@@ -6,15 +6,16 @@
 #include <unordered_map>
 #include <sstream>
 
-#define U64 uint64_t
-#define Score int16_t
-#define TimePoint std::chrono::high_resolution_clock
 #define DEFAULT_POS std::string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
 static constexpr int MAX_PLY = 120;
 static constexpr int MAX_MOVES = 128;
 static constexpr int MAX_SQ = 64;
 static constexpr int N_PIECES = 12;
+
+using Score = int16_t;
+using U64 = uint64_t;
+using TimePoint = std::chrono::high_resolution_clock;
 
 /********************
  * Enum Definitions
