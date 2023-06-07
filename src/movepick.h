@@ -6,15 +6,15 @@
 enum SearchType { QSEARCH, ABSEARCH };
 
 template <SearchType st>
-class FastLookup {
+class MovePicker {
    public:
-    FastLookup(Search &sh, Stack *s, Movelist &moves, const Move move)
+    MovePicker(Search &sh, Stack *s, Movelist &moves, const Move move)
         : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
         movelist_.size = 0;
         movegen::legalmoves<Movetype::CAPTURE>(search_.board, movelist_);
     }
 
-    FastLookup(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves, bool rootNode,
+    MovePicker(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves, bool rootNode,
                const Move move)
         : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
         movelist_.size = 0;
