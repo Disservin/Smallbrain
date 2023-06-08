@@ -65,7 +65,8 @@ void Search::updateHistory(Move bestmove, int bonus, int depth, Move *moves, int
     }
 }
 
-void Search::updateAllHistories(Move bestmove, int depth, Move *quiets, int quiet_count, Stack *ss) {
+void Search::updateAllHistories(Move bestmove, int depth, Move *quiets, int quiet_count,
+                                Stack *ss) {
     int depthBonus = bonus(depth);
 
     counters[from((ss - 1)->currentmove)][to((ss - 1)->currentmove)] = bestmove;
@@ -116,10 +117,10 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      * Adjust alpha and beta for non PV Nodes.
      *******************/
 
-    Move ttMove = NO_MOVE;
+    Move ttmove = NO_MOVE;
     bool tt_hit = false;
 
-    TEntry *tte = TTable.probe(tt_hit, ttMove, board.hash_key);
+    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash_key);
     Score ttScore =
         tt_hit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     // clang-format off
@@ -143,7 +144,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     if (bestValue > alpha) alpha = bestValue;
 
     Movelist moves;
-    MovePicker<QSEARCH> mp(*this, ss, moves, ttMove);
+    MovePicker<QSEARCH> mp(*this, ss, moves, ttmove);
 
     /********************
      * Search the moves
@@ -265,10 +266,10 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     if (PvNode && ss->ply > seldepth) seldepth = ss->ply;
 
     // Look up in the TT
-    Move ttMove = NO_MOVE;
+    Move ttmove = NO_MOVE;
     bool tt_hit = false;
 
-    TEntry *tte = TTable.probe(tt_hit, ttMove, board.hash_key);
+    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash_key);
     Score ttScore = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     /********************
@@ -410,7 +411,7 @@ moves:
     uint8_t madeMoves = 0;
     bool doFullSearch = false;
 
-    MovePicker<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, tt_hit ? ttMove : NO_MOVE);
+    MovePicker<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, tt_hit ? ttmove : NO_MOVE);
 
     /********************
      * Movepicker fetches the next move that we should search.
@@ -461,7 +462,7 @@ moves:
         if (    !RootNode 
             &&  depth >= 8 
             &&  tt_hit  // ttScore cannot be VALUE_NONE!
-            &&  ttMove == move 
+            &&  ttmove == move 
             &&  !excludedMove
             &&  std::abs(ttScore) < 10000
             &&  tte->flag & LOWERBOUND
