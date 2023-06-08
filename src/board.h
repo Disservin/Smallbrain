@@ -174,18 +174,18 @@ class Board {
     U64 hash_key;
 
    private:
-    Accumulators accumulators_;
-    std::vector<State> state_history;
-
-    U64 pieces_bb[12] = {};
-    std::array<Piece, MAX_SQ> board;
-
     // update the hash
 
     U64 updateKeyPiece(Piece piece, Square sq) const;
     U64 updateKeyCastling() const;
     U64 updateKeyEnPassant(Square sq) const;
     U64 updateKeySideToMove() const;
+
+    Accumulators accumulators_;
+    std::vector<State> state_history;
+
+    U64 pieces_bb[12] = {};
+    std::array<Piece, MAX_SQ> board;
 };
 
 template <bool updateNNUE>

@@ -46,6 +46,13 @@ enum class History { HH, COUNTER, CONST };
 
 class Search {
    public:
+    void startThinking();
+
+    // data generation entry function
+    SearchResult iterativeDeepening();
+
+    void reset();
+
     // timepoint when we entered search
     TimePoint::time_point t0;
 
@@ -95,13 +102,6 @@ class Search {
     bool silent = false;
 
     bool use_tb = false;
-
-    void startThinking();
-
-    // data generation entry function
-    SearchResult iterativeDeepening();
-
-    void reset();
 
    private:
     // update history for one move

@@ -32,11 +32,6 @@ class Thread {
 // Holds all currently running threads and their data
 class ThreadPool {
    public:
-    std::atomic_bool stop;
-
-    std::vector<Thread> pool;
-    std::vector<std::thread> runningThreads;
-
     uint64_t getNodes();
     uint64_t getTbHits();
 
@@ -44,4 +39,10 @@ class ThreadPool {
                        int worker_count, bool use_tb);
 
     void stop_threads();
+
+    std::atomic_bool stop;
+
+   private:
+    std::vector<Thread> pool;
+    std::vector<std::thread> runningThreads;
 };

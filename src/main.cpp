@@ -16,7 +16,6 @@ std::atomic_bool UCI_FORCE_STOP;
 
 void quit() {
     Threads.stop_threads();
-    Threads.pool.clear();
     tb_free();
 }
 
