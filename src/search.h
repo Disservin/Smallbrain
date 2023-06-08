@@ -106,14 +106,14 @@ class Search {
    private:
     // update history for one move
     template <History type>
-    void updateHistoryBonus(Move move, Move secondMove, int bonus);
+    void updateHistoryBonus(Move move, Move secondmove, int bonus);
 
     // update history a movelist
     template <History type>
-    void updateHistory(Move bestmove, int bonus, int depth, Move *moves, int moveCount, Stack *ss);
+    void updateHistory(Move bestmove, int bonus, int depth, Move *moves, int move_count, Stack *ss);
 
     // update all histories + other move ordering
-    void updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss);
+    void updateAllHistories(Move bestmove, int depth, Move *quiets, int quiet_count, Stack *ss);
 
     // main search functions
 
@@ -121,7 +121,7 @@ class Search {
     Score qsearch(Score alpha, Score beta, Stack *ss);
     template <Node node>
     Score absearch(int depth, Score alpha, Score beta, Stack *ss);
-    Score aspirationSearch(int depth, Score prevEval, Stack *ss);
+    Score aspirationSearch(int depth, Score prev_eval, Stack *ss);
 
     // check limits
     bool limitReached();
@@ -135,13 +135,13 @@ class Search {
 /// @param move
 /// @return
 template <History type>
-int getHistory(Move move, Move secondMove, const Search &search) {
+int getHistory(Move move, Move secondmove, const Search &search) {
     if constexpr (type == History::HH)
         return search.history[search.board.side_to_move][from(move)][to(move)];
     else if constexpr (type == History::COUNTER)
         return search.counters[from(move)][to(move)];
     else if constexpr (type == History::CONST)
-        return search.consthist[search.board.pieceAtB(from(secondMove))][to(secondMove)]
+        return search.consthist[search.board.pieceAtB(from(secondmove))][to(secondmove)]
                                [search.board.pieceAtB(from(move))][to(move)];
 }
 

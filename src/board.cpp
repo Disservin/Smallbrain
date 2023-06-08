@@ -46,19 +46,19 @@ void Board::refresh() {
         getAccumulator()[Black][i] = HIDDEN_BIAS[i];
     }
 
-    const Square kSQ_White = builtin::lsb(pieces<KING, White>());
-    const Square kSQ_Black = builtin::lsb(pieces<KING, Black>());
+    const Square ksq_white = builtin::lsb(pieces<KING, White>());
+    const Square ksq_black = builtin::lsb(pieces<KING, Black>());
 
     for (Square i = SQ_A1; i < NO_SQ; i++) {
         Piece p = board[i];
         if (p == None) continue;
-        nnue::activate(getAccumulator(), i, p, kSQ_White, kSQ_Black);
+        nnue::activate(getAccumulator(), i, p, ksq_white, ksq_black);
     }
 }
 
 Piece Board::pieceAtB(Square sq) const { return board[sq]; }
 
-void Board::applyFen(const std::string &fen, bool updateAcc) {
+void Board::applyFen(const std::string &fen, bool update_acc) {
     for (Piece p = WhitePawn; p < None; p++) {
         pieces_bb[p] = 0ULL;
     }
@@ -92,7 +92,7 @@ void Board::applyFen(const std::string &fen, bool updateAcc) {
         }
     }
 
-    if (updateAcc) {
+    if (update_acc) {
         refresh();
     }
 
@@ -210,11 +210,11 @@ bool Board::isRepetition(int draw) const {
     return false;
 }
 
-Result Board::isDrawn(bool inCheck) {
+Result Board::isDrawn(bool in_check) {
     if (half_move_clock >= 100) {
         Movelist movelist;
         movegen::legalmoves<Movetype::ALL>(*this, movelist);
-        if (inCheck && movelist.size == 0) return Result::LOST;
+        if (in_check && movelist.size == 0) return Result::LOST;
         return Result::DRAWN;
     }
 
@@ -262,26 +262,26 @@ bool Board::isSquareAttacked(Color c, Square sq, U64 occ) const {
     return false;
 }
 
-U64 Board::allAttackers(Square sq, U64 occupiedBB) const {
-    return attackersForSide(White, sq, occupiedBB) | attackersForSide(Black, sq, occupiedBB);
+U64 Board::allAttackers(Square sq, U64 occupied_bb) const {
+    return attackersForSide(White, sq, occupied_bb) | attackersForSide(Black, sq, occupied_bb);
 }
 
-U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) const {
-    U64 attackingBishops = pieces(BISHOP, attackerColor);
-    U64 attackingRooks = pieces(ROOK, attackerColor);
-    U64 attackingQueens = pieces(QUEEN, attackerColor);
-    U64 attackingKnights = pieces(KNIGHT, attackerColor);
-    U64 attackingKing = pieces(KING, attackerColor);
-    U64 attackingPawns = pieces(PAWN, attackerColor);
+U64 Board::attackersForSide(Color attacker_color, Square sq, U64 occupied_bb) const {
+    U64 attackingBishops = pieces(BISHOP, attacker_color);
+    U64 attackingRooks = pieces(ROOK, attacker_color);
+    U64 attackingQueens = pieces(QUEEN, attacker_color);
+    U64 attackingKnights = pieces(KNIGHT, attacker_color);
+    U64 attackingKing = pieces(KING, attacker_color);
+    U64 attackingPawns = pieces(PAWN, attacker_color);
 
-    U64 interCardinalRays = attacks::Bishop(sq, occupiedBB);
-    U64 cardinalRaysRays = attacks::Rook(sq, occupiedBB);
+    U64 interCardinalRays = attacks::Bishop(sq, occupied_bb);
+    U64 cardinalRaysRays = attacks::Rook(sq, occupied_bb);
 
     U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
     attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
     attackers |= attacks::Knight(sq) & attackingKnights;
     attackers |= attacks::King(sq) & attackingKing;
-    attackers |= attacks::Pawn(sq, ~attackerColor) & attackingPawns;
+    attackers |= attacks::Pawn(sq, ~attacker_color) & attackingPawns;
     return attackers;
 }
 

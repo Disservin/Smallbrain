@@ -6,16 +6,16 @@
 
 namespace datagen {
 
-std::string stringFenData(const fenData &fenData, double score) {
+std::string stringFenData(const fenData &fen_data, double score) {
     std::ostringstream sstream;
-    sstream << fenData.fen << " [" << std::fixed << std::setprecision(1) << score << "] "
-            << fenData.score;
+    sstream << fen_data.fen << " [" << std::fixed << std::setprecision(1) << score << "] "
+            << fen_data.score;
 
     return sstream.str();
 }
 
 void TrainingData::generate(int workers, std::string book, int depth, int nodes, bool use_tb,
-                            int randLimit) {
+                            int rand_limit) {
     if (book != "") {
         std::ifstream openingFile;
         std::string line;
@@ -29,11 +29,12 @@ void TrainingData::generate(int workers, std::string book, int depth, int nodes,
     }
 
     for (int i = 0; i < workers; i++) {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, randLimit, use_tb);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, rand_limit,
+                             use_tb);
     }
 }
 
-void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimit, bool use_tb) {
+void TrainingData::infinitePlay(int threadId, int depth, int nodes, int rand_limit, bool use_tb) {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
@@ -69,7 +70,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimi
 
         board.applyFen(DEFAULT_POS, false);
 
-        randomPlayout(file, board, movelist, search, randLimit, use_tb);
+        randomPlayout(file, board, movelist, search, rand_limit, use_tb);
         games++;
 
         if (threadId == 0 && games % 100 == 0) {
@@ -84,7 +85,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int randLimi
 }
 
 void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist,
-                                 std::unique_ptr<Search> &search, int randLimit, bool use_tb) {
+                                 std::unique_ptr<Search> &search, int rand_limit, bool use_tb) {
     std::vector<fenData> fens;
     fens.reserve(40);
 
@@ -101,8 +102,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
     board.applyFen(DEFAULT_POS, true);
 
-    if (randLimit > 0) {
-        std::uniform_int_distribution<> distRandomFen{0, randLimit};
+    if (rand_limit > 0) {
+        std::uniform_int_distribution<> distRandomFen{0, rand_limit};
         if (distRandomFen(rand_gen::generator) == 1) {
             ply = randomMoves;
             board.applyFen(getRandomfen());
@@ -141,18 +142,18 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         search->nodes = 0;
         movelist.size = 0;
 
-        const bool inCheck = search->board.isSquareAttacked(
+        const bool in_check = search->board.isSquareAttacked(
             ~search->board.side_to_move, search->board.kingSQ(search->board.side_to_move),
             search->board.all());
 
         movegen::legalmoves<Movetype::ALL>(search->board, movelist);
 
         if (movelist.size == 0) {
-            winningSide = inCheck ? ~search->board.side_to_move : NO_COLOR;
+            winningSide = in_check ? ~search->board.side_to_move : NO_COLOR;
             break;
         }
 
-        auto drawn = search->board.isDrawn(inCheck);
+        auto drawn = search->board.isDrawn(in_check);
 
         if (drawn != Result::NONE) {
             winningSide = drawn == Result::LOST ? ~search->board.side_to_move : NO_COLOR;
@@ -194,7 +195,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             break;
         }
 
-        if (!(capture || inCheck || ply < 8)) {
+        if (!(capture || in_check || ply < 8)) {
             sfens.fen = search->board.getFen();
             fens.emplace_back(sfens);
         }

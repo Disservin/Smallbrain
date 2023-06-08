@@ -78,8 +78,8 @@ class ArgumentsParser {
     }
 
    private:
-    void addArgument(std::string argumentName, Argument *argument) {
-        arguments_.insert(std::make_pair(argumentName, std::unique_ptr<Argument>(argument)));
+    void addArgument(std::string argument_name, Argument *argument) {
+        arguments_.insert(std::make_pair(argument_name, std::unique_ptr<Argument>(argument)));
     }
 
     std::map<std::string, std::unique_ptr<Argument>> arguments_;
@@ -87,20 +87,20 @@ class ArgumentsParser {
 
 // Generic function to parse a standalone value after a dash command.
 template <typename T>
-void parseValue(int &i, int argc, const char *argv[], T &argumentValue) {
+void parseValue(int &i, int argc, const char *argv[], T &argument_value) {
     i++;
     if (i < argc && argv[i][0] != '-') {
         if constexpr (std::is_same_v<T, int>)
-            argumentValue = std::stoi(argv[i]);
+            argument_value = std::stoi(argv[i]);
         else if constexpr (std::is_same_v<T, uint32_t>)
-            argumentValue = std::stoul(argv[i]);
+            argument_value = std::stoul(argv[i]);
         else if constexpr (std::is_same_v<T, float>)
-            argumentValue = std::stof(argv[i]);
+            argument_value = std::stof(argv[i]);
         else if constexpr (std::is_same_v<T, double>)
-            argumentValue = std::stod(argv[i]);
+            argument_value = std::stod(argv[i]);
         else if constexpr (std::is_same_v<T, bool>)
-            argumentValue = std::string(argv[i]) == "true";
+            argument_value = std::string(argv[i]) == "true";
         else
-            argumentValue = argv[i];
+            argument_value = argv[i];
     }
 }

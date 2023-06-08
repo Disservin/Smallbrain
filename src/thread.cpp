@@ -33,7 +33,7 @@ uint64_t ThreadPool::getTbHits()
     return total;
 }
 
-void ThreadPool::start_threads(const Board &board, const Limits &limit, const Movelist &searchmoves, int workerCount,
+void ThreadPool::start_threads(const Board &board, const Limits &limit, const Movelist &searchmoves, int worker_count,
                                bool use_tb)
 {
     assert(runningThreads.size() == 0);
@@ -64,14 +64,14 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, const Mo
     mainThread.search->history.reset();
     mainThread.search->counters.reset();
 
-    for (int i = 1; i < workerCount; i++)
+    for (int i = 1; i < worker_count; i++)
     {
         mainThread.search->id = i;
 
         pool.emplace_back(mainThread);
     }
 
-    for (int i = 0; i < workerCount; i++)
+    for (int i = 0; i < worker_count; i++)
     {
         runningThreads.emplace_back(&Thread::start_thinking, std::ref(pool[i]));
     }

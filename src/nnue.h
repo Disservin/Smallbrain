@@ -41,16 +41,16 @@ using accumulator = std::array<std::array<int16_t, N_HIDDEN_SIZE>, 2>;
 void init(const char *filename);
 
 // activate a certain input and update the accumulator
-void activate(nnue::accumulator &accumulator, Square sq, Piece p, Square kSQ_White,
-              Square kSq_Black);
+void activate(nnue::accumulator &accumulator, Square sq, Piece p, Square ksq_white,
+              Square ksq_black);
 
 // deactivate a certain input and update the accumulator
-void deactivate(nnue::accumulator &accumulator, Square sq, Piece p, Square kSQ_White,
-                Square kSq_Black);
+void deactivate(nnue::accumulator &accumulator, Square sq, Piece p, Square ksq_white,
+                Square ksq_black);
 
 // activate and deactivate, mirrors the logic of a move
-void move(nnue::accumulator &accumulator, Square from_sq, Square to_sq, Piece p, Square kSQ_White,
-          Square kSq_Black);
+void move(nnue::accumulator &accumulator, Square from_sq, Square to_sq, Piece p, Square ksq_white,
+          Square ksq_black);
 
 // return the nnue evaluation
 [[nodiscard]] int32_t output(const nnue::accumulator &accumulator, Color side);

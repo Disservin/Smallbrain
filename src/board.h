@@ -35,8 +35,8 @@ class Board {
 
     /// @brief applys a new Fen to the board and also reload the entire nnue
     /// @param fen
-    /// @param updateAcc
-    void applyFen(const std::string &fen, bool updateAcc = true);
+    /// @param update_acc
+    void applyFen(const std::string &fen, bool update_acc = true);
 
     /// @brief returns a Fen string of the current board
     /// @return fen string
@@ -47,7 +47,7 @@ class Board {
     /// @return true for repetition otherwise false
     bool isRepetition(int draw = 1) const;
 
-    Result isDrawn(bool inCheck);
+    Result isDrawn(bool in_check);
 
     /// @brief only pawns + king = true else false
     /// @param c
@@ -91,8 +91,8 @@ class Board {
     bool isSquareAttacked(Color c, Square sq, U64 occ) const;
 
     // attackers used for SEE
-    U64 allAttackers(Square sq, U64 occupiedBB) const;
-    U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) const;
+    U64 allAttackers(Square sq, U64 occupied_bb) const;
+    U64 attackersForSide(Color attacker_color, Square sq, U64 occupied_bb) const;
 
     void updateHash(Move move);
 
@@ -121,23 +121,23 @@ class Board {
     /// @param piece
     /// @param sq
     template <bool updateNNUE>
-    void removePiece(Piece piece, Square sq, Square kSQ_White = SQ_A1, Square kSQ_Black = SQ_A1);
+    void removePiece(Piece piece, Square sq, Square ksq_white = SQ_A1, Square ksq_black = SQ_A1);
 
     /// @brief Place a Piece on the board
     /// @tparam update
     /// @param piece
     /// @param sq
     template <bool updateNNUE>
-    void placePiece(Piece piece, Square sq, Square kSQ_White = SQ_A1, Square kSQ_Black = SQ_A1);
+    void placePiece(Piece piece, Square sq, Square ksq_white = SQ_A1, Square ksq_black = SQ_A1);
 
     /// @brief Move a piece on the board
     /// @tparam updateNNUE
     /// @param piece
-    /// @param fromSq
-    /// @param toSq
+    /// @param from_sq
+    /// @param to_sq
     template <bool updateNNUE>
-    void movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White = SQ_A1,
-                   Square kSQ_Black = SQ_A1);
+    void movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white = SQ_A1,
+                   Square ksq_black = SQ_A1);
 
     U64 attacksByPiece(PieceType pt, Square sq, Color c, U64 occupied);
 
@@ -189,37 +189,39 @@ class Board {
 };
 
 template <bool updateNNUE>
-void Board::removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black) {
+void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb[piece] &= ~(1ULL << sq);
     board[sq] = None;
 
     if constexpr (updateNNUE) {
-        nnue::deactivate(getAccumulator(), sq, piece, kSQ_White, kSQ_Black);
+        nnue::deactivate(getAccumulator(), sq, piece, ksq_white, ksq_black);
     }
 }
 
 template <bool updateNNUE>
-void Board::placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black) {
+void Board::placePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb[piece] |= (1ULL << sq);
     board[sq] = piece;
 
     if constexpr (updateNNUE) {
-        nnue::activate(getAccumulator(), sq, piece, kSQ_White, kSQ_Black);
+        nnue::activate(getAccumulator(), sq, piece, ksq_white, ksq_black);
     }
 }
 
 template <bool updateNNUE>
-void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black) {
-    pieces_bb[piece] &= ~(1ULL << fromSq);
-    pieces_bb[piece] |= (1ULL << toSq);
-    board[fromSq] = None;
-    board[toSq] = piece;
+void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white,
+                      Square ksq_black) {
+    pieces_bb[piece] &= ~(1ULL << from_sq);
+    pieces_bb[piece] |= (1ULL << to_sq);
+    board[from_sq] = None;
+    board[to_sq] = piece;
 
     if constexpr (updateNNUE) {
-        if (type_of_piece(piece) == KING && nnue::KING_BUCKET[fromSq] != nnue::KING_BUCKET[toSq]) {
+        if (type_of_piece(piece) == KING &&
+            nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
             refresh();
         } else {
-            nnue::move(getAccumulator(), fromSq, toSq, piece, kSQ_White, kSQ_Black);
+            nnue::move(getAccumulator(), from_sq, to_sq, piece, ksq_white, ksq_black);
         }
     }
 }
@@ -352,8 +354,8 @@ void Board::makeMove(Move move) {
 
     TTable.prefetch(hash_key);
 
-    const Square kSQ_White = builtin::lsb(pieces<KING, White>());
-    const Square kSQ_Black = builtin::lsb(pieces<KING, Black>());
+    const Square ksq_white = builtin::lsb(pieces<KING, White>());
+    const Square ksq_black = builtin::lsb(pieces<KING, Black>());
 
     // *****************************
     // UPDATE PIECES AND NNUE
@@ -365,19 +367,19 @@ void Board::makeMove(Move move) {
         Square kingToSq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
         if (updateNNUE && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[kingToSq]) {
-            removePiece<false>(p, from_sq, kSQ_White, kSQ_Black);
-            removePiece<false>(rook, to_sq, kSQ_White, kSQ_Black);
+            removePiece<false>(p, from_sq, ksq_white, ksq_black);
+            removePiece<false>(rook, to_sq, ksq_white, ksq_black);
 
-            placePiece<false>(p, kingToSq, kSQ_White, kSQ_Black);
-            placePiece<false>(rook, rookToSq, kSQ_White, kSQ_Black);
+            placePiece<false>(p, kingToSq, ksq_white, ksq_black);
+            placePiece<false>(rook, rookToSq, ksq_white, ksq_black);
 
             refresh();
         } else {
-            removePiece<updateNNUE>(p, from_sq, kSQ_White, kSQ_Black);
-            removePiece<updateNNUE>(rook, to_sq, kSQ_White, kSQ_Black);
+            removePiece<updateNNUE>(p, from_sq, ksq_white, ksq_black);
+            removePiece<updateNNUE>(rook, to_sq, ksq_white, ksq_black);
 
-            placePiece<updateNNUE>(p, kingToSq, kSQ_White, kSQ_Black);
-            placePiece<updateNNUE>(rook, rookToSq, kSQ_White, kSQ_Black);
+            placePiece<updateNNUE>(p, kingToSq, ksq_white, ksq_black);
+            placePiece<updateNNUE>(rook, rookToSq, ksq_white, ksq_black);
         }
 
         side_to_move = ~side_to_move;
@@ -386,25 +388,25 @@ void Board::makeMove(Move move) {
     } else if (pt == PAWN && ep) {
         assert(pieceAtB(Square(to_sq ^ 8)) != None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move), Square(to_sq ^ 8), kSQ_White,
-                                kSQ_Black);
+        removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move), Square(to_sq ^ 8), ksq_white,
+                                ksq_black);
     } else if (capture != None) {
         assert(pieceAtB(to_sq) != None);
 
-        removePiece<updateNNUE>(capture, to_sq, kSQ_White, kSQ_Black);
+        removePiece<updateNNUE>(capture, to_sq, ksq_white, ksq_black);
     }
 
     // The move is differently encoded for promotions to it requires some special care.
     if (typeOf(move) == PROMOTION) {
         assert(pieceAtB(to_sq) == None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, side_to_move), from_sq, kSQ_White, kSQ_Black);
-        placePiece<updateNNUE>(makePiece(promotionType(move), side_to_move), to_sq, kSQ_White,
-                               kSQ_Black);
+        removePiece<updateNNUE>(makePiece(PAWN, side_to_move), from_sq, ksq_white, ksq_black);
+        placePiece<updateNNUE>(makePiece(promotionType(move), side_to_move), to_sq, ksq_white,
+                               ksq_black);
     } else {
         assert(pieceAtB(to_sq) == None);
 
-        movePiece<updateNNUE>(p, from_sq, to_sq, kSQ_White, kSQ_Black);
+        movePiece<updateNNUE>(p, from_sq, to_sq, ksq_white, ksq_black);
     }
 
     side_to_move = ~side_to_move;

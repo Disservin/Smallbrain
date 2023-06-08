@@ -32,9 +32,9 @@ class TranspositionTable {
 
     /// @brief probe the TT for an entry
     /// @param tte
-    /// @param ttHit
+    /// @param tt_hit
     /// @param key Position hash
-    TEntry *probe(bool &ttHit, Move &ttmove, U64 key);
+    TEntry *probe(bool &tt_hit, Move &ttmove, U64 key);
 
     /// @brief calculates the TT index of key
     /// @param key

@@ -28,18 +28,18 @@ void init_reductions() {
 int bonus(int depth) { return std::min(2000, depth * 155); }
 
 template <History type>
-void Search::updateHistoryBonus(Move move, Move secondMove, int bonus) {
-    int hhBonus = bonus - getHistory<type>(move, secondMove, *this) * std::abs(bonus) / 16384;
+void Search::updateHistoryBonus(Move move, Move secondmove, int bonus) {
+    int hhBonus = bonus - getHistory<type>(move, secondmove, *this) * std::abs(bonus) / 16384;
 
     if constexpr (type == History::HH)
         history[board.side_to_move][from(move)][to(move)] += hhBonus;
     else if constexpr (type == History::CONST)
-        consthist[board.pieceAtB(from(secondMove))][to(secondMove)][board.pieceAtB(from(move))]
+        consthist[board.pieceAtB(from(secondmove))][to(secondmove)][board.pieceAtB(from(move))]
                  [to(move)] += hhBonus;
 }
 
 template <History type>
-void Search::updateHistory(Move bestmove, int bonus, int depth, Move *moves, int moveCount,
+void Search::updateHistory(Move bestmove, int bonus, int depth, Move *moves, int move_count,
                            Stack *ss) {
     if constexpr (type == History::HH) {
         if (depth > 1) updateHistoryBonus<type>(bestmove, NO_MOVE, bonus);
@@ -52,7 +52,7 @@ void Search::updateHistory(Move bestmove, int bonus, int depth, Move *moves, int
         }
     }
 
-    for (int i = 0; i < moveCount; i++) {
+    for (int i = 0; i < move_count; i++) {
         const Move move = moves[i];
 
         if constexpr (type == History::CONST) {
@@ -65,23 +65,23 @@ void Search::updateHistory(Move bestmove, int bonus, int depth, Move *moves, int
     }
 }
 
-void Search::updateAllHistories(Move bestMove, int depth, Move *quiets, int quietCount, Stack *ss) {
+void Search::updateAllHistories(Move bestmove, int depth, Move *quiets, int quiet_count, Stack *ss) {
     int depthBonus = bonus(depth);
 
-    counters[from((ss - 1)->currentmove)][to((ss - 1)->currentmove)] = bestMove;
+    counters[from((ss - 1)->currentmove)][to((ss - 1)->currentmove)] = bestmove;
 
     /********************
      * Update Quiet Moves
      *******************/
-    if (board.pieceAtB(to(bestMove)) == None) {
+    if (board.pieceAtB(to(bestmove)) == None) {
         // update Killer Moves
         killer_moves[1][ss->ply] = killer_moves[0][ss->ply];
-        killer_moves[0][ss->ply] = bestMove;
+        killer_moves[0][ss->ply] = bestmove;
 
-        updateHistory<History::HH>(bestMove, depthBonus, depth, quiets, quietCount, ss);
+        updateHistory<History::HH>(bestmove, depthBonus, depth, quiets, quiet_count, ss);
 
         int constbonus = std::min(4 * depth * depth * depth, 1500);
-        updateHistory<History::CONST>(bestMove, constbonus, depth, quiets, quietCount, ss);
+        updateHistory<History::CONST>(bestmove, constbonus, depth, quiets, quiet_count, ss);
     }
 }
 
@@ -94,9 +94,9 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      *******************/
     constexpr bool PvNode = node == PV;
     const Color color = board.side_to_move;
-    const bool inCheck = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
+    const bool in_check = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
 
-    Move bestMove = NO_MOVE;
+    Move bestmove = NO_MOVE;
 
     assert(alpha >= -VALUE_INFINITE && alpha < beta && beta <= VALUE_INFINITE);
     assert(PvNode || (alpha == beta - 1));
@@ -108,7 +108,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      *******************/
     if (board.isRepetition(1 + PvNode)) return -1 + (nodes & 0x2);
 
-    const Result state = board.isDrawn(inCheck);
+    const Result state = board.isDrawn(in_check);
     if (state != Result::NONE) return state == Result::LOST ? mated_in(ss->ply) : 0;
 
     /********************
@@ -117,13 +117,13 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      *******************/
 
     Move ttMove = NO_MOVE;
-    bool ttHit = false;
+    bool tt_hit = false;
 
-    TEntry *tte = TTable.probe(ttHit, ttMove, board.hash_key);
+    TEntry *tte = TTable.probe(tt_hit, ttMove, board.hash_key);
     Score ttScore =
-        ttHit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+        tt_hit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     // clang-format off
-    if (    ttHit 
+    if (    tt_hit 
         &&  !PvNode 
         &&  ttScore != VALUE_NONE
         &&  tte->flag != NONEBOUND)
@@ -157,7 +157,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
             // skip this
             // clang-format off
             if (    captured != NONETYPE 
-                &&  !inCheck 
+                &&  !in_check 
                 &&  bestValue + 400 + piece_values[EG][captured] < alpha 
                 &&  typeOf(move) != PROMOTION
                 &&  board.nonPawnMat(color))
@@ -165,7 +165,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
                 continue;
 
             // see based capture pruning
-            if (!inCheck && !movegen::see(board, move, 0)) continue;
+            if (!in_check && !movegen::see(board, move, 0)) continue;
         }
 
         nodes++;
@@ -184,7 +184,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
 
             if (score > alpha) {
                 alpha = score;
-                bestMove = move;
+                bestmove = move;
 
                 if (score >= beta) break;
             }
@@ -198,7 +198,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
     if (!Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(0, scoreToTT(bestValue, ss->ply), b, board.hash_key, bestMove);
+        TTable.store(0, scoreToTT(bestValue, ss->ply), b, board.hash_key, bestmove);
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
     return bestValue;
@@ -220,10 +220,10 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     Score maxValue = VALUE_INFINITE;
     Move excludedMove = ss->excludedMove;
 
-    const bool inCheck = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
+    const bool in_check = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
     bool improving;
 
-    if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !inCheck) ? eval::evaluation(board) : 0;
+    if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !in_check) ? eval::evaluation(board) : 0;
 
     pv_length[ss->ply] = ss->ply;
 
@@ -233,7 +233,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     if (!RootNode) {
         if (board.isRepetition(1 + PvNode)) return -1 + (nodes & 0x2);
 
-        const Result state = board.isDrawn(inCheck);
+        const Result state = board.isDrawn(in_check);
         if (state != Result::NONE) return state == Result::LOST ? mated_in(ss->ply) : 0;
 
         alpha = std::max(alpha, mated_in(ss->ply));
@@ -245,7 +245,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
      * Check extension
      *******************/
 
-    if (inCheck) depth++;
+    if (in_check) depth++;
 
     /********************
      * Enter qsearch
@@ -266,10 +266,10 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
     // Look up in the TT
     Move ttMove = NO_MOVE;
-    bool ttHit = false;
+    bool tt_hit = false;
 
-    TEntry *tte = TTable.probe(ttHit, ttMove, board.hash_key);
-    Score ttScore = ttHit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+    TEntry *tte = TTable.probe(tt_hit, ttMove, board.hash_key);
+    Score ttScore = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     /********************
      * Look up in the TT
@@ -279,7 +279,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     if (    !RootNode 
         &&  !excludedMove
         &&  !PvNode 
-        &&  ttHit 
+        &&  tt_hit 
         &&  ttScore != VALUE_NONE
         &&  tte->depth >= depth 
         &&  (ss - 1)->currentmove != NULL_MOVE )
@@ -335,7 +335,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
         }
     }
 
-    if (inCheck) {
+    if (in_check) {
         improving = false;
         ss->eval = VALUE_NONE;
         goto moves;
@@ -343,7 +343,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
     // Use the ttscore as a better evaluation of the position, other engines
     // typically have eval and staticEval. In Smallbrain its just eval.
-    ss->eval = ttHit ? ttScore : eval::evaluation(board);
+    ss->eval = tt_hit ? ttScore : eval::evaluation(board);
 
     // improving boolean
     improving = (ss - 2)->eval != VALUE_NONE ? ss->eval > (ss - 2)->eval : false;
@@ -353,9 +353,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     /********************
      * Internal Iterative Reductions (IIR)
      *******************/
-    if (depth >= 3 && !ttHit) depth--;
+    if (depth >= 3 && !tt_hit) depth--;
 
-    if (PvNode && !ttHit) depth--;
+    if (PvNode && !tt_hit) depth--;
 
     if (depth <= 0) return qsearch<PV>(alpha, beta, ss);
 
@@ -404,13 +404,13 @@ moves:
     Move quiets[64];
 
     Score score = VALUE_NONE;
-    Move bestMove = NO_MOVE;
+    Move bestmove = NO_MOVE;
     Move move = NO_MOVE;
-    uint8_t quietCount = 0;
+    uint8_t quiet_count = 0;
     uint8_t madeMoves = 0;
     bool doFullSearch = false;
 
-    MovePicker<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, ttHit ? ttMove : NO_MOVE);
+    MovePicker<ABSEARCH> mp(*this, ss, moves, searchmoves, RootNode, tt_hit ? ttMove : NO_MOVE);
 
     /********************
      * Movepicker fetches the next move that we should search.
@@ -441,11 +441,11 @@ moves:
             else
             {
                 // late move pruning/movecount pruning
-                if (    !inCheck 
+                if (    !in_check 
                     &&  !PvNode 
                     &&  typeOf(move) != PROMOTION
                     &&  depth <= 5
-                    &&  quietCount > (4 + depth * depth))
+                    &&  quiet_count > (4 + depth * depth))
 
                     continue;
                 // SEE pruning
@@ -460,7 +460,7 @@ moves:
         // Singular extensions
         if (    !RootNode 
             &&  depth >= 8 
-            &&  ttHit  // ttScore cannot be VALUE_NONE!
+            &&  tt_hit  // ttScore cannot be VALUE_NONE!
             &&  ttMove == move 
             &&  !excludedMove
             &&  std::abs(ttScore) < 10000
@@ -492,7 +492,7 @@ moves:
             &&  !silent 
             &&  !Threads.stop.load(std::memory_order_relaxed) 
             &&  getTime() > 10000)
-            std::cout << "info depth " << depth - inCheck 
+            std::cout << "info depth " << depth - in_check 
                       << " currmove " << uci::moveToUci(move, board.chess960)
                       << " currmovenumber " << signed(madeMoves) << std::endl;
         // clang-format on
@@ -511,7 +511,7 @@ moves:
          * with a reduced depth, if they beat alpha we search again at
          * full depth.
          *******************/
-        if (depth >= 3 && !inCheck && madeMoves > 3 + 2 * PvNode) {
+        if (depth >= 3 && !in_check && madeMoves > 3 + 2 * PvNode) {
             int rdepth = reductions[depth][madeMoves];
 
             rdepth -= id % 2;
@@ -562,7 +562,7 @@ moves:
 
             if (score > alpha) {
                 alpha = score;
-                bestMove = move;
+                bestmove = move;
 
                 // update the PV
                 pv_table[ss->ply][ss->ply] = move;
@@ -578,18 +578,18 @@ moves:
                  *******************/
                 if (score >= beta) {
                     // update history heuristic
-                    updateAllHistories(bestMove, depth, quiets, quietCount, ss);
+                    updateAllHistories(bestmove, depth, quiets, quiet_count, ss);
                     break;
                 }
             }
         }
-        if (!capture) quiets[quietCount++] = move;
+        if (!capture) quiets[quiet_count++] = move;
     }
 
     /********************
      * If the move list is empty, we are in checkmate or stalemate.
      *******************/
-    if (madeMoves == 0) best = excludedMove ? alpha : inCheck ? mated_in(ss->ply) : 0;
+    if (madeMoves == 0) best = excludedMove ? alpha : in_check ? mated_in(ss->ply) : 0;
 
     if (PvNode) best = std::min(best, maxValue);
 
@@ -598,16 +598,16 @@ moves:
      *******************/
 
     // Transposition table flag
-    Flag b = best >= beta ? LOWERBOUND : (PvNode && bestMove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
+    Flag b = best >= beta ? LOWERBOUND : (PvNode && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excludedMove && !Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash_key, bestMove);
+        TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash_key, bestmove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
     return best;
 }
 
-Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss) {
+Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss) {
     Score alpha = -VALUE_INFINITE;
     Score beta = VALUE_INFINITE;
     int delta = 30;
@@ -622,8 +622,8 @@ Score Search::aspirationSearch(int depth, Score prevEval, Stack *ss) {
      * would lead to many researches.
      *******************/
     if (depth >= 9) {
-        alpha = prevEval - delta;
-        beta = prevEval + delta;
+        alpha = prev_eval - delta;
+        beta = prev_eval + delta;
     }
 
     while (true) {
