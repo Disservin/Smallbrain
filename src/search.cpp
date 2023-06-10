@@ -578,6 +578,7 @@ moves:
                  * Score beat beta -> update histories and break.
                  *******************/
                 if (score >= beta) {
+                    TTable.prefetch<1>(board.hash_key);
                     // update history heuristic
                     updateAllHistories(bestmove, depth, quiets, quiet_count, ss);
                     break;

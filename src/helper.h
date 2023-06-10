@@ -44,9 +44,20 @@ int popcount(U64 mask);
 /// @return the lsb
 Square poplsb(U64 &mask);
 
-/// @brief prefetches a memory address
-/// @param addr
-void prefetch(const void *addr);
+#if defined(__INTEL_COMPILER) || defined(_MSC_VER)
+template <int rw = 0>
+void prefetch(const void *addr) {
+#if defined(__INTEL_COMPILER)
+    __asm__("");
+#endif
+    _mm_prefetch((char *)addr, _MM_HINT_T0);
+}
+#else
+template <int rw = 0>
+void prefetch(const void *addr) {
+    __builtin_prefetch(addr, 0, rw);
+}
+#endif
 }  // namespace builtin
 
 // returns diagonal of given square

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "types.h"
+#include "helper.h"
 
 PACK(struct TEntry {
     U64 key = 0;
@@ -49,7 +50,10 @@ class TranspositionTable {
     /// @brief clear the TT
     void clear();
 
-    void prefetch(uint64_t key) const;
+    template <int rw = 0>
+    void prefetch(uint64_t key) const {
+        builtin::prefetch<rw>(&entries_[index(key)]);
+    }
 
     int hashfull() const;
 };

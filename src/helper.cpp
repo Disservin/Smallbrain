@@ -101,17 +101,6 @@ Square poplsb(U64 &mask) {
     return Square(s);
 }
 
-void prefetch(const void *addr) {
-#if defined(__INTEL_COMPILER)
-    __asm__("");
-#endif
-
-#if defined(__INTEL_COMPILER) || defined(_MSC_VER)
-    _mm_prefetch((char *)addr, _MM_HINT_T0);
-#else
-    __builtin_prefetch(addr);
-#endif
-}
 }  // namespace builtin
 
 uint8_t manhatten_distance(Square sq1, Square sq2) {

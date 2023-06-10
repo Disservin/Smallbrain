@@ -1,5 +1,4 @@
 #include "tt.h"
-#include "helper.h"
 
 TranspositionTable::TranspositionTable() { allocateMB(16); }
 
@@ -40,8 +39,6 @@ void TranspositionTable::allocateMB(uint64_t size_mb) {
 }
 
 void TranspositionTable::clear() { std::fill(entries_.begin(), entries_.end(), TEntry()); }
-
-void TranspositionTable::prefetch(uint64_t key) const { builtin::prefetch(&entries_[index(key)]); }
 
 int TranspositionTable::hashfull() const {
     size_t used = 0;

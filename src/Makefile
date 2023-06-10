@@ -110,10 +110,10 @@ ifneq ($(GIT_DATE), )
 endif
 
 # PGO
-ifneq ($(findstring gcc, $(CXX)),)
+ifneq ($(findstring g++, $(CXX)),)
 	PGO_GEN = -fprofile-generate
 	PGO_USE = -fprofile-use
-else ifneq ($(findstring clang, $(CXX)),)
+else ifneq ($(findstring clang++, $(CXX)),)
 	PGO_MERGE = llvm-profdata merge -output=profdata *.profraw
 	PGO_GEN = -fprofile-instr-generate
 	PGO_USE = -fprofile-instr-use=profdata
@@ -149,7 +149,7 @@ FORCE:
 # Profile Guided Optimizations for gcc, largely depends on compiler version
 pgo:
 	$(CXX) $(PGO_GEN) -MMD -MP -o $(EXE) -flto $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 $(SOURCES) $(FLAGS)
-	./$(EXE) bench depth 15
+	./$(EXE) bench
 	$(PGO_MERGE)
 	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 $(PGO_USE) -MMD -MP -o $(EXE) -flto $(SOURCES) $(FLAGS)
 	@rm -f *.gcda *.profraw *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o profdata
