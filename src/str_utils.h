@@ -60,7 +60,7 @@ template <typename T>
         return std::stoll(haystack[index + 1]);
     else if constexpr (std::is_same_v<T, bool>)
         return haystack[index + 1] == "true";
-    else if (index + 1 < haystack.size())
+    else if (size_t(index + 1) < haystack.size())
         return haystack[index + 1];
 
     return std::nullopt;
