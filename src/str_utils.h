@@ -49,6 +49,7 @@ template <typename T>
     auto position = std::find(haystack.begin(), haystack.end(), needle);
     auto index = position - haystack.begin();
     if (position == haystack.end()) return std::nullopt;
+
     if constexpr (std::is_same_v<T, int>)
         return std::stoi(haystack[index + 1]);
     else if constexpr (std::is_same_v<T, float>)
@@ -59,8 +60,10 @@ template <typename T>
         return std::stoll(haystack[index + 1]);
     else if constexpr (std::is_same_v<T, bool>)
         return haystack[index + 1] == "true";
-    else
+    else if (index + 1 < haystack.size())
         return haystack[index + 1];
+
+    return std::nullopt;
 }
 
 [[nodiscard]] inline int64_t findRange(const std::string &string, const std::string &start,
