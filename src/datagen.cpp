@@ -127,7 +127,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         }
     }
 
-    board.refresh();
+    board.refresh(board.getAccumulator());
     board.hash_history.clear();
     search->board = board;
 

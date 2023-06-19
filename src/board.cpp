@@ -40,10 +40,10 @@ std::string Board::getCastleString() const {
     return ss.str();
 }
 
-void Board::refresh() {
+void Board::refresh(nnue::accumulator &accumulator) const {
     for (int i = 0; i < N_HIDDEN_SIZE; i++) {
-        getAccumulator()[White][i] = HIDDEN_BIAS[i];
-        getAccumulator()[Black][i] = HIDDEN_BIAS[i];
+        accumulator[White][i] = HIDDEN_BIAS[i];
+        accumulator[Black][i] = HIDDEN_BIAS[i];
     }
 
     const Square ksq_white = builtin::lsb(pieces<KING, White>());
@@ -52,7 +52,7 @@ void Board::refresh() {
     for (Square i = SQ_A1; i < NO_SQ; i++) {
         Piece p = board[i];
         if (p == None) continue;
-        nnue::activate(getAccumulator(), i, p, ksq_white, ksq_black);
+        nnue::activate(accumulator, i, p, ksq_white, ksq_black);
     }
 }
 
@@ -93,7 +93,7 @@ void Board::applyFen(const std::string &fen, bool update_acc) {
     }
 
     if (update_acc) {
-        refresh();
+        refresh(getAccumulator());
     }
 
     castling_rights.clearAllCastlingRights();

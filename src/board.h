@@ -26,7 +26,7 @@ class Board {
     std::string getCastleString() const;
 
     /// @brief reload the entire nnue
-    void refresh();
+    void refresh(nnue::accumulator &accumulator) const;
 
     /// @brief Finds what piece is on the square using the board (more performant)
     /// @param sq
@@ -219,7 +219,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
     if constexpr (updateNNUE) {
         if (type_of_piece(piece) == KING &&
             nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
-            refresh();
+            refresh(getAccumulator());
         } else {
             nnue::move(getAccumulator(), from_sq, to_sq, piece, ksq_white, ksq_black);
         }
@@ -373,7 +373,7 @@ void Board::makeMove(Move move) {
             placePiece<false>(p, kingToSq, ksq_white, ksq_black);
             placePiece<false>(rook, rookToSq, ksq_white, ksq_black);
 
-            refresh();
+            refresh(getAccumulator());
         } else {
             removePiece<updateNNUE>(p, from_sq, ksq_white, ksq_black);
             removePiece<updateNNUE>(rook, to_sq, ksq_white, ksq_black);

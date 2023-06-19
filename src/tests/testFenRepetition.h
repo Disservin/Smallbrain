@@ -26,7 +26,7 @@ inline bool testFenRepetition(const std::string &input) {
         }
     }
 
-    board.refresh();
+    board.refresh(board.getAccumulator());
 
     return board.isRepetition(2);
 }
