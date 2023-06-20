@@ -17,6 +17,58 @@ Board::Board(std::string fen) {
     applyFen(fen, true);
 }
 
+Board::Board(const Board &other) {
+    chess960 = other.chess960;
+    en_passant_square = other.en_passant_square;
+    castling_rights = other.castling_rights;
+    half_move_clock = other.half_move_clock;
+    full_move_number = other.full_move_number;
+
+    side_to_move = other.side_to_move;
+
+    hash_history = other.hash_history;
+
+    hash_key = other.hash_key;
+
+    state_history = other.state_history;
+
+    std::copy(std::begin(other.board), std::end(other.board), std::begin(board));
+
+    pieces_bb = other.pieces_bb;
+
+    if (other.accumulators_) {
+        accumulators_ = std::make_unique<Accumulators>(*other.accumulators_);
+    }
+}
+
+Board &Board::operator=(const Board &other) {
+    if (this == &other) return *this;
+
+    chess960 = other.chess960;
+    en_passant_square = other.en_passant_square;
+    castling_rights = other.castling_rights;
+    half_move_clock = other.half_move_clock;
+    full_move_number = other.full_move_number;
+
+    side_to_move = other.side_to_move;
+
+    hash_history = other.hash_history;
+
+    hash_key = other.hash_key;
+
+    state_history = other.state_history;
+
+    std::copy(std::begin(other.board), std::end(other.board), std::begin(board));
+
+    pieces_bb = other.pieces_bb;
+
+    if (other.accumulators_) {
+        accumulators_ = std::make_unique<Accumulators>(*other.accumulators_);
+    }
+
+    return *this;
+}
+
 std::string Board::getCastleString() const {
     std::stringstream ss;
 
@@ -129,7 +181,7 @@ void Board::applyFen(const std::string &fen, bool update_acc) {
 
     state_history.clear();
     hash_history.clear();
-    accumulators_.clear();
+    accumulators_->clear();
 
     hash_key = zobristHash();
 }
@@ -337,7 +389,7 @@ U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ) {
 }
 
 void Board::clearStacks() {
-    accumulators_.clear();
+    accumulators_->clear();
     state_history.clear();
 }
 

@@ -5,6 +5,7 @@
 #include <array>
 #include <iostream>
 #include <string>
+#include <memory>
 
 #include "types/accumulators.h"
 #include "types/castling_rights.h"
@@ -22,6 +23,10 @@ class Board {
    public:
     /// @brief constructor for the board, loads startpos
     Board(std::string fen = DEFAULT_POS);
+
+    Board(const Board &other);
+
+    Board &operator=(const Board &other);
 
     std::string getCastleString() const;
 
@@ -149,22 +154,7 @@ class Board {
     /// @return
     U64 zobristHash() const;
 
-    [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_.back(); }
-
-    bool chess960 = false;
-
-    Color side_to_move;
-
-    // NO_SQ when enpassant is not possible
-    Square en_passant_square;
-
-    CastlingRights castling_rights;
-
-    // halfmoves start at 0
-    uint8_t half_move_clock;
-
-    // full moves start at 1
-    uint16_t full_move_number;
+    [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_->back(); }
 
     // keeps track of previous hashes, used for
     // repetition detection
@@ -172,6 +162,21 @@ class Board {
 
     // current hashkey
     U64 hash_key;
+
+    CastlingRights castling_rights;
+
+    // full moves start at 1
+    uint16_t full_move_number;
+
+    // halfmoves start at 0
+    uint8_t half_move_clock;
+
+    // NO_SQ when enpassant is not possible
+    Square en_passant_square;
+
+    Color side_to_move;
+
+    bool chess960 = false;
 
    private:
     // update the hash
@@ -181,10 +186,11 @@ class Board {
     U64 updateKeyEnPassant(Square sq) const;
     U64 updateKeySideToMove() const;
 
-    Accumulators accumulators_;
+    std::unique_ptr<Accumulators> accumulators_ = std::make_unique<Accumulators>();
+
     std::vector<State> state_history;
 
-    U64 pieces_bb[12] = {};
+    std::array<U64, 12> pieces_bb = {};
     std::array<Piece, MAX_SQ> board;
 };
 
@@ -337,7 +343,7 @@ void Board::makeMove(Move move) {
 
     state_history.emplace_back(en_passant_square, castling_rights, half_move_clock, capture);
 
-    if constexpr (updateNNUE) accumulators_.push();
+    if constexpr (updateNNUE) accumulators_->push();
 
     half_move_clock++;
     full_move_number++;
@@ -417,8 +423,8 @@ void Board::unmakeMove(Move move) {
     const State restore = state_history.back();
     state_history.pop_back();
 
-    if (accumulators_.size()) {
-        accumulators_.pop();
+    if (accumulators_->size()) {
+        accumulators_->pop();
     }
 
     hash_key = hash_history.back();
