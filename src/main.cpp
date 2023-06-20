@@ -14,14 +14,7 @@ ThreadPool Threads;
 
 std::atomic_bool UCI_FORCE_STOP;
 
-void quit() {
-    Threads.stop_threads();
-    tb_free();
-}
-
 int main(int argc, char const *argv[]) {
-    std::atexit(quit);
-
     Threads.stop = false;
     UCI_FORCE_STOP = false;
 
