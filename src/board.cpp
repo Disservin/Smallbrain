@@ -14,7 +14,7 @@ Board::Board(std::string fen) {
 
     std::fill(std::begin(board), std::end(board), None);
 
-    applyFen(fen, true);
+    setFen(fen, true);
 }
 
 Board::Board(const Board &other) {
@@ -108,9 +108,9 @@ void Board::refresh() {
     }
 }
 
-Piece Board::pieceAtB(Square sq) const { return board[sq]; }
+Piece Board::at(Square sq) const { return board[sq]; }
 
-void Board::applyFen(const std::string &fen, bool update_acc) {
+void Board::setFen(const std::string &fen, bool update_acc) {
     for (Piece p = WhitePawn; p < None; p++) {
         pieces_bb[p] = 0ULL;
     }
@@ -183,7 +183,7 @@ void Board::applyFen(const std::string &fen, bool update_acc) {
     hash_history.clear();
     accumulators_->clear();
 
-    hash_key = zobristHash();
+    hash_key = zobrist();
 }
 
 std::string Board::getFen() const {
@@ -199,7 +199,7 @@ std::string Board::getFen() const {
             int sq = rank * 8 + file;
 
             // Get the piece at the current square
-            Piece piece = pieceAtB(Square(sq));
+            Piece piece = at(Square(sq));
 
             // If there is a piece at the current square
             if (piece != None) {
@@ -294,8 +294,6 @@ bool Board::nonPawnMat(Color c) const {
 
 Square Board::kingSQ(Color c) const { return builtin::lsb(pieces(KING, c)); }
 
-U64 Board::enemy(Color c) const { return us(~c); }
-
 U64 Board::us(Color c) const {
     return pieces_bb[PAWN + c * 6] | pieces_bb[KNIGHT + c * 6] | pieces_bb[BISHOP + c * 6] |
            pieces_bb[ROOK + c * 6] | pieces_bb[QUEEN + c * 6] | pieces_bb[KING + c * 6];
@@ -303,9 +301,9 @@ U64 Board::us(Color c) const {
 
 U64 Board::all() const { return us<White>() | us<Black>(); }
 
-Color Board::colorOf(Square loc) const { return Color((pieceAtB(loc) / 6)); }
+Color Board::colorOf(Square loc) const { return Color((at(loc) / 6)); }
 
-bool Board::isSquareAttacked(Color c, Square sq, U64 occ) const {
+bool Board::isAttacked(Color c, Square sq, U64 occ) const {
     if (pieces(PAWN, c) & attacks::Pawn(sq, ~c)) return true;
     if (pieces(KNIGHT, c) & attacks::Knight(sq)) return true;
     if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & attacks::Bishop(sq, occ)) return true;
@@ -414,18 +412,18 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     return os;
 }
 
-U64 Board::zobristHash() const {
+U64 Board::zobrist() const {
     U64 hash = 0ULL;
     U64 wPieces = us<White>();
     U64 bPieces = us<Black>();
     // Piece hashes
     while (wPieces) {
         Square sq = builtin::poplsb(wPieces);
-        hash ^= updateKeyPiece(pieceAtB(sq), sq);
+        hash ^= updateKeyPiece(at(sq), sq);
     }
     while (bPieces) {
         Square sq = builtin::poplsb(bPieces);
-        hash ^= updateKeyPiece(pieceAtB(sq), sq);
+        hash ^= updateKeyPiece(at(sq), sq);
     }
     // Ep hash
     U64 ep_hash = 0ULL;

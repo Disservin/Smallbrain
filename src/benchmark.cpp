@@ -28,7 +28,7 @@ int startBench(int depth) {
 
         searcher->id = 0;
         searcher->use_tb = false;
-        searcher->board.applyFen(fen);
+        searcher->board.setFen(fen);
         searcher->limit = limit;
         searcher->id = 0;
 

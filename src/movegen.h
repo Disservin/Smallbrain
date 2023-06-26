@@ -648,8 +648,8 @@ void legalmoves(const Board &board, Movelist &movelist) {
 inline bool see(const Board &board, Move move, int threshold) {
     Square from_sq = from(move);
     Square to_sq = to(move);
-    PieceType attacker = type_of_piece(board.pieceAtB(from_sq));
-    PieceType victim = type_of_piece(board.pieceAtB(to_sq));
+    PieceType attacker = type_of_piece(board.at(from_sq));
+    PieceType victim = type_of_piece(board.at(to_sq));
     int swap = pieceValuesDefault[victim] - threshold;
     if (swap < 0) return false;
     swap -= pieceValuesDefault[attacker];

@@ -68,7 +68,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int rand_lim
 
         movelist.size = 0;
 
-        board.applyFen(DEFAULT_POS, false);
+        board.setFen(DEFAULT_POS, false);
 
         randomPlayout(file, board, movelist, search, rand_limit, use_tb);
         games++;
@@ -97,16 +97,16 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         auto randLine = maxLines(rand_gen::generator);
 
-        board.applyFen(opening_book_[randLine], false);
+        board.setFen(opening_book_[randLine], false);
     }
 
-    board.applyFen(DEFAULT_POS, true);
+    board.setFen(DEFAULT_POS, true);
 
     if (rand_limit > 0) {
         std::uniform_int_distribution<> distRandomFen{0, rand_limit};
         if (distRandomFen(rand_gen::generator) == 1) {
             ply = randomMoves;
-            board.applyFen(getRandomfen());
+            board.setFen(getRandomfen());
         }
     } else {
         while (ply < randomMoves) {
@@ -142,7 +142,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         search->nodes = 0;
         movelist.size = 0;
 
-        const bool in_check = search->board.isSquareAttacked(
+        const bool in_check = search->board.isAttacked(
             ~search->board.side_to_move, search->board.kingSQ(search->board.side_to_move),
             search->board.all());
 
@@ -168,7 +168,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             exit(1);
         }
 
-        const bool capture = search->board.pieceAtB(to(result.move)) != None;
+        const bool capture = search->board.at(to(result.move)) != None;
 
         sfens.score = search->board.side_to_move == White ? result.score : -result.score;
         sfens.move = result.move;

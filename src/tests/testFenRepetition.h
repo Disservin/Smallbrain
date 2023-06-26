@@ -13,9 +13,9 @@ inline bool testFenRepetition(const std::string &input) {
     bool hasMoves = StrUtil::contains(tokens, "moves");
 
     if (tokens[1] == "fen")
-        board.applyFen(input.substr(input.find("fen") + 4), false);
+        board.setFen(input.substr(input.find("fen") + 4), false);
     else
-        board.applyFen(DEFAULT_POS, false);
+        board.setFen(DEFAULT_POS, false);
 
     if (hasMoves) {
         std::size_t index = std::find(tokens.begin(), tokens.end(), "moves") - tokens.begin();

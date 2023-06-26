@@ -132,8 +132,8 @@ class MovePicker {
     }
 
     int mvvlva(Move move) const {
-        int attacker = type_of_piece(search_.board.pieceAtB(from(move))) + 1;
-        int victim = type_of_piece(search_.board.pieceAtB(to(move))) + 1;
+        int attacker = type_of_piece(search_.board.at(from(move))) + 1;
+        int victim = type_of_piece(search_.board.at(to(move))) + 1;
         return mvvlvaArray[victim][attacker];
     }
 
@@ -142,7 +142,7 @@ class MovePicker {
             return CAPTURE_SCORE + mvvlva(move);
         }
 
-        if (search_.board.pieceAtB(to(move)) != None) {
+        if (search_.board.at(to(move)) != None) {
             return movegen::see(search_.board, move, 0) ? CAPTURE_SCORE + mvvlva(move)
                                                         : mvvlva(move);
         }

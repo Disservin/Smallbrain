@@ -34,7 +34,7 @@ void Search::updateHistoryBonus(Move move, Move secondmove, int bonus) {
     if constexpr (type == History::HH)
         history[board.side_to_move][from(move)][to(move)] += hhBonus;
     else if constexpr (type == History::CONST)
-        consthist[board.pieceAtB(from(secondmove))][to(secondmove)][board.pieceAtB(from(move))]
+        consthist[board.at(from(secondmove))][to(secondmove)][board.at(from(move))]
                  [to(move)] += hhBonus;
 }
 
@@ -74,7 +74,7 @@ void Search::updateAllHistories(Move bestmove, int depth, Move *quiets, int quie
     /********************
      * Update Quiet Moves
      *******************/
-    if (board.pieceAtB(to(bestmove)) == None) {
+    if (board.at(to(bestmove)) == None) {
         // update Killer Moves
         killer_moves[1][ss->ply] = killer_moves[0][ss->ply];
         killer_moves[0][ss->ply] = bestmove;
@@ -95,7 +95,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      *******************/
     constexpr bool PvNode = node == PV;
     const Color color = board.side_to_move;
-    const bool in_check = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
+    const bool in_check = board.isAttacked(~color, board.kingSQ(color), board.all());
 
     Move bestmove = NO_MOVE;
 
@@ -151,7 +151,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      *******************/
     Move move = NO_MOVE;
     while ((move = mp.nextMove()) != NO_MOVE) {
-        PieceType captured = type_of_piece(board.pieceAtB(to(move)));
+        PieceType captured = type_of_piece(board.at(to(move)));
 
         if (bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
             // delta pruning, if the move + a large margin is still less then alpha we can safely
@@ -221,7 +221,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     Score maxValue = VALUE_INFINITE;
     Move excludedMove = ss->excludedMove;
 
-    const bool in_check = board.isSquareAttacked(~color, board.kingSQ(color), board.all());
+    const bool in_check = board.isAttacked(~color, board.kingSQ(color), board.all());
     bool improving;
 
     if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !in_check) ? eval::evaluation(board) : 0;
@@ -425,7 +425,7 @@ moves:
 
         int extension = 0;
 
-        const bool capture = board.pieceAtB(to(move)) != None;
+        const bool capture = board.at(to(move)) != None;
 
         /********************
          * Various pruning techniques.

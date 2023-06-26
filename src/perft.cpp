@@ -71,7 +71,7 @@ void PerftTesting::testAllPos(int n) {
         std::vector<U64> expected960 = {119060324ull, 191762235ull, 924181432ull,
                                         308553169ull, 872323796ull, 2678022813ull};
         for (size_t i = 0; i < expected.size(); i++) {
-            board.applyFen(tests[i]);
+            board.setFen(tests[i]);
             nodes = 0;
             perfTest(depths[i], depths[i]);
             total += nodes;
@@ -86,7 +86,7 @@ void PerftTesting::testAllPos(int n) {
 
         board.chess960 = true;
         for (size_t i = 0; i < expected960.size(); i++) {
-            board.applyFen(tests960[i]);
+            board.setFen(tests960[i]);
             nodes = 0;
             perfTest(depths960[i], depths960[i]);
             total += nodes;

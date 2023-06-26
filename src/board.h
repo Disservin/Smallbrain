@@ -36,12 +36,12 @@ class Board {
     /// @brief Finds what piece is on the square using the board (more performant)
     /// @param sq
     /// @return found piece otherwise None
-    Piece pieceAtB(Square sq) const;
+    Piece at(Square sq) const;
 
     /// @brief applys a new Fen to the board and also reload the entire nnue
     /// @param fen
     /// @param update_acc
-    void applyFen(const std::string &fen, bool update_acc = true);
+    void setFen(const std::string &fen, bool update_acc = true);
 
     /// @brief returns a Fen string of the current board
     /// @return fen string
@@ -60,8 +60,6 @@ class Board {
     bool nonPawnMat(Color c) const;
 
     Square kingSQ(Color c) const;
-
-    U64 enemy(Color c) const;
 
     U64 us(Color c) const;
     template <Color c>
@@ -93,7 +91,7 @@ class Board {
     /// @param sq
     /// @param occ
     /// @return
-    bool isSquareAttacked(Color c, Square sq, U64 occ) const;
+    bool isAttacked(Color c, Square sq, U64 occ) const;
 
     // attackers used for SEE
     U64 allAttackers(Square sq, U64 occupied_bb) const;
@@ -152,7 +150,7 @@ class Board {
 
     /// @brief calculate the current zobrist hash from scratch
     /// @return
-    U64 zobristHash() const;
+    U64 zobrist() const;
 
     [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_->back(); }
 
@@ -233,7 +231,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
 }
 
 inline void Board::updateHash(Move move) {
-    PieceType pt = type_of_piece(pieceAtB(from(move)));
+    PieceType pt = type_of_piece(at(from(move)));
     Piece p = makePiece(pt, side_to_move);
     Square from_sq = from(move);
     Square to_sq = to(move);
@@ -258,7 +256,7 @@ inline void Board::updateHash(Move move) {
             const Square kingToSq =
                 file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
-            assert(type_of_piece(pieceAtB(to_sq)) == ROOK);
+            assert(type_of_piece(at(to_sq)) == ROOK);
 
             hash_key ^= updateKeyPiece(rook, to_sq);
             hash_key ^= updateKeyPiece(rook, rookSQ);
@@ -286,7 +284,7 @@ inline void Board::updateHash(Move move) {
                 en_passant_square = Square(to_sq ^ 8);
                 hash_key ^= updateKeyEnPassant(en_passant_square);
 
-                assert(pieceAtB(en_passant_square) == None);
+                assert(at(en_passant_square) == None);
             }
         }
     }
@@ -322,8 +320,8 @@ inline void Board::updateHash(Move move) {
 /// @param move
 template <bool updateNNUE>
 void Board::makeMove(Move move) {
-    PieceType pt = type_of_piece(pieceAtB(from(move)));
-    Piece p = pieceAtB(from(move));
+    PieceType pt = type_of_piece(at(from(move)));
+    Piece p = at(from(move));
     Square from_sq = from(move);
     Square to_sq = to(move);
     Piece capture = board[to_sq];
@@ -392,25 +390,25 @@ void Board::makeMove(Move move) {
 
         return;
     } else if (pt == PAWN && ep) {
-        assert(pieceAtB(Square(to_sq ^ 8)) != None);
+        assert(at(Square(to_sq ^ 8)) != None);
 
         removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move), Square(to_sq ^ 8), ksq_white,
                                 ksq_black);
     } else if (capture != None) {
-        assert(pieceAtB(to_sq) != None);
+        assert(at(to_sq) != None);
 
         removePiece<updateNNUE>(capture, to_sq, ksq_white, ksq_black);
     }
 
     // The move is differently encoded for promotions to it requires some special care.
     if (typeOf(move) == PROMOTION) {
-        assert(pieceAtB(to_sq) == None);
+        assert(at(to_sq) == None);
 
         removePiece<updateNNUE>(makePiece(PAWN, side_to_move), from_sq, ksq_white, ksq_black);
         placePiece<updateNNUE>(makePiece(promotionType(move), side_to_move), to_sq, ksq_white,
                                ksq_black);
     } else {
-        assert(pieceAtB(to_sq) == None);
+        assert(at(to_sq) == None);
 
         movePiece<updateNNUE>(p, from_sq, to_sq, ksq_white, ksq_black);
     }
@@ -442,7 +440,7 @@ void Board::unmakeMove(Move move) {
     bool promotion = typeOf(move) == PROMOTION;
 
     side_to_move = ~side_to_move;
-    PieceType pt = type_of_piece(pieceAtB(to_sq));
+    PieceType pt = type_of_piece(at(to_sq));
     Piece p = makePiece(pt, side_to_move);
 
     if (typeOf(move) == CASTLING) {

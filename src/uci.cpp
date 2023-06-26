@@ -25,7 +25,7 @@ Uci::Uci() {
 }
 
 void Uci::uciLoop() {
-    board_.applyFen(DEFAULT_POS);
+    board_.setFen(DEFAULT_POS);
 
     std::string input;
     std::cin >> std::ws;
@@ -200,15 +200,15 @@ Square extractSquare(std::string_view squareStr) {
 Move uciToMove(const Board& board, const std::string& input) {
     Square source = extractSquare(input.substr(0, 2));
     Square target = extractSquare(input.substr(2, 2));
-    PieceType piece = type_of_piece(board.pieceAtB(source));
+    PieceType piece = type_of_piece(board.at(source));
 
     // convert to king captures rook
     if (!board.chess960 && piece == KING && square_distance(target, source) == 2) {
         target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
     }
 
-    if (piece == KING && type_of_piece(board.pieceAtB(target)) == ROOK &&
-        board.pieceAtB(target) / 6 == board.pieceAtB(source) / 6) {
+    if (piece == KING && type_of_piece(board.at(target)) == ROOK &&
+        board.at(target) / 6 == board.at(source) / 6) {
         return make<Move::CASTLING>(source, target);
     }
 

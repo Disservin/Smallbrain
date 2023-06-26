@@ -141,8 +141,8 @@ int getHistory(Move move, Move secondmove, const Search &search) {
     else if constexpr (type == History::COUNTER)
         return search.counters[from(move)][to(move)];
     else if constexpr (type == History::CONST)
-        return search.consthist[search.board.pieceAtB(from(secondmove))][to(secondmove)]
-                               [search.board.pieceAtB(from(move))][to(move)];
+        return search.consthist[search.board.at(from(secondmove))][to(secondmove)]
+                               [search.board.at(from(move))][to(move)];
 }
 
 static constexpr int mvvlvaArray[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
