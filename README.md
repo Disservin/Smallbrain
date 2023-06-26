@@ -18,10 +18,10 @@ The latest development versions support FRC/DFRC.
 
 ## Compile
 
-Compile it using the Makefile in ./src
+Compile it using the Makefile
 
 ```
-make
+make -j
 .\smallbrain.exe bench
 ```
 
