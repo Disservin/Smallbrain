@@ -7,7 +7,7 @@ EVALFILE   = $(_ROOT)/src/$(NETWORK_NAME)
 COMP       =
 
 CXX       := g++
-CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra -DNDEBUG -funroll-loops -O3 -flto 
+CXXFLAGS  := -std=c++17 -O3 -Wall -Wcast-qual -fno-exceptions  -pedantic -Wextra -DNDEBUG -funroll-loops -flto 
 
 TARGET    := smallbrain
 NATIVE    := -march=native
@@ -90,7 +90,7 @@ endif
 
 # OS independent build with full debug
 ifeq ($(build), debug)
-	CXXFLAGS   = -g3 -fno-omit-frame-pointer -std=c++17
+	CXXFLAGS   = -std=c++17 -O3 -g3 -fno-omit-frame-pointer
 	NATIVE     = -msse -msse3 -mpopcnt
 	LDFLAGS    = -lpthread -lstdc++
 endif
