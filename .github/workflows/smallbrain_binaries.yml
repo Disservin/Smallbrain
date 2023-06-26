@@ -49,7 +49,6 @@ jobs:
             config: {os: macos-12}
     defaults:
       run:
-        working-directory: src
         shell: ${{ matrix.config.shell }}
     steps:
       - uses: actions/checkout@v3
@@ -81,7 +80,7 @@ jobs:
 
       - name: Create binary folder
         run: |
-          mkdir ../binaries
+          mkdir binaries
 
       # Compiles
       
@@ -90,10 +89,10 @@ jobs:
           make clean
           make build=$BINARY sha=$git_sha COMP=$COMP
           strip ./smallbrain-$BINARY$EXT
-          mv ./smallbrain-$BINARY$EXT ../smallbrain-$OS-$BINARY$EXT
+          mv ./smallbrain-$BINARY$EXT ./smallbrain-$OS-$BINARY$EXT
 
       - name: Find and remove empty files
-        run: rm -f *.o *.nnue sha
+        run: git clean -fx
         shell: bash
 
       - name: Archive binaries
