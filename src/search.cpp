@@ -354,9 +354,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     /********************
      * Internal Iterative Reductions (IIR)
      *******************/
-    if (depth >= 3 && !tt_hit) depth--;
-
-    if (PvNode && !tt_hit) depth--;
+    if ((depth >= 3 || PvNode) && !tt_hit) depth--;
 
     if (depth <= 0) return qsearch<PV>(alpha, beta, ss);
 
