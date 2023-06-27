@@ -37,7 +37,6 @@ jobs:
           }
     defaults:
       run:
-        working-directory: ./src
         shell: ${{ matrix.config.shell }}
     steps:
       - uses: actions/checkout@v3
@@ -81,9 +80,9 @@ jobs:
       - name: Valgrind
         if: runner.os == 'Linux'
         run: |
-          valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain bench
+          valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain* bench
 
       - name: Valgrind
         if: runner.os == 'Linux'
         run: |
-          valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain -tests
+          valgrind --error-exitcode=1 --errors-for-leak-kinds=all --leak-check=full ./smallbrain* -tests

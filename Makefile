@@ -2,99 +2,104 @@ NETWORK_NAME = nn-7e82d78ef76a870-450.nnue
 
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
-EVALFILE   = $(_ROOT)/$(NETWORK_NAME)
-CXX       := g++
-TARGET    := smallbrain
-CXXFLAGS  := -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra -DNDEBUG
-NATIVE     = -march=native
+EVALFILE   = $(_ROOT)/src/$(NETWORK_NAME)
+
 COMP       =
 
-# engine name
-NAME     := smallbrain
-SUFFIX   := .exe
-FLAGS     = -pthread -lstdc++ -static -Wl,--no-as-needed
+CXX       := g++
+CXXFLAGS  := -std=c++17 -O3 -Wall -Wcast-qual -fno-exceptions  -pedantic -Wextra -DNDEBUG -funroll-loops -flto 
+
+TARGET    := smallbrain
+NATIVE    := -march=native
+
+
+NAME      := smallbrain
+SUFFIX    := .exe
+LDFLAGS   := -pthread -lstdc++ -static -Wl,--no-as-needed
+
+TMPDIR = .tmp
 
 # all bmi2 instructions
 INSTRUCTIONS_BMI2 = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
 
 # Detect Windows
 ifeq ($(OS), Windows_NT)
+	MKDIR    := mkdir -p
 	uname_S  := Windows
+	SUFFIX   := .exe
 else
 ifeq ($(COMP), MINGW)
+	MKDIR    := mkdir
 	uname_S  := Windows
+	SUFFIX   := .exe
 else
-	FLAGS   := -lpthread -lstdc++
-	SUFFIX  :=
+	MKDIR   := mkdir -p
+	LDFLAGS := -lpthread -lstdc++
 	uname_S := $(shell uname -s)
+	SUFFIX  :=
 endif
-endif
-
-# Remove native for distributed builds
-ifdef build
-	NATIVE =
 endif
 
 # SPECIFIC BUILDS
 ifeq ($(build), native)
 	NATIVE   = -march=native
-	ARCH     = -x86-64-native
 endif
 
 ifeq ($(build), x86-64)
 	NATIVE       = -mtune=znver1
 	INSTRUCTIONS = -msse -msse2 -mpopcnt
-	ARCH         = -x86-64
 endif
 
 ifeq ($(build), x86-64-avx2)
 	NATIVE       = -mtune=znver3
 	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -mssse3 -msse2
-	ARCH         = -x86-64-avx2
 endif
 
 ifeq ($(build), x86-64-bmi2)
 	NATIVE       = -mtune=znver3
 	INSTRUCTIONS = $(INSTRUCTIONS_BMI2)
-	ARCH         = -x86-64-bmi2
 endif
 
 ifeq ($(build), x86-64-avx512)
 	NATIVE       = -mtune=alderlake
 	INSTRUCTIONS = $(INSTRUCTIONS_BMI2) -mavx512f -mavx512bw
-	ARCH         = -x86-64-avx512
 endif
 
 ifeq ($(build), x86-64-vnni256)
 	NATIVE       = -mtune=alderlake
 	INSTRUCTIONS = $(INSTRUCTIONS_BMI2) -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl -mprefer-vector-width=256
-	ARCH         = -x86-64-vnni256
 endif
 
 ifeq ($(build), x86-64-vnni512)
 	NATIVE       = -mtune=alderlake
 	INSTRUCTIONS = $(INSTRUCTIONS_BMI2) -mavx512vnni -mavx512dq -mavx512vl
-	ARCH         = -x86-64-vnni512
 endif
 
 # Different native flag for macOS
 ifeq ($(uname_S), Darwin)
-	NATIVE = -mcpu=apple-a14	
-	FLAGS = 
+	NATIVE  = -mcpu=apple-a14	
+	LDFLAGS = 
 endif
 
 # Native build with debug symbols
 ifeq ($(build), symbols)
-	CXXFLAGS += -g3 -fno-omit-frame-pointer
-	NATIVE   = -march=native
-	FLAGS    = -lpthread -lstdc++
+	CXXFLAGS  += -g3 -fno-omit-frame-pointer
+	NATIVE     = -march=native
+	LDFLAGS    = -lpthread -lstdc++
 endif
 
 # OS independent build with full debug
 ifeq ($(build), debug)
-	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++17
-	NATIVE   = -msse -msse3 -mpopcnt
-	FLAGS    = -lpthread -lstdc++
+	CXXFLAGS   = -std=c++17 -O3 -g3 -fno-omit-frame-pointer
+	NATIVE     = -msse -msse3 -mpopcnt
+	LDFLAGS    = -lpthread -lstdc++
+endif
+
+# Prepend - to the build name
+ifeq ($(build),)
+	ARCH_NAME := 
+else
+	ARCH_NAME := -$(build)
 endif
 
 # Try to include git commit sha for versioning
@@ -111,45 +116,47 @@ endif
 
 # PGO
 ifneq ($(findstring g++, $(CXX)),)
-	PGO_GEN = -fprofile-generate
-	PGO_USE = -fprofile-use
+	PGO_GEN   = -fprofile-generate
+	PGO_USE   = -fprofile-use
 else ifneq ($(findstring clang++, $(CXX)),)
 	PGO_MERGE = llvm-profdata merge -output=profdata *.profraw
-	PGO_GEN = -fprofile-instr-generate
-	PGO_USE = -fprofile-instr-use=profdata
+	PGO_GEN   = -fprofile-instr-generate
+	PGO_USE   = -fprofile-instr-use=profdata
 endif
 
 # Add network name and Evalfile
 CXXFLAGS += -DNETWORK_NAME=\"$(NETWORK_NAME)\" -DEVALFILE=\"$(EVALFILE)\"
 
-SOURCES := $(wildcard *.cpp) syzygy/Fathom/src/tbprobe.cpp tests/tests.cpp
-OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
-DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
-EXE     := $(NAME)$(ARCH)$(SUFFIX)
+SOURCES := $(wildcard src/*.cpp) src/syzygy/Fathom/src/tbprobe.cpp src/tests/tests.cpp
+OBJECTS := $(patsubst %.cpp,$(TMPDIR)/%.o,$(SOURCES))
+DEPENDS := $(patsubst %.cpp,$(TMPDIR)/%.d,$(SOURCES))
+EXE     := $(NAME)$(ARCH_NAME)$(SUFFIX)
 
 .PHONY: all clean FORCE
 
 all: $(TARGET)
 clean:
-	@rm -rf *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o profdata *.gcda *.profraw
+	@rm -rf $(TMPDIR) *.o  $(DEPENDS) *.d profdata *.gcda *.profraw
 
-# Linking the executable from the object files
 $(TARGET): $(OBJECTS)
-	$(CXX) -o $(EXE) $^ $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) -flto
+	$(CXX) $(CXXFLAGS) $(NATIVE) -MMD -MP -o $(EXE) $^ $(LDFLAGS)
+
+$(TMPDIR)/%.o: %.cpp | $(TMPDIR)
+	$(CXX) $(CXXFLAGS) $(NATIVE) -MMD -MP -c $< -o $@ $(LDFLAGS)
+
+$(TMPDIR):
+	$(MKDIR) "$(TMPDIR)" "$(TMPDIR)/src" "$(TMPDIR)/src/syzygy" "$(TMPDIR)/src/syzygy/Fathom" "$(TMPDIR)/src/syzygy/Fathom/src" "$(TMPDIR)/src/tests"
 
 -include $(DEPENDS)
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3  -flto -MMD -MP -c -o $@ $<
-
 # Force recompilation of ucicommands to include latest version string
-uci.o: FORCE
+$(TMP_DIR)/uci.o: FORCE
 FORCE:
 
 # Profile Guided Optimizations for gcc, largely depends on compiler version
 pgo:
-	$(CXX) $(PGO_GEN) -MMD -MP -o $(EXE) -flto $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 $(SOURCES) $(FLAGS)
+	$(CXX) $(CXXFLAGS) $(PGO_GEN) $(NATIVE) $(INSTRUCTIONS) -MMD -MP -o $(EXE) $(SOURCES) $(LDFLAGS)
 	./$(EXE) bench
 	$(PGO_MERGE)
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -O3 $(PGO_USE) -MMD -MP -o $(EXE) -flto $(SOURCES) $(FLAGS)
-	@rm -f *.gcda *.profraw *.o syzygy/Fathom/src/*.o $(DEPENDS) *.d tests/tests.d tests/tests.o profdata
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(PGO_USE) -MMD -MP -o $(EXE) $(SOURCES) $(LDFLAGS)
+	@rm -f *.gcda *.profraw *.o $(DEPENDS) *.d  profdata
