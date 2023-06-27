@@ -160,20 +160,20 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             break;
         }
 
-        const SearchResult result = search->iterativeDeepening();
+        const auto result = search->iterativeDeepening();
 
         // CATCH BUGS
-        if (result.score == VALUE_NONE) {
+        if (result.second == VALUE_NONE) {
             std::cout << search->board << std::endl;
             exit(1);
         }
 
-        const bool capture = search->board.at(to(result.move)) != None;
+        const bool capture = search->board.at(to(result.first)) != None;
 
-        sfens.score = search->board.side_to_move == White ? result.score : -result.score;
-        sfens.move = result.move;
+        sfens.score = search->board.side_to_move == White ? result.second : -result.second;
+        sfens.move = result.first;
 
-        const Score absScore = std::abs(result.score);
+        const Score absScore = std::abs(result.second);
 
         if (absScore >= 2000) {
             winCount++;
@@ -188,7 +188,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY) {
             winningSide =
-                result.score > 0 ? search->board.side_to_move : ~search->board.side_to_move;
+                result.second > 0 ? search->board.side_to_move : ~search->board.side_to_move;
             break;
         } else if (drawCount >= 12) {
             winningSide = NO_COLOR;
@@ -205,7 +205,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             break;
 
         ply++;
-        search->board.makeMove<true>(result.move);
+        search->board.makeMove<true>(result.first);
     }
 
     U64 white = search->board.us<White>();

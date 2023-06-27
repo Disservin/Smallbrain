@@ -34,8 +34,8 @@ void Search::updateHistoryBonus(Move move, Move secondmove, int bonus) {
     if constexpr (type == History::HH)
         history[board.side_to_move][from(move)][to(move)] += hhBonus;
     else if constexpr (type == History::CONST)
-        consthist[board.at(from(secondmove))][to(secondmove)][board.at(from(move))]
-                 [to(move)] += hhBonus;
+        consthist[board.at(from(secondmove))][to(secondmove)][board.at(from(move))][to(move)] +=
+            hhBonus;
 }
 
 template <History type>
@@ -226,7 +226,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
     if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !in_check) ? eval::evaluation(board) : 0;
 
-    pv_length[ss->ply] = ss->ply;
+    pv_length_[ss->ply] = ss->ply;
 
     /********************
      * Draw detection and mate pruning
@@ -263,7 +263,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
      * Selective depth
      * Heighest depth a pvnode has reached
      *******************/
-    if (PvNode && ss->ply > seldepth) seldepth = ss->ply;
+    if (PvNode && ss->ply > seldepth_) seldepth_ = ss->ply;
 
     // Look up in the TT
     Move ttmove = NO_MOVE;
@@ -566,13 +566,13 @@ moves:
                 bestmove = move;
 
                 // update the PV
-                pv_table[ss->ply][ss->ply] = move;
+                pv_table_[ss->ply][ss->ply] = move;
 
-                for (int next_ply = ss->ply + 1; next_ply < pv_length[ss->ply + 1]; next_ply++) {
-                    pv_table[ss->ply][next_ply] = pv_table[ss->ply + 1][next_ply];
+                for (int next_ply = ss->ply + 1; next_ply < pv_length_[ss->ply + 1]; next_ply++) {
+                    pv_table_[ss->ply][next_ply] = pv_table_[ss->ply + 1][next_ply];
                 }
 
-                pv_length[ss->ply] = pv_length[ss->ply + 1];
+                pv_length_[ss->ply] = pv_length_[ss->ply + 1];
 
                 /********************
                  * Score beat beta -> update histories and break.
@@ -655,23 +655,21 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss) {
     }
 
     if (id == 0 && !silent) {
-        uciOutput(result, depth, seldepth, Threads.getNodes(), Threads.getTbHits(), getTime(),
+        uciOutput(result, depth, seldepth_, Threads.getNodes(), Threads.getTbHits(), getTime(),
                   getPV(), TTable.hashfull());
     }
 
     return result;
 }
 
-SearchResult Search::iterativeDeepening() {
+std::pair<Move, Score> Search::iterativeDeepening() {
     Move bestmove = NO_MOVE;
-    SearchResult sr;
+    std::pair<Move, Score> sr;
 
     Score result = -VALUE_INFINITE;
     int depth = 1;
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
-
-    spent_effort.reset();
 
     for (int i = -2; i <= MAX_PLY + 1; ++i) {
         (ss + i)->ply = i;
@@ -683,11 +681,15 @@ SearchResult Search::iterativeDeepening() {
     int bestmoveChanges = 0;
     int evalAverage = 0;
 
+    pv_table_.reset();
+    pv_length_.reset();
+    spent_effort.reset();
+
     /********************
      * Iterative Deepening Loop.
      *******************/
     for (depth = 1; depth <= limit.depth; depth++) {
-        seldepth = 0;
+        seldepth_ = 0;
 
         auto previousResult = result;
         result = aspirationSearch(depth, result, ss);
@@ -698,11 +700,11 @@ SearchResult Search::iterativeDeepening() {
         // only mainthread manages time control
         if (id != 0) continue;
 
-        sr.score = result;
+        sr.second = result;
 
-        if (bestmove != pv_table[0][0]) bestmoveChanges++;
+        if (bestmove != pv_table_[0][0]) bestmoveChanges++;
 
-        bestmove = pv_table[0][0];
+        bestmove = pv_table_[0][0];
 
         // limit type time
         if (limit.time.optimum != 0) {
@@ -736,7 +738,7 @@ SearchResult Search::iterativeDeepening() {
     /********************
      * In case the depth was 1 make sure we have at least a bestmove.
      *******************/
-    if (depth == 1) bestmove = pv_table[0][0];
+    if (depth == 1) bestmove = pv_table_[0][0];
 
     /********************
      * Mainthread prints bestmove.
@@ -749,21 +751,21 @@ SearchResult Search::iterativeDeepening() {
 
     print_mean();
 
-    sr.move = bestmove;
+    sr.first = bestmove;
     return sr;
 }
 
 void Search::reset() {
-    consthist.reset();
-    counters.reset();
-    history.reset();
-    killer_moves.reset();
-    spent_effort.reset();
-    pv_length.reset();
-    pv_table.reset();
-
     nodes = 0;
     tbhits = 0;
+
+    spent_effort.reset();
+
+    history.reset();
+    counters.reset();
+    consthist.reset();
+
+    killer_moves.reset();
 }
 
 void Search::startThinking() {
@@ -771,8 +773,8 @@ void Search::startThinking() {
      * Various Limits that only the MainThread needs to know
      * and initialise.
      *******************/
-    t0 = TimePoint::now();
-    check_time = 0;
+    t0_ = TimePoint::now();
+    check_time_ = 0;
 
     /********************
      * Play dtz move when time is limited
@@ -796,9 +798,9 @@ bool Search::limitReached() {
 
     if (limit.nodes != 0 && nodes >= limit.nodes) return true;
 
-    if (--check_time > 0) return false;
+    if (--check_time_ > 0) return false;
 
-    check_time = 2047;
+    check_time_ = 2047;
 
     if (limit.time.maximum != 0) {
         auto ms = getTime();
@@ -815,8 +817,8 @@ bool Search::limitReached() {
 std::string Search::getPV() {
     std::stringstream ss;
 
-    for (int i = 0; i < pv_length[0]; i++) {
-        ss << " " << uci::moveToUci(pv_table[0][i], board.chess960);
+    for (int i = 0; i < pv_length_[0]; i++) {
+        ss << " " << uci::moveToUci(pv_table_[0][i], board.chess960);
     }
 
     return ss.str();
@@ -824,5 +826,5 @@ std::string Search::getPV() {
 
 int64_t Search::getTime() {
     auto t1 = TimePoint::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0_).count();
 }

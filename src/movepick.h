@@ -2,6 +2,7 @@
 
 #include "board.h"
 #include "search.h"
+#include "types/constants.h"
 
 enum SearchType { QSEARCH, ABSEARCH };
 

@@ -2,48 +2,37 @@
 
 #include "thread.h"
 
-extern std::atomic_bool UCI_FORCE_STOP;
+void Thread::start_thinking() { search->startThinking(); }
 
-void Thread::start_thinking()
-{
-    search->startThinking();
-}
-
-uint64_t ThreadPool::getNodes()
-{
+uint64_t ThreadPool::getNodes() {
     uint64_t total = 0;
 
-    for (auto &th : pool)
-    {
+    for (auto &th : pool) {
         total += th.search->nodes;
     }
 
     return total;
 }
 
-uint64_t ThreadPool::getTbHits()
-{
+uint64_t ThreadPool::getTbHits() {
     uint64_t total = 0;
 
-    for (auto &th : pool)
-    {
+    for (auto &th : pool) {
         total += th.search->tbhits;
     }
 
     return total;
 }
 
-void ThreadPool::start_threads(const Board &board, const Limits &limit, const Movelist &searchmoves, int worker_count,
-                               bool use_tb)
-{
+void ThreadPool::start_threads(const Board &board, const Limits &limit, const Movelist &searchmoves,
+                               int worker_count, bool use_tb) {
     assert(runningThreads.size() == 0);
 
     stop = false;
 
     Thread mainThread;
 
-    if (pool.size() > 0)
-        mainThread = pool[0];
+    if (pool.size() > 0) mainThread = pool[0];
 
     pool.clear();
 
@@ -64,26 +53,22 @@ void ThreadPool::start_threads(const Board &board, const Limits &limit, const Mo
     mainThread.search->history.reset();
     mainThread.search->counters.reset();
 
-    for (int i = 1; i < worker_count; i++)
-    {
+    for (int i = 1; i < worker_count; i++) {
         mainThread.search->id = i;
 
         pool.emplace_back(mainThread);
     }
 
-    for (int i = 0; i < worker_count; i++)
-    {
+    for (int i = 0; i < worker_count; i++) {
         runningThreads.emplace_back(&Thread::start_thinking, std::ref(pool[i]));
     }
 }
 
-void ThreadPool::stop_threads()
-{
-    stop = UCI_FORCE_STOP = true;
+void ThreadPool::stop_threads() {
+    stop = true;
 
     for (auto &th : runningThreads)
-        if (th.joinable())
-            th.join();
+        if (th.joinable()) th.join();
 
     pool.clear();
     runningThreads.clear();
