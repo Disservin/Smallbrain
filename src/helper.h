@@ -50,7 +50,11 @@ void prefetch(const void *addr) {
 #if defined(__INTEL_COMPILER)
     __asm__("");
 #endif
+#ifdef __GNUC__
     _mm_prefetch((char *)addr, _MM_HINT_T0);
+#else
+    _mm_prefetch((char *)addr, 0);
+#endif
 }
 #else
 template <int rw = 0>

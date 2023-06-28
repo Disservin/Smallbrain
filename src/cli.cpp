@@ -21,6 +21,11 @@ void parseDashArguments(int &i, int argc, char const *argv[],
     while (i + 1 < argc && argv[i + 1][0] != '-' && i++) {
         std::string param = argv[i];
         std::size_t pos = param.find('=');
+
+        if (pos == std::string::npos || pos == param.length() - 1) {
+            continue;
+        }
+
         std::string key = param.substr(0, pos);
         std::string value = param.substr(pos + 1);
 
