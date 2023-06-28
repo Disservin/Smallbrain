@@ -8,8 +8,8 @@
 
 static auto init_squares_between = []() constexpr {
     // initialize squares between table
-    std::array<std::array<U64, 64>, 64> squares_between_bb{};
-    U64 sqs = 0;
+    std::array<std::array<Bitboard, 64>, 64> squares_between_bb{};
+    Bitboard sqs = 0;
     for (Square sq1 = SQ_A1; sq1 <= SQ_H8; ++sq1) {
         for (Square sq2 = SQ_A1; sq2 <= SQ_H8; ++sq2) {
             sqs = (1ULL << sq1) | (1ULL << sq2);
@@ -26,7 +26,7 @@ static auto init_squares_between = []() constexpr {
     return squares_between_bb;
 };
 
-static const std::array<std::array<U64, 64>, 64> SQUARES_BETWEEN_BB = init_squares_between();
+static const std::array<std::array<Bitboard, 64>, 64> SQUARES_BETWEEN_BB = init_squares_between();
 
 struct ExtMove {
     int value = 0;
@@ -77,12 +77,12 @@ struct Movelist {
 namespace movegen {
 
 template <Color c>
-U64 pawnLeftAttacks(const U64 pawns) {
+Bitboard pawnLeftAttacks(const Bitboard pawns) {
     return c == White ? (pawns << 7) & ~MASK_FILE[FILE_H] : (pawns >> 7) & ~MASK_FILE[FILE_A];
 }
 
 template <Color c>
-U64 pawnRightAttacks(const U64 pawns) {
+Bitboard pawnRightAttacks(const Bitboard pawns) {
     return c == White ? (pawns << 9) & ~MASK_FILE[FILE_A] : (pawns >> 9) & ~MASK_FILE[FILE_H];
 }
 
@@ -93,13 +93,13 @@ U64 pawnRightAttacks(const U64 pawns) {
  * When there is no check at all all bits are set (DEFAULT_CHECKMASK)
  *******************/
 template <Color c>
-U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
-    U64 checks = 0ULL;
-    U64 pawn_mask = board.pieces<PAWN, ~c>() & attacks::Pawn(sq, c);
-    U64 knight_mask = board.pieces<KNIGHT, ~c>() & attacks::Knight(sq);
-    U64 bishop_mask =
+Bitboard checkMask(const Board &board, Square sq, Bitboard occ_all, int &double_check) {
+    Bitboard checks = 0ULL;
+    Bitboard pawn_mask = board.pieces<PAWN, ~c>() & attacks::Pawn(sq, c);
+    Bitboard knight_mask = board.pieces<KNIGHT, ~c>() & attacks::Knight(sq);
+    Bitboard bishop_mask =
         (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::Bishop(sq, occ_all);
-    U64 rook_mask =
+    Bitboard rook_mask =
         (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::Rook(sq, occ_all);
 
     /********************
@@ -158,29 +158,29 @@ U64 checkMask(const Board &board, Square sq, U64 occ_all, int &double_check) {
  * of our pieces that lay on the pin mask, if it is only 1 piece then that piece is pinned.
  *******************/
 template <Color c>
-U64 pinMaskRooks(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
-    U64 rook_mask =
+Bitboard pinMaskRooks(const Board &board, Square sq, Bitboard occ_us, Bitboard occ_enemy) {
+    Bitboard rook_mask =
         (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::Rook(sq, occ_enemy);
 
-    U64 pin_hv = 0ULL;
+    Bitboard pin_hv = 0ULL;
     while (rook_mask) {
         const Square index = builtin::poplsb(rook_mask);
-        const U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+        const Bitboard possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (builtin::popcount(possible_pin & occ_us) == 1) pin_hv |= possible_pin;
     }
     return pin_hv;
 }
 
 template <Color c>
-U64 pinMaskBishops(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
-    U64 bishop_mask =
+Bitboard pinMaskBishops(const Board &board, Square sq, Bitboard occ_us, Bitboard occ_enemy) {
+    Bitboard bishop_mask =
         (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::Bishop(sq, occ_enemy);
 
-    U64 pin_d = 0ULL;
+    Bitboard pin_d = 0ULL;
 
     while (bishop_mask) {
         const Square index = builtin::poplsb(bishop_mask);
-        const U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+        const Bitboard possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (builtin::popcount(possible_pin & occ_us) == 1) pin_d |= possible_pin;
     }
 
@@ -193,19 +193,19 @@ U64 pinMaskBishops(const Board &board, Square sq, U64 occ_us, U64 occ_enemy) {
  * this is used for king move generation.
  *******************/
 template <Color c>
-U64 seenSquares(const Board &board, U64 occ_all) {
+Bitboard seenSquares(const Board &board, Bitboard occ_all) {
     const Square kSq = board.kingSQ(~c);
 
-    U64 pawns = board.pieces<PAWN, c>();
-    U64 knights = board.pieces<KNIGHT, c>();
-    U64 queens = board.pieces<QUEEN, c>();
-    U64 bishops = board.pieces<BISHOP, c>() | queens;
-    U64 rooks = board.pieces<ROOK, c>() | queens;
+    Bitboard pawns = board.pieces<PAWN, c>();
+    Bitboard knights = board.pieces<KNIGHT, c>();
+    Bitboard queens = board.pieces<QUEEN, c>();
+    Bitboard bishops = board.pieces<BISHOP, c>() | queens;
+    Bitboard rooks = board.pieces<ROOK, c>() | queens;
 
     // Remove our king
     occ_all &= ~(1ULL << kSq);
 
-    U64 seen = pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
+    Bitboard seen = pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
 
     while (knights) {
         Square index = builtin::poplsb(knights);
@@ -231,7 +231,7 @@ U64 seenSquares(const Board &board, U64 occ_all) {
 /// @param b
 /// @return
 template <Direction direction>
-constexpr U64 shift(const U64 b) {
+constexpr Bitboard shift(const Bitboard b) {
     switch (direction) {
         case NORTH:
             return b << 8;
@@ -260,27 +260,27 @@ constexpr U64 shift(const U64 b) {
 /// @param board
 /// @param movelist
 template <Color c, Movetype mt>
-void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 occ_enemy,
-                       U64 check_mask, U64 pin_hv, U64 pin_d) {
-    const U64 pawns_mask = board.pieces<PAWN, c>();
+void legalPawnMovesAll(const Board &board, Movelist &movelist, Bitboard occ_all, Bitboard occ_enemy,
+                       Bitboard check_mask, Bitboard pin_hv, Bitboard pin_d) {
+    const Bitboard pawns_mask = board.pieces<PAWN, c>();
 
     constexpr Direction UP = c == White ? NORTH : SOUTH;
     constexpr Direction DOWN = c == Black ? NORTH : SOUTH;
     constexpr Direction DOWN_LEFT = c == Black ? NORTH_EAST : SOUTH_WEST;
     constexpr Direction DOWN_RIGHT = c == Black ? NORTH_WEST : SOUTH_EAST;
-    constexpr U64 RANK_BEFORE_PROMO = c == White ? MASK_RANK[RANK_7] : MASK_RANK[RANK_2];
-    constexpr U64 RANK_PROMO = c == White ? MASK_RANK[RANK_8] : MASK_RANK[RANK_1];
-    constexpr U64 doublePushRank = c == White ? MASK_RANK[RANK_3] : MASK_RANK[RANK_6];
+    constexpr Bitboard RANK_BEFORE_PROMO = c == White ? MASK_RANK[RANK_7] : MASK_RANK[RANK_2];
+    constexpr Bitboard RANK_PROMO = c == White ? MASK_RANK[RANK_8] : MASK_RANK[RANK_1];
+    constexpr Bitboard doublePushRank = c == White ? MASK_RANK[RANK_3] : MASK_RANK[RANK_6];
 
     // These pawns can maybe take Left or Right
-    const U64 pawnsLR = pawns_mask & ~pin_hv;
+    const Bitboard pawnsLR = pawns_mask & ~pin_hv;
 
-    const U64 unpinnedpawnsLR = pawnsLR & ~pin_d;
-    const U64 pinnedpawnsLR = pawnsLR & pin_d;
+    const Bitboard unpinnedpawnsLR = pawnsLR & ~pin_d;
+    const Bitboard pinnedpawnsLR = pawnsLR & pin_d;
 
-    U64 Lpawns =
+    Bitboard Lpawns =
         (pawnLeftAttacks<c>(unpinnedpawnsLR)) | (pawnLeftAttacks<c>(pinnedpawnsLR) & pin_d);
-    U64 Rpawns =
+    Bitboard Rpawns =
         (pawnRightAttacks<c>(unpinnedpawnsLR)) | (pawnRightAttacks<c>(pinnedpawnsLR) & pin_d);
 
     // Prune moves that dont capture a piece and are not on the check_mask.
@@ -288,30 +288,30 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
     Rpawns &= occ_enemy & check_mask;
 
     // These pawns can walk Forward
-    const U64 pawnsHV = pawns_mask & ~pin_d;
+    const Bitboard pawnsHV = pawns_mask & ~pin_d;
 
-    const U64 pawnsPinnedHV = pawnsHV & pin_hv;
-    const U64 pawnsUnPinnedHV = pawnsHV & ~pin_hv;
+    const Bitboard pawnsPinnedHV = pawnsHV & pin_hv;
+    const Bitboard pawnsUnPinnedHV = pawnsHV & ~pin_hv;
 
     // Prune moves that are blocked by a piece
-    const U64 singlePushUnpinned = shift<UP>(pawnsUnPinnedHV) & ~occ_all;
-    const U64 singlePushPinned = shift<UP>(pawnsPinnedHV) & pin_hv & ~occ_all;
+    const Bitboard singlePushUnpinned = shift<UP>(pawnsUnPinnedHV) & ~occ_all;
+    const Bitboard singlePushPinned = shift<UP>(pawnsPinnedHV) & pin_hv & ~occ_all;
 
     // Prune moves that are not on the check_mask.
-    U64 singlePush = (singlePushUnpinned | singlePushPinned) & check_mask;
+    Bitboard singlePush = (singlePushUnpinned | singlePushPinned) & check_mask;
 
-    U64 doublePush = ((shift<UP>(singlePushUnpinned & doublePushRank) & ~occ_all) |
-                      (shift<UP>(singlePushPinned & doublePushRank) & ~occ_all)) &
-                     check_mask;
+    Bitboard doublePush = ((shift<UP>(singlePushUnpinned & doublePushRank) & ~occ_all) |
+                           (shift<UP>(singlePushPinned & doublePushRank) & ~occ_all)) &
+                          check_mask;
 
     /********************
      * Add promotion moves.
      * These are always generated unless we only want quiet moves.
      *******************/
     if ((mt != Movetype::QUIET) && pawns_mask & RANK_BEFORE_PROMO) {
-        U64 Promote_Left = Lpawns & RANK_PROMO;
-        U64 Promote_Right = Rpawns & RANK_PROMO;
-        U64 Promote_Move = singlePush & RANK_PROMO;
+        Bitboard Promote_Left = Lpawns & RANK_PROMO;
+        Bitboard Promote_Right = Rpawns & RANK_PROMO;
+        Bitboard Promote_Move = singlePush & RANK_PROMO;
 
         while (Promote_Move) {
             Square to = builtin::poplsb(Promote_Move);
@@ -382,7 +382,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
         const Square ep = board.en_passant_square;
         const Square epPawn = ep + DOWN;
 
-        U64 epMask = (1ull << epPawn) | (1ull << ep);
+        Bitboard epMask = (1ull << epPawn) | (1ull << ep);
 
         /********************
          * In case the en passant square and the enemy pawn
@@ -392,11 +392,11 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
         if ((check_mask & epMask) == 0) return;
 
         const Square kSQ = board.kingSQ(c);
-        const U64 kingMask = (1ull << kSQ) & MASK_RANK[square_rank(epPawn)];
-        const U64 enemyQueenRook = board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>();
+        const Bitboard kingMask = (1ull << kSQ) & MASK_RANK[square_rank(epPawn)];
+        const Bitboard enemyQueenRook = board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>();
 
         const bool isPossiblePin = kingMask && enemyQueenRook;
-        U64 epBB = attacks::Pawn(ep, ~c) & pawnsLR;
+        Bitboard epBB = attacks::Pawn(ep, ~c) & pawnsLR;
 
         /********************
          * For one en passant square two pawns could potentially take there.
@@ -411,7 +411,7 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
              *******************/
             if ((1ULL << from) & pin_d && !(pin_d & (1ull << ep))) continue;
 
-            const U64 connectingPawns = (1ull << epPawn) | (1ull << from);
+            const Bitboard connectingPawns = (1ull << epPawn) | (1ull << from);
 
             /********************
              * 7k/4p3/8/2KP3r/8/8/8/8 b - - 0 1
@@ -430,24 +430,27 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, U64 occ_all, U64 
     }
 }
 
-inline U64 legalKnightMoves(Square sq, U64 movable_square) {
+inline Bitboard legalKnightMoves(Square sq, Bitboard movable_square) {
     return attacks::Knight(sq) & movable_square;
 }
 
-inline U64 legalBishopMoves(Square sq, U64 movable_square, U64 pinMask, U64 occ_all) {
+inline Bitboard legalBishopMoves(Square sq, Bitboard movable_square, Bitboard pinMask,
+                                 Bitboard occ_all) {
     // The Bishop is pinned diagonally thus can only move diagonally.
     if (pinMask & (1ULL << sq)) return attacks::Bishop(sq, occ_all) & movable_square & pinMask;
     return attacks::Bishop(sq, occ_all) & movable_square;
 }
 
-inline U64 legalRookMoves(Square sq, U64 movable_square, U64 pinMask, U64 occ_all) {
+inline Bitboard legalRookMoves(Square sq, Bitboard movable_square, Bitboard pinMask,
+                               Bitboard occ_all) {
     // The Rook is pinned horizontally thus can only move horizontally.
     if (pinMask & (1ULL << sq)) return attacks::Rook(sq, occ_all) & movable_square & pinMask;
     return attacks::Rook(sq, occ_all) & movable_square;
 }
 
-inline U64 legalQueenMoves(Square sq, U64 movable_square, U64 pin_d, U64 pin_hv, U64 occ_all) {
-    U64 moves = 0ULL;
+inline Bitboard legalQueenMoves(Square sq, Bitboard movable_square, Bitboard pin_d, Bitboard pin_hv,
+                                Bitboard occ_all) {
+    Bitboard moves = 0ULL;
     if (pin_d & (1ULL << sq))
         moves |= attacks::Bishop(sq, occ_all) & movable_square & pin_d;
     else if (pin_hv & (1ULL << sq))
@@ -461,7 +464,7 @@ inline U64 legalQueenMoves(Square sq, U64 movable_square, U64 pin_d, U64 pin_hv,
 }
 
 template <Movetype mt>
-U64 legalKingMoves(Square sq, U64 movable_square, U64 seen) {
+Bitboard legalKingMoves(Square sq, Bitboard movable_square, Bitboard seen) {
     return attacks::King(sq) & movable_square & ~seen;
 }
 
@@ -470,11 +473,12 @@ constexpr Square relativeSquare(Color c, Square s) {
 }
 
 template <Color c, Movetype mt>
-inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pin_hv, U64 occ_all) {
+inline Bitboard legalCastleMoves(const Board &board, Square sq, Bitboard seen, Bitboard pin_hv,
+                                 Bitboard occ_all) {
     if constexpr (mt == Movetype::CAPTURE) return 0ull;
     const auto rights = board.castling_rights;
 
-    U64 moves = 0ull;
+    Bitboard moves = 0ull;
 
     for (const auto side : {CastleSide::KING_SIDE, CastleSide::QUEEN_SIDE}) {
         if (!rights.hasCastlingRight(c, side)) continue;
@@ -486,10 +490,10 @@ inline U64 legalCastleMoves(const Board &board, Square sq, U64 seen, U64 pin_hv,
 
         const auto from_rook_sq = file_rank_square(rights.getRookFile(c, side), square_rank(sq));
 
-        const U64 not_occ_path = SQUARES_BETWEEN_BB[sq][from_rook_sq];
-        const U64 not_attacked_path = SQUARES_BETWEEN_BB[sq][end_king_sq];
-        const U64 empty_not_attacked = ~seen & ~(occ_all & ~(1ull << from_rook_sq));
-        const U64 withoutRook = occ_all & ~(1ull << from_rook_sq);
+        const Bitboard not_occ_path = SQUARES_BETWEEN_BB[sq][from_rook_sq];
+        const Bitboard not_attacked_path = SQUARES_BETWEEN_BB[sq][end_king_sq];
+        const Bitboard empty_not_attacked = ~seen & ~(occ_all & ~(1ull << from_rook_sq));
+        const Bitboard withoutRook = occ_all & ~(1ull << from_rook_sq);
 
         if ((not_attacked_path & empty_not_attacked) == not_attacked_path &&
             ((not_occ_path & ~occ_all) == not_occ_path) &&
@@ -516,22 +520,22 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
     int double_check = 0;
 
-    U64 occ_us = board.us<c>();
-    U64 occ_enemy = board.us<~c>();
-    U64 occ_all = occ_us | occ_enemy;
-    U64 enemy_empty_bb = ~occ_us;
+    Bitboard occ_us = board.us<c>();
+    Bitboard occ_enemy = board.us<~c>();
+    Bitboard occ_all = occ_us | occ_enemy;
+    Bitboard enemy_empty_bb = ~occ_us;
 
-    U64 seen = seenSquares<~c>(board, occ_all);
-    U64 check_mask = checkMask<c>(board, king_sq, occ_all, double_check);
-    U64 pin_hv = pinMaskRooks<c>(board, king_sq, occ_us, occ_enemy);
-    U64 pin_d = pinMaskBishops<c>(board, king_sq, occ_us, occ_enemy);
+    Bitboard seen = seenSquares<~c>(board, occ_all);
+    Bitboard check_mask = checkMask<c>(board, king_sq, occ_all, double_check);
+    Bitboard pin_hv = pinMaskRooks<c>(board, king_sq, occ_us, occ_enemy);
+    Bitboard pin_d = pinMaskBishops<c>(board, king_sq, occ_us, occ_enemy);
 
     assert(double_check <= 2);
 
     /********************
      * Moves have to be on the check_mask
      *******************/
-    U64 movable_square;
+    Bitboard movable_square;
 
     /********************
      * Slider, Knights and King moves can only go to enemy or empty squares.
@@ -543,7 +547,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
     else  // QUIET moves
         movable_square = ~occ_all;
 
-    U64 moves = legalKingMoves<mt>(king_sq, movable_square, seen);
+    Bitboard moves = legalKingMoves<mt>(king_sq, movable_square, seen);
 
     movable_square &= check_mask;
 
@@ -570,22 +574,22 @@ void legalmoves(const Board &board, Movelist &movelist) {
     /********************
      * Prune knights that are pinned since these cannot move.
      *******************/
-    U64 knights_mask = board.pieces<KNIGHT, c>() & ~(pin_d | pin_hv);
+    Bitboard knights_mask = board.pieces<KNIGHT, c>() & ~(pin_d | pin_hv);
 
     /********************
      * Prune horizontally pinned bishops
      *******************/
-    U64 bishops_mask = board.pieces<BISHOP, c>() & ~pin_hv;
+    Bitboard bishops_mask = board.pieces<BISHOP, c>() & ~pin_hv;
 
     /********************
      * Prune diagonally pinned rooks
      *******************/
-    U64 rooks_mask = board.pieces<ROOK, c>() & ~pin_d;
+    Bitboard rooks_mask = board.pieces<ROOK, c>() & ~pin_d;
 
     /********************
      * Prune double pinned queens
      *******************/
-    U64 queens_mask = board.pieces<QUEEN, c>() & ~(pin_d & pin_hv);
+    Bitboard queens_mask = board.pieces<QUEEN, c>() & ~(pin_d & pin_hv);
 
     /********************
      * Add the moves to the movelist.
@@ -594,7 +598,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
     while (knights_mask) {
         Square from = builtin::poplsb(knights_mask);
-        U64 moves = legalKnightMoves(from, movable_square);
+        Bitboard moves = legalKnightMoves(from, movable_square);
         while (moves) {
             Square to = builtin::poplsb(moves);
             movelist.add(make(from, to));
@@ -603,7 +607,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
     while (bishops_mask) {
         Square from = builtin::poplsb(bishops_mask);
-        U64 moves = legalBishopMoves(from, movable_square, pin_d, occ_all);
+        Bitboard moves = legalBishopMoves(from, movable_square, pin_d, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
             movelist.add(make(from, to));
@@ -612,7 +616,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
     while (rooks_mask) {
         Square from = builtin::poplsb(rooks_mask);
-        U64 moves = legalRookMoves(from, movable_square, pin_hv, occ_all);
+        Bitboard moves = legalRookMoves(from, movable_square, pin_hv, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
             movelist.add(make(from, to));
@@ -621,7 +625,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
     while (queens_mask) {
         Square from = builtin::poplsb(queens_mask);
-        U64 moves = legalQueenMoves(from, movable_square, pin_d, pin_hv, occ_all);
+        Bitboard moves = legalQueenMoves(from, movable_square, pin_d, pin_hv, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
             movelist.add(make(from, to));

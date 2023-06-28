@@ -62,7 +62,7 @@ class Options {
             return std::stoi(options_[name].value);
         else if constexpr (std::is_same_v<T, float>)
             return std::stof(options_[name].value);
-        else if constexpr (std::is_same_v<T, uint64_t>)
+        else if constexpr (std::is_same_v<T, U64>)
             return std::stoull(options_[name].value);
         else if constexpr (std::is_same_v<T, bool>)
             return options_[name].value == "true";

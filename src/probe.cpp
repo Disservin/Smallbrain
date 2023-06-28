@@ -7,8 +7,8 @@
 
 namespace syzygy {
 Score probeWDL(const Board& board) {
-    U64 white = board.us<White>();
-    U64 black = board.us<Black>();
+    Bitboard white = board.us<White>();
+    Bitboard black = board.us<Black>();
 
     if (builtin::popcount(white | black) > (signed)TB_LARGEST) return VALUE_NONE;
 
@@ -35,8 +35,8 @@ Score probeWDL(const Board& board) {
 }
 
 Move probeDTZ(const Board& board) {
-    U64 white = board.us<White>();
-    U64 black = board.us<Black>();
+    Bitboard white = board.us<White>();
+    Bitboard black = board.us<Black>();
     if (builtin::popcount(white | black) > (signed)TB_LARGEST) return NO_MOVE;
 
     Square ep = board.en_passant_square <= 63 ? board.en_passant_square : Square(0);

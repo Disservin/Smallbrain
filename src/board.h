@@ -61,26 +61,28 @@ class Board {
 
     [[nodiscard]] Square kingSQ(Color c) const;
 
-    [[nodiscard]] U64 us(Color c) const;
+    [[nodiscard]] Bitboard us(Color c) const;
 
     template <Color c>
-    [[nodiscard]] U64 us() const {
+    [[nodiscard]] Bitboard us() const {
         return pieces_bb_[PAWN + c * 6] | pieces_bb_[KNIGHT + c * 6] | pieces_bb_[BISHOP + c * 6] |
                pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
     }
 
-    [[nodiscard]] U64 all() const;
+    [[nodiscard]] Bitboard all() const;
 
     // Gets individual piece bitboards
 
-    [[nodiscard]] constexpr U64 pieces(Piece p) const { return pieces_bb_[p]; }
+    [[nodiscard]] constexpr Bitboard pieces(Piece p) const { return pieces_bb_[p]; }
 
     template <PieceType p, Color c>
-    [[nodiscard]] constexpr U64 pieces() const {
+    [[nodiscard]] constexpr Bitboard pieces() const {
         return pieces_bb_[p + c * 6];
     }
 
-    [[nodiscard]] constexpr U64 pieces(PieceType p, Color c) const { return pieces_bb_[p + c * 6]; }
+    [[nodiscard]] constexpr Bitboard pieces(PieceType p, Color c) const {
+        return pieces_bb_[p + c * 6];
+    }
 
     /// @brief returns the color of a piece at a square
     /// @param loc
@@ -92,7 +94,7 @@ class Board {
     /// @param sq
     /// @param occ
     /// @return
-    [[nodiscard]] bool isAttacked(Color c, Square sq, U64 occ) const;
+    [[nodiscard]] bool isAttacked(Color c, Square sq, Bitboard occ) const;
 
     void updateHash(Move move);
 
@@ -183,7 +185,7 @@ class Board {
 
     std::vector<State> state_history_;
 
-    std::array<U64, 12> pieces_bb_ = {};
+    std::array<Bitboard, 12> pieces_bb_ = {};
     std::array<Piece, MAX_SQ> board_;
 };
 
@@ -273,7 +275,7 @@ inline void Board::updateHash(Move move) {
         if (typeOf(move) == ENPASSANT) {
             hash_key ^= updateKeyPiece(makePiece(PAWN, ~side_to_move), Square(to_sq ^ 8));
         } else if (std::abs(from_sq - to_sq) == 16) {
-            U64 epMask = attacks::Pawn(Square(to_sq ^ 8), side_to_move);
+            Bitboard epMask = attacks::Pawn(Square(to_sq ^ 8), side_to_move);
             if (epMask & pieces(PAWN, ~side_to_move)) {
                 en_passant_square = Square(to_sq ^ 8);
                 hash_key ^= updateKeyEnPassant(en_passant_square);

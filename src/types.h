@@ -13,9 +13,18 @@ static constexpr int MAX_MOVES = 128;
 static constexpr int MAX_SQ = 64;
 static constexpr int N_PIECES = 12;
 
-using Score = int16_t;
-using U64 = uint64_t;
+/********************
+ * Type Definitions
+ *******************/
+
 using TimePoint = std::chrono::high_resolution_clock;
+
+// desinction between an unsigned 64 bit integer and a bitboard
+
+using U64 = uint64_t;
+using Bitboard = uint64_t;
+
+using Score = int16_t;
 
 /********************
  * Enum Definitions
@@ -133,7 +142,7 @@ INCR_OP_ON(Rank)
 
 #undef INCR_OP_ON
 
-#define BASE_OP_ON(N, T)                                                  \
+#define BASE_OP_ON(N, T)                                           \
     constexpr N operator+(N s, T d) { return N(int(s) + int(d)); } \
     constexpr N operator-(N s, T d) { return N(int(s) - int(d)); } \
     constexpr N &operator+=(N &s, T d) { return s = s + d; }       \
@@ -166,18 +175,18 @@ static constexpr PieceType PieceToPieceType[13] = {
     PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONETYPE};
 
 // file masks
-static constexpr U64 MASK_FILE[8] = {
+static constexpr Bitboard MASK_FILE[8] = {
     0x101010101010101,  0x202020202020202,  0x404040404040404,  0x808080808080808,
     0x1010101010101010, 0x2020202020202020, 0x4040404040404040, 0x8080808080808080,
 };
 
 // rank masks
-static constexpr U64 MASK_RANK[8] = {
+static constexpr Bitboard MASK_RANK[8] = {
     0xff,         0xff00,         0xff0000,         0xff000000,
     0xff00000000, 0xff0000000000, 0xff000000000000, 0xff00000000000000};
 
 // diagonal masks
-static constexpr U64 MASK_DIAGONAL[15] = {
+static constexpr Bitboard MASK_DIAGONAL[15] = {
     0x80,
     0x8040,
     0x804020,
@@ -196,7 +205,7 @@ static constexpr U64 MASK_DIAGONAL[15] = {
 };
 
 // anti-diagonal masks
-static constexpr U64 MASK_ANTI_DIAGONAL[15] = {0x1,
+static constexpr Bitboard MASK_ANTI_DIAGONAL[15] = {0x1,
                                                0x102,
                                                0x10204,
                                                0x1020408,
@@ -212,13 +221,13 @@ static constexpr U64 MASK_ANTI_DIAGONAL[15] = {0x1,
                                                0x4080000000000000,
                                                0x8000000000000000};
 
-static constexpr U64 WK_CASTLE_MASK = (1ULL << SQ_F1) | (1ULL << SQ_G1);
-static constexpr U64 WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL << SQ_B1);
+static constexpr Bitboard WK_CASTLE_MASK = (1ULL << SQ_F1) | (1ULL << SQ_G1);
+static constexpr Bitboard WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL << SQ_B1);
 
-static constexpr U64 BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
-static constexpr U64 BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);
+static constexpr Bitboard BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
+static constexpr Bitboard BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);
 
-static constexpr U64 DEFAULT_CHECKMASK = 18446744073709551615ULL;
+static constexpr Bitboard DEFAULT_CHECKMASK = 18446744073709551615ULL;
 
 static constexpr Piece flippedPiece[] = {
     BlackPawn, BlackKnight, BlackBishop, BlackRook, BlackQueen, BlackKing,

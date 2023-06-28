@@ -52,7 +52,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int rand_lim
     limit.nodes = nodes;
     limit.time = t;
 
-    uint64_t games = 0;
+    U64 games = 0;
 
     auto t0 = TimePoint::now();
     auto t1 = TimePoint::now();
@@ -208,8 +208,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         search->board.makeMove<true>(result.first);
     }
 
-    U64 white = search->board.us<White>();
-    U64 black = search->board.us<Black>();
+    Bitboard white = search->board.us<White>();
+    Bitboard black = search->board.us<Black>();
 
     // Set correct winningSide for if (use_tb && search->board.half_move_clock >= 40 &&
     // builtin::popcount(search->board.all()) <= 6)

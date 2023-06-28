@@ -50,8 +50,8 @@ class Search {
     Limits limit = {};
 
     // nodes searched
-    uint64_t nodes = 0;
-    uint64_t tbhits = 0;
+    U64 nodes = 0;
+    U64 tbhits = 0;
 
     // thread id, Mainthread = 0
     int id = 0;

@@ -6,12 +6,12 @@ namespace builtin {
 // Compiler specific functions, taken from Stockfish https://github.com/official-stockfish/Stockfish
 #if defined(__GNUC__)  // GCC, Clang, ICC
 
-Square lsb(U64 b) {
+Square lsb(Bitboard b) {
     assert(b);
     return Square(__builtin_ctzll(b));
 }
 
-Square msb(U64 b) {
+Square msb(Bitboard b) {
     assert(b);
     return Square(63 ^ __builtin_clzll(b));
 }
@@ -20,13 +20,13 @@ Square msb(U64 b) {
 
 #ifdef _WIN64  // MSVC, WIN64
 #include <intrin.h>
-Square lsb(U64 b) {
+Square lsb(Bitboard b) {
     unsigned long idx;
     _BitScanForward64(&idx, b);
     return (Square)idx;
 }
 
-Square msb(U64 b) {
+Square msb(Bitboard b) {
     unsigned long idx;
     _BitScanReverse64(&idx, b);
     return (Square)idx;
@@ -34,7 +34,7 @@ Square msb(U64 b) {
 
 #else  // MSVC, WIN32
 #include <intrin.h>
-Square lsb(U64 b) {
+Square lsb(Bitboard b) {
     unsigned long idx;
 
     if (b & 0xffffffff) {
@@ -46,7 +46,7 @@ Square lsb(U64 b) {
     }
 }
 
-Square msb(U64 b) {
+Square msb(Bitboard b) {
     unsigned long idx;
 
     if (b >> 32) {
@@ -66,7 +66,7 @@ Square msb(U64 b) {
 
 #endif
 
-int popcount(U64 mask) {
+int popcount(Bitboard mask) {
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 
     return (uint8_t)_mm_popcnt_u64(mask);
@@ -78,7 +78,7 @@ int popcount(U64 mask) {
 #endif
 }
 
-Square poplsb(U64 &mask) {
+Square poplsb(Bitboard &mask) {
     int8_t s = lsb(mask);
     mask &= mask - 1;  // compiler optimizes this to _blsr_u64
     return Square(s);
@@ -161,7 +161,7 @@ Piece makePiece(PieceType type, Color c) {
     return Piece(type + 6 * c);
 }
 
-void printBitboard(U64 bb) {
+void printBitboard(Bitboard bb) {
     std::bitset<64> b(bb);
     std::string str_bitset = b.to_string();
     for (int i = 0; i < MAX_SQ; i += 8) {

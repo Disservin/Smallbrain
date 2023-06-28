@@ -8,25 +8,31 @@ This was written very poorly but it does the job.
 I actually have no idea how the random_device behaves when multiple threads access
 it...
 */
-U64 randomFenBoard::Pawns(Color color) { return bitboards[color == Black ? BlackPawn : WhitePawn]; }
+Bitboard randomFenBoard::Pawns(Color color) {
+    return bitboards[color == Black ? BlackPawn : WhitePawn];
+}
 
-U64 randomFenBoard::Knights(Color color) {
+Bitboard randomFenBoard::Knights(Color color) {
     return bitboards[color == Black ? BlackKnight : WhiteKnight];
 }
 
-U64 randomFenBoard::Bishops(Color color) {
+Bitboard randomFenBoard::Bishops(Color color) {
     return bitboards[color == Black ? BlackBishop : WhiteBishop];
 }
 
-U64 randomFenBoard::Rooks(Color color) { return bitboards[color == Black ? BlackRook : WhiteRook]; }
+Bitboard randomFenBoard::Rooks(Color color) {
+    return bitboards[color == Black ? BlackRook : WhiteRook];
+}
 
-U64 randomFenBoard::Queens(Color color) {
+Bitboard randomFenBoard::Queens(Color color) {
     return bitboards[color == Black ? BlackQueen : WhiteQueen];
 }
 
-U64 randomFenBoard::Kings(Color color) { return bitboards[color == Black ? BlackKing : WhiteKing]; }
+Bitboard randomFenBoard::Kings(Color color) {
+    return bitboards[color == Black ? BlackKing : WhiteKing];
+}
 
-U64 randomFenBoard::all() {
+Bitboard randomFenBoard::all() {
     return bitboards[WhitePawn] | bitboards[WhiteKnight] | bitboards[WhiteBishop] |
            bitboards[WhiteRook] | bitboards[WhiteQueen] | bitboards[WhiteKing] |
            bitboards[BlackPawn] | bitboards[BlackKnight] | bitboards[BlackBishop] |

@@ -14,6 +14,6 @@ class PerftTesting {
 
     Board board;
     int depth;
-    uint64_t nodes;
+    U64 nodes;
     Movelist movelists[MAX_PLY];
 };

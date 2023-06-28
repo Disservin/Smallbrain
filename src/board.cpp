@@ -295,16 +295,16 @@ bool Board::nonPawnMat(Color c) const {
 
 Square Board::kingSQ(Color c) const { return builtin::lsb(pieces(KING, c)); }
 
-U64 Board::us(Color c) const {
+Bitboard Board::us(Color c) const {
     return pieces_bb_[PAWN + c * 6] | pieces_bb_[KNIGHT + c * 6] | pieces_bb_[BISHOP + c * 6] |
            pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
 }
 
-U64 Board::all() const { return us<White>() | us<Black>(); }
+Bitboard Board::all() const { return us<White>() | us<Black>(); }
 
 Color Board::colorOf(Square loc) const { return Color((at(loc) / 6)); }
 
-bool Board::isAttacked(Color c, Square sq, U64 occ) const {
+bool Board::isAttacked(Color c, Square sq, Bitboard occ) const {
     if (pieces(PAWN, c) & attacks::Pawn(sq, ~c)) return true;
     if (pieces(KNIGHT, c) & attacks::Knight(sq)) return true;
     if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & attacks::Bishop(sq, occ)) return true;

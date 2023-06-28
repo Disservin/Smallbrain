@@ -6,7 +6,7 @@
 // clang-format off
 
 // pre calculated lookup table for knight attacks
-static constexpr U64 KNIGHT_ATTACKS_TABLE[64] = {
+static constexpr Bitboard KNIGHT_ATTACKS_TABLE[64] = {
     0x0000000000020400, 0x0000000000050800, 0x00000000000A1100, 0x0000000000142200, 0x0000000000284400,
     0x0000000000508800, 0x0000000000A01000, 0x0000000000402000, 0x0000000002040004, 0x0000000005080008,
     0x000000000A110011, 0x0000000014220022, 0x0000000028440044, 0x0000000050880088, 0x00000000A0100010,
@@ -22,7 +22,7 @@ static constexpr U64 KNIGHT_ATTACKS_TABLE[64] = {
     0x0044280000000000, 0x0088500000000000, 0x0010A00000000000, 0x0020400000000000};
 
 // pre calculated lookup table for king attacks
-static constexpr U64 KING_ATTACKS_TABLE[64] = {
+static constexpr Bitboard KING_ATTACKS_TABLE[64] = {
     0x0000000000000302, 0x0000000000000705, 0x0000000000000E0A, 0x0000000000001C14, 0x0000000000003828,
     0x0000000000007050, 0x000000000000E0A0, 0x000000000000C040, 0x0000000000030203, 0x0000000000070507,
     0x00000000000E0A0E, 0x00000000001C141C, 0x0000000000382838, 0x0000000000705070, 0x0000000000E0A0E0,
@@ -38,7 +38,7 @@ static constexpr U64 KING_ATTACKS_TABLE[64] = {
     0x2838000000000000, 0x5070000000000000, 0xA0E0000000000000, 0x40C0000000000000};
 
 // pre calculated lookup table for pawn attacks
-static constexpr U64 PAWN_ATTACKS_TABLE[2][64] = {
+static constexpr Bitboard PAWN_ATTACKS_TABLE[2][64] = {
     // white pawn attacks
     { 0x200, 0x500, 0xa00, 0x1400,
       0x2800, 0x5000, 0xa000, 0x4000,
@@ -81,32 +81,32 @@ using namespace Chess_Lookup::Fancy;
 
 namespace attacks {
 
-constexpr U64 Pawn(uint8_t sq, Color c)
+constexpr Bitboard Pawn(uint8_t sq, Color c)
 {
     return PAWN_ATTACKS_TABLE[c][sq];
 }
 
-constexpr U64 Knight(uint8_t sq)
+constexpr Bitboard Knight(uint8_t sq)
 {
     return KNIGHT_ATTACKS_TABLE[sq];
 }
 
-constexpr U64 Bishop(uint8_t sq, U64 occupied)
+constexpr Bitboard Bishop(uint8_t sq, Bitboard occupied)
 {
     return GetBishopAttacks(sq, occupied);
 }
 
-constexpr U64 Rook(uint8_t sq, U64 occupied)
+constexpr Bitboard Rook(uint8_t sq, Bitboard occupied)
 {
     return GetRookAttacks(sq, occupied);
 }
 
-constexpr U64 Queen(uint8_t sq, U64 occupied)
+constexpr Bitboard Queen(uint8_t sq, Bitboard occupied)
 {
     return GetQueenAttacks(sq, occupied);
 }
 
-constexpr U64 King(uint8_t sq)
+constexpr Bitboard King(uint8_t sq)
 {
     return KING_ATTACKS_TABLE[sq];
 }

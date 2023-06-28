@@ -4,18 +4,19 @@
 
 namespace see {
 
-inline U64 attackersForSide(const Board &board, Color attacker_color, Square sq, U64 occupied_bb) {
-    U64 attackingBishops = board.pieces(BISHOP, attacker_color);
-    U64 attackingRooks = board.pieces(ROOK, attacker_color);
-    U64 attackingQueens = board.pieces(QUEEN, attacker_color);
-    U64 attackingKnights = board.pieces(KNIGHT, attacker_color);
-    U64 attackingKing = board.pieces(KING, attacker_color);
-    U64 attackingPawns = board.pieces(PAWN, attacker_color);
+inline Bitboard attackersForSide(const Board &board, Color attacker_color, Square sq,
+                                 Bitboard occupied_bb) {
+    Bitboard attackingBishops = board.pieces(BISHOP, attacker_color);
+    Bitboard attackingRooks = board.pieces(ROOK, attacker_color);
+    Bitboard attackingQueens = board.pieces(QUEEN, attacker_color);
+    Bitboard attackingKnights = board.pieces(KNIGHT, attacker_color);
+    Bitboard attackingKing = board.pieces(KING, attacker_color);
+    Bitboard attackingPawns = board.pieces(PAWN, attacker_color);
 
-    U64 interCardinalRays = attacks::Bishop(sq, occupied_bb);
-    U64 cardinalRaysRays = attacks::Rook(sq, occupied_bb);
+    Bitboard interCardinalRays = attacks::Bishop(sq, occupied_bb);
+    Bitboard cardinalRaysRays = attacks::Rook(sq, occupied_bb);
 
-    U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
+    Bitboard attackers = interCardinalRays & (attackingBishops | attackingQueens);
     attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
     attackers |= attacks::Knight(sq) & attackingKnights;
     attackers |= attacks::King(sq) & attackingKing;
@@ -23,7 +24,7 @@ inline U64 attackersForSide(const Board &board, Color attacker_color, Square sq,
     return attackers;
 }
 
-inline U64 allAttackers(const Board &board, Square sq, U64 occupied_bb) {
+inline Bitboard allAttackers(const Board &board, Square sq, Bitboard occupied_bb) {
     return attackersForSide(board, White, sq, occupied_bb) |
            attackersForSide(board, Black, sq, occupied_bb);
 }
@@ -41,19 +42,19 @@ inline bool see(const Board &board, Move move, int threshold) {
     if (swap < 0) return false;
     swap -= pieceValuesDefault[attacker];
     if (swap >= 0) return true;
-    U64 occ = (board.all() ^ (1ULL << from_sq)) | (1ULL << to_sq);
-    U64 attackers = allAttackers(board, to_sq, occ) & occ;
+    Bitboard occ = (board.all() ^ (1ULL << from_sq)) | (1ULL << to_sq);
+    Bitboard attackers = allAttackers(board, to_sq, occ) & occ;
 
-    U64 queens = board.pieces(WhiteQueen) | board.pieces(BlackQueen);
+    Bitboard queens = board.pieces(WhiteQueen) | board.pieces(BlackQueen);
 
-    U64 bishops = board.pieces(WhiteBishop) | board.pieces(BlackBishop) | queens;
-    U64 rooks = board.pieces(WhiteRook) | board.pieces(BlackRook) | queens;
+    Bitboard bishops = board.pieces(WhiteBishop) | board.pieces(BlackBishop) | queens;
+    Bitboard rooks = board.pieces(WhiteRook) | board.pieces(BlackRook) | queens;
 
     Color sT = ~board.colorOf(from_sq);
 
     while (true) {
         attackers &= occ;
-        U64 myAttackers = attackers & board.us(sT);
+        Bitboard myAttackers = attackers & board.us(sT);
         if (!myAttackers) break;
 
         int pt;

@@ -25,22 +25,22 @@ namespace builtin {
 /// @brief least significant bit instruction
 /// @param mask
 /// @return the least significant bit as the Square
-Square lsb(U64 mask);
+Square lsb(Bitboard mask);
 
 /// @brief most significant bit instruction
 /// @param mask
 /// @return the most significant bit as the Square
-Square msb(U64 mask);
+Square msb(Bitboard mask);
 
 /// @brief Counts the set bits
 /// @param mask
 /// @return the count
-int popcount(U64 mask);
+int popcount(Bitboard mask);
 
 /// @brief remove the lsb and return it
 /// @param mask
 /// @return the lsb
-Square poplsb(U64 &mask);
+Square poplsb(Bitboard &mask);
 
 #if defined(__INTEL_COMPILER) || defined(_MSC_VER)
 template <int rw = 0>
@@ -114,6 +114,6 @@ Piece makePiece(PieceType type, Color c);
 
 /// @brief prints any bitboard
 /// @param bb
-void printBitboard(U64 bb);
+void printBitboard(Bitboard bb);
 
 bool sameColor(int sq1, int sq2);

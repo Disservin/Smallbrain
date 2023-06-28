@@ -54,7 +54,7 @@ template <typename T>
         return std::stoi(haystack[index + 1]);
     else if constexpr (std::is_same_v<T, float>)
         return std::stof(haystack[index + 1]);
-    else if constexpr (std::is_same_v<T, uint64_t>)
+    else if constexpr (std::is_same_v<T, U64>)
         return std::stoull(haystack[index + 1]);
     else if constexpr (std::is_same_v<T, int64_t>)
         return std::stoll(haystack[index + 1]);

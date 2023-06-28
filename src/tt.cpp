@@ -28,12 +28,12 @@ uint32_t TranspositionTable::index(U64 key) const {
     return ((uint32_t)key * entries_.size()) >> 32;
 }
 
-void TranspositionTable::allocate(uint64_t size) { entries_.resize(size, TEntry()); }
+void TranspositionTable::allocate(U64 size) { entries_.resize(size, TEntry()); }
 
-void TranspositionTable::allocateMB(uint64_t size_mb) {
-    uint64_t sizeB = size_mb * 1e6;
-    sizeB = std::clamp(sizeB, uint64_t(1), uint64_t(MAXHASH * 1e6));
-    uint64_t elements = sizeB / sizeof(TEntry);
+void TranspositionTable::allocateMB(U64 size_mb) {
+    U64 sizeB = size_mb * 1e6;
+    sizeB = std::clamp(sizeB, U64(1), U64(MAXHASH * 1e6));
+    U64 elements = sizeB / sizeof(TEntry);
     allocate(elements);
     std::cout << "info string hash set to " << sizeB / 1e6 << " MB" << std::endl;
 }

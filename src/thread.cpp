@@ -4,8 +4,8 @@
 
 void Thread::start_thinking() { search->startThinking(); }
 
-uint64_t ThreadPool::getNodes() {
-    uint64_t total = 0;
+U64 ThreadPool::getNodes() {
+    U64 total = 0;
 
     for (auto &th : pool) {
         total += th.search->nodes;
@@ -14,8 +14,8 @@ uint64_t ThreadPool::getNodes() {
     return total;
 }
 
-uint64_t ThreadPool::getTbHits() {
-    uint64_t total = 0;
+U64 ThreadPool::getTbHits() {
+    U64 total = 0;
 
     for (auto &th : pool) {
         total += th.search->tbhits;

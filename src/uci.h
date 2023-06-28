@@ -36,7 +36,7 @@ class Uci {
     Movelist searchmoves_;
 
     std::size_t worker_threads_ = 1;
-    uint64_t hash_size_ = 16;
+    U64 hash_size_ = 16;
 
     bool use_tb_ = false;
 };
