@@ -78,7 +78,7 @@ bool getSquareColor(Square square);
 /// @brief get the piecetype of a piece
 /// @param piece
 /// @return the piecetype
-constexpr PieceType typeOfPiece(const Piece piece) { return PieceToPieceType[piece]; }
+constexpr PieceType typeOfPiece(Piece piece) { return PieceToPieceType[piece]; }
 
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];

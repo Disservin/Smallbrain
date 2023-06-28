@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <type_traits>
 
 #include "types/accumulators.h"
 #include "types/castling_rights.h"
@@ -36,7 +37,14 @@ class Board {
     /// @brief Finds what piece is on the square using the board (more performant)
     /// @param sq
     /// @return found piece otherwise None
-    [[nodiscard]] Piece at(Square sq) const;
+    template <typename T = Piece>
+    [[nodiscard]] T at(Square sq) const {
+        if constexpr (std::is_same_v<T, PieceType>) {
+            return typeOfPiece(board_[sq]);
+        } else {
+            return board_[sq];
+        }
+    }
 
     /// @brief applys a new Fen to the board and also reload the entire nnue
     /// @param fen
@@ -227,7 +235,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
 }
 
 inline void Board::updateHash(Move move) {
-    PieceType pt = typeOfPiece(at(from(move)));
+    PieceType pt = at<PieceType>(from(move));
     Piece p = makePiece(pt, side_to_move);
     Square from_sq = from(move);
     Square to_sq = to(move);
@@ -252,7 +260,7 @@ inline void Board::updateHash(Move move) {
             const Square kingToSq =
                 file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
-            assert(typeOfPiece(at(to_sq)) == ROOK);
+            assert(at<PieceType>(to_sq) == ROOK);
 
             hash_key ^= updateKeyPiece(rook, to_sq);
             hash_key ^= updateKeyPiece(rook, rookSQ);
@@ -316,7 +324,7 @@ inline void Board::updateHash(Move move) {
 /// @param move
 template <bool updateNNUE>
 void Board::makeMove(Move move) {
-    PieceType pt = typeOfPiece(at(from(move)));
+    PieceType pt = at<PieceType>(from(move));
     Piece p = at(from(move));
     Square from_sq = from(move);
     Square to_sq = to(move);
@@ -436,7 +444,7 @@ void Board::unmakeMove(Move move) {
     bool promotion = typeOf(move) == PROMOTION;
 
     side_to_move = ~side_to_move;
-    PieceType pt = typeOfPiece(at(to_sq));
+    PieceType pt = at<PieceType>(to_sq);
     Piece p = makePiece(pt, side_to_move);
 
     if (typeOf(move) == CASTLING) {

@@ -36,8 +36,8 @@ inline Bitboard allAttackers(const Board &board, Square sq, Bitboard occupied_bb
 inline bool see(const Board &board, Move move, int threshold) {
     Square from_sq = from(move);
     Square to_sq = to(move);
-    PieceType attacker = typeOfPiece(board.at(from_sq));
-    PieceType victim = typeOfPiece(board.at(to_sq));
+    PieceType attacker = board.at<PieceType>(from_sq);
+    PieceType victim = board.at<PieceType>(to_sq);
     int swap = pieceValuesDefault[victim] - threshold;
     if (swap < 0) return false;
     swap -= pieceValuesDefault[attacker];

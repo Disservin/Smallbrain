@@ -152,7 +152,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      *******************/
     Move move = NO_MOVE;
     while ((move = mp.nextMove()) != NO_MOVE) {
-        PieceType captured = typeOfPiece(board.at(to(move)));
+        PieceType captured = board.at<PieceType>(to(move));
 
         if (bestValue > VALUE_TB_LOSS_IN_MAX_PLY) {
             // delta pruning, if the move + a large margin is still less then alpha we can safely

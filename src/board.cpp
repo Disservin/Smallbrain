@@ -109,8 +109,6 @@ void Board::refresh() {
     }
 }
 
-Piece Board::at(Square sq) const { return board_[sq]; }
-
 void Board::setFen(const std::string &fen, bool update_acc) {
     for (Piece p = WhitePawn; p < None; p++) {
         pieces_bb_[p] = 0ULL;

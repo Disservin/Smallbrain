@@ -128,8 +128,8 @@ void Uci::uciNewGame() {
 void Uci::position(const std::string& line) {
     const auto fen_range = str_util::findRange(line, "fen", "moves");
 
-    const auto fen =
-        str_util::contains(line, "fen") ? line.substr(line.find("fen") + 4, fen_range) : DEFAULT_POS;
+    const auto fen = str_util::contains(line, "fen") ? line.substr(line.find("fen") + 4, fen_range)
+                                                     : DEFAULT_POS;
 
     const auto moves = str_util::contains(line, "moves") ? line.substr(line.find("moves") + 6) : "";
     const auto moves_vec = str_util::splitString(moves, ' ');
@@ -200,14 +200,14 @@ Square extractSquare(std::string_view squareStr) {
 Move uciToMove(const Board& board, const std::string& input) {
     Square source = extractSquare(input.substr(0, 2));
     Square target = extractSquare(input.substr(2, 2));
-    PieceType piece = typeOfPiece(board.at(source));
+    PieceType piece = board.at<PieceType>(source);
 
     // convert to king captures rook
     if (!board.chess960 && piece == KING && squareDistance(target, source) == 2) {
         target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
     }
 
-    if (piece == KING && typeOfPiece(board.at(target)) == ROOK &&
+    if (piece == KING && board.at<PieceType>(target) == ROOK &&
         board.at(target) / 6 == board.at(source) / 6) {
         return make<Move::CASTLING>(source, target);
     }
