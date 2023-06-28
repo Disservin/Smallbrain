@@ -7,7 +7,7 @@ EVALFILE   = $(_ROOT)/src/$(NETWORK_NAME)
 COMP       =
 
 CXX       := g++
-CXXFLAGS  := -std=c++20 -O3 -Wall -Wcast-qual -fno-exceptions  -pedantic -Wextra -DNDEBUG -funroll-loops -flto
+CXXFLAGS  := -std=c++17 -O3 -Wall -Wcast-qual -fno-exceptions  -pedantic -Wextra -DNDEBUG -funroll-loops -flto
 
 TARGET    := smallbrain
 NATIVE    := -march=native
