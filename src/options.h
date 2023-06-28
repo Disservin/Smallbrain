@@ -36,7 +36,7 @@ class Options {
     void add(Option option) { options_[option.name] = option; }
 
     void set(const std::string& line) {
-        std::vector<std::string> tokens = StrUtil::splitString(line, ' ');
+        std::vector<std::string> tokens = str_util::splitString(line, ' ');
 
         if (tokens.size() < 5) {
             std::cout << ("Invalid option command");

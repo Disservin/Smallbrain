@@ -2,23 +2,6 @@
 
 #include "helper.h"
 
-std::vector<std::string> splitInput(const std::string &fen) {
-    std::stringstream fen_stream(fen);
-    std::string segment;
-    std::vector<std::string> seglist;
-
-    while (std::getline(fen_stream, segment, ' ')) {
-        seglist.emplace_back(segment);
-    }
-
-    return seglist;
-}
-
-uint8_t square_distance(Square a, Square b) {
-    return std::max(std::abs(square_file(a) - square_file(b)),
-                    std::abs(square_rank(a) - square_rank(b)));
-}
-
 namespace builtin {
 // Compiler specific functions, taken from Stockfish https://github.com/official-stockfish/Stockfish
 #if defined(__GNUC__)  // GCC, Clang, ICC
@@ -103,12 +86,17 @@ Square poplsb(U64 &mask) {
 
 }  // namespace builtin
 
-uint8_t manhatten_distance(Square sq1, Square sq2) {
-    return std::abs(square_file(sq1) - square_file(sq2)) +
+uint8_t squareDistance(Square a, Square b) {
+    return std::max(std::abs(squareFile(a) - squareFile(b)),
+                    std::abs(square_rank(a) - square_rank(b)));
+}
+
+uint8_t manhattenDistance(Square sq1, Square sq2) {
+    return std::abs(squareFile(sq1) - squareFile(sq2)) +
            std::abs(square_rank(sq1) - square_rank(sq2));
 }
 
-bool get_square_color(Square square) {
+bool getSquareColor(Square square) {
     if ((square % 8) % 2 == (square / 8) % 2) {
         return false;
     } else {

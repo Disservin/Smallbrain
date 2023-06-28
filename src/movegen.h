@@ -15,10 +15,10 @@ static auto init_squares_between = []() constexpr {
             sqs = (1ULL << sq1) | (1ULL << sq2);
             if (sq1 == sq2)
                 squares_between_bb[sq1][sq2] = 0ull;
-            else if (square_file(sq1) == square_file(sq2) || square_rank(sq1) == square_rank(sq2))
+            else if (squareFile(sq1) == squareFile(sq2) || square_rank(sq1) == square_rank(sq2))
                 squares_between_bb[sq1][sq2] = attacks::Rook(sq1, sqs) & attacks::Rook(sq2, sqs);
-            else if (diagonal_of(sq1) == diagonal_of(sq2) ||
-                     anti_diagonal_of(sq1) == anti_diagonal_of(sq2))
+            else if (diagonalOf(sq1) == diagonalOf(sq2) ||
+                     antiDiagonalOf(sq1) == antiDiagonalOf(sq2))
                 squares_between_bb[sq1][sq2] =
                     attacks::Bishop(sq1, sqs) & attacks::Bishop(sq2, sqs);
         }
@@ -648,8 +648,8 @@ void legalmoves(const Board &board, Movelist &movelist) {
 inline bool see(const Board &board, Move move, int threshold) {
     Square from_sq = from(move);
     Square to_sq = to(move);
-    PieceType attacker = type_of_piece(board.at(from_sq));
-    PieceType victim = type_of_piece(board.at(to_sq));
+    PieceType attacker = typeOfPiece(board.at(from_sq));
+    PieceType victim = typeOfPiece(board.at(to_sq));
     int swap = pieceValuesDefault[victim] - threshold;
     if (swap < 0) return false;
     swap -= pieceValuesDefault[attacker];

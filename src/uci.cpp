@@ -47,7 +47,7 @@ void Uci::uciLoop() {
 }
 
 void Uci::processLine(const std::string& line) {
-    std::vector<std::string> tokens = StrUtil::splitString(line, ' ');
+    std::vector<std::string> tokens = str_util::splitString(line, ' ');
 
     if (tokens.empty()) {
         return;
@@ -59,8 +59,8 @@ void Uci::processLine(const std::string& line) {
         isReady();
     } else if (tokens[0] == "ucinewgame") {
         uciNewGame();
-    } else if (StrUtil::contains(line, "go perft")) {
-        int depth = StrUtil::findElement<int>(tokens, "perft").value_or(1);
+    } else if (str_util::contains(line, "go perft")) {
+        int depth = str_util::findElement<int>(tokens, "perft").value_or(1);
         PerftTesting perft = PerftTesting();
         perft.board = board_;
         perft.perfTest(depth, depth);
@@ -126,13 +126,13 @@ void Uci::uciNewGame() {
 }
 
 void Uci::position(const std::string& line) {
-    const auto fen_range = StrUtil::findRange(line, "fen", "moves");
+    const auto fen_range = str_util::findRange(line, "fen", "moves");
 
     const auto fen =
-        StrUtil::contains(line, "fen") ? line.substr(line.find("fen") + 4, fen_range) : DEFAULT_POS;
+        str_util::contains(line, "fen") ? line.substr(line.find("fen") + 4, fen_range) : DEFAULT_POS;
 
-    const auto moves = StrUtil::contains(line, "moves") ? line.substr(line.find("moves") + 6) : "";
-    const auto moves_vec = StrUtil::splitString(moves, ' ');
+    const auto moves = str_util::contains(line, "moves") ? line.substr(line.find("moves") + 6) : "";
+    const auto moves_vec = str_util::splitString(moves, ' ');
 
     board_ = Board(fen);
 
@@ -148,31 +148,31 @@ void Uci::go(const std::string& line) {
 
     Limits limit;
 
-    const auto tokens = StrUtil::splitString(line, ' ');
+    const auto tokens = str_util::splitString(line, ' ');
 
     if (tokens.size() == 1) limit.infinite = true;
 
-    limit.depth = StrUtil::findElement<int>(tokens, "depth").value_or(MAX_PLY);
-    limit.infinite = StrUtil::findElement<std::string>(tokens, "go").value_or("") == "infinite";
-    limit.nodes = StrUtil::findElement<int64_t>(tokens, "nodes").value_or(0);
+    limit.depth = str_util::findElement<int>(tokens, "depth").value_or(MAX_PLY);
+    limit.infinite = str_util::findElement<std::string>(tokens, "go").value_or("") == "infinite";
+    limit.nodes = str_util::findElement<int64_t>(tokens, "nodes").value_or(0);
     limit.time.maximum = limit.time.optimum =
-        StrUtil::findElement<int64_t>(tokens, "movetime").value_or(0);
+        str_util::findElement<int64_t>(tokens, "movetime").value_or(0);
 
     std::string uci_time = board_.side_to_move == Color::White ? "wtime" : "btime";
     std::string uci_inc = board_.side_to_move == Color::White ? "winc" : "binc";
 
-    if (StrUtil::contains(line, uci_time)) {
-        auto time = StrUtil::findElement<int>(tokens, uci_time).value_or(0);
-        auto inc = StrUtil::findElement<int>(tokens, uci_inc).value_or(0);
-        auto mtg = StrUtil::findElement<int>(tokens, "movestogo").value_or(0);
+    if (str_util::contains(line, uci_time)) {
+        auto time = str_util::findElement<int>(tokens, uci_time).value_or(0);
+        auto inc = str_util::findElement<int>(tokens, uci_inc).value_or(0);
+        auto mtg = str_util::findElement<int>(tokens, "movestogo").value_or(0);
 
         limit.time = optimumTime(time, inc, mtg);
     }
 
-    if (StrUtil::contains(line, "searchmoves")) {
+    if (str_util::contains(line, "searchmoves")) {
         const auto searchmoves =
-            StrUtil::findElement<std::string>(tokens, "searchmoves").value_or("");
-        const auto moves = StrUtil::splitString(searchmoves, ' ');
+            str_util::findElement<std::string>(tokens, "searchmoves").value_or("");
+        const auto moves = str_util::splitString(searchmoves, ' ');
 
         for (const auto& move : moves) {
             searchmoves_.add(uciToMove(board_, move));
@@ -200,14 +200,14 @@ Square extractSquare(std::string_view squareStr) {
 Move uciToMove(const Board& board, const std::string& input) {
     Square source = extractSquare(input.substr(0, 2));
     Square target = extractSquare(input.substr(2, 2));
-    PieceType piece = type_of_piece(board.at(source));
+    PieceType piece = typeOfPiece(board.at(source));
 
     // convert to king captures rook
-    if (!board.chess960 && piece == KING && square_distance(target, source) == 2) {
+    if (!board.chess960 && piece == KING && squareDistance(target, source) == 2) {
         target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
     }
 
-    if (piece == KING && type_of_piece(board.at(target)) == ROOK &&
+    if (piece == KING && typeOfPiece(board.at(target)) == ROOK &&
         board.at(target) / 6 == board.at(source) / 6) {
         return make<Move::CASTLING>(source, target);
     }
