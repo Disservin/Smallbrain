@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace StrUtil {
+namespace str_util {
 [[nodiscard]] inline bool startsWith(std::string_view haystack, std::string_view needle) {
     if (needle.empty()) return false;
     return (haystack.rfind(needle, 0) != std::string::npos);
@@ -94,4 +94,4 @@ static inline void trim(std::string &s) {
     ltrim(s);
 }
 
-}  // namespace StrUtil
+}  // namespace str_util

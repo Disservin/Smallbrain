@@ -1,6 +1,7 @@
 #include "board.h"
 #include "movegen.h"
 #include "zobrist.h"
+#include "str_utils.h"
 
 Board::Board(std::string fen) {
     state_history.reserve(MAX_PLY);
@@ -115,7 +116,7 @@ void Board::setFen(const std::string &fen, bool update_acc) {
         pieces_bb[p] = 0ULL;
     }
 
-    std::vector<std::string> params = splitInput(fen);
+    std::vector<std::string> params = str_util::splitString(fen, ' ');
 
     const std::string position = params[0];
     const std::string move_right = params[1];
@@ -164,8 +165,8 @@ void Board::setFen(const std::string &fen, bool update_acc) {
             const auto color = isupper(i) ? White : Black;
             const auto king_sq = builtin::lsb(pieces(KING, color));
             const auto file = static_cast<File>(tolower(i) - 97);
-            const auto side = int(file) > int(square_file(king_sq)) ? CastleSide::KING_SIDE
-                                                                    : CastleSide::QUEEN_SIDE;
+            const auto side = int(file) > int(squareFile(king_sq)) ? CastleSide::KING_SIDE
+                                                                   : CastleSide::QUEEN_SIDE;
             castling_rights.setCastlingRight(color, side, file);
         }
     }
@@ -444,7 +445,7 @@ U64 Board::updateKeyPiece(Piece piece, Square sq) const {
     return RANDOM_ARRAY[64 * hash_piece[piece] + sq];
 }
 
-U64 Board::updateKeyEnPassant(Square sq) const { return RANDOM_ARRAY[772 + square_file(sq)]; }
+U64 Board::updateKeyEnPassant(Square sq) const { return RANDOM_ARRAY[772 + squareFile(sq)]; }
 
 U64 Board::updateKeyCastling() const { return castlingKey[castling_rights.getHashIndex()]; }
 

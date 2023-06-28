@@ -3,14 +3,15 @@
 #include "tests.h"
 #include "../str_utils.h"
 #include "../uci.h"
+#include "../str_utils.h"
 
 namespace tests {
 inline bool testFenRepetition(const std::string &input) {
     Board board;
 
-    std::vector<std::string> tokens = splitInput(input);
+    std::vector<std::string> tokens = str_util::splitString(input, ' ');
 
-    bool hasMoves = StrUtil::contains(tokens, "moves");
+    bool hasMoves = str_util::contains(tokens, "moves");
 
     if (tokens[1] == "fen")
         board.setFen(input.substr(input.find("fen") + 4), false);

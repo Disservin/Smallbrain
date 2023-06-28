@@ -133,8 +133,8 @@ class MovePicker {
     }
 
     int mvvlva(Move move) const {
-        int attacker = type_of_piece(search_.board.at(from(move))) + 1;
-        int victim = type_of_piece(search_.board.at(to(move))) + 1;
+        int attacker = typeOfPiece(search_.board.at(from(move))) + 1;
+        int victim = typeOfPiece(search_.board.at(to(move))) + 1;
         return mvvlvaArray[victim][attacker];
     }
 

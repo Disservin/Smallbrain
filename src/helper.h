@@ -10,18 +10,16 @@
 
 #include "types.h"
 
-std::vector<std::string> splitInput(const std::string &fen);
-
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-inline constexpr File square_file(Square sq) { return File(sq & 7); }
+inline constexpr File squareFile(Square sq) { return File(sq & 7); }
 
 /// @brief  distance between two squares
 /// @param a
 /// @param b
 /// @return
-uint8_t square_distance(Square a, Square b);
+uint8_t squareDistance(Square a, Square b);
 
 namespace builtin {
 /// @brief least significant bit instruction
@@ -65,22 +63,22 @@ void prefetch(const void *addr) {
 }  // namespace builtin
 
 // returns diagonal of given square
-inline constexpr uint8_t diagonal_of(Square sq) { return 7 + square_rank(sq) - square_file(sq); }
+inline constexpr uint8_t diagonalOf(Square sq) { return 7 + square_rank(sq) - squareFile(sq); }
 
 // returns anti diagonal of given square
-inline constexpr uint8_t anti_diagonal_of(Square sq) { return square_rank(sq) + square_file(sq); }
+inline constexpr uint8_t antiDiagonalOf(Square sq) { return square_rank(sq) + squareFile(sq); }
 
-uint8_t manhatten_distance(Square sq1, Square sq2);
+uint8_t manhattenDistance(Square sq1, Square sq2);
 
 /// @brief get the color of the square
 /// @param square
 /// @return light = true
-bool get_square_color(Square square);
+bool getSquareColor(Square square);
 
 /// @brief get the piecetype of a piece
 /// @param piece
 /// @return the piecetype
-inline constexpr PieceType type_of_piece(const Piece piece) { return PieceToPieceType[piece]; }
+inline constexpr PieceType typeOfPiece(const Piece piece) { return PieceToPieceType[piece]; }
 
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];

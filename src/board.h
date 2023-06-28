@@ -221,7 +221,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
     board[to_sq] = piece;
 
     if constexpr (updateNNUE) {
-        if (type_of_piece(piece) == KING &&
+        if (typeOfPiece(piece) == KING &&
             nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
             refresh();
         } else {
@@ -231,7 +231,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
 }
 
 inline void Board::updateHash(Move move) {
-    PieceType pt = type_of_piece(at(from(move)));
+    PieceType pt = typeOfPiece(at(from(move)));
     Piece p = makePiece(pt, side_to_move);
     Square from_sq = from(move);
     Square to_sq = to(move);
@@ -256,7 +256,7 @@ inline void Board::updateHash(Move move) {
             const Square kingToSq =
                 file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
-            assert(type_of_piece(at(to_sq)) == ROOK);
+            assert(typeOfPiece(at(to_sq)) == ROOK);
 
             hash_key ^= updateKeyPiece(rook, to_sq);
             hash_key ^= updateKeyPiece(rook, rookSQ);
@@ -292,7 +292,7 @@ inline void Board::updateHash(Move move) {
     if (capture != None) {
         half_move_clock = 0;
         hash_key ^= updateKeyPiece(capture, to_sq);
-        if (type_of_piece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move == Black) ||
+        if (typeOfPiece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move == Black) ||
                                                (rank == Rank::RANK_8 && side_to_move == White))) {
             const auto king_sq = builtin::lsb(pieces(KING, ~side_to_move));
 
@@ -320,7 +320,7 @@ inline void Board::updateHash(Move move) {
 /// @param move
 template <bool updateNNUE>
 void Board::makeMove(Move move) {
-    PieceType pt = type_of_piece(at(from(move)));
+    PieceType pt = typeOfPiece(at(from(move)));
     Piece p = at(from(move));
     Square from_sq = from(move);
     Square to_sq = to(move);
@@ -328,7 +328,7 @@ void Board::makeMove(Move move) {
 
     assert(from_sq >= 0 && from_sq < 64);
     assert(to_sq >= 0 && to_sq < 64);
-    assert(type_of_piece(capture) != KING);
+    assert(typeOfPiece(capture) != KING);
     assert(pt != NONETYPE);
     assert(p != None);
     assert((typeOf(move) == PROMOTION &&
@@ -440,7 +440,7 @@ void Board::unmakeMove(Move move) {
     bool promotion = typeOf(move) == PROMOTION;
 
     side_to_move = ~side_to_move;
-    PieceType pt = type_of_piece(at(to_sq));
+    PieceType pt = typeOfPiece(at(to_sq));
     Piece p = makePiece(pt, side_to_move);
 
     if (typeOf(move) == CASTLING) {

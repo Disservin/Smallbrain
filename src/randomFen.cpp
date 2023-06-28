@@ -122,7 +122,7 @@ std::stringstream randomFenBoard::generateRandomFen() {
         }
 
     skip:
-        if (square_file(Square(i)) == 7) {
+        if (squareFile(Square(i)) == 7) {
             if (emptySquares != 0) ss << std::to_string(emptySquares);
 
             emptySquares = 0;
