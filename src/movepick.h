@@ -3,6 +3,7 @@
 #include "board.h"
 #include "search.h"
 #include "types/constants.h"
+#include "see.h"
 
 enum SearchType { QSEARCH, ABSEARCH };
 
@@ -144,8 +145,7 @@ class MovePicker {
         }
 
         if (search_.board.at(to(move)) != None) {
-            return movegen::see(search_.board, move, 0) ? CAPTURE_SCORE + mvvlva(move)
-                                                        : mvvlva(move);
+            return see::see(search_.board, move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
         }
 
         if (search_.killer_moves[0][ss_->ply] == move) {

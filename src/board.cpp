@@ -313,29 +313,6 @@ bool Board::isAttacked(Color c, Square sq, U64 occ) const {
     return false;
 }
 
-U64 Board::allAttackers(Square sq, U64 occupied_bb) const {
-    return attackersForSide(White, sq, occupied_bb) | attackersForSide(Black, sq, occupied_bb);
-}
-
-U64 Board::attackersForSide(Color attacker_color, Square sq, U64 occupied_bb) const {
-    U64 attackingBishops = pieces(BISHOP, attacker_color);
-    U64 attackingRooks = pieces(ROOK, attacker_color);
-    U64 attackingQueens = pieces(QUEEN, attacker_color);
-    U64 attackingKnights = pieces(KNIGHT, attacker_color);
-    U64 attackingKing = pieces(KING, attacker_color);
-    U64 attackingPawns = pieces(PAWN, attacker_color);
-
-    U64 interCardinalRays = attacks::Bishop(sq, occupied_bb);
-    U64 cardinalRaysRays = attacks::Rook(sq, occupied_bb);
-
-    U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
-    attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
-    attackers |= attacks::Knight(sq) & attackingKnights;
-    attackers |= attacks::King(sq) & attackingKing;
-    attackers |= attacks::Pawn(sq, ~attacker_color) & attackingPawns;
-    return attackers;
-}
-
 void Board::makeNullMove() {
     state_history_.emplace_back(en_passant_square, castling_rights, half_move_clock, None);
     side_to_move = ~side_to_move;

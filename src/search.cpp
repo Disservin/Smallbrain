@@ -9,6 +9,7 @@
 #include "thread.h"
 #include "tt.h"
 #include "uci.h"
+#include "see.h"
 
 extern ThreadPool Threads;
 extern TranspositionTable TTable;
@@ -166,7 +167,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
                 continue;
 
             // see based capture pruning
-            if (!in_check && !movegen::see(board, move, 0)) continue;
+            if (!in_check && !see::see(board, move, 0)) continue;
         }
 
         nodes++;
@@ -436,7 +437,7 @@ moves:
             {
                 // SEE pruning
                 if (    depth < 6 
-                    &&  !movegen::see(board,move, -(depth * 92)))
+                    &&  !see::see(board,move, -(depth * 92)))
                     continue;
             }
             else
@@ -451,7 +452,7 @@ moves:
                     continue;
                 // SEE pruning
                 if (    depth < 7 
-                    &&  !movegen::see(board,move, -(depth * 93)))
+                    &&  !see::see(board,move, -(depth * 93)))
                     continue;
             }
             // clang-format on

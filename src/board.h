@@ -94,10 +94,6 @@ class Board {
     /// @return
     [[nodiscard]] bool isAttacked(Color c, Square sq, U64 occ) const;
 
-    // attackers used for SEE
-    [[nodiscard]] U64 allAttackers(Square sq, U64 occupied_bb) const;
-    [[nodiscard]] U64 attackersForSide(Color attacker_color, Square sq, U64 occupied_bb) const;
-
     void updateHash(Move move);
 
     /// @brief plays the move on the internal board
