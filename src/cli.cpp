@@ -13,7 +13,6 @@
 #include "tests/tests.h"
 #include "thread.h"
 
-extern std::atomic_bool UCI_FORCE_STOP;
 extern ThreadPool Threads;
 
 void parseDashArguments(int &i, int argc, char const *argv[],
@@ -171,11 +170,8 @@ class Generate : public Argument {
             }
 
             if (input == "quit") {
-                Threads.stop = UCI_FORCE_STOP = true;
+                Threads.stop = true;
 
-                for (std::thread &th : datagen_.threads) {
-                    if (th.joinable()) th.join();
-                }
                 return 1;
             }
         }

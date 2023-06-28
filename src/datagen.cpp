@@ -57,7 +57,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int rand_lim
     auto t0 = TimePoint::now();
     auto t1 = TimePoint::now();
 
-    while (!UCI_FORCE_STOP) {
+    while (!stop_) {
         board.clearStacks();
         search->reset();
 
