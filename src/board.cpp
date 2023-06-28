@@ -13,7 +13,7 @@ Board::Board(std::string fen) {
     half_move_clock = 0;
     full_move_number = 1;
 
-    std::fill(std::begin(board_), std::end(board_), NONE);
+    board_.fill(NONE);
 
     setFen(fen, true);
 }
@@ -105,6 +105,7 @@ void Board::refresh() {
     for (Square i = SQ_A1; i < NO_SQ; i++) {
         Piece p = board_[i];
         if (p == NONE) continue;
+
         nnue::activate(getAccumulator(), i, p, ksq_white, ksq_black);
     }
 }
@@ -128,7 +129,7 @@ void Board::setFen(const std::string &fen, bool update_acc) {
 
     side_to_move = (move_right == "w") ? WHITE : BLACK;
 
-    std::fill(std::begin(board_), std::end(board_), NONE);
+    board_.fill(NONE);
 
     Square square = Square(56);
     for (int index = 0; index < static_cast<int>(position.size()); index++) {
@@ -271,13 +272,15 @@ Result Board::isDrawn(bool in_check) {
         return Result::DRAWN;
     }
 
+    assert(kingSQ(WHITE) != NO_SQ && kingSQ(BLACK) != NO_SQ);
+
     const auto count = builtin::popcount(all());
 
     if (count == 2) return Result::DRAWN;
 
     if (count == 3) {
-        if (pieces(WHITEBISHOP) || pieces(BLACKBISHOP)) return Result::DRAWN;
-        if (pieces(WHITEKNIGHT) || pieces(BLACKKNIGHT)) return Result::DRAWN;
+        if (pieces(BISHOP)) return Result::DRAWN;
+        if (pieces(KNIGHT)) return Result::DRAWN;
     }
 
     if (count == 4) {
@@ -296,8 +299,8 @@ bool Board::nonPawnMat(Color c) const {
 Square Board::kingSQ(Color c) const { return builtin::lsb(pieces(KING, c)); }
 
 Bitboard Board::us(Color c) const {
-    return pieces_bb_[PAWN + c * 6] | pieces_bb_[KNIGHT + c * 6] | pieces_bb_[BISHOP + c * 6] |
-           pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
+    return pieces(PAWN, c) | pieces(KNIGHT, c) | pieces(BISHOP, c) | pieces(ROOK, c) |
+           pieces(QUEEN, c) | pieces(KING, c);
 }
 
 Bitboard Board::all() const {
@@ -318,13 +321,14 @@ bool Board::isAttacked(Color c, Square sq, Bitboard occ) const {
 
 void Board::makeNullMove() {
     state_history_.emplace_back(en_passant_square, castling_rights, half_move_clock, NONE);
-    side_to_move = ~side_to_move;
 
     // Update the hash key
     hash_key ^= updateKeySideToMove();
     if (en_passant_square != NO_SQ) hash_key ^= updateKeyEnPassant(en_passant_square);
 
     TTable.prefetch(hash_key);
+
+    side_to_move = ~side_to_move;
 
     // Set the en passant square to NO_SQ and increment the full move number
     en_passant_square = NO_SQ;
@@ -336,14 +340,14 @@ void Board::unmakeNullMove() {
     state_history_.pop_back();
 
     en_passant_square = restore.en_passant;
-    castling_rights = restore.castling;
-    half_move_clock = restore.half_move;
 
     hash_key ^= updateKeySideToMove();
     if (en_passant_square != NO_SQ) hash_key ^= updateKeyEnPassant(en_passant_square);
 
     full_move_number--;
     side_to_move = ~side_to_move;
+    castling_rights = restore.castling;
+    half_move_clock = restore.half_move;
 }
 
 void Board::clearStacks() {
@@ -374,25 +378,27 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
 
 U64 Board::zobrist() const {
     U64 hash = 0ULL;
-    U64 wPieces = us<WHITE>();
-    U64 bPieces = us<BLACK>();
+    U64 w_pieces = us<WHITE>();
+    U64 b_pieces = us<BLACK>();
     // Piece hashes
-    while (wPieces) {
-        Square sq = builtin::poplsb(wPieces);
+    while (w_pieces) {
+        Square sq = builtin::poplsb(w_pieces);
         hash ^= updateKeyPiece(at(sq), sq);
     }
-    while (bPieces) {
-        Square sq = builtin::poplsb(bPieces);
+
+    while (b_pieces) {
+        Square sq = builtin::poplsb(b_pieces);
         hash ^= updateKeyPiece(at(sq), sq);
     }
+
     // Ep hash
     U64 ep_hash = 0ULL;
+
     if (en_passant_square != NO_SQ) {
         ep_hash = updateKeyEnPassant(en_passant_square);
     }
-    // Turn hash
+
     U64 turn_hash = side_to_move == WHITE ? RANDOM_ARRAY[780] : 0;
-    // Castle hash
     U64 cast_hash = updateKeyCastling();
 
     return hash ^ cast_hash ^ turn_hash ^ ep_hash;
