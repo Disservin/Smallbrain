@@ -2,7 +2,7 @@ NETWORK_NAME = nn-7e82d78ef76a870-450.nnue
 
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
-EVALFILE   = $(_ROOT)/src/$(NETWORK_NAME)
+EVALFILE   = $(_ROOT)/$(NETWORK_NAME)
 
 COMP       =
 
@@ -17,7 +17,7 @@ NAME      := smallbrain
 SUFFIX    := .exe
 LDFLAGS   := -pthread -lstdc++ -static -Wl,--no-as-needed
 
-TMPDIR = .tmp
+TMPDIR = ../.tmp
 
 # all bmi2 instructions
 INSTRUCTIONS_BMI2 = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
@@ -127,7 +127,7 @@ endif
 # Add network name and Evalfile
 CXXFLAGS += -DNETWORK_NAME=\"$(NETWORK_NAME)\" -DEVALFILE=\"$(EVALFILE)\"
 
-SOURCES := $(wildcard src/*.cpp) src/syzygy/Fathom/src/tbprobe.cpp src/tests/tests.cpp
+SOURCES := $(wildcard *.cpp) syzygy/Fathom/src/tbprobe.cpp tests/tests.cpp
 OBJECTS := $(patsubst %.cpp,$(TMPDIR)/%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,$(TMPDIR)/%.d,$(SOURCES))
 EXE     := $(NAME)$(ARCH_NAME)$(SUFFIX)
@@ -145,7 +145,7 @@ $(TMPDIR)/%.o: %.cpp | $(TMPDIR)
 	$(CXX) $(CXXFLAGS) $(NATIVE) -MMD -MP -c $< -o $@ $(LDFLAGS)
 
 $(TMPDIR):
-	$(MKDIR) "$(TMPDIR)" "$(TMPDIR)/src" "$(TMPDIR)/src/syzygy" "$(TMPDIR)/src/syzygy/Fathom" "$(TMPDIR)/src/syzygy/Fathom/src" "$(TMPDIR)/src/tests"
+	$(MKDIR) "$(TMPDIR)" "$(TMPDIR)/src" "$(TMPDIR)/syzygy" "$(TMPDIR)/syzygy/Fathom" "$(TMPDIR)/syzygy/Fathom/src" "$(TMPDIR)/tests"
 
 -include $(DEPENDS)
 
