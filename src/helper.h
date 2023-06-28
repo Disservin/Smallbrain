@@ -13,7 +13,7 @@
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-inline constexpr File squareFile(Square sq) { return File(sq & 7); }
+constexpr File squareFile(Square sq) { return File(sq & 7); }
 
 /// @brief  distance between two squares
 /// @param a
@@ -63,10 +63,10 @@ void prefetch(const void *addr) {
 }  // namespace builtin
 
 // returns diagonal of given square
-inline constexpr uint8_t diagonalOf(Square sq) { return 7 + square_rank(sq) - squareFile(sq); }
+constexpr uint8_t diagonalOf(Square sq) { return 7 + square_rank(sq) - squareFile(sq); }
 
 // returns anti diagonal of given square
-inline constexpr uint8_t antiDiagonalOf(Square sq) { return square_rank(sq) + squareFile(sq); }
+constexpr uint8_t antiDiagonalOf(Square sq) { return square_rank(sq) + squareFile(sq); }
 
 uint8_t manhattenDistance(Square sq1, Square sq2);
 
@@ -78,7 +78,7 @@ bool getSquareColor(Square square);
 /// @brief get the piecetype of a piece
 /// @param piece
 /// @return the piecetype
-inline constexpr PieceType typeOfPiece(const Piece piece) { return PieceToPieceType[piece]; }
+constexpr PieceType typeOfPiece(const Piece piece) { return PieceToPieceType[piece]; }
 
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];

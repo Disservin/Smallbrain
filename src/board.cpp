@@ -4,7 +4,7 @@
 #include "str_utils.h"
 
 Board::Board(std::string fen) {
-    state_history.reserve(MAX_PLY);
+    state_history_.reserve(MAX_PLY);
     hash_history.reserve(512);
 
     side_to_move = White;
@@ -13,7 +13,7 @@ Board::Board(std::string fen) {
     half_move_clock = 0;
     full_move_number = 1;
 
-    std::fill(std::begin(board), std::end(board), None);
+    std::fill(std::begin(board_), std::end(board_), None);
 
     setFen(fen, true);
 }
@@ -31,11 +31,11 @@ Board::Board(const Board &other) {
 
     hash_key = other.hash_key;
 
-    state_history = other.state_history;
+    state_history_ = other.state_history_;
 
-    std::copy(std::begin(other.board), std::end(other.board), std::begin(board));
+    std::copy(std::begin(other.board_), std::end(other.board_), std::begin(board_));
 
-    pieces_bb = other.pieces_bb;
+    pieces_bb_ = other.pieces_bb_;
 
     if (other.accumulators_) {
         accumulators_ = std::make_unique<Accumulators>(*other.accumulators_);
@@ -57,11 +57,11 @@ Board &Board::operator=(const Board &other) {
 
     hash_key = other.hash_key;
 
-    state_history = other.state_history;
+    state_history_ = other.state_history_;
 
-    std::copy(std::begin(other.board), std::end(other.board), std::begin(board));
+    std::copy(std::begin(other.board_), std::end(other.board_), std::begin(board_));
 
-    pieces_bb = other.pieces_bb;
+    pieces_bb_ = other.pieces_bb_;
 
     if (other.accumulators_) {
         accumulators_ = std::make_unique<Accumulators>(*other.accumulators_);
@@ -103,17 +103,17 @@ void Board::refresh() {
     const Square ksq_black = builtin::lsb(pieces<KING, Black>());
 
     for (Square i = SQ_A1; i < NO_SQ; i++) {
-        Piece p = board[i];
+        Piece p = board_[i];
         if (p == None) continue;
         nnue::activate(getAccumulator(), i, p, ksq_white, ksq_black);
     }
 }
 
-Piece Board::at(Square sq) const { return board[sq]; }
+Piece Board::at(Square sq) const { return board_[sq]; }
 
 void Board::setFen(const std::string &fen, bool update_acc) {
     for (Piece p = WhitePawn; p < None; p++) {
-        pieces_bb[p] = 0ULL;
+        pieces_bb_[p] = 0ULL;
     }
 
     std::vector<std::string> params = str_util::splitString(fen, ' ');
@@ -128,7 +128,7 @@ void Board::setFen(const std::string &fen, bool update_acc) {
 
     side_to_move = (move_right == "w") ? White : Black;
 
-    std::fill(std::begin(board), std::end(board), None);
+    std::fill(std::begin(board_), std::end(board_), None);
 
     Square square = Square(56);
     for (int index = 0; index < static_cast<int>(position.size()); index++) {
@@ -180,7 +180,7 @@ void Board::setFen(const std::string &fen, bool update_acc) {
         en_passant_square = Square((rank - 1) * 8 + file - 1);
     }
 
-    state_history.clear();
+    state_history_.clear();
     hash_history.clear();
     accumulators_->clear();
 
@@ -296,8 +296,8 @@ bool Board::nonPawnMat(Color c) const {
 Square Board::kingSQ(Color c) const { return builtin::lsb(pieces(KING, c)); }
 
 U64 Board::us(Color c) const {
-    return pieces_bb[PAWN + c * 6] | pieces_bb[KNIGHT + c * 6] | pieces_bb[BISHOP + c * 6] |
-           pieces_bb[ROOK + c * 6] | pieces_bb[QUEEN + c * 6] | pieces_bb[KING + c * 6];
+    return pieces_bb_[PAWN + c * 6] | pieces_bb_[KNIGHT + c * 6] | pieces_bb_[BISHOP + c * 6] |
+           pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
 }
 
 U64 Board::all() const { return us<White>() | us<Black>(); }
@@ -337,7 +337,7 @@ U64 Board::attackersForSide(Color attacker_color, Square sq, U64 occupied_bb) co
 }
 
 void Board::makeNullMove() {
-    state_history.emplace_back(en_passant_square, castling_rights, half_move_clock, None);
+    state_history_.emplace_back(en_passant_square, castling_rights, half_move_clock, None);
     side_to_move = ~side_to_move;
 
     // Update the hash key
@@ -352,8 +352,8 @@ void Board::makeNullMove() {
 }
 
 void Board::unmakeNullMove() {
-    const State restore = state_history.back();
-    state_history.pop_back();
+    const State restore = state_history_.back();
+    state_history_.pop_back();
 
     en_passant_square = restore.en_passant;
     castling_rights = restore.castling;
@@ -366,38 +366,17 @@ void Board::unmakeNullMove() {
     side_to_move = ~side_to_move;
 }
 
-U64 Board::attacksByPiece(PieceType pt, Square sq, Color c, U64 occ) {
-    switch (pt) {
-        case PAWN:
-            return attacks::Pawn(sq, c);
-        case KNIGHT:
-            return attacks::Knight(sq);
-        case BISHOP:
-            return attacks::Bishop(sq, occ);
-        case ROOK:
-            return attacks::Rook(sq, occ);
-        case QUEEN:
-            return attacks::Queen(sq, occ);
-        case KING:
-            return attacks::King(sq);
-        case NONETYPE:
-            return 0ULL;
-        default:
-            return 0ULL;
-    }
-}
-
 void Board::clearStacks() {
     accumulators_->clear();
-    state_history.clear();
+    state_history_.clear();
 }
 
 std::ostream &operator<<(std::ostream &os, const Board &b) {
     for (int i = 63; i >= 0; i -= 8) {
-        os << " " << pieceToChar[b.board[i - 7]] << " " << pieceToChar[b.board[i - 6]] << " "
-           << pieceToChar[b.board[i - 5]] << " " << pieceToChar[b.board[i - 4]] << " "
-           << pieceToChar[b.board[i - 3]] << " " << pieceToChar[b.board[i - 2]] << " "
-           << pieceToChar[b.board[i - 1]] << " " << pieceToChar[b.board[i]] << " \n";
+        os << " " << pieceToChar[b.board_[i - 7]] << " " << pieceToChar[b.board_[i - 6]] << " "
+           << pieceToChar[b.board_[i - 5]] << " " << pieceToChar[b.board_[i - 4]] << " "
+           << pieceToChar[b.board_[i - 3]] << " " << pieceToChar[b.board_[i - 2]] << " "
+           << pieceToChar[b.board_[i - 1]] << " " << pieceToChar[b.board_[i]] << " \n";
     }
     os << "\n\n";
     os << "Fen: " << b.getFen() << "\n";

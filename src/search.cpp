@@ -814,7 +814,7 @@ bool Search::limitReached() {
     return false;
 }
 
-std::string Search::getPV() {
+std::string Search::getPV() const {
     std::stringstream ss;
 
     for (int i = 0; i < pv_length_[0]; i++) {
@@ -824,7 +824,7 @@ std::string Search::getPV() {
     return ss.str();
 }
 
-int64_t Search::getTime() {
+int64_t Search::getTime() const {
     auto t1 = TimePoint::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0_).count();
 }

@@ -109,5 +109,6 @@ constexpr U64 King(uint8_t sq)
 {
     return KING_ATTACKS_TABLE[sq];
 }
+
 }
 

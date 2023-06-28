@@ -171,11 +171,12 @@ class MovePicker {
     const Stack *ss_;
 
     Movelist &movelist_;
-    Move available_tt_move_ = NO_MOVE;
 
     int played_ = 0;
 
     Pick pick_ = Pick::TT;
+
+    Move available_tt_move_ = NO_MOVE;
 
     Move tt_move_ = NO_MOVE;
     Move killer_move_1_ = NO_MOVE;

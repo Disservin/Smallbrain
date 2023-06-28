@@ -33,11 +33,11 @@ struct ExtMove {
     Move move = NO_MOVE;
 };
 
-inline constexpr bool operator==(const ExtMove &a, const ExtMove &b) { return a.move == b.move; }
+constexpr bool operator==(const ExtMove &a, const ExtMove &b) { return a.move == b.move; }
 
-inline constexpr bool operator>(const ExtMove &a, const ExtMove &b) { return a.value > b.value; }
+constexpr bool operator>(const ExtMove &a, const ExtMove &b) { return a.value > b.value; }
 
-inline constexpr bool operator<(const ExtMove &a, const ExtMove &b) { return a.value < b.value; }
+constexpr bool operator<(const ExtMove &a, const ExtMove &b) { return a.value < b.value; }
 
 struct Movelist {
     ExtMove list[MAX_MOVES] = {};
@@ -51,9 +51,9 @@ struct Movelist {
         size++;
     }
 
-    inline constexpr ExtMove &operator[](int i) { return list[i]; }
+    constexpr ExtMove &operator[](int i) { return list[i]; }
 
-    inline constexpr int find(Move m) {
+    constexpr int find(Move m) {
         for (int i = 0; i < size; i++) {
             if (list[i].move == m) return i;
         }

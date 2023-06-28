@@ -28,7 +28,7 @@ class Board {
 
     Board &operator=(const Board &other);
 
-    std::string getCastleString() const;
+    [[nodiscard]] std::string getCastleString() const;
 
     /// @brief reload the entire nnue
     void refresh();
@@ -36,7 +36,7 @@ class Board {
     /// @brief Finds what piece is on the square using the board (more performant)
     /// @param sq
     /// @return found piece otherwise None
-    Piece at(Square sq) const;
+    [[nodiscard]] Piece at(Square sq) const;
 
     /// @brief applys a new Fen to the board and also reload the entire nnue
     /// @param fen
@@ -45,57 +45,58 @@ class Board {
 
     /// @brief returns a Fen string of the current board
     /// @return fen string
-    std::string getFen() const;
+    [[nodiscard]] std::string getFen() const;
 
     /// @brief detects if the position is a repetition by default 1, fide would be 3
     /// @param draw
     /// @return true for repetition otherwise false
-    bool isRepetition(int draw = 1) const;
+    [[nodiscard]] bool isRepetition(int draw = 1) const;
 
-    Result isDrawn(bool in_check);
+    [[nodiscard]] Result isDrawn(bool in_check);
 
     /// @brief only pawns + king = true else false
     /// @param c
     /// @return
-    bool nonPawnMat(Color c) const;
+    [[nodiscard]] bool nonPawnMat(Color c) const;
 
-    Square kingSQ(Color c) const;
+    [[nodiscard]] Square kingSQ(Color c) const;
 
-    U64 us(Color c) const;
+    [[nodiscard]] U64 us(Color c) const;
+
     template <Color c>
-    U64 us() const {
-        return pieces_bb[PAWN + c * 6] | pieces_bb[KNIGHT + c * 6] | pieces_bb[BISHOP + c * 6] |
-               pieces_bb[ROOK + c * 6] | pieces_bb[QUEEN + c * 6] | pieces_bb[KING + c * 6];
+    [[nodiscard]] U64 us() const {
+        return pieces_bb_[PAWN + c * 6] | pieces_bb_[KNIGHT + c * 6] | pieces_bb_[BISHOP + c * 6] |
+               pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
     }
 
-    U64 all() const;
+    [[nodiscard]] U64 all() const;
 
     // Gets individual piece bitboards
 
-    constexpr U64 pieces(Piece p) const { return pieces_bb[p]; }
+    [[nodiscard]] constexpr U64 pieces(Piece p) const { return pieces_bb_[p]; }
 
     template <PieceType p, Color c>
-    constexpr U64 pieces() const {
-        return pieces_bb[p + c * 6];
+    [[nodiscard]] constexpr U64 pieces() const {
+        return pieces_bb_[p + c * 6];
     }
 
-    constexpr U64 pieces(PieceType p, Color c) const { return pieces_bb[p + c * 6]; }
+    [[nodiscard]] constexpr U64 pieces(PieceType p, Color c) const { return pieces_bb_[p + c * 6]; }
 
     /// @brief returns the color of a piece at a square
     /// @param loc
     /// @return
-    Color colorOf(Square loc) const;
+    [[nodiscard]] Color colorOf(Square loc) const;
 
     /// @brief
     /// @param c
     /// @param sq
     /// @param occ
     /// @return
-    bool isAttacked(Color c, Square sq, U64 occ) const;
+    [[nodiscard]] bool isAttacked(Color c, Square sq, U64 occ) const;
 
     // attackers used for SEE
-    U64 allAttackers(Square sq, U64 occupied_bb) const;
-    U64 attackersForSide(Color attacker_color, Square sq, U64 occupied_bb) const;
+    [[nodiscard]] U64 allAttackers(Square sq, U64 occupied_bb) const;
+    [[nodiscard]] U64 attackersForSide(Color attacker_color, Square sq, U64 occupied_bb) const;
 
     void updateHash(Move move);
 
@@ -142,15 +143,13 @@ class Board {
     void movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white = SQ_A1,
                    Square ksq_black = SQ_A1);
 
-    U64 attacksByPiece(PieceType pt, Square sq, Color c, U64 occupied);
-
     void clearStacks();
 
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
     /// @brief calculate the current zobrist hash from scratch
     /// @return
-    U64 zobrist() const;
+    [[nodiscard]] U64 zobrist() const;
 
     [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_->back(); }
 
@@ -186,16 +185,16 @@ class Board {
 
     std::unique_ptr<Accumulators> accumulators_ = std::make_unique<Accumulators>();
 
-    std::vector<State> state_history;
+    std::vector<State> state_history_;
 
-    std::array<U64, 12> pieces_bb = {};
-    std::array<Piece, MAX_SQ> board;
+    std::array<U64, 12> pieces_bb_ = {};
+    std::array<Piece, MAX_SQ> board_;
 };
 
 template <bool updateNNUE>
 void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
-    pieces_bb[piece] &= ~(1ULL << sq);
-    board[sq] = None;
+    pieces_bb_[piece] &= ~(1ULL << sq);
+    board_[sq] = None;
 
     if constexpr (updateNNUE) {
         nnue::deactivate(getAccumulator(), sq, piece, ksq_white, ksq_black);
@@ -204,8 +203,8 @@ void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_bla
 
 template <bool updateNNUE>
 void Board::placePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
-    pieces_bb[piece] |= (1ULL << sq);
-    board[sq] = piece;
+    pieces_bb_[piece] |= (1ULL << sq);
+    board_[sq] = piece;
 
     if constexpr (updateNNUE) {
         nnue::activate(getAccumulator(), sq, piece, ksq_white, ksq_black);
@@ -215,14 +214,13 @@ void Board::placePiece(Piece piece, Square sq, Square ksq_white, Square ksq_blac
 template <bool updateNNUE>
 void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white,
                       Square ksq_black) {
-    pieces_bb[piece] &= ~(1ULL << from_sq);
-    pieces_bb[piece] |= (1ULL << to_sq);
-    board[from_sq] = None;
-    board[to_sq] = piece;
+    pieces_bb_[piece] &= ~(1ULL << from_sq);
+    pieces_bb_[piece] |= (1ULL << to_sq);
+    board_[from_sq] = None;
+    board_[to_sq] = piece;
 
     if constexpr (updateNNUE) {
-        if (typeOfPiece(piece) == KING &&
-            nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
+        if (typeOfPiece(piece) == KING && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
             refresh();
         } else {
             nnue::move(getAccumulator(), from_sq, to_sq, piece, ksq_white, ksq_black);
@@ -235,7 +233,7 @@ inline void Board::updateHash(Move move) {
     Piece p = makePiece(pt, side_to_move);
     Square from_sq = from(move);
     Square to_sq = to(move);
-    Piece capture = board[to_sq];
+    Piece capture = board_[to_sq];
     const auto rank = square_rank(to_sq);
 
     hash_history.emplace_back(hash_key);
@@ -293,7 +291,7 @@ inline void Board::updateHash(Move move) {
         half_move_clock = 0;
         hash_key ^= updateKeyPiece(capture, to_sq);
         if (typeOfPiece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move == Black) ||
-                                               (rank == Rank::RANK_8 && side_to_move == White))) {
+                                             (rank == Rank::RANK_8 && side_to_move == White))) {
             const auto king_sq = builtin::lsb(pieces(KING, ~side_to_move));
 
             castling_rights.clearCastlingRight(
@@ -324,7 +322,7 @@ void Board::makeMove(Move move) {
     Piece p = at(from(move));
     Square from_sq = from(move);
     Square to_sq = to(move);
-    Piece capture = board[to_sq];
+    Piece capture = board_[to_sq];
 
     assert(from_sq >= 0 && from_sq < 64);
     assert(to_sq >= 0 && to_sq < 64);
@@ -339,7 +337,7 @@ void Board::makeMove(Move move) {
     // STORE STATE HISTORY
     // *****************************
 
-    state_history.emplace_back(en_passant_square, castling_rights, half_move_clock, capture);
+    state_history_.emplace_back(en_passant_square, castling_rights, half_move_clock, capture);
 
     if constexpr (updateNNUE) accumulators_->push();
 
@@ -418,8 +416,8 @@ void Board::makeMove(Move move) {
 
 template <bool updateNNUE>
 void Board::unmakeMove(Move move) {
-    const State restore = state_history.back();
-    state_history.pop_back();
+    const State restore = state_history_.back();
+    state_history_.pop_back();
 
     if (accumulators_->size()) {
         accumulators_->pop();

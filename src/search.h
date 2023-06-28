@@ -77,18 +77,18 @@ class Search {
     // main search functions
 
     template <Node node>
-    Score qsearch(Score alpha, Score beta, Stack *ss);
+    [[nodiscard]] Score qsearch(Score alpha, Score beta, Stack *ss);
 
     template <Node node>
-    Score absearch(int depth, Score alpha, Score beta, Stack *ss);
+    [[nodiscard]] Score absearch(int depth, Score alpha, Score beta, Stack *ss);
 
-    Score aspirationSearch(int depth, Score prev_eval, Stack *ss);
+    [[nodiscard]] Score aspirationSearch(int depth, Score prev_eval, Stack *ss);
 
     // check limits
-    bool limitReached();
+    [[nodiscard]] bool limitReached();
 
-    std::string getPV();
-    int64_t getTime();
+    [[nodiscard]] std::string getPV() const;
+    [[nodiscard]] int64_t getTime() const;
 
     // pv collection
     Table<uint8_t, MAX_PLY> pv_length_ = {};
@@ -109,7 +109,7 @@ class Search {
 /// @param move
 /// @return
 template <History type>
-int getHistory(Move move, Move secondmove, const Search &search) {
+[[nodiscard]] int getHistory(Move move, Move secondmove, const Search &search) {
     if constexpr (type == History::HH)
         return search.history[search.board.side_to_move][from(move)][to(move)];
     else if constexpr (type == History::COUNTER)

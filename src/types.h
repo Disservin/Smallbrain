@@ -134,10 +134,10 @@ INCR_OP_ON(Rank)
 #undef INCR_OP_ON
 
 #define BASE_OP_ON(N, T)                                                  \
-    inline constexpr N operator+(N s, T d) { return N(int(s) + int(d)); } \
-    inline constexpr N operator-(N s, T d) { return N(int(s) - int(d)); } \
-    inline constexpr N &operator+=(N &s, T d) { return s = s + d; }       \
-    inline constexpr N &operator-=(N &s, T d) { return s = s - d; }
+    constexpr N operator+(N s, T d) { return N(int(s) + int(d)); } \
+    constexpr N operator-(N s, T d) { return N(int(s) - int(d)); } \
+    constexpr N &operator+=(N &s, T d) { return s = s + d; }       \
+    constexpr N &operator-=(N &s, T d) { return s = s - d; }
 
 BASE_OP_ON(Square, Direction)
 BASE_OP_ON(Rank, File)
@@ -312,13 +312,13 @@ static std::unordered_map<char, CastlingRight> readCastleString(
 /// @brief Gets the rank index of the square where 0 is the first rank.
 /// @param sq
 /// @return the rank of the square
-inline constexpr Rank square_rank(Square sq) { return Rank(sq >> 3); }
+constexpr Rank square_rank(Square sq) { return Rank(sq >> 3); }
 
 /// @brief makes a square out of rank and file
 /// @param f
 /// @param r
 /// @return
-inline constexpr Square file_rank_square(File f, Rank r) { return Square((r << 3) + f); }
+constexpr Square file_rank_square(File f, Rank r) { return Square((r << 3) + f); }
 /********************
  * Packed structures
  *******************/
