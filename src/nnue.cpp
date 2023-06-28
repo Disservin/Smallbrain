@@ -17,7 +17,7 @@ namespace nnue {
 
 template <Color side>
 int idx(Square sq, Piece p, int ksq) {
-    if constexpr (side == White) {
+    if constexpr (side == WHITE) {
         return sq + static_cast<int>(p) * 64 + KING_BUCKET[ksq] * FEATURE_SIZE;
     } else {
         const Square mirrorSquare = Square(sq ^ 56);
@@ -30,8 +30,8 @@ int idx(Square sq, Piece p, int ksq) {
 
 void activate(nnue::accumulator &accumulator, Square sq, Piece p, Square ksq_white,
               Square ksq_black) {
-    const int input_white = idx<White>(sq, p, ksq_white);
-    const int input_black = idx<Black>(sq, p, ksq_black);
+    const int input_white = idx<WHITE>(sq, p, ksq_white);
+    const int input_black = idx<BLACK>(sq, p, ksq_black);
 
     for (int chunks = 0; chunks < N_HIDDEN_SIZE / 256; chunks++) {
         const int offset = chunks * 256;
@@ -48,8 +48,8 @@ void activate(nnue::accumulator &accumulator, Square sq, Piece p, Square ksq_whi
 
 void deactivate(nnue::accumulator &accumulator, Square sq, Piece p, Square ksq_white,
                 Square ksq_black) {
-    const int input_white = idx<White>(sq, p, ksq_white);
-    const int input_black = idx<Black>(sq, p, ksq_black);
+    const int input_white = idx<WHITE>(sq, p, ksq_white);
+    const int input_black = idx<BLACK>(sq, p, ksq_black);
     for (int chunks = 0; chunks < N_HIDDEN_SIZE / 256; chunks++) {
         const int offset = chunks * 256;
 
@@ -65,11 +65,11 @@ void deactivate(nnue::accumulator &accumulator, Square sq, Piece p, Square ksq_w
 
 void move(nnue::accumulator &accumulator, Square from_sq, Square to_sq, Piece p, Square ksq_white,
           Square ksq_black) {
-    const int input_clear_white = idx<White>(from_sq, p, ksq_white);
-    const int input_add_white = idx<White>(to_sq, p, ksq_white);
+    const int input_clear_white = idx<WHITE>(from_sq, p, ksq_white);
+    const int input_add_white = idx<WHITE>(to_sq, p, ksq_white);
 
-    const int input_clear_black = idx<Black>(from_sq, p, ksq_black);
-    const int input_add_black = idx<Black>(to_sq, p, ksq_black);
+    const int input_clear_black = idx<BLACK>(from_sq, p, ksq_black);
+    const int input_add_black = idx<BLACK>(to_sq, p, ksq_black);
 
     for (int chunks = 0; chunks < N_HIDDEN_SIZE / 256; chunks++) {
         const int offset = chunks * 256;

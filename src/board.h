@@ -36,7 +36,7 @@ class Board {
 
     /// @brief Finds what piece is on the square using the board (more performant)
     /// @param sq
-    /// @return found piece otherwise None
+    /// @return found piece otherwise NONE
     template <typename T = Piece>
     [[nodiscard]] T at(Square sq) const {
         if constexpr (std::is_same_v<T, PieceType>) {
@@ -200,7 +200,7 @@ class Board {
 template <bool updateNNUE>
 void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb_[piece] &= ~(1ULL << sq);
-    board_[sq] = None;
+    board_[sq] = NONE;
 
     if constexpr (updateNNUE) {
         nnue::deactivate(getAccumulator(), sq, piece, ksq_white, ksq_black);
@@ -222,7 +222,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
                       Square ksq_black) {
     pieces_bb_[piece] &= ~(1ULL << from_sq);
     pieces_bb_[piece] |= (1ULL << to_sq);
-    board_[from_sq] = None;
+    board_[from_sq] = NONE;
     board_[to_sq] = piece;
 
     if constexpr (updateNNUE) {
@@ -254,7 +254,7 @@ inline void Board::updateHash(Move move) {
         castling_rights.clearCastlingRight(side_to_move);
 
         if (typeOf(move) == CASTLING) {
-            const Piece rook = side_to_move == White ? WhiteRook : BlackRook;
+            const Piece rook = side_to_move == WHITE ? WHITEROOK : BLACKROOK;
             const Square rookSQ =
                 file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
             const Square kingToSq =
@@ -272,8 +272,8 @@ inline void Board::updateHash(Move move) {
 
             return;
         }
-    } else if (pt == ROOK && ((square_rank(from_sq) == Rank::RANK_8 && side_to_move == Black) ||
-                              (square_rank(from_sq) == Rank::RANK_1 && side_to_move == White))) {
+    } else if (pt == ROOK && ((square_rank(from_sq) == Rank::RANK_8 && side_to_move == BLACK) ||
+                              (square_rank(from_sq) == Rank::RANK_1 && side_to_move == WHITE))) {
         const auto king_sq = builtin::lsb(pieces(KING, side_to_move));
 
         castling_rights.clearCastlingRight(
@@ -288,16 +288,16 @@ inline void Board::updateHash(Move move) {
                 en_passant_square = Square(to_sq ^ 8);
                 hash_key ^= updateKeyEnPassant(en_passant_square);
 
-                assert(at(en_passant_square) == None);
+                assert(at(en_passant_square) == NONE);
             }
         }
     }
 
-    if (capture != None) {
+    if (capture != NONE) {
         half_move_clock = 0;
         hash_key ^= updateKeyPiece(capture, to_sq);
-        if (typeOfPiece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move == Black) ||
-                                             (rank == Rank::RANK_8 && side_to_move == White))) {
+        if (typeOfPiece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move == BLACK) ||
+                                             (rank == Rank::RANK_8 && side_to_move == WHITE))) {
             const auto king_sq = builtin::lsb(pieces(KING, ~side_to_move));
 
             castling_rights.clearCastlingRight(
@@ -334,7 +334,7 @@ void Board::makeMove(Move move) {
     assert(to_sq >= 0 && to_sq < 64);
     assert(typeOfPiece(capture) != KING);
     assert(pt != NONETYPE);
-    assert(p != None);
+    assert(p != NONE);
     assert((typeOf(move) == PROMOTION &&
             (promotionType(move) != PAWN && promotionType(move) != KING)) ||
            typeOf(move) != PROMOTION);
@@ -362,15 +362,15 @@ void Board::makeMove(Move move) {
 
     TTable.prefetch(hash_key);
 
-    const Square ksq_white = builtin::lsb(pieces<KING, White>());
-    const Square ksq_black = builtin::lsb(pieces<KING, Black>());
+    const Square ksq_white = builtin::lsb(pieces<KING, WHITE>());
+    const Square ksq_black = builtin::lsb(pieces<KING, BLACK>());
 
     // *****************************
     // UPDATE PIECES AND NNUE
     // *****************************
 
     if (typeOf(move) == CASTLING) {
-        const Piece rook = side_to_move == White ? WhiteRook : BlackRook;
+        const Piece rook = side_to_move == WHITE ? WHITEROOK : BLACKROOK;
         Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         Square kingToSq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
@@ -394,25 +394,25 @@ void Board::makeMove(Move move) {
 
         return;
     } else if (pt == PAWN && ep) {
-        assert(at(Square(to_sq ^ 8)) != None);
+        assert(at(Square(to_sq ^ 8)) != NONE);
 
         removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move), Square(to_sq ^ 8), ksq_white,
                                 ksq_black);
-    } else if (capture != None) {
-        assert(at(to_sq) != None);
+    } else if (capture != NONE) {
+        assert(at(to_sq) != NONE);
 
         removePiece<updateNNUE>(capture, to_sq, ksq_white, ksq_black);
     }
 
     // The move is differently encoded for promotions to it requires some special care.
     if (typeOf(move) == PROMOTION) {
-        assert(at(to_sq) == None);
+        assert(at(to_sq) == NONE);
 
         removePiece<updateNNUE>(makePiece(PAWN, side_to_move), from_sq, ksq_white, ksq_black);
         placePiece<updateNNUE>(makePiece(promotionType(move), side_to_move), to_sq, ksq_white,
                                ksq_black);
     } else {
-        assert(at(to_sq) == None);
+        assert(at(to_sq) == NONE);
 
         movePiece<updateNNUE>(p, from_sq, to_sq, ksq_white, ksq_black);
     }
@@ -449,7 +449,7 @@ void Board::unmakeMove(Move move) {
 
     if (typeOf(move) == CASTLING) {
         Square rookToSq = to_sq;
-        Piece rook = side_to_move == White ? WhiteRook : BlackRook;
+        Piece rook = side_to_move == WHITE ? WHITEROOK : BLACKROOK;
         Square rookFromSq =
             file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
@@ -466,7 +466,7 @@ void Board::unmakeMove(Move move) {
     } else if (promotion) {
         removePiece<updateNNUE>(makePiece(promotionType(move), side_to_move), to_sq);
         placePiece<updateNNUE>(makePiece(PAWN, side_to_move), from_sq);
-        if (capture != None) placePiece<updateNNUE>(capture, to_sq);
+        if (capture != NONE) placePiece<updateNNUE>(capture, to_sq);
 
         return;
     } else {
@@ -475,7 +475,7 @@ void Board::unmakeMove(Move move) {
 
     if (to_sq == en_passant_square && pt == PAWN) {
         placePiece<updateNNUE>(makePiece(PAWN, ~side_to_move), Square(en_passant_square ^ 8));
-    } else if (capture != None) {
+    } else if (capture != NONE) {
         placePiece<updateNNUE>(capture, to_sq);
     }
 }

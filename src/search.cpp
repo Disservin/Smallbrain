@@ -75,7 +75,7 @@ void Search::updateAllHistories(Move bestmove, int depth, Move *quiets, int quie
     /********************
      * Update Quiet Moves
      *******************/
-    if (board.at(to(bestmove)) == None) {
+    if (board.at(to(bestmove)) == NONE) {
         // update Killer Moves
         killer_moves[1][ss->ply] = killer_moves[0][ss->ply];
         killer_moves[0][ss->ply] = bestmove;
@@ -213,8 +213,8 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     /********************
      * Initialize various variables
      *******************/
-    constexpr bool RootNode = node == Root;
-    constexpr bool PvNode = node != NonPV;
+    constexpr bool RootNode = node == ROOT;
+    constexpr bool PvNode = node != NONPV;
 
     Color color = board.side_to_move;
 
@@ -368,7 +368,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     /********************
      * Razoring
      *******************/
-    if (depth < 3 && ss->eval + 129 < alpha) return qsearch<NonPV>(alpha, beta, ss);
+    if (depth < 3 && ss->eval + 129 < alpha) return qsearch<NONPV>(alpha, beta, ss);
 
     /********************
      * Reverse futility pruning
@@ -391,7 +391,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
         board.makeNullMove();
         (ss)->currentmove = NULL_MOVE;
-        Score score = -absearch<NonPV>(depth - R, -beta, -beta + 1, ss + 1);
+        Score score = -absearch<NONPV>(depth - R, -beta, -beta + 1, ss + 1);
         board.unmakeNullMove();
         if (score >= beta) {
             // dont return mate scores
@@ -426,7 +426,7 @@ moves:
 
         int extension = 0;
 
-        const bool capture = board.at(to(move)) != None;
+        const bool capture = board.at(to(move)) != NONE;
 
         /********************
          * Various pruning techniques.
@@ -474,7 +474,7 @@ moves:
             int singularDepth = (depth - 1) / 2;
 
             ss->excludedMove = move;
-            int value = absearch<NonPV>(singularDepth, singularBeta - 1, singularBeta, ss);
+            int value = absearch<NONPV>(singularDepth, singularBeta - 1, singularBeta, ss);
             ss->excludedMove = NO_MOVE;
 
             if (value < singularBeta)
@@ -526,7 +526,7 @@ moves:
 
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
-            score = -absearch<NonPV>(rdepth, -alpha - 1, -alpha, ss + 1);
+            score = -absearch<NONPV>(rdepth, -alpha - 1, -alpha, ss + 1);
             doFullSearch = score > alpha && rdepth < newDepth;
         } else
             doFullSearch = !PvNode || madeMoves > 1;
@@ -535,7 +535,7 @@ moves:
          * Do a full research if lmr failed or lmr was skipped
          *******************/
         if (doFullSearch) {
-            score = -absearch<NonPV>(newDepth, -alpha - 1, -alpha, ss + 1);
+            score = -absearch<NONPV>(newDepth, -alpha - 1, -alpha, ss + 1);
         }
 
         /********************
@@ -633,7 +633,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss) {
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta > 3500) beta = VALUE_INFINITE;
 
-        result = absearch<Root>(depth, alpha, beta, ss);
+        result = absearch<ROOT>(depth, alpha, beta, ss);
 
         if (Threads.stop.load(std::memory_order_relaxed)) return 0;
 

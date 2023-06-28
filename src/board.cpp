@@ -7,13 +7,13 @@ Board::Board(std::string fen) {
     state_history_.reserve(MAX_PLY);
     hash_history.reserve(512);
 
-    side_to_move = White;
+    side_to_move = WHITE;
     en_passant_square = NO_SQ;
     castling_rights.clearAllCastlingRights();
     half_move_clock = 0;
     full_move_number = 1;
 
-    std::fill(std::begin(board_), std::end(board_), None);
+    std::fill(std::begin(board_), std::end(board_), NONE);
 
     setFen(fen, true);
 }
@@ -75,19 +75,19 @@ std::string Board::getCastleString() const {
 
     if (chess960) {
         // loop to cleanup
-        if (castling_rights.hasCastlingRight(White, CastleSide::KING_SIDE))
-            ss << char(char(castling_rights.getRookFile(White, CastleSide::KING_SIDE)) + 65);
-        if (castling_rights.hasCastlingRight(White, CastleSide::QUEEN_SIDE))
-            ss << char(char(castling_rights.getRookFile(White, CastleSide::QUEEN_SIDE)) + 65);
-        if (castling_rights.hasCastlingRight(Black, CastleSide::KING_SIDE))
-            ss << char(char(castling_rights.getRookFile(Black, CastleSide::KING_SIDE)) + 97);
-        if (castling_rights.hasCastlingRight(Black, CastleSide::QUEEN_SIDE))
-            ss << char(char(castling_rights.getRookFile(Black, CastleSide::QUEEN_SIDE)) + 97);
+        if (castling_rights.hasCastlingRight(WHITE, CastleSide::KING_SIDE))
+            ss << char(char(castling_rights.getRookFile(WHITE, CastleSide::KING_SIDE)) + 65);
+        if (castling_rights.hasCastlingRight(WHITE, CastleSide::QUEEN_SIDE))
+            ss << char(char(castling_rights.getRookFile(WHITE, CastleSide::QUEEN_SIDE)) + 65);
+        if (castling_rights.hasCastlingRight(BLACK, CastleSide::KING_SIDE))
+            ss << char(char(castling_rights.getRookFile(BLACK, CastleSide::KING_SIDE)) + 97);
+        if (castling_rights.hasCastlingRight(BLACK, CastleSide::QUEEN_SIDE))
+            ss << char(char(castling_rights.getRookFile(BLACK, CastleSide::QUEEN_SIDE)) + 97);
     } else {
-        if (castling_rights.hasCastlingRight(White, CastleSide::KING_SIDE)) ss << "K";
-        if (castling_rights.hasCastlingRight(White, CastleSide::QUEEN_SIDE)) ss << "Q";
-        if (castling_rights.hasCastlingRight(Black, CastleSide::KING_SIDE)) ss << "k";
-        if (castling_rights.hasCastlingRight(Black, CastleSide::QUEEN_SIDE)) ss << "q";
+        if (castling_rights.hasCastlingRight(WHITE, CastleSide::KING_SIDE)) ss << "K";
+        if (castling_rights.hasCastlingRight(WHITE, CastleSide::QUEEN_SIDE)) ss << "Q";
+        if (castling_rights.hasCastlingRight(BLACK, CastleSide::KING_SIDE)) ss << "k";
+        if (castling_rights.hasCastlingRight(BLACK, CastleSide::QUEEN_SIDE)) ss << "q";
     }
 
     return ss.str();
@@ -95,22 +95,22 @@ std::string Board::getCastleString() const {
 
 void Board::refresh() {
     for (int i = 0; i < N_HIDDEN_SIZE; i++) {
-        getAccumulator()[White][i] = HIDDEN_BIAS[i];
-        getAccumulator()[Black][i] = HIDDEN_BIAS[i];
+        getAccumulator()[WHITE][i] = HIDDEN_BIAS[i];
+        getAccumulator()[BLACK][i] = HIDDEN_BIAS[i];
     }
 
-    const Square ksq_white = builtin::lsb(pieces<KING, White>());
-    const Square ksq_black = builtin::lsb(pieces<KING, Black>());
+    const Square ksq_white = builtin::lsb(pieces<KING, WHITE>());
+    const Square ksq_black = builtin::lsb(pieces<KING, BLACK>());
 
     for (Square i = SQ_A1; i < NO_SQ; i++) {
         Piece p = board_[i];
-        if (p == None) continue;
+        if (p == NONE) continue;
         nnue::activate(getAccumulator(), i, p, ksq_white, ksq_black);
     }
 }
 
 void Board::setFen(const std::string &fen, bool update_acc) {
-    for (Piece p = WhitePawn; p < None; p++) {
+    for (Piece p = WHITEPAWN; p < NONE; p++) {
         pieces_bb_[p] = 0ULL;
     }
 
@@ -124,9 +124,9 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     half_move_clock = std::stoi(params.size() > 4 ? params[4] : "0");
     full_move_number = std::stoi(params.size() > 4 ? params[5] : "1") * 2;
 
-    side_to_move = (move_right == "w") ? White : Black;
+    side_to_move = (move_right == "w") ? WHITE : BLACK;
 
-    std::fill(std::begin(board_), std::end(board_), None);
+    std::fill(std::begin(board_), std::end(board_), NONE);
 
     Square square = Square(56);
     for (int index = 0; index < static_cast<int>(position.size()); index++) {
@@ -152,15 +152,15 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     for (char i : castling) {
         if (!chess960) {
             if (i == 'K')
-                castling_rights.setCastlingRight<White, CastleSide::KING_SIDE, File::FILE_H>();
+                castling_rights.setCastlingRight<WHITE, CastleSide::KING_SIDE, File::FILE_H>();
             if (i == 'Q')
-                castling_rights.setCastlingRight<White, CastleSide::QUEEN_SIDE, File::FILE_A>();
+                castling_rights.setCastlingRight<WHITE, CastleSide::QUEEN_SIDE, File::FILE_A>();
             if (i == 'k')
-                castling_rights.setCastlingRight<Black, CastleSide::KING_SIDE, File::FILE_H>();
+                castling_rights.setCastlingRight<BLACK, CastleSide::KING_SIDE, File::FILE_H>();
             if (i == 'q')
-                castling_rights.setCastlingRight<Black, CastleSide::QUEEN_SIDE, File::FILE_A>();
+                castling_rights.setCastlingRight<BLACK, CastleSide::QUEEN_SIDE, File::FILE_A>();
         } else {
-            const auto color = isupper(i) ? White : Black;
+            const auto color = isupper(i) ? WHITE : BLACK;
             const auto king_sq = builtin::lsb(pieces(KING, color));
             const auto file = static_cast<File>(tolower(i) - 97);
             const auto side = int(file) > int(squareFile(king_sq)) ? CastleSide::KING_SIDE
@@ -201,7 +201,7 @@ std::string Board::getFen() const {
             Piece piece = at(Square(sq));
 
             // If there is a piece at the current square
-            if (piece != None) {
+            if (piece != NONE) {
                 // If there were any empty squares before this piece,
                 // append the number of empty squares to the FEN string
                 if (free_space) {
@@ -229,7 +229,7 @@ std::string Board::getFen() const {
     }
 
     // Append " w " or " b " to the FEN string, depending on which player's turn it is
-    ss << (side_to_move == White ? " w " : " b ");
+    ss << (side_to_move == WHITE ? " w " : " b ");
 
     // Append the appropriate characters to the FEN string to indicate
     // whether or not castling is allowed for each player
@@ -274,13 +274,13 @@ Result Board::isDrawn(bool in_check) {
     if (count == 2) return Result::DRAWN;
 
     if (count == 3) {
-        if (pieces(WhiteBishop) || pieces(BlackBishop)) return Result::DRAWN;
-        if (pieces(WhiteKnight) || pieces(BlackKnight)) return Result::DRAWN;
+        if (pieces(WHITEBISHOP) || pieces(BLACKBISHOP)) return Result::DRAWN;
+        if (pieces(WHITEKNIGHT) || pieces(BLACKKNIGHT)) return Result::DRAWN;
     }
 
     if (count == 4) {
-        if (pieces(WhiteBishop) && pieces(BlackBishop) &&
-            sameColor(builtin::lsb(pieces(WhiteBishop)), builtin::lsb(pieces(BlackBishop))))
+        if (pieces(WHITEBISHOP) && pieces(BLACKBISHOP) &&
+            sameColor(builtin::lsb(pieces(WHITEBISHOP)), builtin::lsb(pieces(BLACKBISHOP))))
             return Result::DRAWN;
     }
 
@@ -298,7 +298,7 @@ Bitboard Board::us(Color c) const {
            pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
 }
 
-Bitboard Board::all() const { return us<White>() | us<Black>(); }
+Bitboard Board::all() const { return us<WHITE>() | us<BLACK>(); }
 
 Color Board::colorOf(Square loc) const { return Color((at(loc) / 6)); }
 
@@ -312,7 +312,7 @@ bool Board::isAttacked(Color c, Square sq, Bitboard occ) const {
 }
 
 void Board::makeNullMove() {
-    state_history_.emplace_back(en_passant_square, castling_rights, half_move_clock, None);
+    state_history_.emplace_back(en_passant_square, castling_rights, half_move_clock, NONE);
     side_to_move = ~side_to_move;
 
     // Update the hash key
@@ -369,8 +369,8 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
 
 U64 Board::zobrist() const {
     U64 hash = 0ULL;
-    U64 wPieces = us<White>();
-    U64 bPieces = us<Black>();
+    U64 wPieces = us<WHITE>();
+    U64 bPieces = us<BLACK>();
     // Piece hashes
     while (wPieces) {
         Square sq = builtin::poplsb(wPieces);
@@ -386,7 +386,7 @@ U64 Board::zobrist() const {
         ep_hash = updateKeyEnPassant(en_passant_square);
     }
     // Turn hash
-    U64 turn_hash = side_to_move == White ? RANDOM_ARRAY[780] : 0;
+    U64 turn_hash = side_to_move == WHITE ? RANDOM_ARRAY[780] : 0;
     // Castle hash
     U64 cast_hash = updateKeyCastling();
 
@@ -394,7 +394,7 @@ U64 Board::zobrist() const {
 }
 
 U64 Board::updateKeyPiece(Piece piece, Square sq) const {
-    assert(piece < None);
+    assert(piece < NONE);
     assert(sq < NO_SQ);
     return RANDOM_ARRAY[64 * hash_piece[piece] + sq];
 }

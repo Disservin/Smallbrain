@@ -25,8 +25,8 @@ inline Bitboard attackersForSide(const Board &board, Color attacker_color, Squar
 }
 
 inline Bitboard allAttackers(const Board &board, Square sq, Bitboard occupied_bb) {
-    return attackersForSide(board, White, sq, occupied_bb) |
-           attackersForSide(board, Black, sq, occupied_bb);
+    return attackersForSide(board, WHITE, sq, occupied_bb) |
+           attackersForSide(board, BLACK, sq, occupied_bb);
 }
 
 /********************
@@ -45,10 +45,10 @@ inline bool see(const Board &board, Move move, int threshold) {
     Bitboard occ = (board.all() ^ (1ULL << from_sq)) | (1ULL << to_sq);
     Bitboard attackers = allAttackers(board, to_sq, occ) & occ;
 
-    Bitboard queens = board.pieces(WhiteQueen) | board.pieces(BlackQueen);
+    Bitboard queens = board.pieces(WHITEQUEEN) | board.pieces(BLACKQUEEN);
 
-    Bitboard bishops = board.pieces(WhiteBishop) | board.pieces(BlackBishop) | queens;
-    Bitboard rooks = board.pieces(WhiteRook) | board.pieces(BlackRook) | queens;
+    Bitboard bishops = board.pieces(WHITEBISHOP) | board.pieces(BLACKBISHOP) | queens;
+    Bitboard rooks = board.pieces(WHITEROOK) | board.pieces(BLACKROOK) | queens;
 
     Color sT = ~board.colorOf(from_sq);
 

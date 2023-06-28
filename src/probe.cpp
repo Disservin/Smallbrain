@@ -7,22 +7,22 @@
 
 namespace syzygy {
 Score probeWDL(const Board& board) {
-    Bitboard white = board.us<White>();
-    Bitboard black = board.us<Black>();
+    Bitboard white = board.us<WHITE>();
+    Bitboard black = board.us<BLACK>();
 
     if (builtin::popcount(white | black) > (signed)TB_LARGEST) return VALUE_NONE;
 
     Square ep = board.en_passant_square <= 63 ? board.en_passant_square : Square(0);
 
     unsigned TBresult =
-        tb_probe_wdl(white, black, board.pieces(WhiteKing) | board.pieces(BlackKing),
-                     board.pieces(WhiteQueen) | board.pieces(BlackQueen),
-                     board.pieces(WhiteRook) | board.pieces(BlackRook),
-                     board.pieces(WhiteBishop) | board.pieces(BlackBishop),
-                     board.pieces(WhiteKnight) | board.pieces(BlackKnight),
-                     board.pieces(WhitePawn) | board.pieces(BlackPawn), board.half_move_clock,
+        tb_probe_wdl(white, black, board.pieces(WHITEKING) | board.pieces(BLACKKING),
+                     board.pieces(WHITEQUEEN) | board.pieces(BLACKQUEEN),
+                     board.pieces(WHITEROOK) | board.pieces(BLACKROOK),
+                     board.pieces(WHITEBISHOP) | board.pieces(BLACKBISHOP),
+                     board.pieces(WHITEKNIGHT) | board.pieces(BLACKKNIGHT),
+                     board.pieces(WHITEPAWN) | board.pieces(BLACKPAWN), board.half_move_clock,
                      board.castling_rights.hasCastlingRight(board.side_to_move), ep,
-                     board.side_to_move == White);
+                     board.side_to_move == WHITE);
 
     if (TBresult == TB_LOSS) {
         return VALUE_TB_LOSS;
@@ -35,20 +35,20 @@ Score probeWDL(const Board& board) {
 }
 
 Move probeDTZ(const Board& board) {
-    Bitboard white = board.us<White>();
-    Bitboard black = board.us<Black>();
+    Bitboard white = board.us<WHITE>();
+    Bitboard black = board.us<BLACK>();
     if (builtin::popcount(white | black) > (signed)TB_LARGEST) return NO_MOVE;
 
     Square ep = board.en_passant_square <= 63 ? board.en_passant_square : Square(0);
 
     unsigned TBresult = tb_probe_root(
-        white, black, board.pieces(WhiteKing) | board.pieces(BlackKing),
-        board.pieces(WhiteQueen) | board.pieces(BlackQueen),
-        board.pieces(WhiteRook) | board.pieces(BlackRook),
-        board.pieces(WhiteBishop) | board.pieces(BlackBishop),
-        board.pieces(WhiteKnight) | board.pieces(BlackKnight),
-        board.pieces(WhitePawn) | board.pieces(BlackPawn), board.half_move_clock,
-        board.castling_rights.hasCastlingRight(board.side_to_move), ep, board.side_to_move == White,
+        white, black, board.pieces(WHITEKING) | board.pieces(BLACKKING),
+        board.pieces(WHITEQUEEN) | board.pieces(BLACKQUEEN),
+        board.pieces(WHITEROOK) | board.pieces(BLACKROOK),
+        board.pieces(WHITEBISHOP) | board.pieces(BLACKBISHOP),
+        board.pieces(WHITEKNIGHT) | board.pieces(BLACKKNIGHT),
+        board.pieces(WHITEPAWN) | board.pieces(BLACKPAWN), board.half_move_clock,
+        board.castling_rights.hasCastlingRight(board.side_to_move), ep, board.side_to_move == WHITE,
         NULL);  //  * - turn: true=white, false=black
 
     if (TBresult == TB_RESULT_FAILED || TBresult == TB_RESULT_CHECKMATE ||

@@ -9,34 +9,34 @@ I actually have no idea how the random_device behaves when multiple threads acce
 it...
 */
 Bitboard randomFenBoard::Pawns(Color color) {
-    return bitboards[color == Black ? BlackPawn : WhitePawn];
+    return bitboards[color == BLACK ? BLACKPAWN : WHITEPAWN];
 }
 
 Bitboard randomFenBoard::Knights(Color color) {
-    return bitboards[color == Black ? BlackKnight : WhiteKnight];
+    return bitboards[color == BLACK ? BLACKKNIGHT : WHITEKNIGHT];
 }
 
 Bitboard randomFenBoard::Bishops(Color color) {
-    return bitboards[color == Black ? BlackBishop : WhiteBishop];
+    return bitboards[color == BLACK ? BLACKBISHOP : WHITEBISHOP];
 }
 
 Bitboard randomFenBoard::Rooks(Color color) {
-    return bitboards[color == Black ? BlackRook : WhiteRook];
+    return bitboards[color == BLACK ? BLACKROOK : WHITEROOK];
 }
 
 Bitboard randomFenBoard::Queens(Color color) {
-    return bitboards[color == Black ? BlackQueen : WhiteQueen];
+    return bitboards[color == BLACK ? BLACKQUEEN : WHITEQUEEN];
 }
 
 Bitboard randomFenBoard::Kings(Color color) {
-    return bitboards[color == Black ? BlackKing : WhiteKing];
+    return bitboards[color == BLACK ? BLACKKING : WHITEKING];
 }
 
 Bitboard randomFenBoard::all() {
-    return bitboards[WhitePawn] | bitboards[WhiteKnight] | bitboards[WhiteBishop] |
-           bitboards[WhiteRook] | bitboards[WhiteQueen] | bitboards[WhiteKing] |
-           bitboards[BlackPawn] | bitboards[BlackKnight] | bitboards[BlackBishop] |
-           bitboards[BlackRook] | bitboards[BlackQueen] | bitboards[BlackKing];
+    return bitboards[WHITEPAWN] | bitboards[WHITEKNIGHT] | bitboards[WHITEBISHOP] |
+           bitboards[WHITEROOK] | bitboards[WHITEQUEEN] | bitboards[WHITEKING] |
+           bitboards[BLACKPAWN] | bitboards[BLACKKNIGHT] | bitboards[BLACKBISHOP] |
+           bitboards[BLACKROOK] | bitboards[BLACKQUEEN] | bitboards[BLACKKING];
 }
 
 bool randomFenBoard::isAttacked(int sq, Color c) {
@@ -67,11 +67,11 @@ std::stringstream randomFenBoard::generateRandomFen() {
     int WhiteKingSq = distSquare(rand_gen::generator);
     int BlackKingSq = distSquare(rand_gen::generator);
 
-    board[WhiteKingSq] = WhiteKing;
-    board[BlackKingSq] = BlackKing;
+    board[WhiteKingSq] = WHITEKING;
+    board[BlackKingSq] = BLACKKING;
 
-    bitboards[WhiteKing] |= 1ULL << WhiteKingSq;
-    bitboards[BlackKing] |= 1ULL << BlackKingSq;
+    bitboards[WHITEKING] |= 1ULL << WhiteKingSq;
+    bitboards[BLACKKING] |= 1ULL << BlackKingSq;
 
     int i = 56;
     int end = 64;
@@ -94,15 +94,15 @@ std::stringstream randomFenBoard::generateRandomFen() {
         }
 
         // we already placed kigns at the start
-        while (num == WhiteKing ||
-               num == BlackKing ||  // dont place pawns on the first or last rank
-               ((num == WhitePawn || num == BlackPawn) && (i >= 55 || i <= 8))) {
+        while (num == WHITEKING ||
+               num == BLACKKING ||  // dont place pawns on the first or last rank
+               ((num == WHITEPAWN || num == BLACKPAWN) && (i >= 55 || i <= 8))) {
             num = distPiece(rand_gen::generator);
         }
 
         // clang-format off
         // check if piece is valid
-        if (    num < None 
+        if (    num < NONE 
             &&  placedPieces <= allowedPieces 
             &&  piece_count[num] < max_pieces[num] 
             )
@@ -123,7 +123,7 @@ std::stringstream randomFenBoard::generateRandomFen() {
 
             ss << pieceToChar[Piece(num)];
         } else {
-            board[i] = None;
+            board[i] = NONE;
             emptySquares++;
         }
 
@@ -142,11 +142,11 @@ std::stringstream randomFenBoard::generateRandomFen() {
     if (std::abs(matScore) > 1500) {
         return std::stringstream("");
     }
-    if (isAttacked(WhiteKingSq, Black)) {
+    if (isAttacked(WhiteKingSq, BLACK)) {
         return std::stringstream("");
     }
 
-    if (isAttacked(BlackKingSq, White)) {
+    if (isAttacked(BlackKingSq, WHITE)) {
         return std::stringstream("");
     }
 

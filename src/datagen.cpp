@@ -168,9 +168,9 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             exit(1);
         }
 
-        const bool capture = search->board.at(to(result.first)) != None;
+        const bool capture = search->board.at(to(result.first)) != NONE;
 
-        sfens.score = search->board.side_to_move == White ? result.second : -result.second;
+        sfens.score = search->board.side_to_move == WHITE ? result.second : -result.second;
         sfens.move = result.first;
 
         const Score absScore = std::abs(result.second);
@@ -208,8 +208,8 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         search->board.makeMove<true>(result.first);
     }
 
-    Bitboard white = search->board.us<White>();
-    Bitboard black = search->board.us<Black>();
+    Bitboard white = search->board.us<WHITE>();
+    Bitboard black = search->board.us<BLACK>();
 
     // Set correct winningSide for if (use_tb && search->board.half_move_clock >= 40 &&
     // builtin::popcount(search->board.all()) <= 6)
@@ -218,13 +218,13 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             search->board.en_passant_square <= 63 ? search->board.en_passant_square : Square(0);
 
         unsigned TBresult = tb_probe_wdl(
-            white, black, search->board.pieces(WhiteKing) | search->board.pieces(BlackKing),
-            search->board.pieces(WhiteQueen) | search->board.pieces(BlackQueen),
-            search->board.pieces(WhiteRook) | search->board.pieces(BlackRook),
-            search->board.pieces(WhiteBishop) | search->board.pieces(BlackBishop),
-            search->board.pieces(WhiteKnight) | search->board.pieces(BlackKnight),
-            search->board.pieces(WhitePawn) | search->board.pieces(BlackPawn), 0, 0, ep,
-            search->board.side_to_move == White);  //  * - turn: true=white, false=black
+            white, black, search->board.pieces(WHITEKING) | search->board.pieces(BLACKKING),
+            search->board.pieces(WHITEQUEEN) | search->board.pieces(BLACKQUEEN),
+            search->board.pieces(WHITEROOK) | search->board.pieces(BLACKROOK),
+            search->board.pieces(WHITEBISHOP) | search->board.pieces(BLACKBISHOP),
+            search->board.pieces(WHITEKNIGHT) | search->board.pieces(BLACKKNIGHT),
+            search->board.pieces(WHITEPAWN) | search->board.pieces(BLACKPAWN), 0, 0, ep,
+            search->board.side_to_move == WHITE);  //  * - turn: true=white, false=black
 
         if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS) {
             winningSide = ~search->board.side_to_move;
@@ -236,9 +236,9 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     }
 
     double score;
-    if (winningSide == White)
+    if (winningSide == WHITE)
         score = 1.0;
-    else if (winningSide == Black)
+    else if (winningSide == BLACK)
         score = 0.0;
     else
         score = 0.5;

@@ -144,7 +144,7 @@ class MovePicker {
             return CAPTURE_SCORE + mvvlva(move);
         }
 
-        if (search_.board.at(to(move)) != None) {
+        if (search_.board.at(to(move)) != NONE) {
             return see::see(search_.board, move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
         }
 

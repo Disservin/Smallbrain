@@ -78,12 +78,12 @@ namespace movegen {
 
 template <Color c>
 Bitboard pawnLeftAttacks(const Bitboard pawns) {
-    return c == White ? (pawns << 7) & ~MASK_FILE[FILE_H] : (pawns >> 7) & ~MASK_FILE[FILE_A];
+    return c == WHITE ? (pawns << 7) & ~MASK_FILE[FILE_H] : (pawns >> 7) & ~MASK_FILE[FILE_A];
 }
 
 template <Color c>
 Bitboard pawnRightAttacks(const Bitboard pawns) {
-    return c == White ? (pawns << 9) & ~MASK_FILE[FILE_A] : (pawns >> 9) & ~MASK_FILE[FILE_H];
+    return c == WHITE ? (pawns << 9) & ~MASK_FILE[FILE_A] : (pawns >> 9) & ~MASK_FILE[FILE_H];
 }
 
 /********************
@@ -264,13 +264,13 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, Bitboard occ_all,
                        Bitboard check_mask, Bitboard pin_hv, Bitboard pin_d) {
     const Bitboard pawns_mask = board.pieces<PAWN, c>();
 
-    constexpr Direction UP = c == White ? NORTH : SOUTH;
-    constexpr Direction DOWN = c == Black ? NORTH : SOUTH;
-    constexpr Direction DOWN_LEFT = c == Black ? NORTH_EAST : SOUTH_WEST;
-    constexpr Direction DOWN_RIGHT = c == Black ? NORTH_WEST : SOUTH_EAST;
-    constexpr Bitboard RANK_BEFORE_PROMO = c == White ? MASK_RANK[RANK_7] : MASK_RANK[RANK_2];
-    constexpr Bitboard RANK_PROMO = c == White ? MASK_RANK[RANK_8] : MASK_RANK[RANK_1];
-    constexpr Bitboard doublePushRank = c == White ? MASK_RANK[RANK_3] : MASK_RANK[RANK_6];
+    constexpr Direction UP = c == WHITE ? NORTH : SOUTH;
+    constexpr Direction DOWN = c == BLACK ? NORTH : SOUTH;
+    constexpr Direction DOWN_LEFT = c == BLACK ? NORTH_EAST : SOUTH_WEST;
+    constexpr Direction DOWN_RIGHT = c == BLACK ? NORTH_WEST : SOUTH_EAST;
+    constexpr Bitboard RANK_BEFORE_PROMO = c == WHITE ? MASK_RANK[RANK_7] : MASK_RANK[RANK_2];
+    constexpr Bitboard RANK_PROMO = c == WHITE ? MASK_RANK[RANK_8] : MASK_RANK[RANK_1];
+    constexpr Bitboard doublePushRank = c == WHITE ? MASK_RANK[RANK_3] : MASK_RANK[RANK_6];
 
     // These pawns can maybe take Left or Right
     const Bitboard pawnsLR = pawns_mask & ~pin_hv;
@@ -556,7 +556,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         movelist.add(make(king_sq, to));
     }
 
-    if (mt != Movetype::CAPTURE && square_rank(king_sq) == (c == White ? RANK_1 : RANK_8) &&
+    if (mt != Movetype::CAPTURE && square_rank(king_sq) == (c == WHITE ? RANK_1 : RANK_8) &&
         board.castling_rights.hasCastlingRight(c) && check_mask == DEFAULT_CHECKMASK) {
         moves = legalCastleMoves<c, mt>(board, king_sq, seen, pin_hv, occ_all);
 
@@ -639,10 +639,10 @@ void legalmoves(const Board &board, Movelist &movelist) {
  *******************/
 template <Movetype mt>
 void legalmoves(const Board &board, Movelist &movelist) {
-    if (board.side_to_move == White)
-        legalmoves<White, mt>(board, movelist);
+    if (board.side_to_move == WHITE)
+        legalmoves<WHITE, mt>(board, movelist);
     else
-        legalmoves<Black, mt>(board, movelist);
+        legalmoves<BLACK, mt>(board, movelist);
 }
 
 }  // namespace movegen

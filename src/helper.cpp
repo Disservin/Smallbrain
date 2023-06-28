@@ -157,7 +157,7 @@ void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, in
 // clang-format on
 
 Piece makePiece(PieceType type, Color c) {
-    if (type == NONETYPE) return None;
+    if (type == NONETYPE) return NONE;
     return Piece(type + 6 * c);
 }
 

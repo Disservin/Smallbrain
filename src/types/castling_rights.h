@@ -52,10 +52,10 @@ class CastlingRights {
     }
 
     int getHashIndex() const {
-        return hasCastlingRight(White, CastleSide::KING_SIDE) +
-               2 * hasCastlingRight(White, CastleSide::QUEEN_SIDE) +
-               4 * hasCastlingRight(Black, CastleSide::KING_SIDE) +
-               8 * hasCastlingRight(Black, CastleSide::QUEEN_SIDE);
+        return hasCastlingRight(WHITE, CastleSide::KING_SIDE) +
+               2 * hasCastlingRight(WHITE, CastleSide::QUEEN_SIDE) +
+               4 * hasCastlingRight(BLACK, CastleSide::KING_SIDE) +
+               8 * hasCastlingRight(BLACK, CastleSide::QUEEN_SIDE);
     }
 
    private:
@@ -63,7 +63,7 @@ class CastlingRights {
      denotes the file of the rook that we castle to
      1248 1248 1248 1248
      0000 0000 0000 0000
-     bq   bk   wq   wk
+     BQ   BK   WQ   WK
      3    2    1    0
      */
     BitField16 castling_rights;
