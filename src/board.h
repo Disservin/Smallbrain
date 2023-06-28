@@ -195,12 +195,16 @@ class Board {
 
     std::array<Bitboard, 12> pieces_bb_ = {};
     std::array<Piece, MAX_SQ> board_;
+
+    Bitboard occupancy_bb_ = 0ULL;
 };
 
 template <bool updateNNUE>
 void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb_[piece] &= ~(1ULL << sq);
     board_[sq] = NONE;
+
+    occupancy_bb_ &= ~(1ULL << sq);
 
     if constexpr (updateNNUE) {
         nnue::deactivate(getAccumulator(), sq, piece, ksq_white, ksq_black);
@@ -211,6 +215,8 @@ template <bool updateNNUE>
 void Board::placePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb_[piece] |= (1ULL << sq);
     board_[sq] = piece;
+
+    occupancy_bb_ |= (1ULL << sq);
 
     if constexpr (updateNNUE) {
         nnue::activate(getAccumulator(), sq, piece, ksq_white, ksq_black);
@@ -224,6 +230,9 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
     pieces_bb_[piece] |= (1ULL << to_sq);
     board_[from_sq] = NONE;
     board_[to_sq] = piece;
+
+    occupancy_bb_ &= ~(1ULL << from_sq);
+    occupancy_bb_ |= (1ULL << to_sq);
 
     if constexpr (updateNNUE) {
         if (typeOfPiece(piece) == KING && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {

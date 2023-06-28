@@ -114,6 +114,8 @@ void Board::setFen(const std::string &fen, bool update_acc) {
         pieces_bb_[p] = 0ULL;
     }
 
+    occupancy_bb_ = 0ULL;
+
     std::vector<std::string> params = str_util::splitString(fen, ' ');
 
     const std::string position = params[0];
@@ -298,7 +300,10 @@ Bitboard Board::us(Color c) const {
            pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
 }
 
-Bitboard Board::all() const { return us<WHITE>() | us<BLACK>(); }
+Bitboard Board::all() const {
+    assert((us<WHITE>() | us<BLACK>()) == occupancy_bb_);
+    return occupancy_bb_;
+}
 
 Color Board::colorOf(Square loc) const { return Color((at(loc) / 6)); }
 
