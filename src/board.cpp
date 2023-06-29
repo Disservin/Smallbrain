@@ -111,12 +111,6 @@ void Board::refresh() {
 }
 
 void Board::setFen(const std::string &fen, bool update_acc) {
-    for (Piece p = WHITEPAWN; p < NONE; p++) {
-        pieces_bb_[p] = 0ULL;
-    }
-
-    occupancy_bb_ = 0ULL;
-
     std::vector<std::string> params = str_util::splitString(fen, ' ');
 
     const std::string position = params[0];
@@ -127,9 +121,12 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     half_move_clock = std::stoi(params.size() > 4 ? params[4] : "0");
     full_move_number = std::stoi(params.size() > 4 ? params[5] : "1") * 2;
 
+    board_.fill(NONE);
+    pieces_bb_.fill(0ULL);
+
     side_to_move = (move_right == "w") ? WHITE : BLACK;
 
-    board_.fill(NONE);
+    occupancy_bb_ = 0ULL;
 
     Square square = Square(56);
     for (int index = 0; index < static_cast<int>(position.size()); index++) {
@@ -380,6 +377,7 @@ U64 Board::zobrist() const {
     U64 hash = 0ULL;
     U64 w_pieces = us<WHITE>();
     U64 b_pieces = us<BLACK>();
+
     // Piece hashes
     while (w_pieces) {
         Square sq = builtin::poplsb(w_pieces);

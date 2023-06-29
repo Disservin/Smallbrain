@@ -101,3 +101,6 @@ Piece makePiece(PieceType type, Color c);
 void printBitboard(Bitboard bb);
 
 bool sameColor(int sq1, int sq2);
+
+Square rookCastleSquare(Square to_sq, Square from_sq);
+Square kingCastleSquare(Square to_sq, Square from_sq);

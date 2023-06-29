@@ -143,3 +143,11 @@ void printBitboard(Bitboard bb) {
 }
 
 bool sameColor(int sq1, int sq2) { return ((9 * (sq1 ^ sq2)) & 8) == 0; }
+
+Square rookCastleSquare(Square to_sq, Square from_sq) {
+    return file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+}
+
+Square kingCastleSquare(Square to_sq, Square from_sq) {
+    return file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+}
