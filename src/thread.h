@@ -10,7 +10,7 @@
 // A wrapper class to start the search
 class Thread {
    public:
-    void start_thinking();
+    void startThinking();
     std::unique_ptr<Search> search;
 
     Thread() { search = std::make_unique<Search>(); }
@@ -35,10 +35,10 @@ class ThreadPool {
     U64 getNodes();
     U64 getTbHits();
 
-    void start_threads(const Board &board, const Limits &limit, const Movelist &searchmoves,
-                       int worker_count, bool use_tb);
+    void startThreads(const Board &board, const Limits &limit, const Movelist &searchmoves,
+                      int worker_count, bool use_tb);
 
-    void stop_threads();
+    void stopThreads();
 
     std::atomic_bool stop;
 

@@ -122,7 +122,7 @@ void Uci::isReady() { std::cout << "readyok" << std::endl; }
 void Uci::uciNewGame() {
     board_ = Board();
     TTable.clear();
-    Threads.stop_threads();
+    Threads.stopThreads();
 }
 
 void Uci::position(const std::string& line) {
@@ -144,7 +144,7 @@ void Uci::position(const std::string& line) {
 }
 
 void Uci::go(const std::string& line) {
-    Threads.stop_threads();
+    Threads.stopThreads();
 
     Limits limit;
 
@@ -179,13 +179,13 @@ void Uci::go(const std::string& line) {
         }
     }
 
-    Threads.start_threads(board_, limit, searchmoves_, worker_threads_, use_tb_);
+    Threads.startThreads(board_, limit, searchmoves_, worker_threads_, use_tb_);
 }
 
-void Uci::stop() { Threads.stop_threads(); }
+void Uci::stop() { Threads.stopThreads(); }
 
 void Uci::quit() {
-    Threads.stop_threads();
+    Threads.stopThreads();
     tb_free();
 }
 
@@ -250,6 +250,36 @@ std::string moveToUci(Move move, bool chess960) {
     }
 
     return ss.str();
+}
+
+std::string convertScore(int score) {
+    if (std::abs(score) <= 4) score = 0;
+
+    if (score >= VALUE_MATE_IN_PLY)
+        return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
+    else if (score <= VALUE_MATED_IN_PLY)
+        return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+    else
+        return "cp " + std::to_string(score);
+}
+
+void output(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time,
+            const std::string& pv, int hashfull) {
+    std::stringstream ss;
+
+    // clang-format off
+    ss  << "info depth " << signed(depth) 
+        << " seldepth "  << signed(seldepth) 
+        << " score "     << convertScore(score)
+        << " tbhits "    << tbHits 
+        << " nodes "     << nodes 
+        << " nps "       << signed((nodes / (time + 1)) * 1000)
+        << " hashfull "  << hashfull
+        << " time "      << time 
+        << " pv"         << pv;
+    // clang-format on
+
+    std::cout << ss.str() << std::endl;
 }
 
 }  // namespace uci

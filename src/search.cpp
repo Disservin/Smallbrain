@@ -656,8 +656,8 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss) {
     }
 
     if (id == 0 && !silent) {
-        uciOutput(result, depth, seldepth_, Threads.getNodes(), Threads.getTbHits(), getTime(),
-                  getPV(), TTable.hashfull());
+        uci::output(result, depth, seldepth_, Threads.getNodes(), Threads.getTbHits(), getTime(),
+                    getPV(), TTable.hashfull());
     }
 
     return result;

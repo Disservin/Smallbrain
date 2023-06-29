@@ -43,4 +43,20 @@ class Uci {
 
 Move uciToMove(const Board& board, const std::string& input);
 std::string moveToUci(Move move, bool chess960);
+
+/// @brief adjust the outputted score
+/// @param score
+/// @return a new score used for uci output
+std::string convertScore(int score);
+
+/// @brief prints the new uci info
+/// @param score
+/// @param depth
+/// @param seldepth
+/// @param nodes
+/// @param tbHits
+/// @param time
+/// @param pv
+void output(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time,
+            const std::string& pv, int hashfull);
 }  // namespace uci

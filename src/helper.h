@@ -90,22 +90,6 @@ constexpr PieceType typeOfPiece(Piece piece) { return PieceToPieceType[piece]; }
 
 void print_mean();
 
-/// @brief adjust the outputted score
-/// @param score
-/// @return a new score used for uci output
-std::string outputScore(int score);
-
-/// @brief prints the new uci info
-/// @param score
-/// @param depth
-/// @param seldepth
-/// @param nodes
-/// @param tbHits
-/// @param time
-/// @param pv
-void uciOutput(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time,
-               std::string pv, int hashfull);
-
 /// @brief makes a Piece from only the piece type and color
 /// @param type
 /// @param c
