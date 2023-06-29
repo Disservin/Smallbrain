@@ -33,7 +33,7 @@ void Search::updateHistoryBonus(Move move, Move secondmove, int bonus) {
     int hhBonus = bonus - getHistory<type>(move, secondmove, *this) * std::abs(bonus) / 16384;
 
     if constexpr (type == History::HH)
-        history[board.side_to_move][from(move)][to(move)] += hhBonus;
+        history[board.sideToMove()][from(move)][to(move)] += hhBonus;
     else if constexpr (type == History::CONST)
         consthist[board.at(from(secondmove))][to(secondmove)][board.at(from(move))][to(move)] +=
             hhBonus;
@@ -95,7 +95,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      * Initialize various variables
      *******************/
     constexpr bool PvNode = node == PV;
-    const Color color = board.side_to_move;
+    const Color color = board.sideToMove();
     const bool in_check = board.isAttacked(~color, board.kingSQ(color), board.all());
 
     Move bestmove = NO_MOVE;
@@ -121,7 +121,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Move ttmove = NO_MOVE;
     bool tt_hit = false;
 
-    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash_key);
+    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
     Score ttScore =
         tt_hit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
     // clang-format off
@@ -200,7 +200,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Flag b = bestValue >= beta ? LOWERBOUND : UPPERBOUND;
 
     if (!Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(0, scoreToTT(bestValue, ss->ply), b, board.hash_key, bestmove);
+        TTable.store(0, scoreToTT(bestValue, ss->ply), b, board.hash(), bestmove);
 
     assert(bestValue > -VALUE_INFINITE && bestValue < VALUE_INFINITE);
     return bestValue;
@@ -216,7 +216,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     constexpr bool RootNode = node == ROOT;
     constexpr bool PvNode = node != NONPV;
 
-    Color color = board.side_to_move;
+    Color color = board.sideToMove();
 
     Score best = -VALUE_INFINITE;
     Score maxValue = VALUE_INFINITE;
@@ -270,7 +270,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     Move ttmove = NO_MOVE;
     bool tt_hit = false;
 
-    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash_key);
+    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
     Score ttScore = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     /********************
@@ -323,7 +323,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
         if (flag == EXACTBOUND || (flag == LOWERBOUND && tbRes >= beta) ||
             (flag == UPPERBOUND && tbRes <= alpha)) {
-            TTable.store(depth + 6, scoreToTT(tbRes, ss->ply), flag, board.hash_key, NO_MOVE);
+            TTable.store(depth + 6, scoreToTT(tbRes, ss->ply), flag, board.hash(), NO_MOVE);
             return tbRes;
         }
 
@@ -579,7 +579,7 @@ moves:
                  * Score beat beta -> update histories and break.
                  *******************/
                 if (score >= beta) {
-                    TTable.prefetch<1>(board.hash_key);
+                    TTable.prefetch<1>(board.hash());
                     // update history heuristic
                     updateAllHistories(bestmove, depth, quiets, quiet_count, ss);
                     break;
@@ -604,7 +604,7 @@ moves:
     Flag b = best >= beta ? LOWERBOUND : (PvNode && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excludedMove && !Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash_key, bestmove);
+        TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash(), bestmove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
     return best;

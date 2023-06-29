@@ -378,8 +378,8 @@ void legalPawnMovesAll(const Board &board, Movelist &movelist, Bitboard occ_all,
     /********************
      * Add en passant captures.
      *******************/
-    if (mt != Movetype::QUIET && board.en_passant_square != NO_SQ) {
-        const Square ep = board.en_passant_square;
+    if (mt != Movetype::QUIET && board.enPassant() != NO_SQ) {
+        const Square ep = board.enPassant();
         const Square epPawn = ep + DOWN;
 
         Bitboard epMask = (1ull << epPawn) | (1ull << ep);
@@ -476,7 +476,7 @@ template <Color c, Movetype mt>
 inline Bitboard legalCastleMoves(const Board &board, Square sq, Bitboard seen, Bitboard pin_hv,
                                  Bitboard occ_all) {
     if constexpr (mt == Movetype::CAPTURE) return 0ull;
-    const auto rights = board.castling_rights;
+    const auto rights = board.castlingRights();
 
     Bitboard moves = 0ull;
 
@@ -557,7 +557,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
     }
 
     if (mt != Movetype::CAPTURE && square_rank(king_sq) == (c == WHITE ? RANK_1 : RANK_8) &&
-        board.castling_rights.hasCastlingRight(c) && check_mask == DEFAULT_CHECKMASK) {
+        board.castlingRights().hasCastlingRight(c) && check_mask == DEFAULT_CHECKMASK) {
         moves = legalCastleMoves<c, mt>(board, king_sq, seen, pin_hv, occ_all);
 
         while (moves) {
@@ -639,7 +639,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
  *******************/
 template <Movetype mt>
 void legalmoves(const Board &board, Movelist &movelist) {
-    if (board.side_to_move == WHITE)
+    if (board.sideToMove() == WHITE)
         legalmoves<WHITE, mt>(board, movelist);
     else
         legalmoves<BLACK, mt>(board, movelist);

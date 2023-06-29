@@ -128,7 +128,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     }
 
     board.refresh();
-    board.hash_history.clear();
+    board.clearHash();
     search->board = board;
 
     fenData sfens;
@@ -143,20 +143,20 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         movelist.size = 0;
 
         const bool in_check = search->board.isAttacked(
-            ~search->board.side_to_move, search->board.kingSQ(search->board.side_to_move),
+            ~search->board.sideToMove(), search->board.kingSQ(search->board.sideToMove()),
             search->board.all());
 
         movegen::legalmoves<Movetype::ALL>(search->board, movelist);
 
         if (movelist.size == 0) {
-            winningSide = in_check ? ~search->board.side_to_move : NO_COLOR;
+            winningSide = in_check ? ~search->board.sideToMove() : NO_COLOR;
             break;
         }
 
         auto drawn = search->board.isDrawn(in_check);
 
         if (drawn != Result::NONE) {
-            winningSide = drawn == Result::LOST ? ~search->board.side_to_move : NO_COLOR;
+            winningSide = drawn == Result::LOST ? ~search->board.sideToMove() : NO_COLOR;
             break;
         }
 
@@ -170,7 +170,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         const bool capture = search->board.at(to(result.first)) != NONE;
 
-        sfens.score = search->board.side_to_move == WHITE ? result.second : -result.second;
+        sfens.score = search->board.sideToMove() == WHITE ? result.second : -result.second;
         sfens.move = result.first;
 
         const Score absScore = std::abs(result.second);
@@ -188,7 +188,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY) {
             winningSide =
-                result.second > 0 ? search->board.side_to_move : ~search->board.side_to_move;
+                result.second > 0 ? search->board.sideToMove() : ~search->board.sideToMove();
             break;
         } else if (drawCount >= 12) {
             winningSide = NO_COLOR;
@@ -200,7 +200,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             fens.emplace_back(sfens);
         }
 
-        if (use_tb && search->board.half_move_clock >= 40 &&
+        if (use_tb && search->board.halfmoves() >= 40 &&
             builtin::popcount(search->board.all()) <= 6)
             break;
 
@@ -211,11 +211,10 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     Bitboard white = search->board.us<WHITE>();
     Bitboard black = search->board.us<BLACK>();
 
-    // Set correct winningSide for if (use_tb && search->board.half_move_clock >= 40 &&
+    // Set correct winningSide for if (use_tb && search->board.halfmoves() >= 40 &&
     // builtin::popcount(search->board.all()) <= 6)
     if (use_tb && builtin::popcount(white | black) <= 6) {
-        Square ep =
-            search->board.en_passant_square <= 63 ? search->board.en_passant_square : Square(0);
+        Square ep = search->board.enPassant() <= 63 ? search->board.enPassant() : Square(0);
 
         unsigned TBresult = tb_probe_wdl(
             white, black, search->board.pieces(WHITEKING) | search->board.pieces(BLACKKING),
@@ -224,12 +223,12 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             search->board.pieces(WHITEBISHOP) | search->board.pieces(BLACKBISHOP),
             search->board.pieces(WHITEKNIGHT) | search->board.pieces(BLACKKNIGHT),
             search->board.pieces(WHITEPAWN) | search->board.pieces(BLACKPAWN), 0, 0, ep,
-            search->board.side_to_move == WHITE);  //  * - turn: true=white, false=black
+            search->board.sideToMove() == WHITE);  //  * - turn: true=white, false=black
 
         if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS) {
-            winningSide = ~search->board.side_to_move;
+            winningSide = ~search->board.sideToMove();
         } else if (TBresult == TB_WIN || TBresult == TB_CURSED_WIN) {
-            winningSide = search->board.side_to_move;
+            winningSide = search->board.sideToMove();
         } else if (TBresult == TB_DRAW) {
             winningSide = NO_COLOR;
         }

@@ -90,7 +90,7 @@ class Eval : public Argument {
             if (key == "fen") {
                 fen = value;
                 Board board = Board(fen);
-                std::cout << nnue::output(board.getAccumulator(), board.side_to_move) << std::endl;
+                std::cout << nnue::output(board.getAccumulator(), board.sideToMove()) << std::endl;
             } else {
                 ArgumentsParser::throwMissing("eval", key, value);
             }

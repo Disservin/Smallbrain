@@ -158,8 +158,8 @@ void Uci::go(const std::string& line) {
     limit.time.maximum = limit.time.optimum =
         str_util::findElement<int64_t>(tokens, "movetime").value_or(0);
 
-    std::string uci_time = board_.side_to_move == Color::WHITE ? "wtime" : "btime";
-    std::string uci_inc = board_.side_to_move == Color::WHITE ? "winc" : "binc";
+    std::string uci_time = board_.sideToMove() == Color::WHITE ? "wtime" : "btime";
+    std::string uci_inc = board_.sideToMove() == Color::WHITE ? "winc" : "binc";
 
     if (str_util::contains(line, uci_time)) {
         auto time = str_util::findElement<int>(tokens, uci_time).value_or(0);
@@ -212,7 +212,7 @@ Move uciToMove(const Board& board, const std::string& input) {
         return make<Move::CASTLING>(source, target);
     }
 
-    if (piece == PAWN && target == board.en_passant_square) {
+    if (piece == PAWN && target == board.enPassant()) {
         return make<Move::ENPASSANT>(source, target);
     }
 

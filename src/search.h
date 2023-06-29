@@ -111,7 +111,7 @@ class Search {
 template <History type>
 [[nodiscard]] int getHistory(Move move, Move secondmove, const Search &search) {
     if constexpr (type == History::HH)
-        return search.history[search.board.side_to_move][from(move)][to(move)];
+        return search.history[search.board.sideToMove()][from(move)][to(move)];
     else if constexpr (type == History::COUNTER)
         return search.counters[from(move)][to(move)];
     else if constexpr (type == History::CONST)
