@@ -248,19 +248,19 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
 }
 
 inline void Board::updateHash(Move move) {
-    hash_history.emplace_back(hash_key);
-
-    if (en_passant_square != NO_SQ) hash_key ^= updateKeyEnPassant(en_passant_square);
-    en_passant_square = NO_SQ;
-
-    hash_key ^= updateKeyCastling();
-
     const PieceType piece_type = at<PieceType>(from(move));
     const Piece piece = makePiece(piece_type, side_to_move);
     const Square from_sq = from(move);
     const Square to_sq = to(move);
     const Piece capture = board_[to_sq];
     const Rank rank = square_rank(to_sq);
+
+    hash_history.emplace_back(hash_key);
+
+    if (en_passant_square != NO_SQ) hash_key ^= updateKeyEnPassant(en_passant_square);
+    en_passant_square = NO_SQ;
+
+    hash_key ^= updateKeyCastling();
 
     if (piece_type == KING) {
         castling_rights.clearCastlingRight(side_to_move);
@@ -365,8 +365,6 @@ void Board::makeMove(Move move) {
     half_move_clock++;
     full_move_number++;
 
-    // Castling is encoded as king captures rook
-
     // *****************************
     // UPDATE HASH
     // *****************************
@@ -436,7 +434,20 @@ void Board::makeMove(Move move) {
 
 template <bool updateNNUE>
 void Board::unmakeMove(Move move) {
+    side_to_move = ~side_to_move;
+
     const State restore = state_history_.back();
+
+    const Square from_sq = from(move);
+    const Square to_sq = to(move);
+
+    const PieceType piece_type = at<PieceType>(to_sq);
+
+    const Piece piece = makePiece(piece_type, side_to_move);
+    const Piece capture = restore.captured_piece;
+
+    const bool promotion = typeOf(move) == PROMOTION;
+
     state_history_.pop_back();
 
     if (accumulators_->size()) {
@@ -450,19 +461,7 @@ void Board::unmakeMove(Move move) {
     castling_rights = restore.castling;
     half_move_clock = restore.half_move;
 
-    side_to_move = ~side_to_move;
-
     full_move_number--;
-
-    const Square from_sq = from(move);
-    const Square to_sq = to(move);
-
-    const PieceType piece_type = at<PieceType>(to_sq);
-
-    const Piece piece = makePiece(piece_type, side_to_move);
-    const Piece capture = restore.captured_piece;
-
-    const bool promotion = typeOf(move) == PROMOTION;
 
     if (typeOf(move) == CASTLING) {
         const Piece rook = makePiece(ROOK, side_to_move);
