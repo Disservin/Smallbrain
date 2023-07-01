@@ -172,11 +172,11 @@ If you want maximum performance you should compile Smallbrain yourself.
 - Example:
 
 ```
-.\smallbrain.exe -gen -threads 30 -book E:\Github\Smallbrain\src\data\DFRC_openings.epd -tb E:/Chess/345
+.\smallbrain.exe -generate threads=30 book=E:\Github\Smallbrain\src\data\DFRC_openings.epd tb=E:/Chess/345
 ```
 
 ```
-.\smallbrain.exe -gen -threads 30 -depth 7 -hash 256 -tb H:/Chess/345
-.\smallbrain.exe -gen -threads 30 -depth 9 -tb H:/Chess/345
-.\smallbrain.exe -gen -threads 30 -nodes 5000 -tb H:/Chess/345
+.\smallbrain.exe -generate threads=30 depth=7 hash=256 tb=H:/Chess/345
+.\smallbrain.exe -generate threads=30 depth=9 tb=H:/Chess/345
+.\smallbrain.exe -generate threads=30 nodes=5000 tb=H:/Chess/345
 ```

@@ -4,7 +4,9 @@
 #include "board.h"
 
 namespace syzygy {
-// check TB WDL during search
+/// @brief check TB WDL during search
+/// @param board
+/// @return
 [[nodiscard]] Score probeWDL(const Board& board);
 
 /// @brief check DTZ at root node

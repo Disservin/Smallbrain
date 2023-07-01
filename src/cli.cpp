@@ -149,8 +149,6 @@ class Generate : public Argument {
                 nodes_ = std::stoi(value);
             } else if (key == "hash") {
                 hash_ = std::stoi(value);
-            } else if (key == "random") {
-                random_ = std::stoi(value);
             } else {
                 ArgumentsParser::throwMissing("eval", key, value);
             }
@@ -159,7 +157,7 @@ class Generate : public Argument {
         int ttsize = hash_ * 1024 * 1024 / sizeof(TEntry);  // 16 MiB
         TTable.allocate(ttsize * workers_);
 
-        datagen_.generate(workers_, book_path_, depth_, nodes_, use_tb_, random_);
+        datagen_.generate(workers_, book_path_, depth_, nodes_, use_tb_);
 
         std::string input;
         std::cin >> std::ws;
@@ -185,7 +183,6 @@ class Generate : public Argument {
     int depth_ = 7;
     int nodes_ = 0;
     int hash_ = 16;
-    int random_ = 0;
     bool use_tb_ = false;
 
     datagen::TrainingData datagen_ = datagen::TrainingData();

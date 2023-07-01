@@ -412,13 +412,12 @@ void Board::makeMove(Move move) {
 
         return;
     } else if (piece_type == PAWN && ep) {
-        assert(at<PieceType>(Square(to_sq ^ 8)) == PAWN);
+        const Square ep_sq = Square(to_sq ^ 8);
 
-        removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), Square(to_sq ^ 8), ksq_white,
-                                ksq_black);
+        assert(at<PieceType>(ep_sq) == PAWN);
+        removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), ep_sq, ksq_white, ksq_black);
     } else if (capture != NONE) {
         assert(at(to_sq) != NONE);
-
         removePiece<updateNNUE>(capture, to_sq, ksq_white, ksq_black);
     }
 
@@ -495,7 +494,8 @@ void Board::unmakeMove(Move move) {
     }
 
     if (to_sq == en_passant_square_ && piece_type == PAWN) {
-        placePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), Square(en_passant_square_ ^ 8));
+        const Square ep_sq = Square(en_passant_square_ ^ 8);
+        placePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), ep_sq);
     } else if (capture != NONE) {
         placePiece<updateNNUE>(capture, to_sq);
     }

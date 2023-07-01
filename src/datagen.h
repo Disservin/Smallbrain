@@ -35,13 +35,13 @@ class TrainingData {
     /// @param book
     /// @param depth
     void generate(int workers = 4, std::string book = "", int depth = 7, int nodes = 0,
-                  bool use_tb = false, int rand_limit = 0);
+                  bool use_tb = false);
 
     /// @brief repeats infinite random playouts
     /// @param threadId
     /// @param book
     /// @param depth
-    void infinitePlay(int threadId, int depth, int nodes, int rand_limit, bool use_tb);
+    void infinitePlay(int threadId, int depth, int nodes, bool use_tb);
 
     /// @brief starts one selfplay game
     /// @param file
@@ -50,7 +50,7 @@ class TrainingData {
     /// @param Movelist
     /// @param search
     void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist,
-                       std::unique_ptr<Search> &search, int rand_limit, bool use_tb);
+                       std::unique_ptr<Search> &search, bool use_tb);
 
     std::vector<std::thread> threads;
 };

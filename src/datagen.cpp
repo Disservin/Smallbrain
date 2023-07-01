@@ -1,7 +1,7 @@
 #include <fstream>
 
+#include "rand.h"
 #include "datagen.h"
-#include "randomFen.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 
 namespace datagen {
@@ -14,8 +14,7 @@ std::string stringFenData(const fenData &fen_data, double score) {
     return sstream.str();
 }
 
-void TrainingData::generate(int workers, std::string book, int depth, int nodes, bool use_tb,
-                            int rand_limit) {
+void TrainingData::generate(int workers, std::string book, int depth, int nodes, bool use_tb) {
     if (book != "") {
         std::ifstream openingFile;
         std::string line;
@@ -29,12 +28,11 @@ void TrainingData::generate(int workers, std::string book, int depth, int nodes,
     }
 
     for (int i = 0; i < workers; i++) {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, rand_limit,
-                             use_tb);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, use_tb);
     }
 }
 
-void TrainingData::infinitePlay(int threadId, int depth, int nodes, int rand_limit, bool use_tb) {
+void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool use_tb) {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
@@ -70,7 +68,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int rand_lim
 
         board.setFen(DEFAULT_POS, false);
 
-        randomPlayout(file, board, movelist, search, rand_limit, use_tb);
+        randomPlayout(file, board, movelist, search, use_tb);
         games++;
 
         if (threadId == 0 && games % 100 == 0) {
@@ -85,7 +83,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, int rand_lim
 }
 
 void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist,
-                                 std::unique_ptr<Search> &search, int rand_limit, bool use_tb) {
+                                 std::unique_ptr<Search> &search, bool use_tb) {
     std::vector<fenData> fens;
     fens.reserve(40);
 
@@ -102,29 +100,21 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
     board.setFen(DEFAULT_POS, true);
 
-    if (rand_limit > 0) {
-        std::uniform_int_distribution<> distRandomFen{0, rand_limit};
-        if (distRandomFen(rand_gen::generator) == 1) {
-            ply = randomMoves;
-            board.setFen(getRandomfen());
-        }
-    } else {
-        while (ply < randomMoves) {
-            movelist.size = 0;
-            board.clearStacks();
+    while (ply < randomMoves) {
+        movelist.size = 0;
+        board.clearStacks();
 
-            movegen::legalmoves<Movetype::ALL>(board, movelist);
+        movegen::legalmoves<Movetype::ALL>(board, movelist);
 
-            if (movelist.size == 0) return;
+        if (movelist.size == 0) return;
 
-            std::uniform_int_distribution<> randomNum{0, int(movelist.size - 1)};
+        std::uniform_int_distribution<> randomNum{0, int(movelist.size - 1)};
 
-            auto index = randomNum(rand_gen::generator);
+        auto index = randomNum(rand_gen::generator);
 
-            Move move = movelist[index].move;
-            board.makeMove<false>(move);
-            ply++;
-        }
+        Move move = movelist[index].move;
+        board.makeMove<false>(move);
+        ply++;
     }
 
     board.refresh();
