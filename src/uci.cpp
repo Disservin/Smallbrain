@@ -140,7 +140,7 @@ void Uci::position(const std::string& line) {
         board_.makeMove<false>(uciToMove(board_, move));
     }
 
-    board_.refresh();
+    board_.refreshNNUE();
 }
 
 void Uci::go(const std::string& line) {
@@ -174,6 +174,8 @@ void Uci::go(const std::string& line) {
             str_util::findElement<std::string>(tokens, "searchmoves").value_or("");
         const auto moves = str_util::splitString(searchmoves, ' ');
 
+        searchmoves_.size = 0;
+
         for (const auto& move : moves) {
             searchmoves_.add(uciToMove(board_, move));
         }
@@ -204,7 +206,7 @@ Move uciToMove(const Board& board, const std::string& input) {
 
     // convert to king captures rook
     if (!board.chess960 && piece == KING && squareDistance(target, source) == 2) {
-        target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
+        target = fileRankSquare(target > source ? FILE_H : FILE_A, squareRank(source));
     }
 
     if (piece == KING && board.at<PieceType>(target) == ROOK &&
@@ -237,7 +239,7 @@ std::string moveToUci(Move move, bool chess960) {
     // If the move is not a chess960 castling move and is a king moving more than one square,
     // update the to square to be the correct square for a regular castling move
     if (!chess960 && typeOf(move) == CASTLING) {
-        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+        to_sq = fileRankSquare(to_sq > from_sq ? FILE_G : FILE_C, squareRank(from_sq));
     }
 
     // Add the from and to squares to the string stream

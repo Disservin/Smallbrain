@@ -93,7 +93,7 @@ std::string Board::getCastleString() const {
     return ss.str();
 }
 
-void Board::refresh() {
+void Board::refreshNNUE() {
     for (int i = 0; i < N_HIDDEN_SIZE; i++) {
         getAccumulator()[WHITE][i] = HIDDEN_BIAS[i];
         getAccumulator()[BLACK][i] = HIDDEN_BIAS[i];
@@ -144,7 +144,7 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     }
 
     if (update_acc) {
-        refresh();
+        refreshNNUE();
     }
 
     castling_rights_.clearAllCastlingRights();

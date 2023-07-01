@@ -35,13 +35,10 @@ class Board {
     [[nodiscard]] Color sideToMove() const { return side_to_move_; }
     [[nodiscard]] Square enPassant() const { return en_passant_square_; }
     [[nodiscard]] const CastlingRights &castlingRights() const { return castling_rights_; }
+    [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_->back(); }
 
-    /// @brief reload the entire nnue
-    void refresh();
+    void refreshNNUE();
 
-    /// @brief Finds what piece is on the square using the board (more performant)
-    /// @param sq
-    /// @return found piece otherwise NONE
     template <typename T = Piece>
     [[nodiscard]] T at(Square sq) const {
         if constexpr (std::is_same_v<T, PieceType>) {
@@ -51,13 +48,7 @@ class Board {
         }
     }
 
-    /// @brief applys a new Fen to the board and also reload the entire nnue
-    /// @param fen
-    /// @param update_acc
     void setFen(const std::string &fen, bool update_acc = true);
-
-    /// @brief returns a Fen string of the current board
-    /// @return fen string
     [[nodiscard]] std::string getFen() const;
 
     /// @brief detects if the position is a repetition by default 1, fide would be 3
@@ -106,69 +97,39 @@ class Board {
     /// @return
     [[nodiscard]] Color colorOf(Square loc) const;
 
-    /// @brief
-    /// @param c
-    /// @param sq
-    /// @param occ
-    /// @return
     [[nodiscard]] bool isAttacked(Color c, Square sq, Bitboard occ) const;
 
     void updateHash(Move move);
 
-    /// @brief plays the move on the internal board
-    /// @tparam updateNNUE update true = update nnue
-    /// @param move
     template <bool updateNNUE>
     void makeMove(Move move);
 
-    /// @brief unmake a move played on the internal board
-    /// @tparam updateNNUE update true = update nnue
-    /// @param move
     template <bool updateNNUE>
     void unmakeMove(Move move);
 
-    /// @brief make a nullmove
     void makeNullMove();
 
-    /// @brief unmake a nullmove
     void unmakeNullMove();
 
     // update the internal board representation
 
-    /// @brief Remove a Piece from the board
-    /// @tparam update true = update nnue
-    /// @param piece
-    /// @param sq
     template <bool updateNNUE>
     void removePiece(Piece piece, Square sq, Square ksq_white = SQ_A1, Square ksq_black = SQ_A1);
 
-    /// @brief Place a Piece on the board
-    /// @tparam update
-    /// @param piece
-    /// @param sq
     template <bool updateNNUE>
     void placePiece(Piece piece, Square sq, Square ksq_white = SQ_A1, Square ksq_black = SQ_A1);
 
-    /// @brief Move a piece on the board
-    /// @tparam updateNNUE
-    /// @param piece
-    /// @param from_sq
-    /// @param to_sq
     template <bool updateNNUE>
     void movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white = SQ_A1,
                    Square ksq_black = SQ_A1);
+
+    [[nodiscard]] U64 zobrist() const;
 
     void clearStacks();
 
     void clearHash() { hash_history_.clear(); }
 
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
-
-    /// @brief calculate the current zobrist hash from scratch
-    /// @return
-    [[nodiscard]] U64 zobrist() const;
-
-    [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_->back(); }
 
     bool chess960 = false;
 
@@ -247,7 +208,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
 
     if constexpr (updateNNUE) {
         if (typeOfPiece(piece) == KING && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
-            refresh();
+            refreshNNUE();
         } else {
             nnue::move(getAccumulator(), from_sq, to_sq, piece, ksq_white, ksq_black);
         }
@@ -260,7 +221,7 @@ inline void Board::updateHash(Move move) {
     const Square from_sq = from(move);
     const Square to_sq = to(move);
     const Piece capture = board_[to_sq];
-    const Rank rank = square_rank(to_sq);
+    const Rank rank = squareRank(to_sq);
 
     hash_history_.emplace_back(hash_key_);
 
@@ -290,8 +251,8 @@ inline void Board::updateHash(Move move) {
             return;
         }
     } else if (piece_type == ROOK &&
-               ((square_rank(from_sq) == Rank::RANK_8 && side_to_move_ == BLACK) ||
-                (square_rank(from_sq) == Rank::RANK_1 && side_to_move_ == WHITE))) {
+               ((squareRank(from_sq) == Rank::RANK_8 && side_to_move_ == BLACK) ||
+                (squareRank(from_sq) == Rank::RANK_1 && side_to_move_ == WHITE))) {
         const auto king_sq = builtin::lsb(pieces(KING, side_to_move_));
 
         castling_rights_.clearCastlingRight(
@@ -399,7 +360,7 @@ void Board::makeMove(Move move) {
             placePiece<false>(piece, kingToSq, ksq_white, ksq_black);
             placePiece<false>(rook, rook_to_sq, ksq_white, ksq_black);
 
-            refresh();
+            refreshNNUE();
         } else {
             removePiece<updateNNUE>(piece, from_sq, ksq_white, ksq_black);
             removePiece<updateNNUE>(rook, to_sq, ksq_white, ksq_black);

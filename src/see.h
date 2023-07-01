@@ -4,8 +4,8 @@
 
 namespace see {
 
-inline Bitboard attackersForSide(const Board &board, Color attacker_color, Square sq,
-                                 Bitboard occupied_bb) {
+[[nodiscard]] inline Bitboard attackersForSide(const Board &board, Color attacker_color, Square sq,
+                                               Bitboard occupied_bb) {
     Bitboard attacking_bishops = board.pieces(BISHOP, attacker_color);
     Bitboard attacking_rooks = board.pieces(ROOK, attacker_color);
     Bitboard attacking_queens = board.pieces(QUEEN, attacker_color);
@@ -24,7 +24,7 @@ inline Bitboard attackersForSide(const Board &board, Color attacker_color, Squar
     return attackers;
 }
 
-inline Bitboard allAttackers(const Board &board, Square sq, Bitboard occupied_bb) {
+[[nodiscard]] inline Bitboard allAttackers(const Board &board, Square sq, Bitboard occupied_bb) {
     return attackersForSide(board, WHITE, sq, occupied_bb) |
            attackersForSide(board, BLACK, sq, occupied_bb);
 }
@@ -33,7 +33,7 @@ inline Bitboard allAttackers(const Board &board, Square sq, Bitboard occupied_bb
  * Static Exchange Evaluation, logical based on Weiss (https://github.com/TerjeKir/weiss)
  *licensed under GPL-3.0
  *******************/
-inline bool see(const Board &board, Move move, int threshold) {
+[[nodiscard]] inline bool see(const Board &board, Move move, int threshold) {
     Square from_sq = from(move);
     Square to_sq = to(move);
     PieceType attacker = board.at<PieceType>(from_sq);

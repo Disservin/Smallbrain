@@ -63,10 +63,10 @@ void prefetch(const void *addr) {
 }  // namespace builtin
 
 // returns diagonal of given square
-constexpr uint8_t diagonalOf(Square sq) { return 7 + square_rank(sq) - squareFile(sq); }
+constexpr uint8_t diagonalOf(Square sq) { return 7 + squareRank(sq) - squareFile(sq); }
 
 // returns anti diagonal of given square
-constexpr uint8_t antiDiagonalOf(Square sq) { return square_rank(sq) + squareFile(sq); }
+constexpr uint8_t antiDiagonalOf(Square sq) { return squareRank(sq) + squareFile(sq); }
 
 uint8_t manhattenDistance(Square sq1, Square sq2);
 

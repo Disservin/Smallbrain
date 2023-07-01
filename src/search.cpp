@@ -77,8 +77,8 @@ void Search::updateAllHistories(Move bestmove, int depth, Move *quiets, int quie
      *******************/
     if (board.at(to(bestmove)) == NONE) {
         // update Killer Moves
-        killer_moves[1][ss->ply] = killer_moves[0][ss->ply];
-        killer_moves[0][ss->ply] = bestmove;
+        killers[1][ss->ply] = killers[0][ss->ply];
+        killers[0][ss->ply] = bestmove;
 
         updateHistory<History::HH>(bestmove, depth_bonus, depth, quiets, quiet_count, ss);
 
@@ -554,7 +554,7 @@ moves:
         /********************
          * Node count logic used for time control.
          *******************/
-        if (id == 0) spent_effort[from(move)][to(move)] += nodes - node_count;
+        if (id == 0) node_effort[from(move)][to(move)] += nodes - node_count;
 
         /********************
          * Score beat best -> update PV and Bestmove.
@@ -684,7 +684,7 @@ std::pair<Move, Score> Search::iterativeDeepening() {
 
     pv_table_.reset();
     pv_length_.reset();
-    spent_effort.reset();
+    node_effort.reset();
 
     /********************
      * Iterative Deepening Loop.
@@ -712,7 +712,7 @@ std::pair<Move, Score> Search::iterativeDeepening() {
             auto now = getTime();
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
-            int effort = (spent_effort[from(bestmove)][to(bestmove)] * 100) / nodes;
+            int effort = (node_effort[from(bestmove)][to(bestmove)] * 100) / nodes;
             if (depth > 10 && limit.time.optimum * (110 - std::min(effort, 90)) / 100 < now) break;
 
             // increase optimum time if score is increasing
@@ -760,13 +760,13 @@ void Search::reset() {
     nodes = 0;
     tbhits = 0;
 
-    spent_effort.reset();
+    node_effort.reset();
 
     history.reset();
     counters.reset();
     consthist.reset();
 
-    killer_moves.reset();
+    killers.reset();
 }
 
 void Search::startThinking() {

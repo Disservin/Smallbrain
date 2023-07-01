@@ -36,10 +36,10 @@ class Search {
     Table<Move, MAX_SQ, MAX_SQ> counters = {};
 
     // node count logic
-    Table<U64, MAX_SQ, MAX_SQ> spent_effort = {};
+    Table<U64, MAX_SQ, MAX_SQ> node_effort = {};
 
     // Killer moves for quiet move ordering
-    Table<Move, 2, MAX_PLY + 1> killer_moves = {};
+    Table<Move, 2, MAX_PLY + 1> killers = {};
 
     // GUI might send
     // go searchmoves e2e4

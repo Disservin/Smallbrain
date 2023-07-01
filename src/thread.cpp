@@ -43,7 +43,7 @@ void ThreadPool::startThreads(const Board &board, const Limits &limit, const Mov
     mainThread.search->use_tb = use_tb;
     mainThread.search->nodes = 0;
     mainThread.search->tbhits = 0;
-    mainThread.search->spent_effort.reset();
+    mainThread.search->node_effort.reset();
     mainThread.search->searchmoves = searchmoves;
 
     pool_.emplace_back(mainThread);

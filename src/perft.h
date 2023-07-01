@@ -13,7 +13,8 @@ class PerftTesting {
     void testAllPos(int n = 1);
 
     Board board;
-    int depth;
-    U64 nodes;
     Movelist movelists[MAX_PLY];
+
+    U64 nodes;
+    int depth;
 };

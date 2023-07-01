@@ -148,10 +148,10 @@ class MovePicker {
             return see::see(search_.board, move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
         }
 
-        if (search_.killer_moves[0][ss_->ply] == move) {
+        if (search_.killers[0][ss_->ply] == move) {
             killer_move_1_ = move;
             return KILLER_ONE_SCORE;
-        } else if (search_.killer_moves[1][ss_->ply] == move) {
+        } else if (search_.killers[1][ss_->ply] == move) {
             killer_move_2_ = move;
             return KILLER_TWO_SCORE;
         } else if (getHistory<History::COUNTER>((ss_ - 1)->currentmove, NO_MOVE, search_) == move) {

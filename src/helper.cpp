@@ -88,12 +88,12 @@ Square poplsb(Bitboard &mask) {
 
 uint8_t squareDistance(Square a, Square b) {
     return std::max(std::abs(squareFile(a) - squareFile(b)),
-                    std::abs(square_rank(a) - square_rank(b)));
+                    std::abs(squareRank(a) - squareRank(b)));
 }
 
 uint8_t manhattenDistance(Square sq1, Square sq2) {
     return std::abs(squareFile(sq1) - squareFile(sq2)) +
-           std::abs(square_rank(sq1) - square_rank(sq2));
+           std::abs(squareRank(sq1) - squareRank(sq2));
 }
 
 bool getSquareColor(Square square) {
@@ -145,9 +145,9 @@ void printBitboard(Bitboard bb) {
 bool sameColor(int sq1, int sq2) { return ((9 * (sq1 ^ sq2)) & 8) == 0; }
 
 Square rookCastleSquare(Square to_sq, Square from_sq) {
-    return file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+    return fileRankSquare(to_sq > from_sq ? FILE_F : FILE_D, squareRank(from_sq));
 }
 
 Square kingCastleSquare(Square to_sq, Square from_sq) {
-    return file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+    return fileRankSquare(to_sq > from_sq ? FILE_G : FILE_C, squareRank(from_sq));
 }
