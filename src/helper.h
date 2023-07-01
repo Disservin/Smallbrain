@@ -13,34 +13,34 @@
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-constexpr File squareFile(Square sq) { return File(sq & 7); }
+[[nodiscard]] constexpr File squareFile(Square sq) { return File(sq & 7); }
 
 /// @brief  distance between two squares
 /// @param a
 /// @param b
 /// @return
-uint8_t squareDistance(Square a, Square b);
+[[nodiscard]] uint8_t squareDistance(Square a, Square b);
 
 namespace builtin {
 /// @brief least significant bit instruction
 /// @param mask
 /// @return the least significant bit as the Square
-Square lsb(Bitboard mask);
+[[nodiscard]] Square lsb(Bitboard mask);
 
 /// @brief most significant bit instruction
 /// @param mask
 /// @return the most significant bit as the Square
-Square msb(Bitboard mask);
+[[nodiscard]] Square msb(Bitboard mask);
 
 /// @brief Counts the set bits
 /// @param mask
 /// @return the count
-int popcount(Bitboard mask);
+[[nodiscard]] int popcount(Bitboard mask);
 
 /// @brief remove the lsb and return it
 /// @param mask
 /// @return the lsb
-Square poplsb(Bitboard &mask);
+[[nodiscard]] Square poplsb(Bitboard &mask);
 
 #if defined(__INTEL_COMPILER) || defined(_MSC_VER)
 template <int rw = 0>
@@ -63,22 +63,26 @@ void prefetch(const void *addr) {
 }  // namespace builtin
 
 // returns diagonal of given square
-constexpr uint8_t diagonalOf(Square sq) { return 7 + squareRank(sq) - squareFile(sq); }
+[[nodiscard]] constexpr uint8_t diagonalOf(Square sq) {
+    return 7 + squareRank(sq) - squareFile(sq);
+}
 
 // returns anti diagonal of given square
-constexpr uint8_t antiDiagonalOf(Square sq) { return squareRank(sq) + squareFile(sq); }
+[[nodiscard]] constexpr uint8_t antiDiagonalOf(Square sq) {
+    return squareRank(sq) + squareFile(sq);
+}
 
-uint8_t manhattenDistance(Square sq1, Square sq2);
+[[nodiscard]] uint8_t manhattenDistance(Square sq1, Square sq2);
 
 /// @brief get the color of the square
 /// @param square
 /// @return light = true
-bool getSquareColor(Square square);
+[[nodiscard]] bool getSquareColor(Square square);
 
 /// @brief get the piecetype of a piece
 /// @param piece
 /// @return the piecetype
-constexpr PieceType typeOfPiece(Piece piece) { return PieceToPieceType[piece]; }
+[[nodiscard]] constexpr PieceType typeOfPiece(Piece piece) { return PieceToPieceType[piece]; }
 
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];
@@ -100,7 +104,7 @@ Piece makePiece(PieceType type, Color c);
 /// @param bb
 void printBitboard(Bitboard bb);
 
-bool sameColor(int sq1, int sq2);
+[[nodiscard]] bool sameColor(int sq1, int sq2);
 
-Square rookCastleSquare(Square to_sq, Square from_sq);
-Square kingCastleSquare(Square to_sq, Square from_sq);
+[[nodiscard]] Square rookCastleSquare(Square to_sq, Square from_sq);
+[[nodiscard]] Square kingCastleSquare(Square to_sq, Square from_sq);

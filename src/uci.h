@@ -41,10 +41,10 @@ class Uci {
     bool use_tb_ = false;
 };
 
-Move uciToMove(const Board& board, const std::string& input);
-std::string moveToUci(Move move, bool chess960);
+[[nodiscard]] Move uciToMove(const Board& board, const std::string& input);
+[[nodiscard]] std::string moveToUci(Move move, bool chess960);
 
-std::string convertScore(int score);
+[[nodiscard]] std::string convertScore(int score);
 
 void output(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time,
             const std::string& pv, int hashfull);

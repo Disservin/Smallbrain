@@ -2,4 +2,4 @@
 
 #include "types.h"
 
-Time optimumTime(int64_t available_time, int inc, int movestogo);
+[[nodiscard]] Time optimumTime(int64_t available_time, int inc, int movestogo);

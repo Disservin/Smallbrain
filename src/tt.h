@@ -35,12 +35,12 @@ class TranspositionTable {
     /// @param tte
     /// @param tt_hit
     /// @param key Position hash
-    TEntry *probe(bool &tt_hit, Move &ttmove, U64 key);
+    [[nodiscard]] TEntry *probe(bool &tt_hit, Move &ttmove, U64 key);
 
     /// @brief calculates the TT index of key
     /// @param key
     /// @return
-    uint32_t index(U64 key) const;
+    [[nodiscard]] uint32_t index(U64 key) const;
 
     /// @brief allocate Transposition Table and initialize entries_
     void allocate(U64 size);

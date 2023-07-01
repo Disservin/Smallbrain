@@ -33,7 +33,7 @@ class MovePicker {
         }
     }
 
-    Move nextMove() {
+    [[nodiscard]] Move nextMove() {
         switch (pick_) {
             case Pick::TT:
                 pick_ = Pick::SCORE;
@@ -133,13 +133,13 @@ class MovePicker {
         return NO_MOVE;
     }
 
-    int mvvlva(Move move) const {
+    [[nodiscard]] int mvvlva(Move move) const {
         int attacker = search_.board.at<PieceType>(from(move)) + 1;
         int victim = search_.board.at<PieceType>(to(move)) + 1;
         return mvvlvaArray[victim][attacker];
     }
 
-    int scoreMove(const Move move) {
+    [[nodiscard]] int scoreMove(const Move move) {
         if constexpr (st == QSEARCH) {
             return CAPTURE_SCORE + mvvlva(move);
         }
