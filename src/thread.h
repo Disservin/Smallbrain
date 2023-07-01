@@ -43,6 +43,6 @@ class ThreadPool {
     std::atomic_bool stop;
 
    private:
-    std::vector<Thread> pool;
-    std::vector<std::thread> runningThreads;
+    std::vector<Thread> pool_;
+    std::vector<std::thread> running_threads_;
 };

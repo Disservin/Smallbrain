@@ -7,7 +7,7 @@ extern ThreadPool Threads;
 namespace bench {
 
 int startBench(int depth) {
-    U64 totalNodes = 0;
+    U64 total_nodes = 0;
 
     Limits limit;
     limit.depth = depth;
@@ -34,14 +34,14 @@ int startBench(int depth) {
 
         searcher->startThinking();
 
-        totalNodes += searcher->nodes;
+        total_nodes += searcher->nodes;
     }
 
     auto t2 = TimePoint::now();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
     std::cout << "\n"
-              << totalNodes << " nodes " << signed((totalNodes / (ms + 1)) * 1000) << " nps "
+              << total_nodes << " nodes " << signed((total_nodes / (ms + 1)) * 1000) << " nps "
               << std::endl;
 
     print_mean();

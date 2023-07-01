@@ -10,7 +10,7 @@
 struct Stack {
     int eval;
     Move currentmove;
-    Move excludedMove;
+    Move excluded_move;
     uint16_t ply;
 };
 

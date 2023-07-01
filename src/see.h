@@ -6,21 +6,21 @@ namespace see {
 
 inline Bitboard attackersForSide(const Board &board, Color attacker_color, Square sq,
                                  Bitboard occupied_bb) {
-    Bitboard attackingBishops = board.pieces(BISHOP, attacker_color);
-    Bitboard attackingRooks = board.pieces(ROOK, attacker_color);
-    Bitboard attackingQueens = board.pieces(QUEEN, attacker_color);
-    Bitboard attackingKnights = board.pieces(KNIGHT, attacker_color);
-    Bitboard attackingKing = board.pieces(KING, attacker_color);
-    Bitboard attackingPawns = board.pieces(PAWN, attacker_color);
+    Bitboard attacking_bishops = board.pieces(BISHOP, attacker_color);
+    Bitboard attacking_rooks = board.pieces(ROOK, attacker_color);
+    Bitboard attacking_queens = board.pieces(QUEEN, attacker_color);
+    Bitboard attacking_knights = board.pieces(KNIGHT, attacker_color);
+    Bitboard attacking_king = board.pieces(KING, attacker_color);
+    Bitboard attacking_pawns = board.pieces(PAWN, attacker_color);
 
-    Bitboard interCardinalRays = attacks::Bishop(sq, occupied_bb);
-    Bitboard cardinalRaysRays = attacks::Rook(sq, occupied_bb);
+    Bitboard inter_cardinal_rays = attacks::Bishop(sq, occupied_bb);
+    Bitboard cardinal_rays_rays = attacks::Rook(sq, occupied_bb);
 
-    Bitboard attackers = interCardinalRays & (attackingBishops | attackingQueens);
-    attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
-    attackers |= attacks::Knight(sq) & attackingKnights;
-    attackers |= attacks::King(sq) & attackingKing;
-    attackers |= attacks::Pawn(sq, ~attacker_color) & attackingPawns;
+    Bitboard attackers = inter_cardinal_rays & (attacking_bishops | attacking_queens);
+    attackers |= cardinal_rays_rays & (attacking_rooks | attacking_queens);
+    attackers |= attacks::Knight(sq) & attacking_knights;
+    attackers |= attacks::King(sq) & attacking_king;
+    attackers |= attacks::Pawn(sq, ~attacker_color) & attacking_pawns;
     return attackers;
 }
 
@@ -54,12 +54,12 @@ inline bool see(const Board &board, Move move, int threshold) {
 
     while (true) {
         attackers &= occ;
-        Bitboard myAttackers = attackers & board.us(sT);
-        if (!myAttackers) break;
+        Bitboard my_attackers = attackers & board.us(sT);
+        if (!my_attackers) break;
 
         int pt;
         for (pt = 0; pt <= 5; pt++) {
-            if (myAttackers &
+            if (my_attackers &
                 (board.pieces(static_cast<Piece>(pt)) | board.pieces(static_cast<Piece>(pt + 6))))
                 break;
         }
@@ -69,8 +69,8 @@ inline bool see(const Board &board, Move move, int threshold) {
             break;
         }
 
-        occ ^= (1ULL << (builtin::lsb(myAttackers & (board.pieces(static_cast<Piece>(pt)) |
-                                                     board.pieces(static_cast<Piece>(pt + 6))))));
+        occ ^= (1ULL << (builtin::lsb(my_attackers & (board.pieces(static_cast<Piece>(pt)) |
+                                                      board.pieces(static_cast<Piece>(pt + 6))))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
             attackers |= attacks::Bishop(to_sq, occ) & bishops;

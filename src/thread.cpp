@@ -7,7 +7,7 @@ void Thread::startThinking() { search->startThinking(); }
 U64 ThreadPool::getNodes() {
     U64 total = 0;
 
-    for (auto &th : pool) {
+    for (auto &th : pool_) {
         total += th.search->nodes;
     }
 
@@ -17,7 +17,7 @@ U64 ThreadPool::getNodes() {
 U64 ThreadPool::getTbHits() {
     U64 total = 0;
 
-    for (auto &th : pool) {
+    for (auto &th : pool_) {
         total += th.search->tbhits;
     }
 
@@ -26,15 +26,15 @@ U64 ThreadPool::getTbHits() {
 
 void ThreadPool::startThreads(const Board &board, const Limits &limit, const Movelist &searchmoves,
                                int worker_count, bool use_tb) {
-    assert(runningThreads.size() == 0);
+    assert(running_threads_.size() == 0);
 
     stop = false;
 
     Thread mainThread;
 
-    if (pool.size() > 0) mainThread = pool[0];
+    if (pool_.size() > 0) mainThread = pool_[0];
 
-    pool.clear();
+    pool_.clear();
 
     // update with info
     mainThread.search->id = 0;
@@ -46,7 +46,7 @@ void ThreadPool::startThreads(const Board &board, const Limits &limit, const Mov
     mainThread.search->spent_effort.reset();
     mainThread.search->searchmoves = searchmoves;
 
-    pool.emplace_back(mainThread);
+    pool_.emplace_back(mainThread);
 
     // start at index 1 to keep "mainthread" data alive
     mainThread.search->consthist.reset();
@@ -56,20 +56,20 @@ void ThreadPool::startThreads(const Board &board, const Limits &limit, const Mov
     for (int i = 1; i < worker_count; i++) {
         mainThread.search->id = i;
 
-        pool.emplace_back(mainThread);
+        pool_.emplace_back(mainThread);
     }
 
     for (int i = 0; i < worker_count; i++) {
-        runningThreads.emplace_back(&Thread::startThinking, std::ref(pool[i]));
+        running_threads_.emplace_back(&Thread::startThinking, std::ref(pool_[i]));
     }
 }
 
 void ThreadPool::stopThreads() {
     stop = true;
 
-    for (auto &th : runningThreads)
+    for (auto &th : running_threads_)
         if (th.joinable()) th.join();
 
-    pool.clear();
-    runningThreads.clear();
+    pool_.clear();
+    running_threads_.clear();
 }
