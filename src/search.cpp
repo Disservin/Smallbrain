@@ -95,10 +95,6 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      * Initialize various variables
      *******************/
     constexpr bool pv_node = node == PV;
-    const Color color = board.sideToMove();
-    const bool in_check = board.isAttacked(~color, board.kingSQ(color), board.all());
-
-    Move bestmove = NO_MOVE;
 
     assert(alpha >= -VALUE_INFINITE && alpha < beta && beta <= VALUE_INFINITE);
     assert(pv_node || (alpha == beta - 1));
@@ -110,7 +106,10 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      *******************/
     if (board.isRepetition(1 + pv_node)) return -1 + (nodes & 0x2);
 
+    const Color color = board.sideToMove();
+    const bool in_check = board.isAttacked(~color, board.kingSQ(color), board.all());
     const Result state = board.isDrawn(in_check);
+
     if (state != Result::NONE) return state == Result::LOST ? mated_in(ss->ply) : 0;
 
     /********************
@@ -122,8 +121,8 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     bool tt_hit = false;
 
     TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
-    Score tt_score =
-        tt_hit && tte->score != VALUE_NONE ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+    const Score tt_score = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+
     // clang-format off
     if (    tt_hit 
         &&  !pv_node 
@@ -150,7 +149,9 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     /********************
      * Search the moves
      *******************/
+    Move bestmove = NO_MOVE;
     Move move = NO_MOVE;
+
     while ((move = mp.nextMove()) != NO_MOVE) {
         PieceType captured = board.at<PieceType>(to(move));
 
@@ -197,10 +198,10 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      * store in the transposition table
      *******************/
 
-    Flag b = best_value >= beta ? LOWERBOUND : UPPERBOUND;
+    const Flag bound = best_value >= beta ? LOWERBOUND : UPPERBOUND;
 
     if (!Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(0, scoreToTT(best_value, ss->ply), b, board.hash(), bestmove);
+        TTable.store(0, scoreToTT(best_value, ss->ply), bound, board.hash(), bestmove);
 
     assert(best_value > -VALUE_INFINITE && best_value < VALUE_INFINITE);
     return best_value;
@@ -213,21 +214,16 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     /********************
      * Initialize various variables
      *******************/
-    constexpr bool root_node = node == ROOT;
-    constexpr bool pv_node = node != NONPV;
 
-    Color color = board.sideToMove();
-
-    Score best = -VALUE_INFINITE;
-    Score maxValue = VALUE_INFINITE;
-    Move excluded_move = ss->excluded_move;
-
+    const Color color = board.sideToMove();
     const bool in_check = board.isAttacked(~color, board.kingSQ(color), board.all());
-    bool improving;
 
     if (ss->ply >= MAX_PLY) return (ss->ply >= MAX_PLY && !in_check) ? eval::evaluation(board) : 0;
 
     pv_length_[ss->ply] = ss->ply;
+
+    constexpr bool root_node = node == ROOT;
+    constexpr bool pv_node = node != NONPV;
 
     /********************
      * Draw detection and mate pruning
@@ -271,7 +267,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     bool tt_hit = false;
 
     TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
-    Score tt_score = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+    const Score tt_score = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
+
+    const Move excluded_move = ss->excluded_move;
 
     /********************
      * Look up in the TT
@@ -296,10 +294,14 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
         if (alpha >= beta) return tt_score;
     }
 
+    Score max_value = VALUE_INFINITE;
+    Score best = -VALUE_INFINITE;
+
     /********************
      *  Tablebase probing
      *******************/
     Score tb_res = VALUE_NONE;
+
     if (!root_node && !silent && use_tb) tb_res = syzygy::probeWDL(board);
 
     if (tb_res != VALUE_NONE) {
@@ -332,13 +334,14 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
                 best = tb_res;
                 alpha = std::max(alpha, best);
             } else {
-                maxValue = tb_res;
+                max_value = tb_res;
             }
         }
     }
 
+    bool improving = false;
+
     if (in_check) {
-        improving = false;
         ss->eval = VALUE_NONE;
         goto moves;
     }
@@ -470,8 +473,8 @@ moves:
             &&  tte->depth >= depth - 3)
         {
             // clang-format on
-            int singular_beta = tt_score - 3 * depth;
-            int singular_depth = (depth - 1) / 2;
+            const int singular_beta = tt_score - 3 * depth;
+            const int singular_depth = (depth - 1) / 2;
 
             ss->excluded_move = move;
             int value = absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
@@ -483,7 +486,7 @@ moves:
                 return singular_beta;
         }
 
-        int newDepth = depth - 1 + extension;
+        const int newDepth = depth - 1 + extension;
 
         /********************
          * Print currmove information.
@@ -505,7 +508,7 @@ moves:
         nodes++;
         board.makeMove<true>(move);
 
-        U64 node_count = nodes;
+        const U64 node_count = nodes;
         ss->currentmove = move;
 
         /********************
@@ -594,14 +597,15 @@ moves:
      *******************/
     if (made_moves == 0) best = excluded_move ? alpha : in_check ? mated_in(ss->ply) : 0;
 
-    if (pv_node) best = std::min(best, maxValue);
+    if (pv_node) best = std::min(best, max_value);
 
     /********************
      * Store an TEntry in the Transposition Table.
      *******************/
 
     // Transposition table flag
-    Flag b = best >= beta ? LOWERBOUND : (pv_node && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
+    const Flag b =
+        best >= beta ? LOWERBOUND : (pv_node && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excluded_move && !Threads.stop.load(std::memory_order_relaxed))
         TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash(), bestmove);
@@ -692,7 +696,7 @@ std::pair<Move, Score> Search::iterativeDeepening() {
     for (depth = 1; depth <= limit.depth; depth++) {
         seldepth_ = 0;
 
-        auto previousResult = result;
+        const auto previousResult = result;
         result = aspirationSearch(depth, result, ss);
         eval_average += result;
 
@@ -781,7 +785,7 @@ void Search::startThinking() {
      * Play dtz move when time is limited
      *******************/
     if (id == 0 && limit.time.optimum != 0 && use_tb) {
-        Move dtz_move = syzygy::probeDTZ(board);
+        const Move dtz_move = syzygy::probeDTZ(board);
         if (dtz_move != NO_MOVE) {
             std::cout << "bestmove " << uci::moveToUci(dtz_move, board.chess960) << std::endl;
             Threads.stop = true;
