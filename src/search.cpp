@@ -392,10 +392,12 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
         // clang-format on
         int R = 5 + std::min(4, depth / 5) + std::min(3, (ss->eval - beta) / 214);
 
-        board.makeNullMove();
         (ss)->currentmove = NULL_MOVE;
+
+        board.makeNullMove();
         Score score = -absearch<NONPV>(depth - R, -beta, -beta + 1, ss + 1);
         board.unmakeNullMove();
+
         if (score >= beta) {
             // dont return mate scores
             if (score >= VALUE_TB_WIN_IN_MAX_PLY) score = beta;
@@ -440,7 +442,7 @@ moves:
             {
                 // SEE pruning
                 if (    depth < 6 
-                    &&  !see::see(board,move, -(depth * 92)))
+                    &&  !see::see(board, move, -(depth * 92)))
                     continue;
             }
             else
@@ -455,7 +457,7 @@ moves:
                     continue;
                 // SEE pruning
                 if (    depth < 7 
-                    &&  !see::see(board,move, -(depth * 93)))
+                    &&  !see::see(board, move, -(depth * 93)))
                     continue;
             }
             // clang-format on
@@ -619,8 +621,6 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss) {
     Score beta = VALUE_INFINITE;
     int delta = 30;
 
-    Score result = 0;
-
     /********************
      * We search moves after depth 9 with an aspiration Window.
      * A small window around the previous evaluation enables us
@@ -633,6 +633,7 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss) {
         beta = prev_eval + delta;
     }
 
+    Score result = 0;
     while (true) {
         if (alpha < -3500) alpha = -VALUE_INFINITE;
         if (beta > 3500) beta = VALUE_INFINITE;
@@ -667,12 +668,8 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss) {
     return result;
 }
 
-std::pair<Move, Score> Search::iterativeDeepening() {
-    Move bestmove = NO_MOVE;
-    std::pair<Move, Score> sr;
-
-    Score result = -VALUE_INFINITE;
-    int depth = 1;
+SearchResult Search::iterativeDeepening() {
+    SearchResult search_result;
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
 
@@ -683,9 +680,6 @@ std::pair<Move, Score> Search::iterativeDeepening() {
         (ss + i)->excluded_move = NO_MOVE;
     }
 
-    int bestmove_changes = 0;
-    int eval_average = 0;
-
     pv_table_.reset();
     pv_length_.reset();
     node_effort.reset();
@@ -693,37 +687,43 @@ std::pair<Move, Score> Search::iterativeDeepening() {
     /********************
      * Iterative Deepening Loop.
      *******************/
-    for (depth = 1; depth <= limit.depth; depth++) {
+    int bestmove_changes = 0;
+    int eval_average = 0;
+
+    int depth = 1;
+    for (; depth <= limit.depth; depth++) {
         seldepth_ = 0;
 
-        const auto previousResult = result;
-        result = aspirationSearch(depth, result, ss);
-        eval_average += result;
+        const auto previousResult = search_result.score;
+        search_result.score = aspirationSearch(depth, search_result.score, ss);
 
         if (limitReached()) break;
 
         // only mainthread manages time control
         if (id != 0) continue;
 
-        sr.second = result;
+        eval_average += search_result.score;
 
-        if (bestmove != pv_table_[0][0]) bestmove_changes++;
+        if (search_result.bestmove != pv_table_[0][0]) bestmove_changes++;
 
-        bestmove = pv_table_[0][0];
+        search_result.bestmove = pv_table_[0][0];
 
         // limit type time
         if (limit.time.optimum != 0) {
             auto now = getTime();
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
-            int effort = (node_effort[from(bestmove)][to(bestmove)] * 100) / nodes;
+            int effort =
+                (node_effort[from(search_result.bestmove)][to(search_result.bestmove)] * 100) /
+                nodes;
             if (depth > 10 && limit.time.optimum * (110 - std::min(effort, 90)) / 100 < now) break;
 
             // increase optimum time if score is increasing
-            if (result + 30 < eval_average / depth) limit.time.optimum *= 1.10;
+            if (search_result.score + 30 < eval_average / depth) limit.time.optimum *= 1.10;
 
             // increase optimum time if score is dropping
-            if (result > -200 && result - previousResult < -20) limit.time.optimum *= 1.10;
+            if (search_result.score > -200 && search_result.score - previousResult < -20)
+                limit.time.optimum *= 1.10;
 
             // increase optimum time if bestmove fluctates
             if (bestmove_changes > 4) limit.time.optimum = limit.time.maximum * 0.75;
@@ -743,21 +743,21 @@ std::pair<Move, Score> Search::iterativeDeepening() {
     /********************
      * In case the depth was 1 make sure we have at least a bestmove.
      *******************/
-    if (depth == 1) bestmove = pv_table_[0][0];
+    if (depth == 1) search_result.bestmove = pv_table_[0][0];
 
     /********************
      * Mainthread prints bestmove.
      * Allowprint is disabled in data generation
      *******************/
     if (id == 0 && !silent) {
-        std::cout << "bestmove " << uci::moveToUci(bestmove, board.chess960) << std::endl;
+        std::cout << "bestmove " << uci::moveToUci(search_result.bestmove, board.chess960)
+                  << std::endl;
         Threads.stop = true;
     }
 
     print_mean();
 
-    sr.first = bestmove;
-    return sr;
+    return search_result;
 }
 
 void Search::reset() {

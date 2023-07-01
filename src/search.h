@@ -14,6 +14,11 @@ struct Stack {
     uint16_t ply;
 };
 
+struct SearchResult {
+    Move bestmove = NO_MOVE;
+    Score score = -VALUE_INFINITE;
+};
+
 enum class History { HH, COUNTER, CONST };
 
 class Search {
@@ -21,7 +26,7 @@ class Search {
     void startThinking();
 
     // data generation entry function
-    std::pair<Move, Score> iterativeDeepening();
+    SearchResult iterativeDeepening();
 
     void reset();
 

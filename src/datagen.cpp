@@ -153,17 +153,17 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         const auto result = search->iterativeDeepening();
 
         // CATCH BUGS
-        if (result.second == VALUE_NONE) {
+        if (result.score == VALUE_NONE) {
             std::cout << search->board << std::endl;
             exit(1);
         }
 
-        const bool capture = search->board.at(to(result.first)) != NONE;
+        const bool capture = search->board.at(to(result.bestmove)) != NONE;
 
-        sfens.score = search->board.sideToMove() == WHITE ? result.second : -result.second;
-        sfens.move = result.first;
+        sfens.score = search->board.sideToMove() == WHITE ? result.score : -result.score;
+        sfens.move = result.bestmove;
 
-        const Score absScore = std::abs(result.second);
+        const Score absScore = std::abs(result.score);
 
         if (absScore >= 2000) {
             winCount++;
@@ -178,7 +178,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY) {
             winningSide =
-                result.second > 0 ? search->board.sideToMove() : ~search->board.sideToMove();
+                result.score > 0 ? search->board.sideToMove() : ~search->board.sideToMove();
             break;
         } else if (drawCount >= 12) {
             winningSide = NO_COLOR;
@@ -195,7 +195,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             break;
 
         ply++;
-        search->board.makeMove<true>(result.first);
+        search->board.makeMove<true>(result.bestmove);
     }
 
     Bitboard white = search->board.us<WHITE>();
