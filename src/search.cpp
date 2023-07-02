@@ -689,6 +689,8 @@ SearchResult Search::iterativeDeepening() {
      * Allowprint is disabled in data generation
      *******************/
     if (id == 0 && !silent) {
+        uci::output(search_result.score, depth, seldepth_, Threads.getNodes(), Threads.getTbHits(),
+                    getTime(), getPV(), TTable.hashfull());
         std::cout << "bestmove " << uci::moveToUci(search_result.bestmove, board.chess960)
                   << std::endl;
         Threads.stop = true;
