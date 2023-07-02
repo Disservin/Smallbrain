@@ -4,6 +4,7 @@
 #include "search.h"
 #include "types/constants.h"
 #include "see.h"
+#include "history.h"
 
 enum SearchType { QSEARCH, ABSEARCH };
 

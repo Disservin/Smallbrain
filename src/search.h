@@ -19,8 +19,6 @@ struct SearchResult {
     Score score = -VALUE_INFINITE;
 };
 
-enum class History { HH, COUNTER, CONST };
-
 class Search {
    public:
     void startThinking();
@@ -68,17 +66,6 @@ class Search {
     bool use_tb = false;
 
    private:
-    // update history for one move
-    template <History type>
-    void updateHistoryBonus(Move move, Move secondmove, int bonus);
-
-    // update history a movelist
-    template <History type>
-    void updateHistory(Move bestmove, int bonus, int depth, Move *moves, int move_count, Stack *ss);
-
-    // update all histories + other move ordering
-    void updateAllHistories(Move bestmove, int depth, Move *quiets, int quiet_count, Stack *ss);
-
     // main search functions
 
     template <Node node>
@@ -108,21 +95,6 @@ class Search {
     // selective depth
     uint8_t seldepth_ = 0;
 };
-
-/// @brief return the history of the move
-/// @tparam type
-/// @param move
-/// @return
-template <History type>
-[[nodiscard]] int getHistory(Move move, Move secondmove, const Search &search) {
-    if constexpr (type == History::HH)
-        return search.history[search.board.sideToMove()][from(move)][to(move)];
-    else if constexpr (type == History::COUNTER)
-        return search.counters[from(move)][to(move)];
-    else if constexpr (type == History::CONST)
-        return search.consthist[search.board.at(from(secondmove))][to(secondmove)]
-                               [search.board.at(from(move))][to(move)];
-}
 
 // fill reductions array
 void init_reductions();
