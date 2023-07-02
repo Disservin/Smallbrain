@@ -787,6 +787,7 @@ void Search::startThinking() {
     if (id == 0 && limit.time.optimum != 0 && use_tb) {
         const Move dtz_move = syzygy::probeDTZ(board);
         if (dtz_move != NO_MOVE) {
+            uci::output(15000, 1, 1, 1, 1, 0, " " + uci::moveToUci(dtz_move, board.chess960), 0);
             std::cout << "bestmove " << uci::moveToUci(dtz_move, board.chess960) << std::endl;
             Threads.stop = true;
             return;

@@ -56,21 +56,6 @@ Move probeDTZ(const Board& board) {
         TBresult == TB_RESULT_STALEMATE)
         return NO_MOVE;
 
-    int dtz = TB_GET_DTZ(TBresult);
-    int wdl = TB_GET_WDL(TBresult);
-
-    Score s = 0;
-
-    if (wdl == TB_LOSS) {
-        s = VALUE_TB_LOSS_IN_MAX_PLY;
-    }
-    if (wdl == TB_WIN) {
-        s = VALUE_TB_WIN_IN_MAX_PLY;
-    }
-    if (wdl == TB_BLESSED_LOSS || wdl == TB_DRAW || wdl == TB_CURSED_WIN) {
-        s = 0;
-    }
-
     // 1 - queen, 2 - rook, 3 - bishop, 4 - knight.
     int promo = TB_GET_PROMOTES(TBresult);
     PieceType promoTranslation[] = {NONETYPE, QUEEN, ROOK, BISHOP, KNIGHT, NONETYPE};
@@ -88,8 +73,6 @@ Move probeDTZ(const Board& board) {
             if ((promoTranslation[promo] == NONETYPE && typeOf(move) != PROMOTION) ||
                 (promo < 5 && promoTranslation[promo] == promotionType(move) &&
                  typeOf(move) == PROMOTION)) {
-                uci::output(s, static_cast<int>(dtz), 1, 1, 1, 0,
-                            " " + uci::moveToUci(move, board.chess960), 0);
                 return move;
             }
         }
