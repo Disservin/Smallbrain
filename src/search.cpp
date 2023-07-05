@@ -6,10 +6,10 @@
 #include "evaluation.h"
 #include "movepick.h"
 #include "search.h"
+#include "see.h"
 #include "thread.h"
 #include "tt.h"
 #include "uci.h"
-#include "see.h"
 
 extern ThreadPool Threads;
 extern TranspositionTable TTable;
@@ -623,6 +623,8 @@ SearchResult Search::iterativeDeepening() {
     pv_length_.reset();
     node_effort.reset();
 
+    auto lastPv = getPV();
+
     /********************
      * Iterative Deepening Loop.
      *******************/
@@ -640,6 +642,8 @@ SearchResult Search::iterativeDeepening() {
 
         // only mainthread manages time control
         if (id != 0) continue;
+
+        lastPv = getPV();
 
         eval_average += search_result.score;
 
@@ -692,7 +696,7 @@ SearchResult Search::iterativeDeepening() {
         uci::output(
             search_result.score, depth, seldepth_, Threads.getNodes(), Threads.getTbHits(),
             getTime(),
-            getPV().empty() ? uci::moveToUci(search_result.bestmove, board.chess960) : getPV(),
+            lastPv.empty() ? uci::moveToUci(search_result.bestmove, board.chess960) : lastPv,
             TTable.hashfull());
         std::cout << "bestmove " << uci::moveToUci(search_result.bestmove, board.chess960)
                   << std::endl;
