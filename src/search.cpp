@@ -671,6 +671,11 @@ SearchResult Search::iterativeDeepening() {
             // increase optimum time if bestmove fluctates
             if (bestmove_changes > 4) limit.time.optimum = limit.time.maximum * 0.75;
 
+            limit.time.optimum *=
+                -0.0000016 *
+                    std::pow((uci::modelWinRate(search_result.score, board.ply()) - 500), 2.0) +
+                1.2;
+
             // stop if we have searched for more than 75% of our max time.
             if (depth > 10 && now * 10 > limit.time.maximum * 6) break;
         }
