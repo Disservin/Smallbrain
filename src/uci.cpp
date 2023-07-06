@@ -273,7 +273,6 @@ std::string convertScore(int score) {
         return "cp " + std::to_string(score * 100 / NormalizeToPawnValue);
 }
 
-// https://github.com/official-stockfish/Stockfish/blob/master/src/uci.cpp#L202
 int modelWinRate(int v, int ply) {
     double m = std::min(240, ply) / 64.0;
 

@@ -41,6 +41,11 @@ class Uci {
     bool use_tb_ = false;
 };
 
+/// @brief https://github.com/official-stockfish/Stockfish/blob/master/src/uci.cpp#L202
+/// [0, 1000]
+/// @param v
+/// @param ply
+/// @return
 [[nodiscard]] int modelWinRate(int v, int ply);
 
 [[nodiscard]] Move uciToMove(const Board& board, const std::string& input);
