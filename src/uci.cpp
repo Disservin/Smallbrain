@@ -1,27 +1,33 @@
 #include "uci.h"
 
+#include <cmath>
+
 #include "syzygy/Fathom/src/tbprobe.h"
 
 #include "cli.h"
+#include "evaluation.h"
+#include "perft.h"
 #include "str_utils.h"
 #include "thread.h"
 #include "tt.h"
-#include "evaluation.h"
-#include "perft.h"
 
 extern TranspositionTable TTable;
 extern ThreadPool Threads;
 
 namespace uci {
+
+uci::Options options;
+
 Uci::Uci() {
-    options_ = uci::Options();
+    options = uci::Options();
     board_ = Board();
 
-    options_.add(uci::Option{"Hash", "spin", "16", "16", "1", "60129"});
-    options_.add(uci::Option{"Threads", "spin", "1", "1", "1", "256"});
-    options_.add(uci::Option{"EvalFile", "string", "", "", "", ""});
-    options_.add(uci::Option{"SyzygyPath", "string", "", "", "", ""});
-    options_.add(uci::Option{"UCI_Chess960", "check", "false", "false", "", ""});
+    options.add(uci::Option{"Hash", "spin", "16", "16", "1", "60129"});
+    options.add(uci::Option{"Threads", "spin", "1", "1", "1", "256"});
+    options.add(uci::Option{"EvalFile", "string", "", "", "", ""});
+    options.add(uci::Option{"SyzygyPath", "string", "", "", "", ""});
+    options.add(uci::Option{"UCI_Chess960", "check", "false", "false", "", ""});
+    options.add(uci::Option{"UCI_ShowWDL", "check", "false", "false", "", ""});
 }
 
 void Uci::uciLoop() {
@@ -82,18 +88,18 @@ void Uci::processLine(const std::string& line) {
 void Uci::uci() {
     std::cout << "id name " << ArgumentsParser::getVersion() << std::endl;
     std::cout << "id author Disservin\n" << std::endl;
-    options_.print();
+    options.print();
     std::cout << "uciok" << std::endl;
     applyOptions();
 }
 
 void Uci::setOption(const std::string& line) {
-    options_.set(line);
+    options.set(line);
     applyOptions();
 }
 
 void Uci::applyOptions() {
-    const auto path = options_.get<std::string>("SyzygyPath");
+    const auto path = options.get<std::string>("SyzygyPath");
 
     if (!path.empty()) {
         if (tb_init(path.c_str())) {
@@ -104,17 +110,17 @@ void Uci::applyOptions() {
         }
     }
 
-    const auto eval_file = options_.get<std::string>("EvalFile");
+    const auto eval_file = options.get<std::string>("EvalFile");
 
     if (!eval_file.empty()) {
         std::cout << "info string EvalFile " << eval_file << std::endl;
         nnue::init(eval_file.c_str());
     }
 
-    worker_threads_ = options_.get<int>("Threads");
-    board_.chess960 = options_.get<bool>("UCI_Chess960");
+    worker_threads_ = options.get<int>("Threads");
+    board_.chess960 = options.get<bool>("UCI_Chess960");
 
-    TTable.allocateMB(options_.get<int>("Hash"));
+    TTable.allocateMB(options.get<int>("Hash"));
 }
 
 void Uci::isReady() { std::cout << "readyok" << std::endl; }
@@ -255,6 +261,7 @@ std::string moveToUci(Move move, bool chess960) {
 }
 
 std::string convertScore(int score) {
+    constexpr int NormalizeToPawnValue = 68;
     if (std::abs(score) <= 4) score = 0;
 
     if (score >= VALUE_MATE_IN_PLY)
@@ -262,18 +269,49 @@ std::string convertScore(int score) {
     else if (score <= VALUE_MATED_IN_PLY)
         return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
     else
-        return "cp " + std::to_string(score);
+        return "cp " + std::to_string(score * 100 / NormalizeToPawnValue);
 }
 
-void output(int score, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time,
+// https://github.com/official-stockfish/Stockfish/blob/master/src/uci.cpp#L202
+int modelWinRate(int v, int ply) {
+    double m = std::min(240, ply) / 64.0;
+
+    constexpr double as[] = {3.71647025, -14.29945046, 13.44567708, 65.94957578};
+    constexpr double bs[] = {0.51179363, 1.72771561, -4.62094219, 53.38697251};
+
+    double a = (((as[0] * m + as[1]) * m + as[2]) * m) + as[3];
+    double b = (((bs[0] * m + bs[1]) * m + bs[2]) * m) + bs[3];
+
+    double x = std::clamp(double(v), -4000.0, 4000.0);
+
+    return int(0.5 + 1000 / (1 + std::exp((a - x) / b)));
+}
+
+std::string wdl(int v, int ply) {
+    std::stringstream ss;
+
+    int wdl_w = modelWinRate(v, ply);
+    int wdl_l = modelWinRate(-v, ply);
+    int wdl_d = 1000 - wdl_w - wdl_l;
+    ss << " wdl " << wdl_w << " " << wdl_d << " " << wdl_l;
+
+    return ss.str();
+}
+
+void output(int score, int ply, int depth, uint8_t seldepth, U64 nodes, U64 tbHits, int time,
             const std::string& pv, int hashfull) {
     std::stringstream ss;
 
     // clang-format off
     ss  << "info depth " << signed(depth) 
         << " seldepth "  << signed(seldepth) 
-        << " score "     << convertScore(score)
-        << " tbhits "    << tbHits 
+        << " score "     << convertScore(score);
+
+    if (options.get<bool>("UCI_ShowWDL")) {
+        ss << " wdl " << wdl(score, ply);
+    }
+
+    ss  << " tbhits "    << tbHits 
         << " nodes "     << nodes 
         << " nps "       << signed((nodes / (time + 1)) * 1000)
         << " hashfull "  << hashfull

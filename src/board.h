@@ -4,8 +4,8 @@
 
 #include <array>
 #include <iostream>
-#include <string>
 #include <memory>
+#include <string>
 #include <type_traits>
 
 #include "types/accumulators.h"
@@ -32,6 +32,7 @@ class Board {
     [[nodiscard]] U64 hash() const { return hash_key_; }
     [[nodiscard]] std::string getCastleString() const;
     [[nodiscard]] uint8_t halfmoves() const { return half_move_clock_; }
+    [[nodiscard]] int ply() const { return full_move_number_ * 2; }
     [[nodiscard]] Color sideToMove() const { return side_to_move_; }
     [[nodiscard]] Square enPassant() const { return en_passant_square_; }
     [[nodiscard]] const CastlingRights &castlingRights() const { return castling_rights_; }

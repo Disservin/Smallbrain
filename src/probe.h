@@ -1,7 +1,8 @@
 #pragma once
 
-#include "types.h"
 #include "board.h"
+#include "types.h"
+
 
 namespace syzygy {
 /// @brief check TB WDL during search
@@ -11,5 +12,5 @@ namespace syzygy {
 
 /// @brief check DTZ at root node
 /// @return return DTZ Move
-[[nodiscard]] Move probeDTZ(const Board& board);
+[[nodiscard]] std::pair<int, Move> probeDTZ(const Board& board);
 }  // namespace syzygy

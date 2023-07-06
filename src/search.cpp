@@ -600,8 +600,8 @@ Score Search::aspirationSearch(int depth, Score prev_eval, Stack *ss) {
     }
 
     if (id == 0 && !silent) {
-        uci::output(result, depth, seldepth_, Threads.getNodes(), Threads.getTbHits(), getTime(),
-                    getPV(), TTable.hashfull());
+        uci::output(result, board.ply(), depth, seldepth_, Threads.getNodes(), Threads.getTbHits(),
+                    getTime(), getPV(), TTable.hashfull());
     }
 
     return result;
@@ -694,8 +694,8 @@ SearchResult Search::iterativeDeepening() {
      *******************/
     if (id == 0 && !silent) {
         uci::output(
-            search_result.score, depth, seldepth_, Threads.getNodes(), Threads.getTbHits(),
-            getTime(),
+            search_result.score, board.ply(), depth, seldepth_, Threads.getNodes(),
+            Threads.getTbHits(), getTime(),
             lastPv.empty() ? uci::moveToUci(search_result.bestmove, board.chess960) : lastPv,
             TTable.hashfull());
         std::cout << "bestmove " << uci::moveToUci(search_result.bestmove, board.chess960)
@@ -733,10 +733,11 @@ void Search::startThinking() {
      * Play dtz move when time is limited
      *******************/
     if (id == 0 && limit.time.optimum != 0 && use_tb) {
-        const Move dtz_move = syzygy::probeDTZ(board);
-        if (dtz_move != NO_MOVE) {
-            uci::output(15000, 1, 1, 1, 1, 0, " " + uci::moveToUci(dtz_move, board.chess960), 0);
-            std::cout << "bestmove " << uci::moveToUci(dtz_move, board.chess960) << std::endl;
+        const auto dtz = syzygy::probeDTZ(board);
+        if (dtz.second != NO_MOVE) {
+            uci::output(dtz.first, 1, 1, 1, 1, 1, 0,
+                        " " + uci::moveToUci(dtz.second, board.chess960), 0);
+            std::cout << "bestmove " << uci::moveToUci(dtz.second, board.chess960) << std::endl;
             Threads.stop = true;
             return;
         }

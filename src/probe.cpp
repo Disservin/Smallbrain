@@ -34,10 +34,10 @@ Score probeWDL(const Board& board) {
     return VALUE_NONE;
 }
 
-Move probeDTZ(const Board& board) {
+std::pair<int, Move> probeDTZ(const Board& board) {
     Bitboard white = board.us<WHITE>();
     Bitboard black = board.us<BLACK>();
-    if (builtin::popcount(white | black) > (signed)TB_LARGEST) return NO_MOVE;
+    if (builtin::popcount(white | black) > (signed)TB_LARGEST) return {TB_RESULT_FAILED, NO_MOVE};
 
     Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
 
@@ -54,7 +54,21 @@ Move probeDTZ(const Board& board) {
 
     if (TBresult == TB_RESULT_FAILED || TBresult == TB_RESULT_CHECKMATE ||
         TBresult == TB_RESULT_STALEMATE)
-        return NO_MOVE;
+        return {TB_RESULT_FAILED, NO_MOVE};
+
+    int wdl = TB_GET_WDL(TBresult);
+
+    Score s = 0;
+
+    if (wdl == TB_LOSS) {
+        s = VALUE_TB_LOSS_IN_MAX_PLY;
+    }
+    if (wdl == TB_WIN) {
+        s = VALUE_TB_WIN_IN_MAX_PLY;
+    }
+    if (wdl == TB_BLESSED_LOSS || wdl == TB_DRAW || wdl == TB_CURSED_WIN) {
+        s = 0;
+    }
 
     // 1 - queen, 2 - rook, 3 - bishop, 4 - knight.
     int promo = TB_GET_PROMOTES(TBresult);
@@ -73,7 +87,7 @@ Move probeDTZ(const Board& board) {
             if ((promoTranslation[promo] == NONETYPE && typeOf(move) != PROMOTION) ||
                 (promo < 5 && promoTranslation[promo] == promotionType(move) &&
                  typeOf(move) == PROMOTION)) {
-                return move;
+                return {s, move};
             }
         }
     }
@@ -82,6 +96,6 @@ Move probeDTZ(const Board& board) {
               << " : " << std::endl;
     std::exit(0);
 
-    return NO_MOVE;
+    return {s, NO_MOVE};
 }
 }  // namespace syzygy
