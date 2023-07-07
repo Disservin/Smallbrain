@@ -672,7 +672,7 @@ SearchResult Search::iterativeDeepening() {
             if (bestmove_changes > 4) limit.time.optimum = limit.time.maximum * 0.75;
 
             limit.time.optimum *=
-                -0.0000008 *
+                -0.0000004 *
                     std::pow((uci::modelWinRate(search_result.score, board.ply()) - 500), 2.0) +
                 1.1;
 
