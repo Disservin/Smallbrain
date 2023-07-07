@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
 #include <string>
 #include <unordered_map>
-#include <iostream>
+
 
 #include "types.h"
 
@@ -74,7 +75,7 @@ class Options {
     void set(const std::string& name, const std::string& value) {
         if (options_.find(name) == options_.end()) {
             std::cout << ("Unrecognized option: " + name);
-            std::exit(1);
+            return;
         }
 
         if (options_[name].type == "check") {
