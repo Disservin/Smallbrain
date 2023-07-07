@@ -159,8 +159,7 @@ class Generate : public Argument {
             }
         });
 
-        int ttsize = hash_ * 1024 * 1024 / sizeof(TEntry);  // 16 MiB
-        TTable.allocate(ttsize * workers_);
+        TTable.allocateMB(hash_ * workers_);
 
         datagen_.generate(workers_, book_path_, depth_, nodes_, use_tb_);
 
@@ -185,7 +184,7 @@ class Generate : public Argument {
     std::string book_path_ = "";
     std::string tb_path_ = "";
     int workers_ = 1;
-    int depth_ = 7;
+    int depth_ = 9;
     int nodes_ = 0;
     int hash_ = 16;
     bool use_tb_ = false;
