@@ -802,6 +802,7 @@ bool Search::limitReached() {
             return true;
         }
     }
+
     return false;
 }
 

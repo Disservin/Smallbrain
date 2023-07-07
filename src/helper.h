@@ -35,7 +35,7 @@ namespace builtin {
 /// @brief Counts the set bits
 /// @param mask
 /// @return the count
-[[nodiscard]] int popcount(Bitboard mask);
+[[nodiscard]] unsigned popcount(Bitboard mask);
 
 /// @brief remove the lsb and return it
 /// @param mask
