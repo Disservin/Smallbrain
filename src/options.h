@@ -5,7 +5,6 @@
 #include <string>
 #include <unordered_map>
 
-
 #include "types.h"
 
 #include "str_utils.h"
@@ -74,7 +73,7 @@ class Options {
    private:
     void set(const std::string& name, const std::string& value) {
         if (options_.find(name) == options_.end()) {
-            std::cout << ("Unrecognized option: " + name);
+            std::cout << ("Unrecognized option: " + name) << std::endl;
             return;
         }
 
