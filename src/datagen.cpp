@@ -1,7 +1,7 @@
 #include <fstream>
 
-#include "rand.h"
 #include "datagen.h"
+#include "rand.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 
 namespace datagen {
@@ -38,7 +38,6 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool use_tb)
     file.open(filename, std::ios::app);
 
     std::unique_ptr<Search> search = std::make_unique<Search>();
-    Board board = Board();
     Movelist movelist;
 
     Time t;
@@ -56,7 +55,6 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool use_tb)
     auto t1 = TimePoint::now();
 
     while (!stop_) {
-        board.clearStacks();
         search->reset();
 
         search->silent = true;
@@ -66,9 +64,7 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool use_tb)
 
         movelist.size = 0;
 
-        board.setFen(DEFAULT_POS, false);
-
-        randomPlayout(file, board, movelist, search, use_tb);
+        randomPlayout(file, movelist, search, use_tb);
         games++;
 
         if (threadId == 0 && games % 100 == 0) {
@@ -82,13 +78,10 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool use_tb)
     file.close();
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &movelist,
-                                 std::unique_ptr<Search> &search, bool use_tb) {
-    std::vector<fenData> fens;
-    fens.reserve(40);
+Board TrainingData::randomStart() {
+    constexpr int randomMoves = 10;
 
-    int ply = 0;
-    int randomMoves = 10;
+    Board board;
 
     if (opening_book_.size() != 0) {
         std::uniform_int_distribution<> maxLines{0, int(opening_book_.size() - 1)};
@@ -98,15 +91,23 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         board.setFen(opening_book_[randLine], false);
     }
 
-    board.setFen(DEFAULT_POS, true);
+    board.setFen(DEFAULT_POS, false);
 
-    while (ply < randomMoves) {
+    Movelist movelist;
+
+    int ply = 0;
+
+    while (ply++ < randomMoves) {
         movelist.size = 0;
         board.clearStacks();
 
         movegen::legalmoves<Movetype::ALL>(board, movelist);
 
-        if (movelist.size == 0) return;
+        if (movelist.size == 0) {
+            ply = 0;
+            board.setFen(DEFAULT_POS, false);
+            continue;
+        }
 
         std::uniform_int_distribution<> randomNum{0, int(movelist.size - 1)};
 
@@ -114,12 +115,19 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
 
         Move move = movelist[index].move;
         board.makeMove<false>(move);
-        ply++;
     }
 
-    board.refreshNNUE();
-    board.clearHash();
-    search->board = board;
+    return board;
+}
+
+void TrainingData::randomPlayout(std::ofstream &file, Movelist &movelist,
+                                 std::unique_ptr<Search> &search, bool use_tb) {
+    std::vector<fenData> fens;
+    fens.reserve(40);
+
+    int ply = 10;
+
+    search->board = randomStart();
 
     fenData sfens;
     int drawCount = 0;

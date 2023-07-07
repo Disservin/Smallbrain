@@ -43,14 +43,16 @@ class TrainingData {
     /// @param depth
     void infinitePlay(int threadId, int depth, int nodes, bool use_tb);
 
+    Board randomStart();
+
     /// @brief starts one selfplay game
     /// @param file
     /// @param depth
     /// @param board
     /// @param Movelist
     /// @param search
-    void randomPlayout(std::ofstream &file, Board &board, Movelist &movelist,
-                       std::unique_ptr<Search> &search, bool use_tb);
+    void randomPlayout(std::ofstream &file, Movelist &movelist, std::unique_ptr<Search> &search,
+                       bool use_tb);
 
     std::vector<std::thread> threads;
 };
