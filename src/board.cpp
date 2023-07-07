@@ -1,7 +1,7 @@
 #include "board.h"
 #include "movegen.h"
-#include "zobrist.h"
 #include "str_utils.h"
+#include "zobrist.h"
 
 Board::Board(std::string fen) {
     state_history_.reserve(MAX_PLY);
@@ -20,52 +20,62 @@ Board::Board(std::string fen) {
 
 Board::Board(const Board &other) {
     chess960 = other.chess960;
-    en_passant_square_ = other.en_passant_square_;
-    castling_rights_ = other.castling_rights_;
-    half_move_clock_ = other.half_move_clock_;
-    full_move_number_ = other.full_move_number_;
-
-    side_to_move_ = other.side_to_move_;
-
-    hash_history_ = other.hash_history_;
-
-    hash_key_ = other.hash_key_;
-
-    state_history_ = other.state_history_;
-
-    std::copy(std::begin(other.board_), std::end(other.board_), std::begin(board_));
-
-    pieces_bb_ = other.pieces_bb_;
 
     if (other.accumulators_) {
         accumulators_ = std::make_unique<Accumulators>(*other.accumulators_);
     }
+
+    state_history_ = other.state_history_;
+
+    hash_history_ = other.hash_history_;
+
+    pieces_bb_ = other.pieces_bb_;
+    board_ = other.board_;
+
+    occupancy_bb_ = other.occupancy_bb_;
+
+    hash_key_ = other.hash_key_;
+
+    castling_rights_ = other.castling_rights_;
+
+    full_move_number_ = other.full_move_number_;
+
+    half_move_clock_ = other.half_move_clock_;
+
+    side_to_move_ = other.side_to_move_;
+
+    en_passant_square_ = other.en_passant_square_;
 }
 
 Board &Board::operator=(const Board &other) {
     if (this == &other) return *this;
 
     chess960 = other.chess960;
-    en_passant_square_ = other.en_passant_square_;
-    castling_rights_ = other.castling_rights_;
-    half_move_clock_ = other.half_move_clock_;
-    full_move_number_ = other.full_move_number_;
-
-    side_to_move_ = other.side_to_move_;
-
-    hash_history_ = other.hash_history_;
-
-    hash_key_ = other.hash_key_;
-
-    state_history_ = other.state_history_;
-
-    std::copy(std::begin(other.board_), std::end(other.board_), std::begin(board_));
-
-    pieces_bb_ = other.pieces_bb_;
 
     if (other.accumulators_) {
         accumulators_ = std::make_unique<Accumulators>(*other.accumulators_);
     }
+
+    state_history_ = other.state_history_;
+
+    hash_history_ = other.hash_history_;
+
+    pieces_bb_ = other.pieces_bb_;
+    board_ = other.board_;
+
+    occupancy_bb_ = other.occupancy_bb_;
+
+    hash_key_ = other.hash_key_;
+
+    castling_rights_ = other.castling_rights_;
+
+    full_move_number_ = other.full_move_number_;
+
+    half_move_clock_ = other.half_move_clock_;
+
+    side_to_move_ = other.side_to_move_;
+
+    en_passant_square_ = other.en_passant_square_;
 
     return *this;
 }
@@ -262,14 +272,14 @@ bool Board::isRepetition(int draw) const {
 }
 
 Result Board::isDrawn(bool in_check) {
+    assert(kingSQ(WHITE) != NO_SQ && kingSQ(BLACK) != NO_SQ);
+
     if (half_move_clock_ >= 100) {
         Movelist movelist;
         movegen::legalmoves<Movetype::ALL>(*this, movelist);
         if (in_check && movelist.size == 0) return Result::LOST;
         return Result::DRAWN;
     }
-
-    assert(kingSQ(WHITE) != NO_SQ && kingSQ(BLACK) != NO_SQ);
 
     const auto count = builtin::popcount(all());
 
