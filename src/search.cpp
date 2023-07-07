@@ -636,7 +636,7 @@ SearchResult Search::iterativeDeepening() {
         seldepth_ = 0;
 
         const auto previousResult = search_result.score;
-        search_result.score = aspirationSearch(depth, search_result.score, ss);
+        const auto value = aspirationSearch(depth, search_result.score, ss);
 
         if (limitReached()) break;
 
@@ -645,11 +645,12 @@ SearchResult Search::iterativeDeepening() {
 
         lastPv = getPV();
 
-        eval_average += search_result.score;
-
         if (search_result.bestmove != pv_table_[0][0]) bestmove_changes++;
 
         search_result.bestmove = pv_table_[0][0];
+        search_result.score = value;
+
+        eval_average += search_result.score;
 
         // limit type time
         if (limit.time.optimum != 0) {
@@ -766,6 +767,7 @@ bool Search::limitReached() {
             return true;
         }
     }
+
     return false;
 }
 

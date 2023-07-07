@@ -15,12 +15,17 @@ struct fenData {
     Move move;
 };
 
+enum class Side { WHITE, BLACK, DRAW, NONE, TB_CHECK };
+
 std::string stringFenData(const fenData &fen_data, double score);
 
 class TrainingData {
     std::vector<std::string> opening_book_;
 
     std::atomic_bool stop_ = false;
+
+    bool use_tb_ = false;
+    Limits limit_;
 
    public:
     ~TrainingData() {
@@ -41,9 +46,12 @@ class TrainingData {
     /// @param threadId
     /// @param book
     /// @param depth
-    void infinitePlay(int threadId, int depth, int nodes, bool use_tb);
+    void infinitePlay(int threadId, int depth, int nodes);
 
     Board randomStart();
+
+    Side makeMove(Search &search, Board &board, std::vector<fenData> &fens, int &win_count,
+                  int &draw_count, int ply);
 
     /// @brief starts one selfplay game
     /// @param file
@@ -51,8 +59,7 @@ class TrainingData {
     /// @param board
     /// @param Movelist
     /// @param search
-    void randomPlayout(std::ofstream &file, Movelist &movelist, std::unique_ptr<Search> &search,
-                       bool use_tb);
+    void randomPlayout(std::ofstream &file);
 
     std::vector<std::thread> threads;
 };

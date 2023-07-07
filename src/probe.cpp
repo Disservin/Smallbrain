@@ -10,7 +10,7 @@ Score probeWDL(const Board& board) {
     Bitboard white = board.us<WHITE>();
     Bitboard black = board.us<BLACK>();
 
-    if (builtin::popcount(white | black) > (signed)TB_LARGEST) return VALUE_NONE;
+    if (builtin::popcount(white | black) > TB_LARGEST) return VALUE_NONE;
 
     Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
 
@@ -37,7 +37,7 @@ Score probeWDL(const Board& board) {
 std::pair<int, Move> probeDTZ(const Board& board) {
     Bitboard white = board.us<WHITE>();
     Bitboard black = board.us<BLACK>();
-    if (builtin::popcount(white | black) > (signed)TB_LARGEST) return {TB_RESULT_FAILED, NO_MOVE};
+    if (builtin::popcount(white | black) > TB_LARGEST) return {TB_RESULT_FAILED, NO_MOVE};
 
     Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
 

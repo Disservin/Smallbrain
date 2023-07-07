@@ -27,27 +27,25 @@ void TrainingData::generate(int workers, std::string book, int depth, int nodes,
         openingFile.close();
     }
 
+    use_tb_ = use_tb;
+
     for (int i = 0; i < workers; i++) {
-        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes, use_tb);
+        threads.emplace_back(&TrainingData::infinitePlay, this, i, depth, nodes);
     }
 }
 
-void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool use_tb) {
+void TrainingData::infinitePlay(int threadId, int depth, int nodes) {
     std::ofstream file;
     std::string filename = "data/data" + std::to_string(threadId) + ".txt";
     file.open(filename, std::ios::app);
-
-    std::unique_ptr<Search> search = std::make_unique<Search>();
-    Movelist movelist;
 
     Time t;
     t.maximum = 0;
     t.optimum = 0;
 
-    Limits limit;
-    limit.depth = depth == 0 ? MAX_PLY - 1 : depth;
-    limit.nodes = nodes;
-    limit.time = t;
+    limit_.depth = depth == 0 ? MAX_PLY - 1 : depth;
+    limit_.nodes = nodes;
+    limit_.time = t;
 
     U64 games = 0;
 
@@ -55,16 +53,14 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes, bool use_tb)
     auto t1 = TimePoint::now();
 
     while (!stop_) {
-        search->reset();
+        // search->reset();
 
-        search->silent = true;
-        search->use_tb = false;
-        search->id = 0;
-        search->limit = limit;
+        // search->silent = true;
+        // search->use_tb = false;
+        // search->id = 0;
+        // search->limit = limit;
 
-        movelist.size = 0;
-
-        randomPlayout(file, movelist, search, use_tb);
+        randomPlayout(file);
         games++;
 
         if (threadId == 0 && games % 100 == 0) {
@@ -117,125 +113,152 @@ Board TrainingData::randomStart() {
         board.makeMove<false>(move);
     }
 
+    board.refreshNNUE();
+
     return board;
 }
 
-void TrainingData::randomPlayout(std::ofstream &file, Movelist &movelist,
-                                 std::unique_ptr<Search> &search, bool use_tb) {
+Side TrainingData::makeMove(Search &search, Board &board, std::vector<fenData> &fens,
+                            int &win_count, int &draw_count, int ply) {
+    search.nodes = 0;
+    board.clearStacks();
+
+    const bool in_check =
+        board.isAttacked(~board.sideToMove(), board.kingSQ(board.sideToMove()), board.all());
+
+    Movelist movelist;
+    movegen::legalmoves<Movetype::ALL>(board, movelist);
+
+    if (movelist.size == 0) {
+        return in_check ? Side(~board.sideToMove()) : Side::DRAW;
+    }
+
+    if (board.isRepetition(2)) {
+        fens.clear();
+        return Side::DRAW;
+    }
+
+    auto drawn = board.isDrawn(in_check);
+
+    if (drawn != Result::NONE) {
+        return drawn == Result::LOST ? Side(~board.sideToMove()) : Side::DRAW;
+    }
+
+    search.board = board;
+    const auto result = search.iterativeDeepening();
+
+    // CATCH BUGS
+    if (result.score == VALUE_NONE) {
+        std::cout << board << std::endl;
+        exit(1);
+    }
+
+    const bool capture = board.at(to(result.bestmove)) != NONE;
+
+    fenData sfens;
+    sfens.score = board.sideToMove() == WHITE ? result.score : -result.score;
+    sfens.move = result.bestmove;
+
+    const Score absScore = std::abs(result.score);
+
+    if (absScore >= 2000) {
+        win_count++;
+        draw_count = 0;
+    } else if (absScore <= 4) {
+        draw_count++;
+        win_count = 0;
+    } else {
+        draw_count = 0;
+        win_count = 0;
+    }
+
+    if (win_count >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY) {
+        return result.score > 0 ? Side(board.sideToMove()) : Side(~board.sideToMove());
+    } else if (draw_count >= 12) {
+        return Side::DRAW;
+    }
+
+    if (!(capture || in_check || ply < 8)) {
+        sfens.fen = board.getFen();
+        fens.emplace_back(sfens);
+    }
+
+    if (use_tb_ && board.halfmoves() >= 40 && builtin::popcount(board.all()) <= TB_LARGEST)
+        return Side::TB_CHECK;
+
+    board.makeMove<true>(result.bestmove);
+
+    return Side::NONE;
+}
+
+void TrainingData::randomPlayout(std::ofstream &file) {
     std::vector<fenData> fens;
     fens.reserve(40);
 
+    int win_count = 0;
+    int draw_count = 0;
     int ply = 10;
 
-    search->board = randomStart();
+    Side winningSide = Side::NONE;
 
-    fenData sfens;
-    int drawCount = 0;
-    int winCount = 0;
-    Color winningSide = NO_COLOR;
+    Board board = randomStart();
 
-    while (true) {
-        search->board.clearStacks();
+    std::unique_ptr<Search> search_player_1 = std::make_unique<Search>();
 
-        search->nodes = 0;
-        movelist.size = 0;
+    search_player_1->use_tb = false;
+    search_player_1->id = 0;
+    search_player_1->limit = limit_;
+    search_player_1->silent = true;
 
-        const bool in_check = search->board.isAttacked(
-            ~search->board.sideToMove(), search->board.kingSQ(search->board.sideToMove()),
-            search->board.all());
+    std::unique_ptr<Search> search_player_2 = std::make_unique<Search>();
 
-        movegen::legalmoves<Movetype::ALL>(search->board, movelist);
+    search_player_2->use_tb = false;
+    search_player_2->id = 0;
+    search_player_2->limit = limit_;
+    search_player_2->silent = true;
 
-        if (movelist.size == 0) {
-            winningSide = in_check ? ~search->board.sideToMove() : NO_COLOR;
-            break;
-        }
+    bool flip = false;
 
-        auto drawn = search->board.isDrawn(in_check);
-
-        if (drawn != Result::NONE) {
-            winningSide = drawn == Result::LOST ? ~search->board.sideToMove() : NO_COLOR;
-            break;
-        }
-
-        const auto result = search->iterativeDeepening();
-
-        // CATCH BUGS
-        if (result.score == VALUE_NONE) {
-            std::cout << search->board << std::endl;
-            exit(1);
-        }
-
-        const bool capture = search->board.at(to(result.bestmove)) != NONE;
-
-        sfens.score = search->board.sideToMove() == WHITE ? result.score : -result.score;
-        sfens.move = result.bestmove;
-
-        const Score absScore = std::abs(result.score);
-
-        if (absScore >= 2000) {
-            winCount++;
-            drawCount = 0;
-        } else if (absScore <= 4) {
-            drawCount++;
-            winCount = 0;
+    while (winningSide == Side::NONE) {
+        if (flip) {
+            winningSide = makeMove(*search_player_1, board, fens, win_count, draw_count, ply);
         } else {
-            drawCount = 0;
-            winCount = 0;
+            winningSide = makeMove(*search_player_2, board, fens, win_count, draw_count, ply);
         }
 
-        if (winCount >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY) {
-            winningSide =
-                result.score > 0 ? search->board.sideToMove() : ~search->board.sideToMove();
-            break;
-        } else if (drawCount >= 12) {
-            winningSide = NO_COLOR;
-            break;
-        }
-
-        if (!(capture || in_check || ply < 8)) {
-            sfens.fen = search->board.getFen();
-            fens.emplace_back(sfens);
-        }
-
-        if (use_tb && search->board.halfmoves() >= 40 &&
-            builtin::popcount(search->board.all()) <= 6)
-            break;
-
-        ply++;
-        search->board.makeMove<true>(result.bestmove);
+        flip = !flip;
     }
 
-    Bitboard white = search->board.us<WHITE>();
-    Bitboard black = search->board.us<BLACK>();
+    Bitboard white = board.us<WHITE>();
+    Bitboard black = board.us<BLACK>();
 
-    // Set correct winningSide for if (use_tb && search->board.halfmoves() >= 40 &&
-    // builtin::popcount(search->board.all()) <= 6)
-    if (use_tb && builtin::popcount(white | black) <= 6) {
-        Square ep = search->board.enPassant() <= 63 ? search->board.enPassant() : Square(0);
+    // Set correct winningSide for if (use_tb && board.halfmoves() >= 40 &&
+    // builtin::popcount(board.all()) <= TB_LARGEST)
+    if (use_tb_ && builtin::popcount(white | black) <= TB_LARGEST) {
+        Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
 
-        unsigned TBresult = tb_probe_wdl(
-            white, black, search->board.pieces(WHITEKING) | search->board.pieces(BLACKKING),
-            search->board.pieces(WHITEQUEEN) | search->board.pieces(BLACKQUEEN),
-            search->board.pieces(WHITEROOK) | search->board.pieces(BLACKROOK),
-            search->board.pieces(WHITEBISHOP) | search->board.pieces(BLACKBISHOP),
-            search->board.pieces(WHITEKNIGHT) | search->board.pieces(BLACKKNIGHT),
-            search->board.pieces(WHITEPAWN) | search->board.pieces(BLACKPAWN), 0, 0, ep,
-            search->board.sideToMove() == WHITE);  //  * - turn: true=white, false=black
+        unsigned TBresult =
+            tb_probe_wdl(white, black, board.pieces(WHITEKING) | board.pieces(BLACKKING),
+                         board.pieces(WHITEQUEEN) | board.pieces(BLACKQUEEN),
+                         board.pieces(WHITEROOK) | board.pieces(BLACKROOK),
+                         board.pieces(WHITEBISHOP) | board.pieces(BLACKBISHOP),
+                         board.pieces(WHITEKNIGHT) | board.pieces(BLACKKNIGHT),
+                         board.pieces(WHITEPAWN) | board.pieces(BLACKPAWN), 0, 0, ep,
+                         board.sideToMove() == WHITE);  //  * - turn: true=white, false=black
 
         if (TBresult == TB_LOSS || TBresult == TB_BLESSED_LOSS) {
-            winningSide = ~search->board.sideToMove();
+            winningSide = Side(~board.sideToMove());
         } else if (TBresult == TB_WIN || TBresult == TB_CURSED_WIN) {
-            winningSide = search->board.sideToMove();
+            winningSide = Side(board.sideToMove());
         } else if (TBresult == TB_DRAW) {
-            winningSide = NO_COLOR;
+            winningSide = Side::DRAW;
         }
     }
 
     double score;
-    if (winningSide == WHITE)
+    if (winningSide == Side::WHITE)
         score = 1.0;
-    else if (winningSide == BLACK)
+    else if (winningSide == Side::BLACK)
         score = 0.0;
     else
         score = 0.5;
