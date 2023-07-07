@@ -6,12 +6,14 @@
 
 #include "benchmark.h"
 #include "board.h"
+#include "datagen.h"
+#include "evaluation.h"
 #include "movegen.h"
 #include "nnue.h"
 #include "perft.h"
-#include "datagen.h"
 #include "tests/tests.h"
 #include "thread.h"
+#include "uci.h"
 
 extern ThreadPool Threads;
 
@@ -90,7 +92,7 @@ class Eval : public Argument {
             if (key == "fen") {
                 fen = value;
                 Board board = Board(fen);
-                std::cout << nnue::output(board.getAccumulator(), board.sideToMove()) << std::endl;
+                std::cout << uci::convertScore(eval::evaluation(board)) << std::endl;
             } else {
                 ArgumentsParser::throwMissing("eval", key, value);
             }
