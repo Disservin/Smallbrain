@@ -261,7 +261,8 @@ std::string moveToUci(Move move, bool chess960) {
 }
 
 std::string convertScore(int score) {
-    constexpr int NormalizeToPawnValue = 68;
+    constexpr int NormalizeToPawnValue = 131;
+
     if (std::abs(score) <= 4) score = 0;
 
     if (score >= VALUE_MATE_IN_PLY)
@@ -276,8 +277,8 @@ std::string convertScore(int score) {
 int modelWinRate(int v, int ply) {
     double m = std::min(240, ply) / 64.0;
 
-    constexpr double as[] = {3.71647025, -14.29945046, 13.44567708, 65.94957578};
-    constexpr double bs[] = {0.51179363, 1.72771561, -4.62094219, 53.38697251};
+    constexpr double as[] = {0.54196100, -1.26579121, 24.52268566, 107.83857189};
+    constexpr double bs[] = {-3.24292846, 22.96074940, -44.91927840, 64.15812572};
 
     double a = (((as[0] * m + as[1]) * m + as[2]) * m) + as[3];
     double b = (((bs[0] * m + bs[1]) * m + bs[2]) * m) + bs[3];
