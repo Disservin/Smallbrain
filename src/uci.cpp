@@ -288,12 +288,12 @@ int modelWinRate(int v, int ply) {
 }
 
 std::string wdl(int v, int ply) {
-    std::stringstream ss;
-
     int wdl_w = modelWinRate(v, ply);
     int wdl_l = modelWinRate(-v, ply);
     int wdl_d = 1000 - wdl_w - wdl_l;
-    ss << " wdl " << wdl_w << " " << wdl_d << " " << wdl_l;
+
+    std::stringstream ss;
+    ss << wdl_w << " " << wdl_d << " " << wdl_l;
 
     return ss.str();
 }
