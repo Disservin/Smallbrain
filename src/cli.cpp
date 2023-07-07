@@ -145,6 +145,9 @@ class Generate : public Argument {
                 book_path_ = value;
             } else if (key == "tb") {
                 tb_init(value.c_str());
+
+                use_tb_ = true;
+                std::cout << "info string successfully loaded syzygy path " << value << std::endl;
             } else if (key == "depth") {
                 depth_ = std::stoi(value);
             } else if (key == "nodes") {

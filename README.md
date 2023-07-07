@@ -176,7 +176,7 @@ If you want maximum performance you should compile Smallbrain yourself.
 ```
 
 ```
-.\smallbrain.exe -generate threads=30 depth=7 hash=256 tb=H:/Chess/345
+.\smallbrain.exe -generate threads=30 depth=7 hash=256 tb=F:\syzygy_5\3-4-5
 .\smallbrain.exe -generate threads=30 depth=9 tb=H:/Chess/345
 .\smallbrain.exe -generate threads=30 nodes=5000 tb=H:/Chess/345
 ```
