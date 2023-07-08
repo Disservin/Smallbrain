@@ -379,7 +379,7 @@ moves:
             // clang-format off
             if (capture)
             {
-            //     // SEE pruning
+                // SEE pruning
                 if (    depth < 6 
                     &&  !pv_node
                     &&  !see::see(board, move, -(depth * 92)))
