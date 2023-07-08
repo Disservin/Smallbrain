@@ -379,25 +379,25 @@ moves:
             // clang-format off
             if (capture)
             {
-                // SEE pruning
+            //     // SEE pruning
                 if (    depth < 6 
+                    &&  !pv_node
                     &&  !see::see(board, move, -(depth * 92)))
                     continue;
             }
             else
             {
-                // late move pruning/movecount pruning
+            //     // late move pruning/movecount pruning
                 if (    !in_check 
                     &&  !pv_node 
                     &&  typeOf(move) != PROMOTION
                     &&  depth <= 5
                     &&  quiet_count > (4 + depth * depth))
-
                     continue;
-                // SEE pruning
-                if (    depth < 7 
-                    &&  !see::see(board, move, -(depth * 93)))
-                    continue;
+            //     // SEE pruning
+            //     if (    depth < 7 
+            //         &&  !see::see(board, move, -(depth * 93)))
+            //         continue;
             }
             // clang-format on
         }
