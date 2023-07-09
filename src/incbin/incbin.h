@@ -1,3 +1,4 @@
+#define INCBIN_SILENCE_BITCODE_WARNING
 /**
  * @file incbin.h
  * @author Dale Weiler

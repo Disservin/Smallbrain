@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include <assert.h>
 #ifdef __cplusplus
+#include <string>
 #include <atomic>
 #else
 #include <stdatomic.h>
@@ -720,7 +721,7 @@ static void add_to_hash(struct BaseEntry *ptr, uint64_t key)
 #define pchr(i) piece_to_char[QUEEN - (i)]
 #define Swap(a,b) {int tmp=a;a=b;b=tmp;}
 
-static void init_tb(char *str)
+static void init_tb(const char *str)
 {
   if (!test_tb(str, tbSuffix[WDL]))
     return;
@@ -729,7 +730,7 @@ static void init_tb(char *str)
   for (int i = 0; i < 16; i++)
     pcs[i] = 0;
   int color = 0;
-  for (char *s = str; *s; s++)
+  for (const char *s = str; *s; s++)
     if (*s == 'v')
       color = 8;
     else {
@@ -818,6 +819,25 @@ static void free_tb_entry(struct BaseEntry *be)
   }
 }
 
+std::string replacePlaceholders(const std::string& pattern, [[maybe_unused]] size_t index) {
+    return pattern;
+}
+
+
+template <typename T, typename... Args>
+std::string replacePlaceholders(const std::string &pattern, size_t index, T &&arg, Args &&...args)
+{
+    size_t placeholderPos = pattern.find("X", index);
+    if (placeholderPos != std::string::npos)
+    {
+        std::string result = pattern.substr(0, placeholderPos);
+        result += std::forward<T>(arg);
+        result += pattern.substr(placeholderPos + 1);
+        return replacePlaceholders(result, placeholderPos + 1, std::forward<Args>(args)...);
+    }
+    return pattern;
+}
+
 bool tb_init(const char *path)
 {
   if (!initialized) {
@@ -895,34 +915,30 @@ bool tb_init(const char *path)
   int i, j, k, l, m;
 
   for (i = 0; i < 5; i++) {
-    sprintf(str, "K%cvK", pchr(i));
-    init_tb(str);
+    init_tb(replacePlaceholders("KXvK", 0, pchr(i)).c_str());
   }
 
   for (i = 0; i < 5; i++)
     for (j = i; j < 5; j++) {
-      sprintf(str, "K%cvK%c", pchr(i), pchr(j));
-      init_tb(str);
+      init_tb(replacePlaceholders("KXvKX", 0, pchr(i), pchr(j)).c_str());
     }
 
   for (i = 0; i < 5; i++)
     for (j = i; j < 5; j++) {
-      sprintf(str, "K%c%cvK", pchr(i), pchr(j));
-      init_tb(str);
+      init_tb(replacePlaceholders("KXXvK", 0, pchr(i), pchr(j)).c_str());
     }
 
   for (i = 0; i < 5; i++)
     for (j = i; j < 5; j++)
       for (k = 0; k < 5; k++) {
-        sprintf(str, "K%c%cvK%c", pchr(i), pchr(j), pchr(k));
-        init_tb(str);
+        init_tb(replacePlaceholders("KXXvKX", 0, pchr(i), pchr(j), pchr(k)).c_str());
+
       }
 
   for (i = 0; i < 5; i++)
     for (j = i; j < 5; j++)
       for (k = j; k < 5; k++) {
-        sprintf(str, "K%c%c%cvK", pchr(i), pchr(j), pchr(k));
-        init_tb(str);
+        init_tb(replacePlaceholders("KXXXvK", 0, pchr(i), pchr(j), pchr(k)).c_str());
       }
 
   // 6- and 7-piece TBs make sense only with a 64-bit address space
@@ -933,24 +949,21 @@ bool tb_init(const char *path)
     for (j = i; j < 5; j++)
       for (k = i; k < 5; k++)
         for (l = (i == k) ? j : k; l < 5; l++) {
-          sprintf(str, "K%c%cvK%c%c", pchr(i), pchr(j), pchr(k), pchr(l));
-          init_tb(str);
+          init_tb(replacePlaceholders("KXXvKXX", 0, pchr(i), pchr(j), pchr(k), pchr(l)).c_str());
         }
 
   for (i = 0; i < 5; i++)
     for (j = i; j < 5; j++)
       for (k = j; k < 5; k++)
         for (l = 0; l < 5; l++) {
-          sprintf(str, "K%c%c%cvK%c", pchr(i), pchr(j), pchr(k), pchr(l));
-          init_tb(str);
+          init_tb(replacePlaceholders("KXXXvKX", 0, pchr(i), pchr(j), pchr(k), pchr(l)).c_str());
         }
 
   for (i = 0; i < 5; i++)
     for (j = i; j < 5; j++)
       for (k = j; k < 5; k++)
         for (l = k; l < 5; l++) {
-          sprintf(str, "K%c%c%c%cvK", pchr(i), pchr(j), pchr(k), pchr(l));
-          init_tb(str);
+          init_tb(replacePlaceholders("KXXXXvK", 0, pchr(i), pchr(j), pchr(k), pchr(l)).c_str());
         }
 
   if (TB_PIECES < 7)
@@ -961,8 +974,7 @@ bool tb_init(const char *path)
       for (k = j; k < 5; k++)
         for (l = k; l < 5; l++)
           for (m = l; m < 5; m++) {
-            sprintf(str, "K%c%c%c%c%cvK", pchr(i), pchr(j), pchr(k), pchr(l), pchr(m));
-            init_tb(str);
+            init_tb(  replacePlaceholders("KXXXXXvK", 0, pchr(i), pchr(j), pchr(k), pchr(l), pchr(m)).c_str());
           }
 
   for (i = 0; i < 5; i++)
@@ -970,8 +982,8 @@ bool tb_init(const char *path)
       for (k = j; k < 5; k++)
         for (l = k; l < 5; l++)
           for (m = 0; m < 5; m++) {
-            sprintf(str, "K%c%c%c%cvK%c", pchr(i), pchr(j), pchr(k), pchr(l), pchr(m));
-            init_tb(str);
+            init_tb(replacePlaceholders("KXXXXvKX", 0, pchr(i), pchr(j), pchr(k), pchr(l), pchr(m)).c_str());
+
           }
 
   for (i = 0; i < 5; i++)
@@ -979,8 +991,7 @@ bool tb_init(const char *path)
       for (k = j; k < 5; k++)
         for (l = 0; l < 5; l++)
           for (m = l; m < 5; m++) {
-            sprintf(str, "K%c%c%cvK%c%c", pchr(i), pchr(j), pchr(k), pchr(l), pchr(m));
-            init_tb(str);
+            init_tb(replacePlaceholders("KXXXvKXX", 0, pchr(i), pchr(j), pchr(k), pchr(l), pchr(m)).c_str());
           }
 
 finished:
