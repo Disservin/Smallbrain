@@ -3,8 +3,8 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
-#include <unordered_map>
 #include <sstream>
+#include <unordered_map>
 
 #define DEFAULT_POS std::string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
@@ -30,13 +30,7 @@ using Score = int16_t;
  * Enum Definitions
  *******************/
 
-enum class Movetype : uint8_t { ALL, CAPTURE, QUIET };
-
 enum Color : uint8_t { WHITE, BLACK, NO_COLOR };
-
-enum Phase : int { MG, EG };
-
-enum class Result { NONE, DRAWN, LOST };
 
 enum Piece : uint8_t {
     WHITEPAWN,
@@ -105,20 +99,15 @@ enum Direction : int8_t {
     SOUTH_EAST = -7
 };
 
-enum MoveScores : int {
-    TT_SCORE = 10'000'000,
-    CAPTURE_SCORE = 7'000'000,
-    KILLER_ONE_SCORE = 6'000'000,
-    KILLER_TWO_SCORE = 5'000'000,
-    COUNTER_SCORE = 4'000'000,
-    NEGATIVE_SCORE = -10'000'000
-};
-
 enum Node { NONPV, PV, ROOT };
 
 enum Rank { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 
 enum File { NO_FILE = -1, FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
+
+enum class Movetype : uint8_t { ALL, CAPTURE, QUIET };
+
+enum class Result { NONE, DRAWN, LOST };
 
 /********************
  * Overloading of operators
@@ -158,7 +147,7 @@ BASE_OP_ON(Rank, File)
  *******************/
 
 // clang-format off
-const std::string squareToString[64] = {
+const std::string SQUARE_TO_STRING[64] = {
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
     "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
     "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
@@ -171,7 +160,7 @@ const std::string squareToString[64] = {
 
 // clang-format on
 
-static constexpr PieceType PieceToPieceType[13] = {
+static constexpr PieceType PIECE_TO_PIECETYPE[13] = {
     PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONETYPE};
 
 // file masks
@@ -185,51 +174,9 @@ static constexpr Bitboard MASK_RANK[8] = {
     0xff,         0xff00,         0xff0000,         0xff000000,
     0xff00000000, 0xff0000000000, 0xff000000000000, 0xff00000000000000};
 
-// diagonal masks
-static constexpr Bitboard MASK_DIAGONAL[15] = {
-    0x80,
-    0x8040,
-    0x804020,
-    0x80402010,
-    0x8040201008,
-    0x804020100804,
-    0x80402010080402,
-    0x8040201008040201,
-    0x4020100804020100,
-    0x2010080402010000,
-    0x1008040201000000,
-    0x804020100000000,
-    0x402010000000000,
-    0x201000000000000,
-    0x100000000000000,
-};
-
-// anti-diagonal masks
-static constexpr Bitboard MASK_ANTI_DIAGONAL[15] = {0x1,
-                                                    0x102,
-                                                    0x10204,
-                                                    0x1020408,
-                                                    0x102040810,
-                                                    0x10204081020,
-                                                    0x1020408102040,
-                                                    0x102040810204080,
-                                                    0x204081020408000,
-                                                    0x408102040800000,
-                                                    0x810204080000000,
-                                                    0x1020408000000000,
-                                                    0x2040800000000000,
-                                                    0x4080000000000000,
-                                                    0x8000000000000000};
-
-static constexpr Bitboard WK_CASTLE_MASK = (1ULL << SQ_F1) | (1ULL << SQ_G1);
-static constexpr Bitboard WQ_CASTLE_MASK = (1ULL << SQ_D1) | (1ULL << SQ_C1) | (1ULL << SQ_B1);
-
-static constexpr Bitboard BK_CASTLE_MASK = (1ULL << SQ_F8) | (1ULL << SQ_G8);
-static constexpr Bitboard BQ_CASTLE_MASK = (1ULL << SQ_D8) | (1ULL << SQ_C8) | (1ULL << SQ_B8);
-
 static constexpr Bitboard DEFAULT_CHECKMASK = 18446744073709551615ULL;
 
-static constexpr Piece flippedPiece[] = {
+static constexpr Piece FLIPPED_PIECE[] = {
     BLACKPAWN, BLACKKNIGHT, BLACKBISHOP, BLACKROOK, BLACKQUEEN, BLACKKING,
     WHITEPAWN, WHITEKNIGHT, WHITEBISHOP, WHITEROOK, WHITEQUEEN, WHITEKING,
 };
@@ -250,73 +197,49 @@ struct Limits {
     bool infinite = false;
 };
 
-inline Score mate_in(int ply) { return (VALUE_MATE - ply); }
-
-inline Score mated_in(int ply) { return (ply - VALUE_MATE); }
-
-inline Score scoreToTT(Score s, int plies) {
-    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s + plies
-            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies
-                                            : s);
-}
-
-inline Score scoreFromTT(Score s, int plies) {
-    if (s == VALUE_NONE) return VALUE_NONE;
-
-    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s - plies
-            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies
-                                            : s);
-}
-
 /********************
  * Maps
  *******************/
 
-static std::unordered_map<Piece, char> pieceToChar({{WHITEPAWN, 'P'},
-                                                    {WHITEKNIGHT, 'N'},
-                                                    {WHITEBISHOP, 'B'},
-                                                    {WHITEROOK, 'R'},
-                                                    {WHITEQUEEN, 'Q'},
-                                                    {WHITEKING, 'K'},
-                                                    {BLACKPAWN, 'p'},
-                                                    {BLACKKNIGHT, 'n'},
-                                                    {BLACKBISHOP, 'b'},
-                                                    {BLACKROOK, 'r'},
-                                                    {BLACKQUEEN, 'q'},
-                                                    {BLACKKING, 'k'},
-                                                    {NONE, '.'}});
+static std::unordered_map<Piece, char> PIECE_TO_CHAR({{WHITEPAWN, 'P'},
+                                                      {WHITEKNIGHT, 'N'},
+                                                      {WHITEBISHOP, 'B'},
+                                                      {WHITEROOK, 'R'},
+                                                      {WHITEQUEEN, 'Q'},
+                                                      {WHITEKING, 'K'},
+                                                      {BLACKPAWN, 'p'},
+                                                      {BLACKKNIGHT, 'n'},
+                                                      {BLACKBISHOP, 'b'},
+                                                      {BLACKROOK, 'r'},
+                                                      {BLACKQUEEN, 'q'},
+                                                      {BLACKKING, 'k'},
+                                                      {NONE, '.'}});
 
-static std::unordered_map<char, Piece> charToPiece({{'P', WHITEPAWN},
-                                                    {'N', WHITEKNIGHT},
-                                                    {'B', WHITEBISHOP},
-                                                    {'R', WHITEROOK},
-                                                    {'Q', WHITEQUEEN},
-                                                    {'K', WHITEKING},
-                                                    {'p', BLACKPAWN},
-                                                    {'n', BLACKKNIGHT},
-                                                    {'b', BLACKBISHOP},
-                                                    {'r', BLACKROOK},
-                                                    {'q', BLACKQUEEN},
-                                                    {'k', BLACKKING},
-                                                    {'.', NONE}});
+static std::unordered_map<char, Piece> CHAR_TO_PIECE({{'P', WHITEPAWN},
+                                                      {'N', WHITEKNIGHT},
+                                                      {'B', WHITEBISHOP},
+                                                      {'R', WHITEROOK},
+                                                      {'Q', WHITEQUEEN},
+                                                      {'K', WHITEKING},
+                                                      {'p', BLACKPAWN},
+                                                      {'n', BLACKKNIGHT},
+                                                      {'b', BLACKBISHOP},
+                                                      {'r', BLACKROOK},
+                                                      {'q', BLACKQUEEN},
+                                                      {'k', BLACKKING},
+                                                      {'.', NONE}});
 
-static std::unordered_map<PieceType, char> PieceTypeToPromPiece(
+static std::unordered_map<PieceType, char> PIECETYPE_TO_CHAR(
     {{KNIGHT, 'n'}, {BISHOP, 'b'}, {ROOK, 'r'}, {QUEEN, 'q'}});
 
-static std::unordered_map<char, PieceType> pieceToInt({{'n', KNIGHT},
-                                                       {'b', BISHOP},
-                                                       {'r', ROOK},
-                                                       {'q', QUEEN},
-                                                       {'N', KNIGHT},
-                                                       {'B', BISHOP},
-                                                       {'R', ROOK},
-                                                       {'Q', QUEEN}});
-
-static std::unordered_map<Square, CastlingRight> castlingMapRook(
-    {{SQ_A1, WQ}, {SQ_H1, WK}, {SQ_A8, BQ}, {SQ_H8, BK}});
-
-static std::unordered_map<char, CastlingRight> readCastleString(
-    {{'K', WK}, {'k', BK}, {'Q', WQ}, {'q', BQ}});
+static std::unordered_map<char, PieceType> CHAR_TO_PIECETYPE({{'n', KNIGHT},
+                                                              {'b', BISHOP},
+                                                              {'r', ROOK},
+                                                              {'q', QUEEN},
+                                                              {'N', KNIGHT},
+                                                              {'B', BISHOP},
+                                                              {'R', ROOK},
+                                                              {'Q', QUEEN}});
 
 /// @brief Gets the rank index of the square where 0 is the first rank.
 /// @param sq
@@ -375,13 +298,13 @@ inline std::ostream &operator<<(std::ostream &os, const Move move) {
     Square from_sq = from(move);
     Square to_sq = to(move);
 
-    os << squareToString[from_sq] << squareToString[to_sq];
+    os << SQUARE_TO_STRING[from_sq] << SQUARE_TO_STRING[to_sq];
     if (typeOf(move) == Move::PROMOTION) {
-        os << PieceTypeToPromPiece.at(promotionType(move));
+        os << PIECETYPE_TO_CHAR.at(promotionType(move));
     }
     return os;
 }
 
-static constexpr int piece_values[2][7] = {{98, 337, 365, 477, 1025, 0, 0},
-                                           {114, 281, 297, 512, 936, 0, 0}};
-static constexpr int pieceValuesDefault[7] = {100, 320, 330, 500, 900, 0, 0};
+static constexpr int PIECE_VALUES_TUNED[2][7] = {{98, 337, 365, 477, 1025, 0, 0},
+                                                 {114, 281, 297, 512, 936, 0, 0}};
+static constexpr int PIECE_VALUES_CLASSICAL[7] = {100, 320, 330, 500, 900, 0, 0};

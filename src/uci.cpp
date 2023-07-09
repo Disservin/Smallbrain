@@ -228,7 +228,7 @@ Move uciToMove(const Board& board, const std::string& input) {
         case 4:
             return make(source, target);
         case 5:
-            return make<Move::PROMOTION>(source, target, pieceToInt[input.at(4)]);
+            return make<Move::PROMOTION>(source, target, CHAR_TO_PIECETYPE[input.at(4)]);
         default:
             std::cout << "FALSE INPUT" << std::endl;
             return make(NO_SQ, NO_SQ);
@@ -249,12 +249,12 @@ std::string moveToUci(Move move, bool chess960) {
     }
 
     // Add the from and to squares to the string stream
-    ss << squareToString[from_sq];
-    ss << squareToString[to_sq];
+    ss << SQUARE_TO_STRING[from_sq];
+    ss << SQUARE_TO_STRING[to_sq];
 
     // If the move is a promotion, add the promoted piece to the string stream
     if (typeOf(move) == PROMOTION) {
-        ss << PieceTypeToPromPiece[promotionType(move)];
+        ss << PIECETYPE_TO_CHAR[promotionType(move)];
     }
 
     return ss.str();

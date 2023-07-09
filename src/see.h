@@ -38,9 +38,9 @@ namespace see {
     Square to_sq = to(move);
     PieceType attacker = board.at<PieceType>(from_sq);
     PieceType victim = board.at<PieceType>(to_sq);
-    int swap = pieceValuesDefault[victim] - threshold;
+    int swap = PIECE_VALUES_CLASSICAL[victim] - threshold;
     if (swap < 0) return false;
-    swap -= pieceValuesDefault[attacker];
+    swap -= PIECE_VALUES_CLASSICAL[attacker];
     if (swap >= 0) return true;
     Bitboard occ = (board.all() ^ (1ULL << from_sq)) | (1ULL << to_sq);
     Bitboard attackers = allAttackers(board, to_sq, occ) & occ;
@@ -64,7 +64,7 @@ namespace see {
                 break;
         }
         sT = ~sT;
-        if ((swap = -swap - 1 - piece_values[MG][pt]) >= 0) {
+        if ((swap = -swap - 1 - PIECE_VALUES_TUNED[0][pt]) >= 0) {
             if (pt == KING && (attackers & board.us(sT))) sT = ~sT;
             break;
         }

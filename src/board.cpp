@@ -141,8 +141,8 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     Square square = Square(56);
     for (int index = 0; index < static_cast<int>(position.size()); index++) {
         char curr = position[index];
-        if (charToPiece.find(curr) != charToPiece.end()) {
-            const Piece piece = charToPiece[curr];
+        if (CHAR_TO_PIECE.find(curr) != CHAR_TO_PIECE.end()) {
+            const Piece piece = CHAR_TO_PIECE[curr];
             placePiece<false>(piece, square);
 
             square = Square(square + 1);
@@ -220,7 +220,7 @@ std::string Board::getFen() const {
                 }
 
                 // Append the character representing the piece to the FEN string
-                ss << pieceToChar[piece];
+                ss << PIECE_TO_CHAR[piece];
             } else {
                 // If there is no piece at the current square, increment the
                 // counter for the number of empty squares
@@ -251,7 +251,7 @@ std::string Board::getFen() const {
     if (en_passant_square_ == NO_SQ)
         ss << " - ";
     else
-        ss << " " << squareToString[en_passant_square_] << " ";
+        ss << " " << SQUARE_TO_STRING[en_passant_square_] << " ";
 
     ss << int(half_move_clock_) << " " << int(full_move_number_ / 2);
 
@@ -364,10 +364,10 @@ void Board::clearStacks() {
 
 std::ostream &operator<<(std::ostream &os, const Board &b) {
     for (int i = 63; i >= 0; i -= 8) {
-        os << " " << pieceToChar[b.board_[i - 7]] << " " << pieceToChar[b.board_[i - 6]] << " "
-           << pieceToChar[b.board_[i - 5]] << " " << pieceToChar[b.board_[i - 4]] << " "
-           << pieceToChar[b.board_[i - 3]] << " " << pieceToChar[b.board_[i - 2]] << " "
-           << pieceToChar[b.board_[i - 1]] << " " << pieceToChar[b.board_[i]] << " \n";
+        os << " " << PIECE_TO_CHAR[b.board_[i - 7]] << " " << PIECE_TO_CHAR[b.board_[i - 6]] << " "
+           << PIECE_TO_CHAR[b.board_[i - 5]] << " " << PIECE_TO_CHAR[b.board_[i - 4]] << " "
+           << PIECE_TO_CHAR[b.board_[i - 3]] << " " << PIECE_TO_CHAR[b.board_[i - 2]] << " "
+           << PIECE_TO_CHAR[b.board_[i - 1]] << " " << PIECE_TO_CHAR[b.board_[i]] << " \n";
     }
     os << "\n\n";
     os << "Fen: " << b.getFen() << "\n";

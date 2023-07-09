@@ -82,7 +82,7 @@ void prefetch(const void *addr) {
 /// @brief get the piecetype of a piece
 /// @param piece
 /// @return the piecetype
-[[nodiscard]] constexpr PieceType typeOfPiece(Piece piece) { return PieceToPieceType[piece]; }
+[[nodiscard]] constexpr PieceType typeOfPiece(Piece piece) { return PIECE_TO_PIECETYPE[piece]; }
 
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];

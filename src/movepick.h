@@ -8,6 +8,15 @@
 
 enum SearchType { QSEARCH, ABSEARCH };
 
+enum MoveScores : int {
+    TT_SCORE = 10'000'000,
+    CAPTURE_SCORE = 7'000'000,
+    KILLER_ONE_SCORE = 6'000'000,
+    KILLER_TWO_SCORE = 5'000'000,
+    COUNTER_SCORE = 4'000'000,
+    NEGATIVE_SCORE = -10'000'000
+};
+
 template <SearchType st>
 class MovePicker {
    public:

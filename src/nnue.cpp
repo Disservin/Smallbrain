@@ -21,7 +21,7 @@ int idx(Square sq, Piece p, int ksq) {
         return sq + static_cast<int>(p) * 64 + KING_BUCKET[ksq] * FEATURE_SIZE;
     } else {
         const Square mirrorSquare = Square(sq ^ 56);
-        const int mirrorPiece = static_cast<int>(flippedPiece[static_cast<int>(p)]);
+        const int mirrorPiece = static_cast<int>(FLIPPED_PIECE[static_cast<int>(p)]);
         const int input = mirrorSquare + mirrorPiece * 64;
 
         return input + KING_BUCKET[ksq ^ 56] * FEATURE_SIZE;

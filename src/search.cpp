@@ -26,6 +26,24 @@ void init_reductions() {
     }
 }
 
+Score mateIn(int ply) { return (VALUE_MATE - ply); }
+
+Score matedIn(int ply) { return (ply - VALUE_MATE); }
+
+Score scoreToTT(Score s, int plies) {
+    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s + plies
+            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies
+                                            : s);
+}
+
+Score scoreFromTT(Score s, int plies) {
+    if (s == VALUE_NONE) return VALUE_NONE;
+
+    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s - plies
+            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies
+                                            : s);
+}
+
 template <Node node>
 Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     if (limitReached()) return 0;
@@ -49,7 +67,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     const bool in_check = board.isAttacked(~color, board.kingSQ(color), board.all());
     const Result state = board.isDrawn(in_check);
 
-    if (state != Result::NONE) return state == Result::LOST ? mated_in(ss->ply) : 0;
+    if (state != Result::NONE) return state == Result::LOST ? matedIn(ss->ply) : 0;
 
     /********************
      * Look up in the TT
@@ -100,7 +118,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
             // clang-format off
             if (    captured != NONETYPE 
                 &&  !in_check 
-                &&  best_value + 400 + piece_values[EG][captured] < alpha 
+                &&  best_value + 400 + PIECE_VALUES_TUNED[1][captured] < alpha 
                 &&  typeOf(move) != PROMOTION
                 &&  board.nonPawnMat(color))
                 // clang-format on
@@ -171,10 +189,10 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
         if (board.isRepetition(1 + pv_node)) return -1 + (nodes & 0x2);
 
         const Result state = board.isDrawn(in_check);
-        if (state != Result::NONE) return state == Result::LOST ? mated_in(ss->ply) : 0;
+        if (state != Result::NONE) return state == Result::LOST ? matedIn(ss->ply) : 0;
 
-        alpha = std::max(alpha, mated_in(ss->ply));
-        beta = std::min(beta, mate_in(ss->ply + 1));
+        alpha = std::max(alpha, matedIn(ss->ply));
+        beta = std::min(beta, mateIn(ss->ply + 1));
         if (alpha >= beta) return alpha;
     }
 
@@ -536,7 +554,7 @@ moves:
     /********************
      * If the move list is empty, we are in checkmate or stalemate.
      *******************/
-    if (made_moves == 0) best = excluded_move ? alpha : in_check ? mated_in(ss->ply) : 0;
+    if (made_moves == 0) best = excluded_move ? alpha : in_check ? matedIn(ss->ply) : 0;
 
     if (pv_node) best = std::min(best, max_value);
 
