@@ -92,11 +92,14 @@ If you want maximum performance you should compile Smallbrain yourself.
 - EvalFile
   The neural net used for the evaluation,
   currently only default.nnue exist.
-
 - SyzygyPath
   Path to the syzygy files.
+- UCI_ShowWDL
+  Shows the WDL score in the UCI info.
+- UCI_Chess960
+  Enables Chess960 support.
 
-## Engine specific commands
+## Engine specific uci commands
 
 - go perft \<depth>
   calculates perft from a set position up to _depth_.
@@ -104,8 +107,22 @@ If you want maximum performance you should compile Smallbrain yourself.
   prints the current board
 - eval
   prints the evaluation of the board.
-- perft
-  tests all perft position.
+
+## CLI commands
+
+- bench
+  Starts the bench.
+- perft fen=\<fen> depth=\<depth>
+  fen and depth are optional.
+- -eval fen=\<fen>
+- -version/--version/--v/-v
+  Prints the version.
+- -see
+  Calculates the static exchange evaluation of the current position.
+- -generate
+  Starts the data generation.
+- -tests
+  Starts the tests.
 
 ## Features
 
@@ -117,56 +134,49 @@ If you want maximum performance you should compile Smallbrain yourself.
 - Starts the data generation.
 
   ```
-  -gen
+  -generate
   ```
 
 - Specify the number of threads to use.
   default: 1
 
   ```
-  -threads <int>
+  threads=<int>
   ```
 
 - If you want to start from a book instead of using random playout.
   default: ""
 
   ```
-  -book <path/to/book>
+  book=<path/to/book>
   ```
 
 - Path to TB, only used for adjudication.
   default: ""
 
   ```
-  -tb <path/to/tb>
+  tb=<path/to/tb>
   ```
 
 - Analysis depth, values between 7-9 are good.
   default: 7
 
   ```
-  -depth <int>
+  depth=<int>
   ```
 
 - Analysis nodes, values between 2500-10000 are good.
   default: 0
 
   ```
-  -nodes <int>
+  nodes=<int>
   ```
 
 - The amount of hash in MB. This gets multiplied by the number of threads.
   default: 16
 
   ```
-  -hash <int>
-  ```
-
-- With a possibility of 1/random start from a random position.
-  default: 0 to turn this off.
-
-  ```
-  -random <int>
+  hash=<int>
   ```
 
 - Example:
