@@ -307,8 +307,8 @@ void Board::makeMove(const Move move) {
     assert(from(move) >= 0 && from(move) < 64);
     assert(to(move) >= 0 && to(move) < 64);
     assert(typeOfPiece(at(to_sq)) != KING);
-    assert(at<PieceType>(from_sq) != NONETYPE);
-    assert(at(from_sq) != NONE);
+    assert(at<PieceType>(from(move)) != NONETYPE);
+    assert(at(from(move)) != NONE);
     assert((typeOf(move) == PROMOTION &&
             (promotionType(move) != PAWN && promotionType(move) != KING)) ||
            typeOf(move) != PROMOTION);
