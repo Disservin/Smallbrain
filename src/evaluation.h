@@ -4,6 +4,6 @@
 
 namespace eval {
 
-[[nodiscard]] Score evaluation(Board &board);
+[[nodiscard]] Score evaluate(Board &board);
 
 }  // namespace eval

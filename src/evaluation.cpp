@@ -4,7 +4,7 @@
 #include "nnue.h"
 
 namespace eval {
-Score evaluation(Board &board) {
+Score evaluate(Board &board) {
     int32_t v = nnue::output(board.getAccumulator(), board.sideToMove());
 
     v = static_cast<double>(v) * (1.0 - (board.halfmoves() / 1000.0));

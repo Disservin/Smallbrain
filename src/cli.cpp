@@ -92,7 +92,7 @@ class Eval : public Argument {
             if (key == "fen") {
                 fen = value;
                 Board board = Board(fen);
-                std::cout << uci::convertScore(eval::evaluation(board)) << std::endl;
+                std::cout << uci::convertScore(eval::evaluate(board)) << std::endl;
             } else {
                 ArgumentsParser::throwMissing("eval", key, value);
             }

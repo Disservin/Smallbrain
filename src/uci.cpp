@@ -77,7 +77,7 @@ void Uci::processLine(const std::string& line) {
     } else if (tokens[0] == "setoption") {
         setOption(line);
     } else if (tokens[0] == "eval") {
-        std::cout << convertScore(eval::evaluation(board_)) << std::endl;
+        std::cout << convertScore(eval::evaluate(board_)) << std::endl;
     } else if (tokens[0] == "print") {
         std::cout << board_ << std::endl;
     } else {
