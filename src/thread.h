@@ -10,9 +10,6 @@
 // A wrapper class to start the search
 class SearchInstance {
    public:
-    void start();
-    std::unique_ptr<Search> search;
-
     SearchInstance() { search = std::make_unique<Search>(); }
 
     SearchInstance(const SearchInstance &other) {
@@ -29,6 +26,10 @@ class SearchInstance {
     }
 
     ~SearchInstance() = default;
+
+    void start();
+
+    std::unique_ptr<Search> search;
 };
 
 // Holds all currently running threads and their data
