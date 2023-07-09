@@ -26,17 +26,17 @@ void init_reductions() {
     }
 }
 
-Score mateIn(int ply) { return (VALUE_MATE - ply); }
+[[nodiscard]] Score mateIn(int ply) { return (VALUE_MATE - ply); }
 
-Score matedIn(int ply) { return (ply - VALUE_MATE); }
+[[nodiscard]] Score matedIn(int ply) { return (ply - VALUE_MATE); }
 
-Score scoreToTT(Score s, int plies) {
+[[nodiscard]] Score scoreToTT(Score s, int plies) {
     return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s + plies
             : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies
                                             : s);
 }
 
-Score scoreFromTT(Score s, int plies) {
+[[nodiscard]] Score scoreFromTT(Score s, int plies) {
     if (s == VALUE_NONE) return VALUE_NONE;
 
     return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s - plies
