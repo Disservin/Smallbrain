@@ -81,32 +81,32 @@ using namespace Chess_Lookup::Fancy;
 
 namespace attacks {
 
-constexpr Bitboard Pawn(uint8_t sq, Color c)
+constexpr Bitboard pawn(uint8_t sq, Color c)
 {
     return PAWN_ATTACKS_TABLE[c][sq];
 }
 
-constexpr Bitboard Knight(uint8_t sq)
+constexpr Bitboard knight(uint8_t sq)
 {
     return KNIGHT_ATTACKS_TABLE[sq];
 }
 
-constexpr Bitboard Bishop(uint8_t sq, Bitboard occupied)
+constexpr Bitboard bishop(uint8_t sq, Bitboard occupied)
 {
     return GetBishopAttacks(sq, occupied);
 }
 
-constexpr Bitboard Rook(uint8_t sq, Bitboard occupied)
+constexpr Bitboard rook(uint8_t sq, Bitboard occupied)
 {
     return GetRookAttacks(sq, occupied);
 }
 
-constexpr Bitboard Queen(uint8_t sq, Bitboard occupied)
+constexpr Bitboard queen(uint8_t sq, Bitboard occupied)
 {
     return GetQueenAttacks(sq, occupied);
 }
 
-constexpr Bitboard King(uint8_t sq)
+constexpr Bitboard king(uint8_t sq)
 {
     return KING_ATTACKS_TABLE[sq];
 }

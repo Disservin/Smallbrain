@@ -16,11 +16,11 @@ static auto init_squares_between = []() constexpr {
             if (sq1 == sq2)
                 squares_between_bb[sq1][sq2] = 0ull;
             else if (squareFile(sq1) == squareFile(sq2) || squareRank(sq1) == squareRank(sq2))
-                squares_between_bb[sq1][sq2] = attacks::Rook(sq1, sqs) & attacks::Rook(sq2, sqs);
+                squares_between_bb[sq1][sq2] = attacks::rook(sq1, sqs) & attacks::rook(sq2, sqs);
             else if (diagonalOf(sq1) == diagonalOf(sq2) ||
                      antiDiagonalOf(sq1) == antiDiagonalOf(sq2))
                 squares_between_bb[sq1][sq2] =
-                    attacks::Bishop(sq1, sqs) & attacks::Bishop(sq2, sqs);
+                    attacks::bishop(sq1, sqs) & attacks::bishop(sq2, sqs);
         }
     }
     return squares_between_bb;
@@ -98,12 +98,12 @@ template <Color c>
 [[nodiscard]] Bitboard checkMask(const Board &board, Square sq, Bitboard occ_all,
                                  int &double_check) {
     Bitboard checks = 0ULL;
-    Bitboard pawn_mask = board.pieces<PAWN, ~c>() & attacks::Pawn(sq, c);
-    Bitboard knight_mask = board.pieces<KNIGHT, ~c>() & attacks::Knight(sq);
+    Bitboard pawn_mask = board.pieces<PAWN, ~c>() & attacks::pawn(sq, c);
+    Bitboard knight_mask = board.pieces<KNIGHT, ~c>() & attacks::knight(sq);
     Bitboard bishop_mask =
-        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::Bishop(sq, occ_all);
+        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::bishop(sq, occ_all);
     Bitboard rook_mask =
-        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::Rook(sq, occ_all);
+        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::rook(sq, occ_all);
 
     /********************
      * We keep track of the amount of checks, in case there are
@@ -164,7 +164,7 @@ template <Color c>
 [[nodiscard]] Bitboard pinMaskRooks(const Board &board, Square sq, Bitboard occ_us,
                                     Bitboard occ_enemy) {
     Bitboard rook_mask =
-        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::Rook(sq, occ_enemy);
+        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::rook(sq, occ_enemy);
 
     Bitboard pin_hv = 0ULL;
     while (rook_mask) {
@@ -179,7 +179,7 @@ template <Color c>
 [[nodiscard]] Bitboard pinMaskBishops(const Board &board, Square sq, Bitboard occ_us,
                                       Bitboard occ_enemy) {
     Bitboard bishop_mask =
-        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::Bishop(sq, occ_enemy);
+        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::bishop(sq, occ_enemy);
 
     Bitboard pin_d = 0ULL;
 
@@ -214,19 +214,19 @@ template <Color c>
 
     while (knights) {
         Square index = builtin::poplsb(knights);
-        seen |= attacks::Knight(index);
+        seen |= attacks::knight(index);
     }
     while (bishops) {
         Square index = builtin::poplsb(bishops);
-        seen |= attacks::Bishop(index, occ_all);
+        seen |= attacks::bishop(index, occ_all);
     }
     while (rooks) {
         Square index = builtin::poplsb(rooks);
-        seen |= attacks::Rook(index, occ_all);
+        seen |= attacks::rook(index, occ_all);
     }
 
     Square index = builtin::lsb(board.pieces<KING, c>());
-    seen |= attacks::King(index);
+    seen |= attacks::king(index);
 
     return seen;
 }
@@ -401,7 +401,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
         const Bitboard enemy_queen_rook = board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>();
 
         const bool is_possible_pin = king_mask && enemy_queen_rook;
-        Bitboard ep_bb = attacks::Pawn(ep, ~c) & pawns_lr;
+        Bitboard ep_bb = attacks::pawn(ep, ~c) & pawns_lr;
 
         /********************
          * For one en passant square two pawns could potentially take there.
@@ -427,7 +427,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
              * If thats the case then the move is illegal and we can break immediately.
              *******************/
             if (is_possible_pin &&
-                (attacks::Rook(k_sq, occ_all & ~connecting_pawns) & enemy_queen_rook) != 0)
+                (attacks::rook(k_sq, occ_all & ~connecting_pawns) & enemy_queen_rook) != 0)
                 break;
 
             movelist.add(make<ENPASSANT>(from, to));
@@ -436,21 +436,21 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
 }
 
 [[nodiscard]] inline Bitboard generateLegalKnightMoves(Square sq, Bitboard movable_square) {
-    return attacks::Knight(sq) & movable_square;
+    return attacks::knight(sq) & movable_square;
 }
 
 [[nodiscard]] inline Bitboard generateLegalBishopMoves(Square sq, Bitboard movable_square,
                                                        Bitboard pinMask, Bitboard occ_all) {
     // The Bishop is pinned diagonally thus can only move diagonally.
-    if (pinMask & (1ULL << sq)) return attacks::Bishop(sq, occ_all) & movable_square & pinMask;
-    return attacks::Bishop(sq, occ_all) & movable_square;
+    if (pinMask & (1ULL << sq)) return attacks::bishop(sq, occ_all) & movable_square & pinMask;
+    return attacks::bishop(sq, occ_all) & movable_square;
 }
 
 [[nodiscard]] inline Bitboard generateLegalRookMoves(Square sq, Bitboard movable_square,
                                                      Bitboard pinMask, Bitboard occ_all) {
     // The Rook is pinned horizontally thus can only move horizontally.
-    if (pinMask & (1ULL << sq)) return attacks::Rook(sq, occ_all) & movable_square & pinMask;
-    return attacks::Rook(sq, occ_all) & movable_square;
+    if (pinMask & (1ULL << sq)) return attacks::rook(sq, occ_all) & movable_square & pinMask;
+    return attacks::rook(sq, occ_all) & movable_square;
 }
 
 [[nodiscard]] inline Bitboard generateLegalQueenMoves(Square sq, Bitboard movable_square,
@@ -458,12 +458,12 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
                                                       Bitboard occ_all) {
     Bitboard moves = 0ULL;
     if (pin_d & (1ULL << sq))
-        moves |= attacks::Bishop(sq, occ_all) & movable_square & pin_d;
+        moves |= attacks::bishop(sq, occ_all) & movable_square & pin_d;
     else if (pin_hv & (1ULL << sq))
-        moves |= attacks::Rook(sq, occ_all) & movable_square & pin_hv;
+        moves |= attacks::rook(sq, occ_all) & movable_square & pin_hv;
     else {
-        moves |= attacks::Rook(sq, occ_all) & movable_square;
-        moves |= attacks::Bishop(sq, occ_all) & movable_square;
+        moves |= attacks::rook(sq, occ_all) & movable_square;
+        moves |= attacks::bishop(sq, occ_all) & movable_square;
     }
 
     return moves;
@@ -471,7 +471,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
 
 template <Movetype mt>
 [[nodiscard]] Bitboard generateLegalKingMoves(Square sq, Bitboard movable_square, Bitboard seen) {
-    return attacks::King(sq) & movable_square & ~seen;
+    return attacks::king(sq) & movable_square & ~seen;
 }
 
 [[nodiscard]] constexpr Square relativeSquare(Color c, Square s) {

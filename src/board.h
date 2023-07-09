@@ -266,7 +266,7 @@ inline void Board::updateHash(Move move) {
         if (typeOf(move) == ENPASSANT) {
             hash_key_ ^= updateKeyPiece(makePiece(PAWN, ~side_to_move_), ep_sq);
         } else if (std::abs(from_sq - to_sq) == 16) {
-            Bitboard ep_mask = attacks::Pawn(ep_sq, side_to_move_);
+            Bitboard ep_mask = attacks::pawn(ep_sq, side_to_move_);
 
             if (ep_mask & pieces(PAWN, ~side_to_move_)) {
                 en_passant_square_ = ep_sq;

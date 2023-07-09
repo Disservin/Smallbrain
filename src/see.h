@@ -13,14 +13,14 @@ namespace see {
     const Bitboard attacking_king = board.pieces(KING, attacker_color);
     const Bitboard attacking_pawns = board.pieces(PAWN, attacker_color);
 
-    const Bitboard inter_cardinal_rays = attacks::Bishop(sq, occupied_bb);
-    const Bitboard cardinal_rays_rays = attacks::Rook(sq, occupied_bb);
+    const Bitboard inter_cardinal_rays = attacks::bishop(sq, occupied_bb);
+    const Bitboard cardinal_rays_rays = attacks::rook(sq, occupied_bb);
 
     Bitboard attackers = inter_cardinal_rays & (attacking_bishops | attacking_queens);
     attackers |= cardinal_rays_rays & (attacking_rooks | attacking_queens);
-    attackers |= attacks::Knight(sq) & attacking_knights;
-    attackers |= attacks::King(sq) & attacking_king;
-    attackers |= attacks::Pawn(sq, ~attacker_color) & attacking_pawns;
+    attackers |= attacks::knight(sq) & attacking_knights;
+    attackers |= attacks::king(sq) & attacking_king;
+    attackers |= attacks::pawn(sq, ~attacker_color) & attacking_pawns;
     return attackers;
 }
 
@@ -73,8 +73,8 @@ namespace see {
                                                       board.pieces(static_cast<Piece>(pt + 6))))));
 
         if (pt == PAWN || pt == BISHOP || pt == QUEEN)
-            attackers |= attacks::Bishop(to_sq, occ) & bishops;
-        if (pt == ROOK || pt == QUEEN) attackers |= attacks::Rook(to_sq, occ) & rooks;
+            attackers |= attacks::bishop(to_sq, occ) & bishops;
+        if (pt == ROOK || pt == QUEEN) attackers |= attacks::rook(to_sq, occ) & rooks;
     }
     return sT != board.colorOf(from_sq);
 }

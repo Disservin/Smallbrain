@@ -318,11 +318,11 @@ Bitboard Board::all() const {
 Color Board::colorOf(Square loc) const { return Color((at(loc) / 6)); }
 
 bool Board::isAttacked(Color c, Square sq, Bitboard occ) const {
-    if (pieces(PAWN, c) & attacks::Pawn(sq, ~c)) return true;
-    if (pieces(KNIGHT, c) & attacks::Knight(sq)) return true;
-    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & attacks::Bishop(sq, occ)) return true;
-    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & attacks::Rook(sq, occ)) return true;
-    if (pieces(KING, c) & attacks::King(sq)) return true;
+    if (pieces(PAWN, c) & attacks::pawn(sq, ~c)) return true;
+    if (pieces(KNIGHT, c) & attacks::knight(sq)) return true;
+    if ((pieces(BISHOP, c) | pieces(QUEEN, c)) & attacks::bishop(sq, occ)) return true;
+    if ((pieces(ROOK, c) | pieces(QUEEN, c)) & attacks::rook(sq, occ)) return true;
+    if (pieces(KING, c) & attacks::king(sq)) return true;
     return false;
 }
 
