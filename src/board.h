@@ -306,7 +306,7 @@ template <bool updateNNUE>
 void Board::makeMove(const Move move) {
     assert(from(move) >= 0 && from(move) < 64);
     assert(to(move) >= 0 && to(move) < 64);
-    assert(typeOfPiece(at(to_sq)) != KING);
+    assert(typeOfPiece(at(to(move))) != KING);
     assert(at<PieceType>(from(move)) != NONETYPE);
     assert(at(from(move)) != NONE);
     assert((typeOf(move) == PROMOTION &&
