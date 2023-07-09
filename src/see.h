@@ -6,15 +6,15 @@ namespace see {
 
 [[nodiscard]] inline Bitboard attackersForSide(const Board &board, Color attacker_color, Square sq,
                                                Bitboard occupied_bb) {
-    Bitboard attacking_bishops = board.pieces(BISHOP, attacker_color);
-    Bitboard attacking_rooks = board.pieces(ROOK, attacker_color);
-    Bitboard attacking_queens = board.pieces(QUEEN, attacker_color);
-    Bitboard attacking_knights = board.pieces(KNIGHT, attacker_color);
-    Bitboard attacking_king = board.pieces(KING, attacker_color);
-    Bitboard attacking_pawns = board.pieces(PAWN, attacker_color);
+    const Bitboard attacking_bishops = board.pieces(BISHOP, attacker_color);
+    const Bitboard attacking_rooks = board.pieces(ROOK, attacker_color);
+    const Bitboard attacking_queens = board.pieces(QUEEN, attacker_color);
+    const Bitboard attacking_knights = board.pieces(KNIGHT, attacker_color);
+    const Bitboard attacking_king = board.pieces(KING, attacker_color);
+    const Bitboard attacking_pawns = board.pieces(PAWN, attacker_color);
 
-    Bitboard inter_cardinal_rays = attacks::Bishop(sq, occupied_bb);
-    Bitboard cardinal_rays_rays = attacks::Rook(sq, occupied_bb);
+    const Bitboard inter_cardinal_rays = attacks::Bishop(sq, occupied_bb);
+    const Bitboard cardinal_rays_rays = attacks::Rook(sq, occupied_bb);
 
     Bitboard attackers = inter_cardinal_rays & (attacking_bishops | attacking_queens);
     attackers |= cardinal_rays_rays & (attacking_rooks | attacking_queens);

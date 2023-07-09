@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "types.h"
 #include "helper.h"
+#include "types.h"
 
 PACK(struct TEntry {
     U64 key = 0;
@@ -35,7 +35,7 @@ class TranspositionTable {
     /// @param tte
     /// @param tt_hit
     /// @param key Position hash
-    [[nodiscard]] TEntry *probe(bool &tt_hit, Move &ttmove, U64 key);
+    [[nodiscard]] const TEntry *probe(bool &tt_hit, Move &ttmove, U64 key) const;
 
     /// @brief calculates the TT index of key
     /// @param key
@@ -55,5 +55,5 @@ class TranspositionTable {
         builtin::prefetch<rw>(&entries_[index(key)]);
     }
 
-    int hashfull() const;
+    [[nodiscard]] int hashfull() const;
 };

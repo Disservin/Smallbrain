@@ -1,26 +1,26 @@
 #pragma once
 
 #include "board.h"
-#include "search.h"
-#include "types/constants.h"
-#include "see.h"
 #include "history.h"
+#include "search.h"
+#include "see.h"
+#include "types/constants.h"
 
 enum SearchType { QSEARCH, ABSEARCH };
 
 template <SearchType st>
 class MovePicker {
    public:
-    MovePicker(Search &sh, Stack *s, Movelist &moves, const Move move)
+    MovePicker(const Search &sh, const Stack *s, Movelist &moves, const Move move)
         : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
         movelist_.size = 0;
         movegen::legalmoves<Movetype::CAPTURE>(search_.board, movelist_);
     }
 
-    MovePicker(Search &sh, Stack *s, Movelist &moves, const Movelist &searchmoves, bool rootNode,
-               const Move move)
+    MovePicker(const Search &sh, const Stack *s, Movelist &moves, const Movelist &searchmoves,
+               const bool root_node, const Move move)
         : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
-        if (rootNode && searchmoves.size > 0) {
+        if (root_node && searchmoves.size > 0) {
             movelist_ = searchmoves;
             return;
         }

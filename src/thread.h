@@ -32,8 +32,8 @@ class Thread {
 // Holds all currently running threads and their data
 class ThreadPool {
    public:
-    [[nodiscard]] U64 getNodes();
-    [[nodiscard]] U64 getTbHits();
+    [[nodiscard]] U64 getNodes() const;
+    [[nodiscard]] U64 getTbHits() const;
 
     void startThreads(const Board &board, const Limits &limit, const Movelist &searchmoves,
                       int worker_count, bool use_tb);

@@ -123,7 +123,7 @@ void Uci::applyOptions() {
     TTable.allocateMB(options.get<int>("Hash"));
 }
 
-void Uci::isReady() { std::cout << "readyok" << std::endl; }
+void Uci::isReady() const { std::cout << "readyok" << std::endl; }
 
 void Uci::uciNewGame() {
     board_ = Board();
@@ -190,9 +190,9 @@ void Uci::go(const std::string& line) {
     Threads.startThreads(board_, limit, searchmoves_, worker_threads_, use_tb_);
 }
 
-void Uci::stop() { Threads.stopThreads(); }
+void Uci::stop() const { Threads.stopThreads(); }
 
-void Uci::quit() {
+void Uci::quit() const {
     Threads.stopThreads();
     tb_free();
 }

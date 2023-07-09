@@ -4,7 +4,7 @@
 
 void Thread::startThinking() { search->startThinking(); }
 
-U64 ThreadPool::getNodes() {
+U64 ThreadPool::getNodes() const {
     U64 total = 0;
 
     for (auto &th : pool_) {
@@ -14,7 +14,7 @@ U64 ThreadPool::getNodes() {
     return total;
 }
 
-U64 ThreadPool::getTbHits() {
+U64 ThreadPool::getTbHits() const {
     U64 total = 0;
 
     for (auto &th : pool_) {
@@ -25,7 +25,7 @@ U64 ThreadPool::getTbHits() {
 }
 
 void ThreadPool::startThreads(const Board &board, const Limits &limit, const Movelist &searchmoves,
-                               int worker_count, bool use_tb) {
+                              int worker_count, bool use_tb) {
     assert(running_threads_.size() == 0);
 
     stop = false;

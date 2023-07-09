@@ -6,13 +6,14 @@
 #include "uci.h"
 
 namespace syzygy {
+
 Score probeWDL(const Board& board) {
-    Bitboard white = board.us<WHITE>();
-    Bitboard black = board.us<BLACK>();
+    const Bitboard white = board.us<WHITE>();
+    const Bitboard black = board.us<BLACK>();
 
     if (builtin::popcount(white | black) > (signed)TB_LARGEST) return VALUE_NONE;
 
-    Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
+    const Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
 
     unsigned TBresult =
         tb_probe_wdl(white, black, board.pieces(WHITEKING) | board.pieces(BLACKKING),
@@ -35,11 +36,11 @@ Score probeWDL(const Board& board) {
 }
 
 std::pair<int, Move> probeDTZ(const Board& board) {
-    Bitboard white = board.us<WHITE>();
-    Bitboard black = board.us<BLACK>();
+    const Bitboard white = board.us<WHITE>();
+    const Bitboard black = board.us<BLACK>();
     if (builtin::popcount(white | black) > (signed)TB_LARGEST) return {TB_RESULT_FAILED, NO_MOVE};
 
-    Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
+    const Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
 
     unsigned TBresult =
         tb_probe_root(white, black, board.pieces(WHITEKING) | board.pieces(BLACKKING),
@@ -56,7 +57,7 @@ std::pair<int, Move> probeDTZ(const Board& board) {
         TBresult == TB_RESULT_STALEMATE)
         return {TB_RESULT_FAILED, NO_MOVE};
 
-    int wdl = TB_GET_WDL(TBresult);
+    const int wdl = TB_GET_WDL(TBresult);
 
     Score s = 0;
 
@@ -71,12 +72,12 @@ std::pair<int, Move> probeDTZ(const Board& board) {
     }
 
     // 1 - queen, 2 - rook, 3 - bishop, 4 - knight.
-    int promo = TB_GET_PROMOTES(TBresult);
-    PieceType promoTranslation[] = {NONETYPE, QUEEN, ROOK, BISHOP, KNIGHT, NONETYPE};
+    const int promo = TB_GET_PROMOTES(TBresult);
+    const PieceType promoTranslation[] = {NONETYPE, QUEEN, ROOK, BISHOP, KNIGHT, NONETYPE};
 
     // gets the square from and square to for the move which should be played
-    Square sqFrom = Square(TB_GET_FROM(TBresult));
-    Square sqTo = Square(TB_GET_TO(TBresult));
+    const Square sqFrom = Square(TB_GET_FROM(TBresult));
+    const Square sqTo = Square(TB_GET_TO(TBresult));
 
     Movelist legalmoves;
     movegen::legalmoves<Movetype::ALL>(board, legalmoves);

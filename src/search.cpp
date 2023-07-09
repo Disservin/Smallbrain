@@ -59,7 +59,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Move ttmove = NO_MOVE;
     bool tt_hit = false;
 
-    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
+    const TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
     const Score tt_score = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     // clang-format off
@@ -205,7 +205,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     Move ttmove = NO_MOVE;
     bool tt_hit = false;
 
-    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
+    const TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
     const Score tt_score = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     const Move excluded_move = ss->excluded_move;

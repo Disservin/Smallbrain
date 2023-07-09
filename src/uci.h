@@ -20,15 +20,15 @@ class Uci {
     void setOption(const std::string& line);
     void applyOptions();
 
-    void isReady();
+    void isReady() const;
 
     void uciNewGame();
     void position(const std::string& line);
 
     void go(const std::string& line);
 
-    void stop();
-    void quit();
+    void stop() const;
+    void quit() const;
 
    private:
     Board board_;

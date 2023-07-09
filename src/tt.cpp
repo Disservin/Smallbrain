@@ -15,8 +15,8 @@ void TranspositionTable::store(int depth, Score bestvalue, Flag b, U64 key, Move
     }
 }
 
-TEntry *TranspositionTable::probe(bool &tt_hit, Move &ttmove, U64 key) {
-    TEntry *tte = &entries_[index(key)];
+const TEntry *TranspositionTable::probe(bool &tt_hit, Move &ttmove, U64 key) const {
+    const TEntry *tte = &entries_[index(key)];
     tt_hit = (tte->key == key);
     ttmove = tte->move;
     return tte;

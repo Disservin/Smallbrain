@@ -7,24 +7,26 @@
 U64 PerftTesting::perftFunction(int depth, int max) {
     movelists[depth].size = 0;
     movegen::legalmoves<Movetype::ALL>(board, movelists[depth]);
+
     if (depth == 0)
         return 1;
     else if (depth == 1 && max != 1) {
         return movelists[depth].size;
     }
-    U64 nodesIt = 0;
+
+    U64 nodes_it = 0;
     for (auto extmove : movelists[depth]) {
         Move move = extmove.move;
         board.makeMove<false>(move);
-        nodesIt += perftFunction(depth - 1, depth);
+        nodes_it += perftFunction(depth - 1, depth);
         board.unmakeMove<false>(move);
         if (depth == max) {
-            nodes += nodesIt;
-            std::cout << uci::moveToUci(move, board.chess960) << " " << nodesIt << std::endl;
-            nodesIt = 0;
+            nodes += nodes_it;
+            std::cout << uci::moveToUci(move, board.chess960) << " " << nodes_it << std::endl;
+            nodes_it = 0;
         }
     }
-    return nodesIt;
+    return nodes_it;
 }
 
 void PerftTesting::perfTest(int depth, int max) {
@@ -70,6 +72,7 @@ void PerftTesting::testAllPos(int n) {
 
         std::vector<U64> expected960 = {119060324ull, 191762235ull, 924181432ull,
                                         308553169ull, 872323796ull, 2678022813ull};
+
         for (size_t i = 0; i < expected.size(); i++) {
             board.setFen(tests[i]);
             nodes = 0;
