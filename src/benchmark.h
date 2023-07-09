@@ -63,6 +63,6 @@ static const std::vector<std::string> benchmarkfens = {
     "4rrb1/1kp3b1/1p1p4/pP1Pn2p/5p2/1PR2P2/2P1NB1P/2KR1B2 w D - 0 21",
     "1rkr3b/1ppn3p/3pB1n1/6q1/R2P4/4N1P1/1P5P/2KRQ1B1 b Dbd - 0 14"};
 
-int startBench(int depth = 12);
+int run(int depth = 12);
 
 }  // namespace bench

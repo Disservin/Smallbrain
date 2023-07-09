@@ -104,22 +104,22 @@ bool getSquareColor(Square square) {
     }
 }
 
-void mean_of(int v) {
+void meanOf(int v) {
     means[0]++;
     means[1] += v;
 }
 
-void max_of(int v) {
+void maxOf(int v) {
     max[0]++;
     if (v > max[1]) max[1] = v;
 }
 
-void min_of(int v) {
+void minOf(int v) {
     min[0]++;
     if (v < min[1]) min[1] = v;
 }
 
-void print_mean() {
+void printMean() {
     if (means[0])
         std::cout << "Total " << means[0] << " Mean " << (double)means[1] / means[0] << std::endl;
     if (min[0]) std::cout << "Total " << min[0] << " Min " << min[1] << std::endl;

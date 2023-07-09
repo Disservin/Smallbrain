@@ -103,10 +103,10 @@ class Board {
     void updateHash(Move move);
 
     template <bool updateNNUE>
-    void makeMove(Move move);
+    void makeMove(const Move move);
 
     template <bool updateNNUE>
-    void unmakeMove(Move move);
+    void unmakeMove(const Move move);
 
     void makeNullMove();
 
@@ -303,7 +303,16 @@ inline void Board::updateHash(Move move) {
 /// @tparam updateNNUE
 /// @param move
 template <bool updateNNUE>
-void Board::makeMove(Move move) {
+void Board::makeMove(const Move move) {
+    assert(from(move) >= 0 && from(move) < 64);
+    assert(to(move) >= 0 && to(move) < 64);
+    assert(typeOfPiece(at(to_sq)) != KING);
+    assert(at<PieceType>(from_sq) != NONETYPE);
+    assert(at(from_sq) != NONE);
+    assert((typeOf(move) == PROMOTION &&
+            (promotionType(move) != PAWN && promotionType(move) != KING)) ||
+           typeOf(move) != PROMOTION);
+
     const Square from_sq = from(move);
     const Square to_sq = to(move);
 
@@ -313,15 +322,6 @@ void Board::makeMove(Move move) {
     const Piece capture = at(to_sq);
 
     const bool ep = to_sq == en_passant_square_;
-
-    assert(from_sq >= 0 && from_sq < 64);
-    assert(to_sq >= 0 && to_sq < 64);
-    assert(typeOfPiece(capture) != KING);
-    assert(piece_type != NONETYPE);
-    assert(piece != NONE);
-    assert((typeOf(move) == PROMOTION &&
-            (promotionType(move) != PAWN && promotionType(move) != KING)) ||
-           typeOf(move) != PROMOTION);
 
     // *****************************
     // STORE STATE HISTORY
@@ -378,21 +378,21 @@ void Board::makeMove(Move move) {
 
         assert(at<PieceType>(ep_sq) == PAWN);
         removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), ep_sq, ksq_white, ksq_black);
-    } else if (capture != NONE) {
-        assert(at(to_sq) != NONE);
+    } else if (capture != Piece::NONE) {
+        assert(at(to_sq) != Piece::NONE);
         removePiece<updateNNUE>(capture, to_sq, ksq_white, ksq_black);
     }
 
     // The move is differently encoded for promotions to it requires some special care.
     if (typeOf(move) == PROMOTION) {
         // Captured piece is already removed
-        assert(at(to_sq) == NONE);
+        assert(at(to_sq) == Piece::NONE);
 
         removePiece<updateNNUE>(makePiece(PAWN, side_to_move_), from_sq, ksq_white, ksq_black);
         placePiece<updateNNUE>(makePiece(promotionType(move), side_to_move_), to_sq, ksq_white,
                                ksq_black);
     } else {
-        assert(at(to_sq) == NONE);
+        assert(at(to_sq) == Piece::NONE);
 
         movePiece<updateNNUE>(piece, from_sq, to_sq, ksq_white, ksq_black);
     }
@@ -402,8 +402,6 @@ void Board::makeMove(Move move) {
 
 template <bool updateNNUE>
 void Board::unmakeMove(Move move) {
-    side_to_move_ = ~side_to_move_;
-
     const State restore = state_history_.back();
 
     const Square from_sq = from(move);
@@ -411,25 +409,26 @@ void Board::unmakeMove(Move move) {
 
     const PieceType piece_type = at<PieceType>(to_sq);
 
-    const Piece piece = makePiece(piece_type, side_to_move_);
+    const Piece piece = makePiece(piece_type, ~side_to_move_);
     const Piece capture = restore.captured_piece;
 
     const bool promotion = typeOf(move) == PROMOTION;
-
-    state_history_.pop_back();
 
     if (accumulators_->size()) {
         accumulators_->pop();
     }
 
     hash_key_ = hash_history_.back();
+
     hash_history_.pop_back();
+    state_history_.pop_back();
 
     en_passant_square_ = restore.en_passant;
     castling_rights_ = restore.castling;
     half_move_clock_ = restore.half_move;
 
     full_move_number_--;
+    side_to_move_ = ~side_to_move_;
 
     if (typeOf(move) == CASTLING) {
         const Piece rook = makePiece(ROOK, side_to_move_);

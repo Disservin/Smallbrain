@@ -335,11 +335,10 @@ void Board::makeNullMove() {
 
     TTable.prefetch(hash_key_);
 
-    side_to_move_ = ~side_to_move_;
-
-    // Set the en passant square to NO_SQ and increment the full move number
     en_passant_square_ = NO_SQ;
+
     full_move_number_++;
+    side_to_move_ = ~side_to_move_;
 }
 
 void Board::unmakeNullMove() {
@@ -351,10 +350,11 @@ void Board::unmakeNullMove() {
     hash_key_ ^= updateKeySideToMove();
     if (en_passant_square_ != NO_SQ) hash_key_ ^= updateKeyEnPassant(en_passant_square_);
 
-    full_move_number_--;
-    side_to_move_ = ~side_to_move_;
     castling_rights_ = restore.castling;
     half_move_clock_ = restore.half_move;
+
+    full_move_number_--;
+    side_to_move_ = ~side_to_move_;
 }
 
 void Board::clearStacks() {

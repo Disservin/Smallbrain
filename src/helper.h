@@ -88,11 +88,11 @@ void prefetch(const void *addr) {
 [[maybe_unused]] static std::atomic<int64_t> min[2];
 [[maybe_unused]] static std::atomic<int64_t> max[2];
 
-[[maybe_unused]] void mean_of(int v);
-[[maybe_unused]] void min_of(int v);
-[[maybe_unused]] void max_of(int v);
+[[maybe_unused]] void meanOf(int v);
+[[maybe_unused]] void minOf(int v);
+[[maybe_unused]] void maxOf(int v);
 
-void print_mean();
+void printMean();
 
 /// @brief makes a Piece from only the piece type and color
 /// @param type

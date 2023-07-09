@@ -703,7 +703,7 @@ SearchResult Search::iterativeDeepening() {
         Threads.stop = true;
     }
 
-    print_mean();
+    printMean();
 
     return search_result;
 }

@@ -128,7 +128,7 @@ class Benchmark : public Argument {
    public:
     int parse(int &, int, char const *argv[]) override {
         if (std::string(argv[1]) == std::string("bench")) {
-            bench::startBench(12);
+            bench::run(12);
             return 1;
         }
         return 0;
