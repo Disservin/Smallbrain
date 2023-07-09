@@ -2,7 +2,7 @@
 
 #include "thread.h"
 
-void Thread::startThinking() { search->startThinking(); }
+void SearchInstance::start() { search->startThinking(); }
 
 U64 ThreadPool::getNodes() const {
     U64 total = 0;
@@ -24,13 +24,13 @@ U64 ThreadPool::getTbHits() const {
     return total;
 }
 
-void ThreadPool::startThreads(const Board &board, const Limits &limit, const Movelist &searchmoves,
-                              int worker_count, bool use_tb) {
+void ThreadPool::start(const Board &board, const Limits &limit, const Movelist &searchmoves,
+                       int worker_count, bool use_tb) {
     assert(running_threads_.size() == 0);
 
     stop = false;
 
-    Thread mainThread;
+    SearchInstance mainThread;
 
     if (pool_.size() > 0) mainThread = pool_[0];
 
@@ -60,11 +60,11 @@ void ThreadPool::startThreads(const Board &board, const Limits &limit, const Mov
     }
 
     for (int i = 0; i < worker_count; i++) {
-        running_threads_.emplace_back(&Thread::startThinking, std::ref(pool_[i]));
+        running_threads_.emplace_back(&SearchInstance::start, std::ref(pool_[i]));
     }
 }
 
-void ThreadPool::stopThreads() {
+void ThreadPool::kill() {
     stop = true;
 
     for (auto &th : running_threads_)

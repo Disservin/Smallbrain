@@ -128,7 +128,7 @@ void Uci::isReady() const { std::cout << "readyok" << std::endl; }
 void Uci::uciNewGame() {
     board_ = Board();
     TTable.clear();
-    Threads.stopThreads();
+    Threads.kill();
 }
 
 void Uci::position(const std::string& line) {
@@ -150,7 +150,7 @@ void Uci::position(const std::string& line) {
 }
 
 void Uci::go(const std::string& line) {
-    Threads.stopThreads();
+    Threads.kill();
 
     Limits limit;
 
@@ -187,13 +187,13 @@ void Uci::go(const std::string& line) {
         }
     }
 
-    Threads.startThreads(board_, limit, searchmoves_, worker_threads_, use_tb_);
+    Threads.start(board_, limit, searchmoves_, worker_threads_, use_tb_);
 }
 
-void Uci::stop() const { Threads.stopThreads(); }
+void Uci::stop() const { Threads.kill(); }
 
 void Uci::quit() const {
-    Threads.stopThreads();
+    Threads.kill();
     tb_free();
 }
 
