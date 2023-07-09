@@ -1,7 +1,7 @@
 #include <fstream>
 
-#include "rand.h"
 #include "datagen.h"
+#include "rand.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 
 namespace datagen {
@@ -117,7 +117,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
         ply++;
     }
 
-    board.refreshNNUE();
+    board.refreshNNUE(board.getAccumulator());
     board.clearHash();
     search->board = board;
 

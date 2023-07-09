@@ -38,7 +38,7 @@ class Board {
     [[nodiscard]] const CastlingRights &castlingRights() const { return castling_rights_; }
     [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_->back(); }
 
-    void refreshNNUE();
+    void refreshNNUE(nnue::accumulator &acc) const;
 
     template <typename T = Piece>
     [[nodiscard]] T at(Square sq) const {
@@ -209,7 +209,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
 
     if constexpr (updateNNUE) {
         if (typeOfPiece(piece) == KING && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
-            refreshNNUE();
+            refreshNNUE(getAccumulator());
         } else {
             nnue::move(getAccumulator(), from_sq, to_sq, piece, ksq_white, ksq_black);
         }
@@ -365,7 +365,7 @@ void Board::makeMove(const Move move) {
             placePiece<false>(piece, king_to_sq, ksq_white, ksq_black);
             placePiece<false>(rook, rook_to_sq, ksq_white, ksq_black);
 
-            refreshNNUE();
+            refreshNNUE(getAccumulator());
         } else {
             removePiece<updateNNUE>(piece, from_sq, ksq_white, ksq_black);
             removePiece<updateNNUE>(rook, to_sq, ksq_white, ksq_black);

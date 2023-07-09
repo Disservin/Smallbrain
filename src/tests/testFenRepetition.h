@@ -1,9 +1,8 @@
 #pragma once
 
-#include "tests.h"
 #include "../str_utils.h"
 #include "../uci.h"
-#include "../str_utils.h"
+#include "tests.h"
 
 namespace tests {
 inline bool testFenRepetition(const std::string &input) {
@@ -27,7 +26,7 @@ inline bool testFenRepetition(const std::string &input) {
         }
     }
 
-    board.refreshNNUE();
+    board.refreshNNUE(board.getAccumulator());
 
     return board.isRepetition(2);
 }
