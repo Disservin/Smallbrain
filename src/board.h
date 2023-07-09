@@ -235,16 +235,16 @@ inline void Board::updateHash(Move move) {
         castling_rights_.clearCastlingRight(side_to_move_);
 
         if (typeOf(move) == CASTLING) {
-            const Piece rook = side_to_move_ == WHITE ? WHITEROOK : BLACKROOK;
-            const Square rookSQ = rookCastleSquare(to_sq, from_sq);
-            const Square kingToSq = kingCastleSquare(to_sq, from_sq);
-
             assert(at<PieceType>(to_sq) == ROOK);
 
+            const Piece rook = makePiece(ROOK, side_to_move_);
+            const Square rook_sq = rookCastleSquare(to_sq, from_sq);
+            const Square king_to_sq = kingCastleSquare(to_sq, from_sq);
+
             hash_key_ ^= updateKeyPiece(rook, to_sq);
-            hash_key_ ^= updateKeyPiece(rook, rookSQ);
+            hash_key_ ^= updateKeyPiece(rook, rook_sq);
             hash_key_ ^= updateKeyPiece(piece, from_sq);
-            hash_key_ ^= updateKeyPiece(piece, kingToSq);
+            hash_key_ ^= updateKeyPiece(piece, king_to_sq);
 
             hash_key_ ^= updateKeySideToMove();
             hash_key_ ^= updateKeyCastling();
@@ -255,17 +255,21 @@ inline void Board::updateHash(Move move) {
                ((squareRank(from_sq) == Rank::RANK_8 && side_to_move_ == BLACK) ||
                 (squareRank(from_sq) == Rank::RANK_1 && side_to_move_ == WHITE))) {
         const auto king_sq = builtin::lsb(pieces(KING, side_to_move_));
+        const auto side = from_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
 
-        castling_rights_.clearCastlingRight(
-            side_to_move_, from_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
+        castling_rights_.clearCastlingRight(side_to_move_, side);
     } else if (piece_type == PAWN) {
+        const Square ep_sq = Square(to_sq ^ 8);
+
         half_move_clock_ = 0;
+
         if (typeOf(move) == ENPASSANT) {
-            hash_key_ ^= updateKeyPiece(makePiece(PAWN, ~side_to_move_), Square(to_sq ^ 8));
+            hash_key_ ^= updateKeyPiece(makePiece(PAWN, ~side_to_move_), ep_sq);
         } else if (std::abs(from_sq - to_sq) == 16) {
-            Bitboard epMask = attacks::Pawn(Square(to_sq ^ 8), side_to_move_);
-            if (epMask & pieces(PAWN, ~side_to_move_)) {
-                en_passant_square_ = Square(to_sq ^ 8);
+            Bitboard ep_mask = attacks::Pawn(ep_sq, side_to_move_);
+
+            if (ep_mask & pieces(PAWN, ~side_to_move_)) {
+                en_passant_square_ = ep_sq;
                 hash_key_ ^= updateKeyEnPassant(en_passant_square_);
 
                 assert(at(en_passant_square_) == NONE);
@@ -273,21 +277,21 @@ inline void Board::updateHash(Move move) {
         }
     }
 
-    if (capture != NONE) {
+    if (capture != Piece::NONE) {
         half_move_clock_ = 0;
+
         hash_key_ ^= updateKeyPiece(capture, to_sq);
+
         if (typeOfPiece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move_ == BLACK) ||
                                              (rank == Rank::RANK_8 && side_to_move_ == WHITE))) {
             const auto king_sq = builtin::lsb(pieces(KING, ~side_to_move_));
+            const auto side = to_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
 
-            castling_rights_.clearCastlingRight(
-                ~side_to_move_, to_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE);
+            castling_rights_.clearCastlingRight(~side_to_move_, side);
         }
     }
 
     if (typeOf(move) == PROMOTION) {
-        half_move_clock_ = 0;
-
         hash_key_ ^= updateKeyPiece(makePiece(PAWN, side_to_move_), from_sq);
         hash_key_ ^= updateKeyPiece(makePiece(promotionType(move), side_to_move_), to_sq);
     } else {
@@ -352,13 +356,13 @@ void Board::makeMove(const Move move) {
     if (typeOf(move) == CASTLING) {
         const Piece rook = makePiece(ROOK, side_to_move_);
         Square rook_to_sq = rookCastleSquare(to_sq, from_sq);
-        Square kingToSq = kingCastleSquare(to_sq, from_sq);
+        Square king_to_sq = kingCastleSquare(to_sq, from_sq);
 
-        if (updateNNUE && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[kingToSq]) {
+        if (updateNNUE && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[king_to_sq]) {
             removePiece<false>(piece, from_sq, ksq_white, ksq_black);
             removePiece<false>(rook, to_sq, ksq_white, ksq_black);
 
-            placePiece<false>(piece, kingToSq, ksq_white, ksq_black);
+            placePiece<false>(piece, king_to_sq, ksq_white, ksq_black);
             placePiece<false>(rook, rook_to_sq, ksq_white, ksq_black);
 
             refreshNNUE();
@@ -366,7 +370,7 @@ void Board::makeMove(const Move move) {
             removePiece<updateNNUE>(piece, from_sq, ksq_white, ksq_black);
             removePiece<updateNNUE>(rook, to_sq, ksq_white, ksq_black);
 
-            placePiece<updateNNUE>(piece, kingToSq, ksq_white, ksq_black);
+            placePiece<updateNNUE>(piece, king_to_sq, ksq_white, ksq_black);
             placePiece<updateNNUE>(rook, rook_to_sq, ksq_white, ksq_black);
         }
 
