@@ -1,9 +1,10 @@
 #pragma once
+
+#include <functional>
 #include <string>
 
 #include "../board.h"
 #include "../movegen.h"
-#include <functional>
 
 // #define unit_test(func, return_value, ...)
 //     std::cout << "Running " << __func__ << std::endl;
