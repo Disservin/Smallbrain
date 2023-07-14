@@ -502,11 +502,12 @@ template <Color c, Movetype mt>
         const Bitboard not_attacked_path = SQUARES_BETWEEN_BB[sq][end_king_sq];
         const Bitboard empty_not_attacked = ~seen & ~(occ_all & ~(1ull << from_rook_sq));
         const Bitboard withoutRook = occ_all & ~(1ull << from_rook_sq);
+        const Bitboard withoutKing = occ_all & ~(1ull << sq);
 
         if ((not_attacked_path & empty_not_attacked) == not_attacked_path &&
             ((not_occ_path & ~occ_all) == not_occ_path) &&
             !((1ull << from_rook_sq) & pin_hv & MASK_RANK[static_cast<int>(squareRank(sq))]) &&
-            !((1ull << end_rook_sq) & withoutRook) &&
+            !((1ull << end_rook_sq) & (withoutRook & withoutKing)) &&
             !((1ull << end_king_sq) & (seen | (withoutRook & ~(1ull << sq))))) {
             moves |= (1ull << from_rook_sq);
         }

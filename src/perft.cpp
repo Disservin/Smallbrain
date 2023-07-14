@@ -89,6 +89,7 @@ void PerftTesting::testAllPos(int n) {
                 std::cout << "Position " << i + 1 << ": failed" << std::endl;
                 exit(4);
             }
+            i++;
         }
 
         board.chess960 = true;
@@ -109,6 +110,7 @@ void PerftTesting::testAllPos(int n) {
                 std::cout << "FRC Position " << i + 1 << ": failed" << std::endl;
                 exit(4);
             }
+            i++;
         }
 
         auto t2 = TimePoint::now();
