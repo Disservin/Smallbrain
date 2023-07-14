@@ -111,5 +111,25 @@ constexpr Bitboard king(uint8_t sq)
     return KING_ATTACKS_TABLE[sq];
 }
 
+constexpr Bitboard attacksByPiece(PieceType pt, Color color, uint8_t sq, Bitboard occupied)
+{
+    switch (pt) {
+        case PAWN:
+            return pawn(sq, color);
+        case KNIGHT:
+            return knight(sq);
+        case BISHOP:
+            return bishop(sq, occupied);
+        case ROOK:
+            return rook(sq, occupied);
+        case QUEEN:
+            return queen(sq, occupied);
+        case KING:
+            return king(sq);
+        default:
+            return 0;
+    }
+}
+
 }
 

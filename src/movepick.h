@@ -6,9 +6,7 @@
 #include "see.h"
 #include "types/constants.h"
 
-enum SearchType {
-    QSEARCH, ABSEARCH
-};
+enum SearchType { QSEARCH, ABSEARCH };
 
 enum MoveScores : int {
     TT_SCORE = 10'000'000,
@@ -19,18 +17,56 @@ enum MoveScores : int {
     NEGATIVE_SCORE = -10'000'000
 };
 
-template<SearchType st>
+int threatScore(const Board &board, const Move move) {
+    const auto bb = attacks::attacksByPiece(board.at<PieceType>(from(move)), board.sideToMove(),
+                                            to(move), board.all() & ~(1ull << from(move)));
+    switch (board.at<PieceType>(from(move))) {
+        case PAWN: {
+            const int score =
+                500 * builtin::popcount(bb & board.pieces(PieceType::QUEEN, ~board.sideToMove())) +
+                350 * builtin::popcount(bb & board.pieces(PieceType::ROOK, ~board.sideToMove())) +
+                150 * builtin::popcount(bb & board.pieces(PieceType::BISHOP, ~board.sideToMove())) +
+                150 * builtin::popcount(bb & board.pieces(PieceType::KNIGHT, ~board.sideToMove()));
+            return score;
+        }
+        case KNIGHT: {
+            const int score =
+                400 * builtin::popcount(bb & board.pieces(PieceType::QUEEN, ~board.sideToMove())) +
+                300 * builtin::popcount(bb & board.pieces(PieceType::ROOK, ~board.sideToMove()));
+            return score;
+        }
+        case BISHOP: {
+            const int score =
+                400 * builtin::popcount(bb & board.pieces(PieceType::QUEEN, ~board.sideToMove())) +
+                300 * builtin::popcount(bb & board.pieces(PieceType::ROOK, ~board.sideToMove()));
+            return score;
+        }
+        case ROOK: {
+            const int score =
+                200 * builtin::popcount(bb & board.pieces(PieceType::QUEEN, ~board.sideToMove()));
+            return score;
+        }
+        case QUEEN:
+            return 0;
+        case KING:
+            return 0;
+        default:
+            return 0;
+    }
+}
+
+template <SearchType st>
 class MovePicker {
-public:
+   public:
     MovePicker(const Search &sh, const Stack *s, Movelist &moves, const Move move)
-            : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
+        : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
         movelist_.size = 0;
         movegen::legalmoves<Movetype::CAPTURE>(search_.board, movelist_);
     }
 
     MovePicker(const Search &sh, const Stack *s, Movelist &moves, const Movelist &searchmoves,
                const bool root_node, const Move move)
-            : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
+        : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
         if (root_node && searchmoves.size > 0) {
             movelist_ = searchmoves;
             return;
@@ -172,13 +208,12 @@ public:
 
         return getHistory<History::HH>(move, NO_MOVE, search_) +
                2 * (getHistory<History::CONST>(move, (ss_ - 1)->currentmove, search_) +
-                    getHistory<History::CONST>(move, (ss_ - 2)->currentmove, search_));
+                    getHistory<History::CONST>(move, (ss_ - 2)->currentmove, search_)) +
+               threatScore(search_.board, move);
     }
 
-private:
-    enum class Pick {
-        TT, SCORE, CAPTURES, KILLERS_1, KILLERS_2, COUNTER, QUIET
-    };
+   private:
+    enum class Pick { TT, SCORE, CAPTURES, KILLERS_1, KILLERS_2, COUNTER, QUIET };
 
     const Search &search_;
     const Stack *ss_;
