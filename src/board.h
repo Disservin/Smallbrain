@@ -21,7 +21,7 @@
 extern TranspositionTable TTable;
 
 class Board {
-public:
+   public:
     /// @brief constructor for the board, loads startpos
     explicit Board(const std::string &fen = DEFAULT_POS);
 
@@ -47,7 +47,7 @@ public:
 
     void refreshNNUE(nnue::accumulator &acc) const;
 
-    template<typename T = Piece>
+    template <typename T = Piece>
     [[nodiscard]] T at(Square sq) const {
         if constexpr (std::is_same_v<T, PieceType>) {
             return typeOfPiece(board_[sq]);
@@ -76,7 +76,7 @@ public:
 
     [[nodiscard]] Bitboard us(Color c) const;
 
-    template<Color c>
+    template <Color c>
     [[nodiscard]] Bitboard us() const {
         return pieces_bb_[PAWN + c * 6] | pieces_bb_[KNIGHT + c * 6] | pieces_bb_[BISHOP + c * 6] |
                pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
@@ -88,7 +88,7 @@ public:
 
     [[nodiscard]] constexpr Bitboard pieces(Piece piece) const { return pieces_bb_[piece]; }
 
-    template<PieceType piece_type, Color c>
+    template <PieceType piece_type, Color c>
     [[nodiscard]] constexpr Bitboard pieces() const {
         return pieces_bb_[piece_type + c * 6];
     }
@@ -110,10 +110,10 @@ public:
 
     void updateHash(Move move);
 
-    template<bool updateNNUE>
+    template <bool updateNNUE>
     void makeMove(Move move);
 
-    template<bool updateNNUE>
+    template <bool updateNNUE>
     void unmakeMove(Move move);
 
     void makeNullMove();
@@ -122,13 +122,13 @@ public:
 
     // update the internal board representation
 
-    template<bool updateNNUE>
+    template <bool updateNNUE>
     void removePiece(Piece piece, Square sq, Square ksq_white = SQ_A1, Square ksq_black = SQ_A1);
 
-    template<bool updateNNUE>
+    template <bool updateNNUE>
     void placePiece(Piece piece, Square sq, Square ksq_white = SQ_A1, Square ksq_black = SQ_A1);
 
-    template<bool updateNNUE>
+    template <bool updateNNUE>
     void movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white = SQ_A1,
                    Square ksq_black = SQ_A1);
 
@@ -142,7 +142,7 @@ public:
 
     bool chess960 = false;
 
-private:
+   private:
     // update the hash
 
     [[nodiscard]] U64 updateKeyPiece(Piece piece, Square sq) const;
@@ -183,7 +183,7 @@ private:
     Square en_passant_square_;
 };
 
-template<bool updateNNUE>
+template <bool updateNNUE>
 void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb_[piece] &= ~(1ULL << sq);
     board_[sq] = NONE;
@@ -195,7 +195,7 @@ void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_bla
     }
 }
 
-template<bool updateNNUE>
+template <bool updateNNUE>
 void Board::placePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb_[piece] |= (1ULL << sq);
     board_[sq] = piece;
@@ -207,7 +207,7 @@ void Board::placePiece(Piece piece, Square sq, Square ksq_white, Square ksq_blac
     }
 }
 
-template<bool updateNNUE>
+template <bool updateNNUE>
 void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white,
                       Square ksq_black) {
     pieces_bb_[piece] &= ~(1ULL << from_sq);
@@ -268,7 +268,9 @@ inline void Board::updateHash(Move move) {
         const auto king_sq = builtin::lsb(pieces(KING, side_to_move_));
         const auto side = from_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
 
-        castling_rights_.clearCastlingRight(side_to_move_, side);
+        if (castling_rights_.getRookFile(side_to_move_, side) == squareFile(from_sq)) {
+            castling_rights_.clearCastlingRight(side_to_move_, side);
+        }
     } else if (piece_type == PAWN) {
         const auto ep_sq = Square(to_sq ^ 8);
 
@@ -298,7 +300,9 @@ inline void Board::updateHash(Move move) {
             const auto king_sq = builtin::lsb(pieces(KING, ~side_to_move_));
             const auto side = to_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
 
-            castling_rights_.clearCastlingRight(~side_to_move_, side);
+            if (castling_rights_.getRookFile(~side_to_move_, side) == squareFile(to_sq)) {
+                castling_rights_.clearCastlingRight(~side_to_move_, side);
+            }
         }
     }
 
@@ -317,7 +321,7 @@ inline void Board::updateHash(Move move) {
 /// @brief
 /// @tparam updateNNUE
 /// @param move
-template<bool updateNNUE>
+template <bool updateNNUE>
 void Board::makeMove(const Move move) {
     assert(from(move) >= 0 && from(move) < 64);
     assert(to(move) >= 0 && to(move) < 64);
@@ -415,7 +419,7 @@ void Board::makeMove(const Move move) {
     side_to_move_ = ~side_to_move_;
 }
 
-template<bool updateNNUE>
+template <bool updateNNUE>
 void Board::unmakeMove(Move move) {
     const State restore = state_history_.back();
 

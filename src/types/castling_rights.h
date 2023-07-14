@@ -3,13 +3,11 @@
 #include "../types.h"
 #include "bitfield.h"
 
-enum class CastleSide : uint8_t {
-    KING_SIDE, QUEEN_SIDE
-};
+enum class CastleSide : uint8_t { KING_SIDE, QUEEN_SIDE };
 
 class CastlingRights {
-public:
-    template<Color color, CastleSide castle, File rook_file>
+   public:
+    template <Color color, CastleSide castle, File rook_file>
     void setCastlingRight() {
         int file = static_cast<uint16_t>(rook_file) + 1;
 
@@ -48,9 +46,8 @@ public:
     }
 
     [[nodiscard]] File getRookFile(Color color, CastleSide castle) const {
-        assert(hasCastlingRight(color, castle) && "Castling right does not exist");
         return static_cast<File>(
-                castling_rights_.getGroup(2 * static_cast<int>(color) + static_cast<int>(castle)) - 1);
+            castling_rights_.getGroup(2 * static_cast<int>(color) + static_cast<int>(castle)) - 1);
     }
 
     [[nodiscard]] int getHashIndex() const {
@@ -60,7 +57,7 @@ public:
                8 * hasCastlingRight(BLACK, CastleSide::QUEEN_SIDE);
     }
 
-private:
+   private:
     /*
      denotes the file of the rook that we castle to
      1248 1248 1248 1248
