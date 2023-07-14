@@ -20,23 +20,22 @@ class Uci {
     void setOption(const std::string& line);
     void applyOptions();
 
-    void isReady() const;
+    static void isReady();
 
     void uciNewGame();
     void position(const std::string& line);
 
     void go(const std::string& line);
 
-    void stop() const;
-    void quit() const;
+    static void stop();
+    static void quit();
 
    private:
     Board board_;
 
     Movelist searchmoves_;
 
-    std::size_t worker_threads_ = 1;
-    U64 hash_size_ = 16;
+    int worker_threads_ = 1;
 
     bool use_tb_ = false;
 };

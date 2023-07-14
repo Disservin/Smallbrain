@@ -3,7 +3,7 @@
 #include "str_utils.h"
 #include "zobrist.h"
 
-Board::Board(std::string fen) {
+Board::Board(const std::string &fen) {
     state_history_.reserve(MAX_PLY);
     hash_history_.reserve(512);
 
@@ -138,9 +138,8 @@ void Board::setFen(const std::string &fen, bool update_acc) {
 
     occupancy_bb_ = 0ULL;
 
-    Square square = Square(56);
-    for (int index = 0; index < static_cast<int>(position.size()); index++) {
-        char curr = position[index];
+    auto square = Square(56);
+    for (char curr: position) {
         if (CHAR_TO_PIECE.find(curr) != CHAR_TO_PIECE.end()) {
             const Piece piece = CHAR_TO_PIECE[curr];
             placePiece<false>(piece, square);
@@ -159,7 +158,7 @@ void Board::setFen(const std::string &fen, bool update_acc) {
 
     castling_rights_.clearAllCastlingRights();
 
-    for (char i : castling) {
+    for (char i: castling) {
         if (!chess960) {
             if (i == 'K')
                 castling_rights_.setCastlingRight<WHITE, CastleSide::KING_SIDE, File::FILE_H>();
@@ -271,7 +270,7 @@ bool Board::isRepetition(int draw) const {
     return false;
 }
 
-Result Board::isDrawn(bool in_check) {
+Result Board::isDrawn(bool in_check) const {
     assert(kingSQ(WHITE) != NO_SQ && kingSQ(BLACK) != NO_SQ);
 
     if (half_move_clock_ >= 100) {

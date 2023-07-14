@@ -4,10 +4,10 @@
 #include "movegen.h"
 
 class PerftTesting {
-   public:
-    U64 perftFunction(int depth, int max);
+public:
+    U64 perftFunction(int depth, int max_depth);
 
-    void perfTest(int depth, int max);
+    void perfTest(int depth, int max_depth);
 
     /// @brief perfs a test on all test positions
     void testAllPos(int n = 1);
@@ -16,5 +16,4 @@ class PerftTesting {
     Movelist movelists[MAX_PLY];
 
     U64 nodes;
-    int depth;
 };

@@ -7,7 +7,7 @@
 struct Accumulators {
     Accumulators() { assert(alignof(accumulators) == 32); };
 
-    int size() const {
+    [[nodiscard]] int size() const {
         assert(index >= 0 && index < MAX_PLY + 1);
         return index;
     }
@@ -30,7 +30,7 @@ struct Accumulators {
         return accumulators[index];
     }
 
-   private:
+private:
     alignas(32) std::array<nnue::accumulator, MAX_PLY + 1> accumulators = {};
     int index = 0;
 };

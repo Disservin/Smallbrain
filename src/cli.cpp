@@ -8,17 +8,15 @@
 #include "board.h"
 #include "datagen.h"
 #include "evaluation.h"
-#include "movegen.h"
-#include "nnue.h"
+
 #include "perft.h"
-#include "tests/tests.h"
 #include "thread.h"
 #include "uci.h"
 
 extern ThreadPool Threads;
 
 void parseDashArguments(int &i, int argc, char const *argv[],
-                        std::function<void(std::string, std::string)> func) {
+                        const std::function<void(std::string, std::string)> &func) {
     while (i + 1 < argc && argv[i + 1][0] != '-' && i++) {
         std::string param = argv[i];
         std::size_t pos = param.find('=');
@@ -44,7 +42,7 @@ void parseDashArguments(int &i, int argc, char const *argv[],
 }
 
 class Version : public Argument {
-   public:
+public:
     int parse(int &i, int, char const *[]) override {
         std::cout << ArgumentsParser::getVersion() << std::endl;
         i++;
@@ -53,11 +51,11 @@ class Version : public Argument {
 };
 
 class Perft : public Argument {
-   public:
+public:
     int parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
-        parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
+        parseDashArguments(i, argc, argv, [&](const std::string &key, const std::string &value) {
             if (key == "fen") {
                 fen = value;
                 no_args_ = false;
@@ -79,16 +77,16 @@ class Perft : public Argument {
         return 0;
     }
 
-   private:
+private:
     bool no_args_ = true;
 };
 
 class Eval : public Argument {
-   public:
+public:
     int parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
-        parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
+        parseDashArguments(i, argc, argv, [&](const std::string &key, const std::string &value) {
             if (key == "fen") {
                 fen = value;
                 Board board = Board(fen);
@@ -102,11 +100,11 @@ class Eval : public Argument {
 };
 
 class See : public Argument {
-   public:
+public:
     int parse(int &i, int argc, char const *argv[]) override {
         std::string fen;
 
-        parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
+        parseDashArguments(i, argc, argv, [&](const std::string &key, const std::string &value) {
             if (key == "fen") {
                 fen = value;
                 board = Board(fen);
@@ -120,12 +118,12 @@ class See : public Argument {
         return 0;
     }
 
-   private:
+private:
     Board board;
 };
 
 class Benchmark : public Argument {
-   public:
+public:
     int parse(int &, int, char const *argv[]) override {
         if (std::string(argv[1]) == std::string("bench")) {
             bench::run(12);
@@ -136,9 +134,9 @@ class Benchmark : public Argument {
 };
 
 class Generate : public Argument {
-   public:
+public:
     int parse(int &i, int argc, char const *argv[]) override {
-        parseDashArguments(i, argc, argv, [&](std::string key, std::string value) {
+        parseDashArguments(i, argc, argv, [&](const std::string &key, const std::string &value) {
             if (key == "threads") {
                 workers_ = std::stoi(value);
             } else if (key == "book") {
@@ -177,12 +175,11 @@ class Generate : public Argument {
                 return 1;
             }
         }
-        return 0;
     }
 
-   private:
-    std::string book_path_ = "";
-    std::string tb_path_ = "";
+private:
+    std::string book_path_;
+    std::string tb_path_;
     int workers_ = 1;
     int depth_ = 9;
     int nodes_ = 0;

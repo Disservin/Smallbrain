@@ -9,7 +9,7 @@
 
 // A wrapper class to start the search
 class SearchInstance {
-   public:
+public:
     SearchInstance() { search = std::make_unique<Search>(); }
 
     SearchInstance(const SearchInstance &other) {
@@ -27,15 +27,16 @@ class SearchInstance {
 
     ~SearchInstance() = default;
 
-    void start();
+    void start() const;
 
     std::unique_ptr<Search> search;
 };
 
 // Holds all currently running threads and their data
 class ThreadPool {
-   public:
+public:
     [[nodiscard]] U64 getNodes() const;
+
     [[nodiscard]] U64 getTbHits() const;
 
     void start(const Board &board, const Limits &limit, const Movelist &searchmoves,
@@ -45,7 +46,7 @@ class ThreadPool {
 
     std::atomic_bool stop;
 
-   private:
+private:
     std::vector<SearchInstance> pool_;
     std::vector<std::thread> running_threads_;
 };

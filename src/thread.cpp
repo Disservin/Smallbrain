@@ -2,7 +2,7 @@
 
 #include "thread.h"
 
-void SearchInstance::start() { search->startThinking(); }
+void SearchInstance::start() const { search->startThinking(); }
 
 U64 ThreadPool::getNodes() const {
     U64 total = 0;
@@ -32,7 +32,7 @@ void ThreadPool::start(const Board &board, const Limits &limit, const Movelist &
 
     SearchInstance mainThread;
 
-    if (pool_.size() > 0) mainThread = pool_[0];
+    if (!pool_.empty()) mainThread = pool_[0];
 
     pool_.clear();
 

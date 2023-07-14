@@ -1,8 +1,3 @@
-#include <atomic>
-
-#include "syzygy/Fathom/src/tbprobe.h"
-
-#include "rand.h"
 #include "thread.h"
 #include "uci.h"
 #include "cli.h"

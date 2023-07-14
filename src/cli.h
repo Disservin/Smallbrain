@@ -10,14 +10,14 @@
 #include <unordered_map>
 
 class Argument {
-   public:
+public:
     virtual int parse(int &i, int argc, char const *argv[]) = 0;
 
     virtual ~Argument() = default;
 };
 
 class ArgumentsParser {
-   public:
+public:
     ArgumentsParser();
 
     static void throwMissing(std::string_view name, std::string_view key, std::string_view value) {
@@ -77,8 +77,8 @@ class ArgumentsParser {
         return status;
     }
 
-   private:
-    void addArgument(std::string argument_name, Argument *argument) {
+private:
+    void addArgument(const std::string &argument_name, Argument *argument) {
         arguments_.insert(std::make_pair(argument_name, std::unique_ptr<Argument>(argument)));
     }
 
@@ -86,7 +86,7 @@ class ArgumentsParser {
 };
 
 // Generic function to parse a standalone value after a dash command.
-template <typename T>
+template<typename T>
 void parseValue(int &i, int argc, const char *argv[], T &argument_value) {
     i++;
     if (i < argc && argv[i][0] != '-') {

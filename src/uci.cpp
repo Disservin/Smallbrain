@@ -11,7 +11,6 @@
 #include "thread.h"
 #include "tt.h"
 
-extern TranspositionTable TTable;
 extern ThreadPool Threads;
 
 namespace uci {
@@ -48,8 +47,6 @@ void Uci::uciLoop() {
             processLine(input);
         }
     }
-
-    return;
 }
 
 void Uci::processLine(const std::string& line) {
@@ -123,7 +120,7 @@ void Uci::applyOptions() {
     TTable.allocateMB(options.get<int>("Hash"));
 }
 
-void Uci::isReady() const { std::cout << "readyok" << std::endl; }
+void Uci::isReady() { std::cout << "readyok" << std::endl; }
 
 void Uci::uciNewGame() {
     board_ = Board();
@@ -190,9 +187,9 @@ void Uci::go(const std::string& line) {
     Threads.start(board_, limit, searchmoves_, worker_threads_, use_tb_);
 }
 
-void Uci::stop() const { Threads.kill(); }
+void Uci::stop() { Threads.kill(); }
 
-void Uci::quit() const {
+void Uci::quit() {
     Threads.kill();
     tb_free();
 }
@@ -208,7 +205,7 @@ Square extractSquare(std::string_view squareStr) {
 Move uciToMove(const Board& board, const std::string& input) {
     Square source = extractSquare(input.substr(0, 2));
     Square target = extractSquare(input.substr(2, 2));
-    PieceType piece = board.at<PieceType>(source);
+    auto piece = board.at<PieceType>(source);
 
     // convert to king captures rook
     if (!board.chess960 && piece == KING && squareDistance(target, source) == 2) {

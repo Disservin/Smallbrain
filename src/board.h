@@ -21,26 +21,33 @@
 extern TranspositionTable TTable;
 
 class Board {
-   public:
+public:
     /// @brief constructor for the board, loads startpos
-    Board(std::string fen = DEFAULT_POS);
+    explicit Board(const std::string &fen = DEFAULT_POS);
 
     Board(const Board &other);
 
     Board &operator=(const Board &other);
 
     [[nodiscard]] U64 hash() const { return hash_key_; }
+
     [[nodiscard]] std::string getCastleString() const;
+
     [[nodiscard]] uint8_t halfmoves() const { return half_move_clock_; }
+
     [[nodiscard]] int ply() const { return full_move_number_ * 2; }
+
     [[nodiscard]] Color sideToMove() const { return side_to_move_; }
+
     [[nodiscard]] Square enPassant() const { return en_passant_square_; }
+
     [[nodiscard]] const CastlingRights &castlingRights() const { return castling_rights_; }
+
     [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_->back(); }
 
     void refreshNNUE(nnue::accumulator &acc) const;
 
-    template <typename T = Piece>
+    template<typename T = Piece>
     [[nodiscard]] T at(Square sq) const {
         if constexpr (std::is_same_v<T, PieceType>) {
             return typeOfPiece(board_[sq]);
@@ -50,6 +57,7 @@ class Board {
     }
 
     void setFen(const std::string &fen, bool update_acc = true);
+
     [[nodiscard]] std::string getFen() const;
 
     /// @brief detects if the position is a repetition by default 1, fide would be 3
@@ -57,7 +65,7 @@ class Board {
     /// @return true for repetition otherwise false
     [[nodiscard]] bool isRepetition(int draw = 1) const;
 
-    [[nodiscard]] Result isDrawn(bool in_check);
+    [[nodiscard]] Result isDrawn(bool in_check) const;
 
     /// @brief only pawns + king = true else false
     /// @param c
@@ -68,7 +76,7 @@ class Board {
 
     [[nodiscard]] Bitboard us(Color c) const;
 
-    template <Color c>
+    template<Color c>
     [[nodiscard]] Bitboard us() const {
         return pieces_bb_[PAWN + c * 6] | pieces_bb_[KNIGHT + c * 6] | pieces_bb_[BISHOP + c * 6] |
                pieces_bb_[ROOK + c * 6] | pieces_bb_[QUEEN + c * 6] | pieces_bb_[KING + c * 6];
@@ -80,7 +88,7 @@ class Board {
 
     [[nodiscard]] constexpr Bitboard pieces(Piece piece) const { return pieces_bb_[piece]; }
 
-    template <PieceType piece_type, Color c>
+    template<PieceType piece_type, Color c>
     [[nodiscard]] constexpr Bitboard pieces() const {
         return pieces_bb_[piece_type + c * 6];
     }
@@ -102,11 +110,11 @@ class Board {
 
     void updateHash(Move move);
 
-    template <bool updateNNUE>
-    void makeMove(const Move move);
+    template<bool updateNNUE>
+    void makeMove(Move move);
 
-    template <bool updateNNUE>
-    void unmakeMove(const Move move);
+    template<bool updateNNUE>
+    void unmakeMove(Move move);
 
     void makeNullMove();
 
@@ -114,13 +122,13 @@ class Board {
 
     // update the internal board representation
 
-    template <bool updateNNUE>
+    template<bool updateNNUE>
     void removePiece(Piece piece, Square sq, Square ksq_white = SQ_A1, Square ksq_black = SQ_A1);
 
-    template <bool updateNNUE>
+    template<bool updateNNUE>
     void placePiece(Piece piece, Square sq, Square ksq_white = SQ_A1, Square ksq_black = SQ_A1);
 
-    template <bool updateNNUE>
+    template<bool updateNNUE>
     void movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white = SQ_A1,
                    Square ksq_black = SQ_A1);
 
@@ -134,13 +142,16 @@ class Board {
 
     bool chess960 = false;
 
-   private:
+private:
     // update the hash
 
-    U64 updateKeyPiece(Piece piece, Square sq) const;
-    U64 updateKeyCastling() const;
-    U64 updateKeyEnPassant(Square sq) const;
-    U64 updateKeySideToMove() const;
+    [[nodiscard]] U64 updateKeyPiece(Piece piece, Square sq) const;
+
+    [[nodiscard]] U64 updateKeyCastling() const;
+
+    [[nodiscard]] U64 updateKeyEnPassant(Square sq) const;
+
+    [[nodiscard]] U64 updateKeySideToMove() const;
 
     std::unique_ptr<Accumulators> accumulators_ = std::make_unique<Accumulators>();
 
@@ -151,12 +162,12 @@ class Board {
     std::vector<U64> hash_history_;
 
     std::array<Bitboard, 12> pieces_bb_ = {};
-    std::array<Piece, MAX_SQ> board_;
+    std::array<Piece, MAX_SQ> board_{};
 
     Bitboard occupancy_bb_ = 0ULL;
 
     // current hashkey
-    U64 hash_key_;
+    U64 hash_key_{};
 
     CastlingRights castling_rights_;
 
@@ -172,7 +183,7 @@ class Board {
     Square en_passant_square_;
 };
 
-template <bool updateNNUE>
+template<bool updateNNUE>
 void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb_[piece] &= ~(1ULL << sq);
     board_[sq] = NONE;
@@ -184,7 +195,7 @@ void Board::removePiece(Piece piece, Square sq, Square ksq_white, Square ksq_bla
     }
 }
 
-template <bool updateNNUE>
+template<bool updateNNUE>
 void Board::placePiece(Piece piece, Square sq, Square ksq_white, Square ksq_black) {
     pieces_bb_[piece] |= (1ULL << sq);
     board_[sq] = piece;
@@ -196,7 +207,7 @@ void Board::placePiece(Piece piece, Square sq, Square ksq_white, Square ksq_blac
     }
 }
 
-template <bool updateNNUE>
+template<bool updateNNUE>
 void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_white,
                       Square ksq_black) {
     pieces_bb_[piece] &= ~(1ULL << from_sq);
@@ -217,7 +228,7 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
 }
 
 inline void Board::updateHash(Move move) {
-    const PieceType piece_type = at<PieceType>(from(move));
+    const auto piece_type = at<PieceType>(from(move));
     const Piece piece = makePiece(piece_type, side_to_move_);
     const Square from_sq = from(move);
     const Square to_sq = to(move);
@@ -259,7 +270,7 @@ inline void Board::updateHash(Move move) {
 
         castling_rights_.clearCastlingRight(side_to_move_, side);
     } else if (piece_type == PAWN) {
-        const Square ep_sq = Square(to_sq ^ 8);
+        const auto ep_sq = Square(to_sq ^ 8);
 
         half_move_clock_ = 0;
 
@@ -306,7 +317,7 @@ inline void Board::updateHash(Move move) {
 /// @brief
 /// @tparam updateNNUE
 /// @param move
-template <bool updateNNUE>
+template<bool updateNNUE>
 void Board::makeMove(const Move move) {
     assert(from(move) >= 0 && from(move) < 64);
     assert(to(move) >= 0 && to(move) < 64);
@@ -320,7 +331,7 @@ void Board::makeMove(const Move move) {
     const Square from_sq = from(move);
     const Square to_sq = to(move);
 
-    const PieceType piece_type = at<PieceType>(from_sq);
+    const auto piece_type = at<PieceType>(from_sq);
 
     const Piece piece = at(from_sq);
     const Piece capture = at(to_sq);
@@ -378,7 +389,7 @@ void Board::makeMove(const Move move) {
 
         return;
     } else if (piece_type == PAWN && ep) {
-        const Square ep_sq = Square(to_sq ^ 8);
+        const auto ep_sq = Square(to_sq ^ 8);
 
         assert(at<PieceType>(ep_sq) == PAWN);
         removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), ep_sq, ksq_white, ksq_black);
@@ -404,14 +415,14 @@ void Board::makeMove(const Move move) {
     side_to_move_ = ~side_to_move_;
 }
 
-template <bool updateNNUE>
+template<bool updateNNUE>
 void Board::unmakeMove(Move move) {
     const State restore = state_history_.back();
 
     const Square from_sq = from(move);
     const Square to_sq = to(move);
 
-    const PieceType piece_type = at<PieceType>(to_sq);
+    const auto piece_type = at<PieceType>(to_sq);
 
     const Piece piece = makePiece(piece_type, ~side_to_move_);
     const Piece capture = restore.captured_piece;
@@ -459,7 +470,7 @@ void Board::unmakeMove(Move move) {
     }
 
     if (to_sq == en_passant_square_ && piece_type == PAWN) {
-        const Square ep_sq = Square(en_passant_square_ ^ 8);
+        const auto ep_sq = Square(en_passant_square_ ^ 8);
         placePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), ep_sq);
     } else if (capture != NONE) {
         placePiece<updateNNUE>(capture, to_sq);

@@ -2,7 +2,7 @@
 
 int bonus(int depth) { return std::min(2000, depth * 155); }
 
-template <History type>
+template<History type>
 void updateHistoryBonus(Search &search, Move move, Move secondmove, int bonus) {
     int hh_bonus = bonus - getHistory<type>(move, secondmove, search) * std::abs(bonus) / 16384;
 
@@ -10,11 +10,11 @@ void updateHistoryBonus(Search &search, Move move, Move secondmove, int bonus) {
         search.history[search.board.sideToMove()][from(move)][to(move)] += hh_bonus;
     else if constexpr (type == History::CONST)
         search.consthist[search.board.at(from(secondmove))][to(secondmove)]
-                        [search.board.at(from(move))][to(move)] += hh_bonus;
+        [search.board.at(from(move))][to(move)] += hh_bonus;
 }
 
-template <History type>
-void updateHistory(Search &search, Move bestmove, int bonus, int depth, Move *moves, int move_count,
+template<History type>
+void updateHistory(Search &search, Move bestmove, int bonus, int depth, const Move *moves, int move_count,
                    Stack *ss) {
     if constexpr (type == History::HH) {
         if (depth > 1) updateHistoryBonus<type>(search, bestmove, NO_MOVE, bonus);

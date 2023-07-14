@@ -12,7 +12,6 @@
 #include "uci.h"
 
 extern ThreadPool Threads;
-extern TranspositionTable TTable;
 
 // Initialize reduction table
 int reductions[MAX_PLY][MAX_MOVES];
@@ -31,20 +30,20 @@ void init_reductions() {
 [[nodiscard]] Score matedIn(int ply) { return (ply - VALUE_MATE); }
 
 [[nodiscard]] Score scoreToTT(Score s, int plies) {
-    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s + plies
-            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies
-                                            : s);
+    return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s + plies
+                                         : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies
+                                                                         : s);
 }
 
 [[nodiscard]] Score scoreFromTT(Score s, int plies) {
     if (s == VALUE_NONE) return VALUE_NONE;
 
-    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s - plies
-            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies
-                                            : s);
+    return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s - plies
+                                         : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies
+                                                                         : s);
 }
 
-template <Node node>
+template<Node node>
 Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     if (limitReached()) return 0;
 
@@ -81,11 +80,10 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     const Score tt_score = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     // clang-format off
-    if (    tt_hit 
-        &&  !pv_node 
-        &&  tt_score != VALUE_NONE
-        &&  tte->flag != NONEBOUND)
-    {
+    if (tt_hit
+        && !pv_node
+        && tt_score != VALUE_NONE
+        && tte->flag != NONEBOUND) {
         // clang-format on
         if (tte->flag == EXACTBOUND)
             return tt_score;
@@ -110,17 +108,17 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Move move = NO_MOVE;
 
     while ((move = mp.nextMove()) != NO_MOVE) {
-        PieceType captured = board.at<PieceType>(to(move));
+        auto captured = board.at<PieceType>(to(move));
 
         if (best_value > VALUE_TB_LOSS_IN_MAX_PLY) {
             // delta pruning, if the move + a large margin is still less then alpha we can safely
             // skip this
             // clang-format off
-            if (    captured != NONETYPE 
-                &&  !in_check 
-                &&  best_value + 400 + PIECE_VALUES_TUNED[1][captured] < alpha 
-                &&  typeOf(move) != PROMOTION
-                &&  board.nonPawnMat(color))
+            if (captured != NONETYPE
+                && !in_check
+                && best_value + 400 + PIECE_VALUES_TUNED[1][captured] < alpha
+                && typeOf(move) != PROMOTION
+                && board.nonPawnMat(color))
                 // clang-format on
                 continue;
 
@@ -164,7 +162,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     return best_value;
 }
 
-template <Node node>
+template<Node node>
 Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     if (limitReached()) return 0;
 
@@ -233,14 +231,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
      * Adjust alpha and beta for non PV nodes
      *******************/
     // clang-format off
-    if (    !root_node 
-        &&  !excluded_move
-        &&  !pv_node 
-        &&  tt_hit 
-        &&  tt_score != VALUE_NONE
-        &&  tte->depth >= depth 
-        &&  (ss - 1)->currentmove != NULL_MOVE )
-    {
+    if (!root_node
+        && !excluded_move
+        && !pv_node
+        && tt_hit
+        && tt_score != VALUE_NONE
+        && tte->depth >= depth
+        && (ss - 1)->currentmove != NULL_MOVE) {
         // clang-format on
         if (tte->flag == EXACTBOUND)
             return tt_score;
@@ -308,7 +305,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     ss->eval = tt_hit ? tt_score : eval::evaluate(board);
 
     // improving boolean
-    improving = (ss - 2)->eval != VALUE_NONE ? ss->eval > (ss - 2)->eval : false;
+    improving = (ss - 2)->eval != VALUE_NONE && ss->eval > (ss - 2)->eval;
 
     if (root_node) goto moves;
 
@@ -340,12 +337,11 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
      * Null move pruning
      *******************/
     // clang-format off
-    if (    board.nonPawnMat(color) 
-        &&  !excluded_move
-        &&  (ss - 1)->currentmove != NULL_MOVE 
-        &&  depth >= 3 
-        &&  ss->eval >= beta)
-    {
+    if (board.nonPawnMat(color)
+        && !excluded_move
+        && (ss - 1)->currentmove != NULL_MOVE
+        && depth >= 3
+        && ss->eval >= beta) {
         // clang-format on
         int R = 5 + std::min(4, depth / 5) + std::min(3, (ss->eval - beta) / 214);
 
@@ -363,7 +359,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
         }
     }
 
-moves:
+    moves:
     Movelist moves;
     Move quiets[64];
 
@@ -395,26 +391,23 @@ moves:
          *******************/
         if (!root_node && best > VALUE_TB_LOSS_IN_MAX_PLY) {
             // clang-format off
-            if (capture)
-            {
+            if (capture) {
                 // SEE pruning
-                if (    depth < 6 
-                    &&  !see::see(board, move, -(depth * 92)))
+                if (depth < 6
+                    && !see::see(board, move, -(depth * 92)))
                     continue;
-            }
-            else
-            {
+            } else {
                 // late move pruning/movecount pruning
-                if (    !in_check 
-                    &&  !pv_node 
-                    &&  typeOf(move) != PROMOTION
-                    &&  depth <= 5
-                    &&  quiet_count > (4 + depth * depth))
+                if (!in_check
+                    && !pv_node
+                    && typeOf(move) != PROMOTION
+                    && depth <= 5
+                    && quiet_count > (4 + depth * depth))
 
                     continue;
                 // SEE pruning
-                if (    depth < 7 
-                    &&  !see::see(board, move, -(depth * 93)))
+                if (depth < 7
+                    && !see::see(board, move, -(depth * 93)))
                     continue;
             }
             // clang-format on
@@ -422,15 +415,14 @@ moves:
 
         // clang-format off
         // Singular extensions
-        if (    !root_node 
-            &&  depth >= 8 
-            &&  tt_hit  // tt_score cannot be VALUE_NONE!
-            &&  ttmove == move 
-            &&  !excluded_move
-            &&  std::abs(tt_score) < 10000
-            &&  tte->flag & LOWERBOUND
-            &&  tte->depth >= depth - 3)
-        {
+        if (!root_node
+            && depth >= 8
+            && tt_hit  // tt_score cannot be VALUE_NONE!
+            && ttmove == move
+            && !excluded_move
+            && std::abs(tt_score) < 10000
+            && tte->flag & LOWERBOUND
+            && tte->depth >= depth - 3) {
             // clang-format on
             const int singular_beta = tt_score - 3 * depth;
             const int singular_depth = (depth - 1) / 2;
@@ -451,12 +443,12 @@ moves:
          * Print currmove information.
          *******************/
         // clang-format off
-        if (    id == 0 
-            &&  root_node 
-            &&  !silent 
-            &&  !Threads.stop.load(std::memory_order_relaxed) 
-            &&  getTime() > 10000)
-            std::cout << "info depth " << depth - in_check 
+        if (id == 0
+            && root_node
+            && !silent
+            && !Threads.stop.load(std::memory_order_relaxed)
+            && getTime() > 10000)
+            std::cout << "info depth " << depth - in_check
                       << " currmove " << uci::moveToUci(move, board.chess960)
                       << " currmovenumber " << signed(made_moves) << std::endl;
         // clang-format on
@@ -564,7 +556,7 @@ moves:
 
     // Transposition table flag
     const Flag b =
-        best >= beta ? LOWERBOUND : (pv_node && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
+            best >= beta ? LOWERBOUND : (pv_node && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excluded_move && !Threads.stop.load(std::memory_order_relaxed))
         TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash(), bestmove);
@@ -675,8 +667,8 @@ SearchResult Search::iterativeDeepening() {
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort =
-                (node_effort[from(search_result.bestmove)][to(search_result.bestmove)] * 100) /
-                nodes;
+                    (node_effort[from(search_result.bestmove)][to(search_result.bestmove)] * 100) /
+                    nodes;
             if (depth > 10 && limit.time.optimum * (110 - std::min(effort, 90)) / 100 < now) break;
 
             // increase optimum time if score is increasing
@@ -712,10 +704,10 @@ SearchResult Search::iterativeDeepening() {
      *******************/
     if (id == 0 && !silent) {
         uci::output(
-            search_result.score, board.ply(), depth, seldepth_, Threads.getNodes(),
-            Threads.getTbHits(), getTime(),
-            lastPv.empty() ? uci::moveToUci(search_result.bestmove, board.chess960) : lastPv,
-            TTable.hashfull());
+                search_result.score, board.ply(), depth, seldepth_, Threads.getNodes(),
+                Threads.getTbHits(), getTime(),
+                lastPv.empty() ? uci::moveToUci(search_result.bestmove, board.chess960) : lastPv,
+                TTable.hashfull());
         std::cout << "bestmove " << uci::moveToUci(search_result.bestmove, board.chess960)
                   << std::endl;
         Threads.stop = true;
