@@ -30,20 +30,20 @@ void init_reductions() {
 [[nodiscard]] Score matedIn(int ply) { return (ply - VALUE_MATE); }
 
 [[nodiscard]] Score scoreToTT(Score s, int plies) {
-    return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s + plies
-                                         : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies
-                                                                         : s);
+    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s + plies
+            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s - plies
+                                            : s);
 }
 
 [[nodiscard]] Score scoreFromTT(Score s, int plies) {
     if (s == VALUE_NONE) return VALUE_NONE;
 
-    return (s >= VALUE_TB_WIN_IN_MAX_PLY ? s - plies
-                                         : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies
-                                                                         : s);
+    return (s >= VALUE_TB_WIN_IN_MAX_PLY    ? s - plies
+            : s <= VALUE_TB_LOSS_IN_MAX_PLY ? s + plies
+                                            : s);
 }
 
-template<Node node>
+template <Node node>
 Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     if (limitReached()) return 0;
 
@@ -162,7 +162,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     return best_value;
 }
 
-template<Node node>
+template <Node node>
 Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     if (limitReached()) return 0;
 
@@ -359,7 +359,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
         }
     }
 
-    moves:
+moves:
     Movelist moves;
     Move quiets[64];
 
@@ -556,7 +556,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
     // Transposition table flag
     const Flag b =
-            best >= beta ? LOWERBOUND : (pv_node && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
+        best >= beta ? LOWERBOUND : (pv_node && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excluded_move && !Threads.stop.load(std::memory_order_relaxed))
         TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash(), bestmove);
@@ -646,20 +646,21 @@ SearchResult Search::iterativeDeepening() {
         seldepth_ = 0;
 
         const auto previousResult = search_result.score;
-        search_result.score = aspirationSearch(depth, search_result.score, ss);
+        const auto value = aspirationSearch(depth, search_result.score, ss);
 
         if (limitReached()) break;
 
         // only mainthread manages time control
         if (id != 0) continue;
 
-        lastPv = getPV();
-
-        eval_average += search_result.score;
-
         if (search_result.bestmove != pv_table_[0][0]) bestmove_changes++;
 
         search_result.bestmove = pv_table_[0][0];
+        search_result.score = value;
+
+        lastPv = getPV();
+
+        eval_average += search_result.score;
 
         // limit type time
         if (limit.time.optimum != 0) {
@@ -667,8 +668,8 @@ SearchResult Search::iterativeDeepening() {
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort =
-                    (node_effort[from(search_result.bestmove)][to(search_result.bestmove)] * 100) /
-                    nodes;
+                (node_effort[from(search_result.bestmove)][to(search_result.bestmove)] * 100) /
+                nodes;
             if (depth > 10 && limit.time.optimum * (110 - std::min(effort, 90)) / 100 < now) break;
 
             // increase optimum time if score is increasing
@@ -704,10 +705,10 @@ SearchResult Search::iterativeDeepening() {
      *******************/
     if (id == 0 && !silent) {
         uci::output(
-                search_result.score, board.ply(), depth, seldepth_, Threads.getNodes(),
-                Threads.getTbHits(), getTime(),
-                lastPv.empty() ? uci::moveToUci(search_result.bestmove, board.chess960) : lastPv,
-                TTable.hashfull());
+            search_result.score, board.ply(), depth, seldepth_, Threads.getNodes(),
+            Threads.getTbHits(), getTime(),
+            lastPv.empty() ? uci::moveToUci(search_result.bestmove, board.chess960) : lastPv,
+            TTable.hashfull());
         std::cout << "bestmove " << uci::moveToUci(search_result.bestmove, board.chess960)
                   << std::endl;
         Threads.stop = true;
