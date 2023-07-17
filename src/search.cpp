@@ -535,7 +535,7 @@ moves:
                 if (score >= beta) {
                     TTable.prefetch<1>(board.hash());
                     // update history heuristic
-                    updateAllHistories(*this, bestmove, depth, quiets, quiet_count, ss);
+                    history::update(*this, bestmove, depth, quiets, quiet_count, ss);
                     break;
                 }
             }
