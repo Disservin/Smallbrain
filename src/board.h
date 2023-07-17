@@ -17,6 +17,7 @@
 #include "nnue.h"
 #include "tt.h"
 #include "types.h"
+#include "zobrist.h"
 
 extern TranspositionTable TTable;
 
@@ -143,16 +144,6 @@ class Board {
     bool chess960 = false;
 
    private:
-    // update the hash
-
-    [[nodiscard]] U64 updateKeyPiece(Piece piece, Square sq) const;
-
-    [[nodiscard]] U64 updateKeyCastling() const;
-
-    [[nodiscard]] U64 updateKeyEnPassant(Square sq) const;
-
-    [[nodiscard]] U64 updateKeySideToMove() const;
-
     std::unique_ptr<Accumulators> accumulators_ = std::make_unique<Accumulators>();
 
     std::vector<State> state_history_;
@@ -237,10 +228,11 @@ inline void Board::updateHash(Move move) {
 
     hash_history_.emplace_back(hash_key_);
 
-    if (en_passant_square_ != NO_SQ) hash_key_ ^= updateKeyEnPassant(en_passant_square_);
+    if (en_passant_square_ != NO_SQ)
+        hash_key_ ^= zobrist::enpassant(squareFile(en_passant_square_));
     en_passant_square_ = NO_SQ;
 
-    hash_key_ ^= updateKeyCastling();
+    hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
 
     if (piece_type == KING) {
         castling_rights_.clearCastlingRight(side_to_move_);
@@ -252,13 +244,13 @@ inline void Board::updateHash(Move move) {
             const Square rook_sq = rookCastleSquare(to_sq, from_sq);
             const Square king_to_sq = kingCastleSquare(to_sq, from_sq);
 
-            hash_key_ ^= updateKeyPiece(rook, to_sq);
-            hash_key_ ^= updateKeyPiece(rook, rook_sq);
-            hash_key_ ^= updateKeyPiece(piece, from_sq);
-            hash_key_ ^= updateKeyPiece(piece, king_to_sq);
+            hash_key_ ^= zobrist::piece(rook, to_sq);
+            hash_key_ ^= zobrist::piece(rook, rook_sq);
+            hash_key_ ^= zobrist::piece(piece, from_sq);
+            hash_key_ ^= zobrist::piece(piece, king_to_sq);
 
-            hash_key_ ^= updateKeySideToMove();
-            hash_key_ ^= updateKeyCastling();
+            hash_key_ ^= zobrist::sideToMove();
+            hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
 
             return;
         }
@@ -277,13 +269,13 @@ inline void Board::updateHash(Move move) {
         half_move_clock_ = 0;
 
         if (typeOf(move) == ENPASSANT) {
-            hash_key_ ^= updateKeyPiece(makePiece(PAWN, ~side_to_move_), ep_sq);
+            hash_key_ ^= zobrist::piece(makePiece(PAWN, ~side_to_move_), ep_sq);
         } else if (std::abs(from_sq - to_sq) == 16) {
             Bitboard ep_mask = attacks::pawn(ep_sq, side_to_move_);
 
             if (ep_mask & pieces(PAWN, ~side_to_move_)) {
                 en_passant_square_ = ep_sq;
-                hash_key_ ^= updateKeyEnPassant(en_passant_square_);
+                hash_key_ ^= zobrist::enpassant(squareFile(en_passant_square_));
 
                 assert(at(en_passant_square_) == NONE);
             }
@@ -293,7 +285,7 @@ inline void Board::updateHash(Move move) {
     if (capture != Piece::NONE) {
         half_move_clock_ = 0;
 
-        hash_key_ ^= updateKeyPiece(capture, to_sq);
+        hash_key_ ^= zobrist::piece(capture, to_sq);
 
         if (typeOfPiece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move_ == BLACK) ||
                                              (rank == Rank::RANK_8 && side_to_move_ == WHITE))) {
@@ -307,15 +299,15 @@ inline void Board::updateHash(Move move) {
     }
 
     if (typeOf(move) == PROMOTION) {
-        hash_key_ ^= updateKeyPiece(makePiece(PAWN, side_to_move_), from_sq);
-        hash_key_ ^= updateKeyPiece(makePiece(promotionType(move), side_to_move_), to_sq);
+        hash_key_ ^= zobrist::piece(makePiece(PAWN, side_to_move_), from_sq);
+        hash_key_ ^= zobrist::piece(makePiece(promotionType(move), side_to_move_), to_sq);
     } else {
-        hash_key_ ^= updateKeyPiece(piece, from_sq);
-        hash_key_ ^= updateKeyPiece(piece, to_sq);
+        hash_key_ ^= zobrist::piece(piece, from_sq);
+        hash_key_ ^= zobrist::piece(piece, to_sq);
     }
 
-    hash_key_ ^= updateKeySideToMove();
-    hash_key_ ^= updateKeyCastling();
+    hash_key_ ^= zobrist::sideToMove();
+    hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
 }
 
 /// @brief

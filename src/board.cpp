@@ -139,7 +139,7 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     occupancy_bb_ = 0ULL;
 
     auto square = Square(56);
-    for (char curr: position) {
+    for (char curr : position) {
         if (CHAR_TO_PIECE.find(curr) != CHAR_TO_PIECE.end()) {
             const Piece piece = CHAR_TO_PIECE[curr];
             placePiece<false>(piece, square);
@@ -158,7 +158,7 @@ void Board::setFen(const std::string &fen, bool update_acc) {
 
     castling_rights_.clearAllCastlingRights();
 
-    for (char i: castling) {
+    for (char i : castling) {
         if (!chess960) {
             if (i == 'K')
                 castling_rights_.setCastlingRight<WHITE, CastleSide::KING_SIDE, File::FILE_H>();
@@ -329,8 +329,9 @@ void Board::makeNullMove() {
     state_history_.emplace_back(en_passant_square_, castling_rights_, half_move_clock_, NONE);
 
     // Update the hash key
-    hash_key_ ^= updateKeySideToMove();
-    if (en_passant_square_ != NO_SQ) hash_key_ ^= updateKeyEnPassant(en_passant_square_);
+    hash_key_ ^= zobrist::sideToMove();
+    if (en_passant_square_ != NO_SQ)
+        hash_key_ ^= zobrist::enpassant(squareFile(en_passant_square_));
 
     TTable.prefetch(hash_key_);
 
@@ -346,8 +347,9 @@ void Board::unmakeNullMove() {
 
     en_passant_square_ = restore.en_passant;
 
-    hash_key_ ^= updateKeySideToMove();
-    if (en_passant_square_ != NO_SQ) hash_key_ ^= updateKeyEnPassant(en_passant_square_);
+    hash_key_ ^= zobrist::sideToMove();
+    if (en_passant_square_ != NO_SQ)
+        hash_key_ ^= zobrist::enpassant(squareFile(en_passant_square_));
 
     castling_rights_ = restore.castling;
     half_move_clock_ = restore.half_move;
@@ -390,35 +392,23 @@ U64 Board::zobrist() const {
     // Piece hashes
     while (w_pieces) {
         Square sq = builtin::poplsb(w_pieces);
-        hash ^= updateKeyPiece(at(sq), sq);
+        hash ^= zobrist::piece(at(sq), sq);
     }
 
     while (b_pieces) {
         Square sq = builtin::poplsb(b_pieces);
-        hash ^= updateKeyPiece(at(sq), sq);
+        hash ^= zobrist::piece(at(sq), sq);
     }
 
     // Ep hash
     U64 ep_hash = 0ULL;
 
     if (en_passant_square_ != NO_SQ) {
-        ep_hash = updateKeyEnPassant(en_passant_square_);
+        ep_hash = zobrist::enpassant(squareFile(en_passant_square_));
     }
 
-    U64 turn_hash = side_to_move_ == WHITE ? RANDOM_ARRAY[780] : 0;
-    U64 cast_hash = updateKeyCastling();
+    U64 turn_hash = side_to_move_ == WHITE ? zobrist::sideToMove() : 0;
+    U64 cast_hash = zobrist::castling(castling_rights_.getHashIndex());
 
     return hash ^ cast_hash ^ turn_hash ^ ep_hash;
 }
-
-U64 Board::updateKeyPiece(Piece piece, Square sq) const {
-    assert(piece < NONE);
-    assert(sq < NO_SQ);
-    return RANDOM_ARRAY[64 * hash_piece[piece] + sq];
-}
-
-U64 Board::updateKeyEnPassant(Square sq) const { return RANDOM_ARRAY[772 + squareFile(sq)]; }
-
-U64 Board::updateKeyCastling() const { return castlingKey[castling_rights_.getHashIndex()]; }
-
-U64 Board::updateKeySideToMove() const { return RANDOM_ARRAY[780]; }

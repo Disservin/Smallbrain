@@ -1,6 +1,11 @@
 #pragma once
 #include "types.h"
 
+/****************************************************************************\
+ * Polyglot Zobrist Hash                                                     *
+\****************************************************************************/
+namespace zobrist {
+
 static constexpr U64 RANDOM_ARRAY[781] = {
     0x9D39247E33776D41, 0x2AF7398005AAA5C7, 0x44DB015024623547, 0x9C15F73E62A76AE2,
     0x75834465489C0C89, 0x3290AC3A203001BF, 0x0FBBAD1F61042279, 0xE83A908FF2FB60CA,
@@ -217,4 +222,16 @@ static constexpr U64 castlingKey[16] = {
     RANDOM_ARRAY[768 + 1] ^ RANDOM_ARRAY[768 + 2] ^ RANDOM_ARRAY[768 + 3],
     RANDOM_ARRAY[768 + 1] ^ RANDOM_ARRAY[768 + 2] ^ RANDOM_ARRAY[768 + 3] ^ RANDOM_ARRAY[768]};
 
-static constexpr int hash_piece[12] = {1, 3, 5, 7, 9, 11, 0, 2, 4, 6, 8, 10};
+static constexpr int MAP_HASH_PIECE[12] = {1, 3, 5, 7, 9, 11, 0, 2, 4, 6, 8, 10};
+
+[[nodiscard]] inline U64 piece(Piece piece, Square square) {
+    return RANDOM_ARRAY[64 * MAP_HASH_PIECE[static_cast<int>(piece)] + square];
+}
+
+[[nodiscard]] inline U64 enpassant(File file) { return RANDOM_ARRAY[772 + static_cast<int>(file)]; }
+
+[[nodiscard]] inline U64 castling(int castling) { return castlingKey[castling]; }
+
+[[nodiscard]] inline U64 sideToMove() { return RANDOM_ARRAY[780]; }
+
+}  // namespace zobrist
