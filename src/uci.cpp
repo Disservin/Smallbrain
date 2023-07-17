@@ -15,13 +15,17 @@ extern ThreadPool Threads;
 
 namespace uci {
 
+constexpr U64 UCI_MAX_HASH_MB =
+    static_cast<U64>(TranspositionTable::MAXHASH_MiB * (1024 * 1024) / (1e6));
+
 uci::Options options;
 
 Uci::Uci() {
     options = uci::Options();
     board_ = Board();
 
-    options.add(uci::Option{"Hash", "spin", "16", "16", "1", "60129"});  // Size in MB
+    options.add(uci::Option{"Hash", "spin", "16", "16", "1",
+                            std::to_string(UCI_MAX_HASH_MB)});  // Size in MB
     options.add(uci::Option{"Threads", "spin", "1", "1", "1", "256"});
     options.add(uci::Option{"EvalFile", "string", "", "", "", ""});
     options.add(uci::Option{"SyzygyPath", "string", "", "", "", ""});

@@ -23,16 +23,16 @@ const TEntry *TranspositionTable::probe(bool &tt_hit, Move &ttmove, U64 key) con
 }
 
 uint32_t TranspositionTable::index(U64 key) const {
-    assert((((uint32_t) key * entries_.size()) >> 32) < entries_.size());
+    assert((((uint32_t)key * entries_.size()) >> 32) < entries_.size());
 
-    return ((uint32_t) key * entries_.size()) >> 32;
+    return ((uint32_t)key * entries_.size()) >> 32;
 }
 
 void TranspositionTable::allocate(U64 size) { entries_.resize(size, TEntry()); }
 
 void TranspositionTable::allocateMB(U64 size_mb) {
     U64 sizeB = size_mb * static_cast<int>(1e6);
-    sizeB = std::clamp(sizeB, U64(1), U64(MAXHASH * 1e6));
+    sizeB = std::clamp(sizeB, U64(1), U64(MAXHASH_MiB * 1e6));
     U64 elements = sizeB / sizeof(TEntry);
     allocate(elements);
     std::cout << "info string hash set to " << sizeB / 1e6 << " MB" << std::endl;

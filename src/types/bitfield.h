@@ -13,7 +13,7 @@ class BitField16 {
 
         // calculate the bit position of the start of the group you want to set
         uint16_t startBit = group_index * group_size_;
-        uint16_t setMask = static_cast<uint16_t>(group_value << startBit);
+        auto setMask = static_cast<uint16_t>(group_value << startBit);
 
         // clear the bits in the group
         value_ &= ~(0xF << startBit);
@@ -22,14 +22,14 @@ class BitField16 {
         value_ |= setMask;
     }
 
-    uint16_t getGroup(uint16_t group_index) const {
+    [[nodiscard]] uint16_t getGroup(uint16_t group_index) const {
         assert(group_index < 4 && "group_index must be less than 4");
         uint16_t startBit = group_index * group_size_;
         return (value_ >> startBit) & 0xF;
     }
 
     void clear() { value_ = 0; }
-    uint16_t get() const { return value_; }
+    [[nodiscard]] uint16_t get() const { return value_; }
 
    private:
     static constexpr uint16_t group_size_ = 4;  // size of each group

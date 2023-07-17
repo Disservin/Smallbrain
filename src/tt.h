@@ -17,9 +17,6 @@ class TranspositionTable {
    private:
     std::vector<TEntry> entries_;
 
-    // 57344 MiB = 2^32 * 14B / (1024 * 1024)
-    static constexpr U64 MAXHASH = (1ull << 32) * sizeof(TEntry) / (1024 * 1024);
-
    public:
     TranspositionTable();
 
@@ -56,4 +53,7 @@ class TranspositionTable {
     }
 
     [[nodiscard]] int hashfull() const;
+
+    // 57344 MiB = 2^32 * 14B / (1024 * 1024)
+    static constexpr U64 MAXHASH_MiB = (1ull << 32) * sizeof(TEntry) / (1024 * 1024);
 };
