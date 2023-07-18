@@ -9,6 +9,7 @@
 
 struct Stack {
     int eval;
+    int move_count;
     Move currentmove;
     Move excluded_move;
     uint16_t ply;

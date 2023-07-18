@@ -21,25 +21,25 @@ template <SearchType st>
 class MovePicker {
    public:
     MovePicker(const Search &sh, const Stack *s, Movelist &moves, const Move move)
-        : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
-        movelist_.size = 0;
-        movegen::legalmoves<Movetype::CAPTURE>(search_.board, movelist_);
+        :  movelist(moves), search_(sh), ss_(s), available_tt_move_(move) {
+        movelist.size = 0;
+        movegen::legalmoves<Movetype::CAPTURE>(search_.board, movelist);
     }
 
     MovePicker(const Search &sh, const Stack *s, Movelist &moves, const Movelist &searchmoves,
                const bool root_node, const Move move)
-        : search_(sh), ss_(s), movelist_(moves), available_tt_move_(move) {
+        : movelist(moves),search_(sh), ss_(s),  available_tt_move_(move) {
         if (root_node && searchmoves.size > 0) {
-            movelist_ = searchmoves;
+            movelist = searchmoves;
             return;
         }
-        movelist_.size = 0;
-        movegen::legalmoves<Movetype::ALL>(search_.board, movelist_);
+        movelist.size = 0;
+        movegen::legalmoves<Movetype::ALL>(search_.board, movelist);
     }
 
     void score() {
-        for (int i = 0; i < movelist_.size; i++) {
-            movelist_[i].value = scoreMove(movelist_[i].move);
+        for (int i = 0; i < movelist.size; i++) {
+            movelist[i].value = scoreMove(movelist[i].move);
         }
     }
 
@@ -48,7 +48,7 @@ class MovePicker {
             case Pick::TT:
                 pick_ = Pick::SCORE;
 
-                if (available_tt_move_ != NO_MOVE && movelist_.find(available_tt_move_) != -1) {
+                if (available_tt_move_ != NO_MOVE && movelist.find(available_tt_move_) != -1) {
                     tt_move_ = available_tt_move_;
                     return tt_move_;
                 }
@@ -60,22 +60,22 @@ class MovePicker {
                 score();
                 [[fallthrough]];
             case Pick::CAPTURES: {
-                while (played_ < movelist_.size) {
+                while (played_ < movelist.size) {
                     int index = played_;
-                    for (int i = 1 + index; i < movelist_.size; i++) {
-                        if (movelist_[i] > movelist_[index]) {
+                    for (int i = 1 + index; i < movelist.size; i++) {
+                        if (movelist[i] > movelist[index]) {
                             index = i;
                         }
                     }
 
-                    if (movelist_[index].value < CAPTURE_SCORE) {
+                    if (movelist[index].value < CAPTURE_SCORE) {
                         break;
                     }
 
-                    std::swap(movelist_[index], movelist_[played_]);
+                    std::swap(movelist[index], movelist[played_]);
 
-                    if (movelist_[played_].move != tt_move_) {
-                        return movelist_[played_++].move;
+                    if (movelist[played_].move != tt_move_) {
+                        return movelist[played_++].move;
                     }
 
                     played_++;
@@ -113,23 +113,23 @@ class MovePicker {
 
                 [[fallthrough]];
             case Pick::QUIET:
-                while (played_ < movelist_.size) {
+                while (played_ < movelist.size) {
                     int index = played_;
-                    for (int i = 1 + index; i < movelist_.size; i++) {
-                        if (movelist_[i] > movelist_[index]) {
+                    for (int i = 1 + index; i < movelist.size; i++) {
+                        if (movelist[i] > movelist[index]) {
                             index = i;
                         }
                     }
 
-                    std::swap(movelist_[index], movelist_[played_]);
+                    std::swap(movelist[index], movelist[played_]);
 
-                    if (movelist_[played_].move != tt_move_ &&
-                        movelist_[played_].move != killer_move_1_ &&
-                        movelist_[played_].move != killer_move_2_ &&
-                        movelist_[played_].move != counter_move_) {
-                        assert(movelist_[played_].value < COUNTER_SCORE);
+                    if (movelist[played_].move != tt_move_ &&
+                        movelist[played_].move != killer_move_1_ &&
+                        movelist[played_].move != killer_move_2_ &&
+                        movelist[played_].move != counter_move_) {
+                        assert(movelist[played_].value < COUNTER_SCORE);
 
-                        return movelist_[played_++].move;
+                        return movelist[played_++].move;
                     }
 
                     played_++;
@@ -174,13 +174,13 @@ class MovePicker {
                     history::get<HistoryType::CONST>(move, (ss_ - 2)->currentmove, search_));
     }
 
+    Movelist &movelist;
+
    private:
     enum class Pick { TT, SCORE, CAPTURES, KILLERS_1, KILLERS_2, COUNTER, QUIET };
 
     const Search &search_;
     const Stack *ss_;
-
-    Movelist &movelist_;
 
     int played_ = 0;
 

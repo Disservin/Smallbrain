@@ -371,6 +371,7 @@ moves:
     bool do_full_search = false;
 
     MovePicker<ABSEARCH> mp(*this, ss, moves, searchmoves, root_node, tt_hit ? ttmove : NO_MOVE);
+    ss->move_count = mp.movelist.size;
 
     /********************
      * Movepicker fetches the next move that we should search.
@@ -424,11 +425,11 @@ moves:
             && tte->flag & LOWERBOUND
             && tte->depth >= depth - 3) {
             // clang-format on
-            const int singular_beta = tt_score - 3 * depth;
+            const Score singular_beta = tt_score - 3 * depth;
             const int singular_depth = (depth - 1) / 2;
 
             ss->excluded_move = move;
-            int value = absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
+            const auto value = absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
             ss->excluded_move = NO_MOVE;
 
             if (value < singular_beta)
@@ -436,6 +437,9 @@ moves:
             else if (singular_beta >= beta)
                 return singular_beta;
         }
+
+        // One reply extensions
+        if (in_check && (ss-1)->move_count == 1 && ss->move_count == 1) extension += 1;
 
         const int newDepth = depth - 1 + extension;
 
@@ -543,6 +547,8 @@ moves:
         if (!capture) quiets[quiet_count++] = move;
     }
 
+    ss->move_count = made_moves;
+
     /********************
      * If the move list is empty, we are in checkmate or stalemate.
      *******************/
@@ -624,6 +630,7 @@ SearchResult Search::iterativeDeepening() {
 
     for (int i = -2; i <= MAX_PLY + 1; ++i) {
         (ss + i)->ply = i;
+        (ss + i)->move_count = 0;
         (ss + i)->currentmove = NO_MOVE;
         (ss + i)->eval = 0;
         (ss + i)->excluded_move = NO_MOVE;
