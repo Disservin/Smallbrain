@@ -2,9 +2,8 @@
 
 TranspositionTable::TranspositionTable() { allocateMB(16); }
 
-void TranspositionTable::store(int depth, Score bestvalue, Flag b, U64 key, Move move) {
-    TEntry *tte = &entries_[index(key)];
-
+void TranspositionTable::store(TEntry *tte, int depth, Score bestvalue, Flag b, U64 key,
+                               Move move) {
     if (tte->key != key || move) tte->move = move;
 
     if (tte->key != key || b == EXACTBOUND || depth + 4 > tte->depth) {
@@ -15,8 +14,8 @@ void TranspositionTable::store(int depth, Score bestvalue, Flag b, U64 key, Move
     }
 }
 
-const TEntry *TranspositionTable::probe(bool &tt_hit, Move &ttmove, U64 key) const {
-    const TEntry *tte = &entries_[index(key)];
+TEntry *TranspositionTable::probe(bool &tt_hit, Move &ttmove, U64 key) {
+    TEntry *tte = &entries_[index(key)];
     tt_hit = (tte->key == key);
     ttmove = tte->move;
     return tte;

@@ -21,18 +21,19 @@ class TranspositionTable {
     TranspositionTable();
 
     /// @brief store an entry in the TT
+    /// @param tte
     /// @param depth
     /// @param bestvalue
     /// @param b Type of bound
     /// @param key Position hash
     /// @param move
-    void store(int depth, Score bestvalue, Flag b, U64 key, Move move);
+    void store(TEntry *tte, int depth, Score bestvalue, Flag b, U64 key, Move move);
 
     /// @brief probe the TT for an entry
     /// @param tte
     /// @param tt_hit
     /// @param key Position hash
-    [[nodiscard]] const TEntry *probe(bool &tt_hit, Move &ttmove, U64 key) const;
+    [[nodiscard]] TEntry *probe(bool &tt_hit, Move &ttmove, U64 key);
 
     /// @brief calculates the TT index of key
     /// @param key

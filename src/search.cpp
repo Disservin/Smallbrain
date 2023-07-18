@@ -76,7 +76,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     Move ttmove = NO_MOVE;
     bool tt_hit = false;
 
-    const TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
+    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
     const Score tt_score = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     // clang-format off
@@ -156,7 +156,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     const Flag bound = best_value >= beta ? LOWERBOUND : UPPERBOUND;
 
     if (!Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(0, scoreToTT(best_value, ss->ply), bound, board.hash(), bestmove);
+        TTable.store(tte, 0, scoreToTT(best_value, ss->ply), bound, board.hash(), bestmove);
 
     assert(best_value > -VALUE_INFINITE && best_value < VALUE_INFINITE);
     return best_value;
@@ -221,7 +221,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     Move ttmove = NO_MOVE;
     bool tt_hit = false;
 
-    const TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
+    TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
     const Score tt_score = tt_hit ? scoreFromTT(tte->score, ss->ply) : Score(VALUE_NONE);
 
     const Move excluded_move = ss->excluded_move;
@@ -279,7 +279,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
         if (flag == EXACTBOUND || (flag == LOWERBOUND && tb_res >= beta) ||
             (flag == UPPERBOUND && tb_res <= alpha)) {
-            TTable.store(depth + 6, scoreToTT(tb_res, ss->ply), flag, board.hash(), NO_MOVE);
+            TTable.store(tte, depth + 6, scoreToTT(tb_res, ss->ply), flag, board.hash(), NO_MOVE);
             return tb_res;
         }
 
@@ -429,7 +429,8 @@ moves:
             const int singular_depth = (depth - 1) / 2;
 
             ss->excluded_move = move;
-            const auto value = absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
+            const auto value =
+                absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
             ss->excluded_move = NO_MOVE;
 
             if (value < singular_beta)
@@ -439,7 +440,7 @@ moves:
         }
 
         // One reply extensions
-        if (in_check && (ss-1)->move_count == 1 && ss->move_count == 1) extension += 1;
+        if (in_check && (ss - 1)->move_count == 1 && ss->move_count == 1) extension += 1;
 
         const int newDepth = depth - 1 + extension;
 
@@ -565,7 +566,7 @@ moves:
         best >= beta ? LOWERBOUND : (pv_node && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excluded_move && !Threads.stop.load(std::memory_order_relaxed))
-        TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash(), bestmove);
+        TTable.store(tte, depth, scoreToTT(best, ss->ply), b, board.hash(), bestmove);
 
     assert(best > -VALUE_INFINITE && best < VALUE_INFINITE);
     return best;
