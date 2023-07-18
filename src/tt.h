@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "helper.h"
@@ -14,9 +15,6 @@ PACK(struct TEntry {
 });
 
 class TranspositionTable {
-   private:
-    std::vector<TEntry> entries_;
-
    public:
     TranspositionTable();
 
@@ -54,6 +52,15 @@ class TranspositionTable {
 
     [[nodiscard]] int hashfull() const;
 
+    static constexpr int BUCKET_SIZE = 2;
+
+    struct Bucket {
+        std::array<TEntry, BUCKET_SIZE> entries;
+    };
+
     // 57344 MiB = 2^32 * 14B / (1024 * 1024)
-    static constexpr U64 MAXHASH_MiB = (1ull << 32) * sizeof(TEntry) / (1024 * 1024);
+    static constexpr U64 MAXHASH_MiB = (1ull << 32) * sizeof(Bucket) / (1024 * 1024);
+
+   private:
+    std::vector<Bucket> entries_;
 };
