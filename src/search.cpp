@@ -300,13 +300,6 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
         goto moves;
     }
 
-    // Use the tt_score as a better evaluation of the position, other engines
-    // typically have eval and staticEval. In Smallbrain its just eval.
-    ss->eval = tt_hit ? tt_score : eval::evaluate(board);
-
-    // improving boolean
-    improving = (ss - 2)->eval != VALUE_NONE && ss->eval > (ss - 2)->eval;
-
     if (root_node) goto moves;
 
     /********************
@@ -322,10 +315,16 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
     if (pv_node) goto moves;
 
+    // Use the tt_score as a better evaluation of the position, other engines
+    // typically have eval and staticEval. In Smallbrain its just eval.
+    ss->eval = tt_hit ? tt_score : eval::evaluate(board);
+
     /********************
      * Razoring
      *******************/
     if (depth < 3 && ss->eval + 129 < alpha) return qsearch<NONPV>(alpha, beta, ss);
+
+    improving = (ss - 2)->eval != VALUE_NONE && ss->eval > (ss - 2)->eval;
 
     /********************
      * Reverse futility pruning
@@ -429,7 +428,8 @@ moves:
             const int singular_depth = (depth - 1) / 2;
 
             ss->excluded_move = move;
-            const auto value = absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
+            const auto value =
+                absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
             ss->excluded_move = NO_MOVE;
 
             if (value < singular_beta)
@@ -439,7 +439,7 @@ moves:
         }
 
         // One reply extensions
-        if (in_check && (ss-1)->move_count == 1 && ss->move_count == 1) extension += 1;
+        if (in_check && (ss - 1)->move_count == 1 && ss->move_count == 1) extension += 1;
 
         const int newDepth = depth - 1 + extension;
 
