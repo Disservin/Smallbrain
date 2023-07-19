@@ -485,6 +485,11 @@ moves:
             rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
             score = -absearch<NONPV>(rdepth, -alpha - 1, -alpha, ss + 1);
+
+            /**********************
+             * If the reduced search beats alpha we do a full search but only if
+             * rdepth is smaller than newDepth, because otherwise we would do the same search twice.
+             *******************/
             do_full_search = score > alpha && rdepth < newDepth;
         } else
             do_full_search = !pv_node || made_moves > 1;
