@@ -13,6 +13,7 @@ struct Stack {
     Move currentmove;
     Move excluded_move;
     uint16_t ply;
+    bool threat;
 };
 
 struct SearchResult {

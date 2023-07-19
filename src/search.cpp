@@ -210,6 +210,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     assert(0 < depth && depth < MAX_PLY);
 
     (ss + 1)->excluded_move = NO_MOVE;
+    ss->threat = false;
 
     /********************
      * Selective depth
@@ -357,6 +358,9 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
             return score;
         }
+        if (score <= VALUE_MATED_IN_PLY) {
+            ss->threat = true;
+        }
     }
 
 moves:
@@ -440,6 +444,9 @@ moves:
 
         // One reply extensions
         if (in_check && (ss-1)->move_count == 1 && ss->move_count == 1) extension += 1;
+
+        // Threat extensions
+        if (ss->threat) extension += 1;
 
         const int newDepth = depth - 1 + extension;
 
@@ -634,6 +641,7 @@ SearchResult Search::iterativeDeepening() {
         (ss + i)->currentmove = NO_MOVE;
         (ss + i)->eval = 0;
         (ss + i)->excluded_move = NO_MOVE;
+        (ss+i)->threat = false;
     }
 
     pv_table_.reset();
