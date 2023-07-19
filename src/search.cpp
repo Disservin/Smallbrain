@@ -429,7 +429,8 @@ moves:
             const int singular_depth = (depth - 1) / 2;
 
             ss->excluded_move = move;
-            const auto value = absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
+            const auto value =
+                absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
             ss->excluded_move = NO_MOVE;
 
             if (value < singular_beta)
@@ -439,7 +440,7 @@ moves:
         }
 
         // One reply extensions
-        if (in_check && (ss-1)->move_count == 1 && ss->move_count == 1) extension += 1;
+        if (in_check && (ss - 1)->move_count == 1 && ss->move_count == 1) extension += 1;
 
         const int newDepth = depth - 1 + extension;
 
@@ -490,7 +491,7 @@ moves:
              * If the reduced search beats alpha we do a full search but only if
              * rdepth is smaller than newDepth, because otherwise we would do the same search twice.
              *******************/
-            do_full_search = score > alpha && rdepth < newDepth;
+            do_full_search = score > alpha && rdepth + 1 < newDepth;
         } else
             do_full_search = !pv_node || made_moves > 1;
 
