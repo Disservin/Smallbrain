@@ -190,3 +190,34 @@ If you want maximum performance you should compile Smallbrain yourself.
 .\smallbrain.exe -generate threads=30 depth=9 tb=H:/Chess/345
 .\smallbrain.exe -generate threads=30 nodes=5000 tb=H:/Chess/345
 ```
+
+## Acknowledgements
+
+I'd also like to thank the following people for their help and support:
+
+- A big thanks to Luecx for his amazing CudAd trainer and his help with the NNUE implementation.
+- Andrew Grant for the OpenBench platform https://github.com/AndyGrant/OpenBench
+- Morgan Houppin, author of Stash https://github.com/mhouppin/stash-bot for his debug sessions.
+- Various other people from Stockfish discord for their help.
+- [Chess.com](https://www.chess.com/computer-chess-championship) for their Smallbrain inclusion in the Computer Chess Championship (CCC)
+- [TCEC](https://tcec-chess.com/) for their Smallbrain invitation.
+
+### Engines
+
+The following engines have tought me a lot about chess programming and I'd like to thank their authors for their work:
+
+- [Stockfish](https://github.com/official-stockfish/Stockfish)
+- [Koivisto](https://github.com/Luecx/Koivisto)
+- [Weiss](https://github.com/TerjeKir/weiss)
+
+### Tools
+
+Included:
+The following parts of the code are from other projects, I'd like to thank their authors for their work and their respective licenses remain the same:
+
+- [Fathom](https://github.com/jdart1/Fathom) [MIT](https://github.com/jdart1/Fathom/blob/master/LICENSE)
+- [Incbin](https://github.com/graphitemaster/incbin) [UNLICENSE](https://github.com/graphitemaster/incbin/blob/main/UNLICENSE)
+
+External:
+
+- [OpenBench](https://github.com/AndyGrant/OpenBench) [GPL-3.0](https://github.com/AndyGrant/OpenBench/blob/master/LICENSE)
