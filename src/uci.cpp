@@ -147,6 +147,8 @@ void Uci::position(const std::string& line) {
         board_.makeMove<false>(uciToMove(board_, move));
     }
 
+    board_.clearStacks();
+
     board_.refreshNNUE(board_.getAccumulator());
 }
 
