@@ -208,6 +208,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     assert(-VALUE_INFINITE <= alpha && alpha < beta && beta <= VALUE_INFINITE);
     assert(pv_node || (alpha == beta - 1));
     assert(0 < depth && depth < MAX_PLY);
+    assert(ss->ply < MAX_PLY);
 
     (ss + 1)->excluded_move = NO_MOVE;
 
@@ -429,7 +430,8 @@ moves:
             const int singular_depth = (depth - 1) / 2;
 
             ss->excluded_move = move;
-            const auto value = absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
+            const auto value =
+                absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
             ss->excluded_move = NO_MOVE;
 
             if (value < singular_beta)
@@ -439,7 +441,7 @@ moves:
         }
 
         // One reply extensions
-        if (in_check && (ss-1)->move_count == 1 && ss->move_count == 1) extension += 1;
+        if (in_check && (ss - 1)->move_count == 1 && ss->move_count == 1) extension += 1;
 
         const int newDepth = depth - 1 + extension;
 

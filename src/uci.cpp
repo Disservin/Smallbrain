@@ -159,7 +159,7 @@ void Uci::go(const std::string& line) {
 
     if (tokens.size() == 1) limit.infinite = true;
 
-    limit.depth = str_util::findElement<int>(tokens, "depth").value_or(MAX_PLY);
+    limit.depth = str_util::findElement<int>(tokens, "depth").value_or(MAX_PLY - 1);
     limit.infinite = str_util::findElement<std::string>(tokens, "go").value_or("") == "infinite";
     limit.nodes = str_util::findElement<int64_t>(tokens, "nodes").value_or(0);
     limit.time.maximum = limit.time.optimum =
