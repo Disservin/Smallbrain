@@ -1,7 +1,5 @@
 #include "tt.h"
 
-TranspositionTable::TranspositionTable() { allocateMB(16); }
-
 void TranspositionTable::store(int depth, Score bestvalue, Flag b, U64 key, Move move) {
     TEntry *tte = &entries_[index(key)];
 
@@ -35,7 +33,7 @@ void TranspositionTable::allocateMB(U64 size_mb) {
     sizeB = std::clamp(sizeB, U64(1), U64(MAXHASH_MiB * 1e6));
     U64 elements = sizeB / sizeof(TEntry);
     allocate(elements);
-    std::cout << "info string hash set to " << sizeB / 1e6 << " MB" << std::endl;
+    std::cout << "hash set to " << sizeB / 1e6 << " MB" << std::endl;
 }
 
 void TranspositionTable::clear() { std::fill(entries_.begin(), entries_.end(), TEntry()); }

@@ -31,6 +31,8 @@ Uci::Uci() {
     options.add(uci::Option{"SyzygyPath", "string", "", "", "", ""});
     options.add(uci::Option{"UCI_Chess960", "check", "false", "false", "", ""});
     options.add(uci::Option{"UCI_ShowWDL", "check", "false", "false", "", ""});
+
+    applyOptions();
 }
 
 void Uci::uciLoop() {
@@ -91,7 +93,6 @@ void Uci::uci() {
     std::cout << "id author Disservin\n" << std::endl;
     options.print();
     std::cout << "uciok" << std::endl;
-    applyOptions();
 }
 
 void Uci::setOption(const std::string& line) {
