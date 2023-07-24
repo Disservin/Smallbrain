@@ -18,6 +18,8 @@ class TranspositionTable {
     std::vector<TEntry> entries_;
 
    public:
+    TranspositionTable();
+
     /// @brief store an entry in the TT
     /// @param depth
     /// @param bestvalue

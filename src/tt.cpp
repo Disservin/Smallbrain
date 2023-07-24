@@ -1,5 +1,7 @@
 #include "tt.h"
 
+TranspositionTable::TranspositionTable() { allocateMB(16); }
+
 void TranspositionTable::store(int depth, Score bestvalue, Flag b, U64 key, Move move) {
     TEntry *tte = &entries_[index(key)];
 
