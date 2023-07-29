@@ -49,15 +49,15 @@ void prefetch(const void *addr) {
     __asm__("");
 #endif
 #ifdef __GNUC__
-    _mm_prefetch((char *)addr, _MM_HINT_T0);
+    _mm_prefetch((const char *)addr, _MM_HINT_T0);
 #else
-    _mm_prefetch((char *)addr, 0);
+    _mm_prefetch((const char *)addr, 0);
 #endif
 }
 #else
 template <int rw = 0>
 void prefetch(const void *addr) {
-    __builtin_prefetch(addr, 0, rw);
+    __builtin_prefetch((const char *)addr, 0, rw);
 }
 #endif
 }  // namespace builtin

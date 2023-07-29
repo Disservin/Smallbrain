@@ -15,12 +15,15 @@ NATIVE    := -march=native
 
 NAME      := smallbrain
 SUFFIX    := .exe
+
+ifneq ($(CXX), clang++)
 LDFLAGS   := -pthread -lstdc++ -static -Wl,--no-as-needed
+endif
 
 TMPDIR = ../.tmp
 
 # all bmi2 instructions
-INSTRUCTIONS_BMI2 = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
+INSTRUCTIONS_BMI2 = -march=haswell
 
 # Detect Windows
 ifeq ($(OS), Windows_NT)
@@ -52,7 +55,7 @@ endif
 
 ifeq ($(build), x86-64-avx2)
 	NATIVE       = -mtune=znver3
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -mssse3 -msse2
+	INSTRUCTIONS = -march=bdver4 -mno-tbm -mno-sse4a -mno-bmi2
 endif
 
 ifeq ($(build), x86-64-bmi2)

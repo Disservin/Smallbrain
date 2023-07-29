@@ -1,6 +1,8 @@
 #pragma once
 
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+#endif
 
 #include <array>
 #include <iostream>
