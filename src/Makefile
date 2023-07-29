@@ -16,9 +16,7 @@ NATIVE    := -march=native
 NAME      := smallbrain
 SUFFIX    := .exe
 
-ifneq ($(CXX), clang++)
 LDFLAGS   := -pthread -lstdc++ -static -Wl,--no-as-needed
-endif
 
 TMPDIR = ../.tmp
 
@@ -41,6 +39,10 @@ else
 	uname_S := $(shell uname -s)
 	SUFFIX  :=
 endif
+endif
+
+ifeq ($(CXX), clang++-17)
+LDFLAGS   := -pthread
 endif
 
 # SPECIFIC BUILDS
