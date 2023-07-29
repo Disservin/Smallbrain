@@ -84,8 +84,8 @@ class Search {
     [[nodiscard]] int64_t getTime() const;
 
     // pv collection
-    Table<uint8_t, MAX_PLY> pv_length_ = {};
-    Table<Move, MAX_PLY, MAX_PLY> pv_table_ = {};
+    Table<uint8_t, MAX_PLY + 1> pv_length_ = {};
+    Table<Move, MAX_PLY + 1, MAX_PLY + 1> pv_table_ = {};
 
     // timepoint when we entered search
     TimePoint::time_point t0_;

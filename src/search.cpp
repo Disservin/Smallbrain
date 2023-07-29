@@ -535,6 +535,9 @@ moves:
                 pv_table_[ss->ply][ss->ply] = move;
 
                 for (int next_ply = ss->ply + 1; next_ply < pv_length_[ss->ply + 1]; next_ply++) {
+                    assert(ss->ply < MAX_PLY + 1);
+                    assert(next_ply < MAX_PLY + 1);
+                    assert(ss->ply + 1 < MAX_PLY + 1);
                     pv_table_[ss->ply][next_ply] = pv_table_[ss->ply + 1][next_ply];
                 }
 
@@ -635,7 +638,15 @@ SearchResult Search::iterativeDeepening() {
 
     Stack stack[MAX_PLY + 4], *ss = stack + 2;
 
-    for (int i = -2; i <= MAX_PLY + 1; ++i) {
+    for (int i = 2; i > 0; --i) {
+        (ss - i)->ply = i;
+        (ss - i)->move_count = 0;
+        (ss - i)->currentmove = NO_MOVE;
+        (ss - i)->eval = 0;
+        (ss - i)->excluded_move = NO_MOVE;
+    }
+
+    for (int i = 0; i <= MAX_PLY + 1; ++i) {
         (ss + i)->ply = i;
         (ss + i)->move_count = 0;
         (ss + i)->currentmove = NO_MOVE;
