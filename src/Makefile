@@ -17,6 +17,7 @@ NAME      := smallbrain
 SUFFIX    := .exe
 
 LDFLAGS   := -pthread -lstdc++ -static -Wl,--no-as-needed
+endif
 
 TMPDIR = ../.tmp
 
