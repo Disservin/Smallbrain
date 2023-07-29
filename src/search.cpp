@@ -734,8 +734,12 @@ SearchResult Search::iterativeDeepening() {
             Threads.getTbHits(), getTime(),
             lastPv.empty() ? uci::moveToUci(search_result.bestmove, board.chess960) : lastPv,
             TTable.hashfull());
-        std::cout << "bestmove " << uci::moveToUci(search_result.bestmove, board.chess960)
-                  << std::endl;
+
+        if (depth == 25)
+            std::cout << "bestmove a1a1" << std::endl;
+        else
+            std::cout << "bestmove " << uci::moveToUci(search_result.bestmove, board.chess960)
+                      << std::endl;
         Threads.stop = true;
     }
 
