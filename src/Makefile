@@ -120,10 +120,12 @@ ifneq ($(GIT_DATE), )
 endif
 
 # PGO
-ifneq ($(findstring g++, $(CXX)),)
+ifneq (,$(findstring g++, $(CXX)))
 	PGO_GEN   = -fprofile-generate
 	PGO_USE   = -fprofile-use
-else ifneq ($(findstring clang++, $(CXX)),)
+endif
+
+ifneq (,$(findstring clang++, $(CXX)))
 	PGO_MERGE = llvm-profdata merge -output=profdata *.profraw
 	PGO_GEN   = -fprofile-instr-generate
 	PGO_USE   = -fprofile-instr-use=profdata
