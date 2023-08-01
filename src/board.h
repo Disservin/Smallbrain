@@ -48,6 +48,8 @@ class Board {
 
     [[nodiscard]] nnue::accumulator &getAccumulator() { return accumulators_->back(); }
 
+    [[nodiscard]] Accumulators &getAccumulators() { return *accumulators_; }
+
     void refreshNNUE(nnue::accumulator &acc) const;
 
     template <typename T = Piece>

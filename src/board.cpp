@@ -18,12 +18,9 @@ Board::Board(const std::string &fen) {
     setFen(fen, true);
 }
 
-Board::Board(const Board &other) {
+Board::Board(const Board &other)
+    : accumulators_(std::make_unique<Accumulators>(*other.accumulators_)) {
     chess960 = other.chess960;
-
-    if (other.accumulators_) {
-        accumulators_ = std::make_unique<Accumulators>(*other.accumulators_);
-    }
 
     state_history_ = other.state_history_;
 
@@ -48,34 +45,32 @@ Board::Board(const Board &other) {
 }
 
 Board &Board::operator=(const Board &other) {
-    if (this == &other) return *this;
+    if (this != &other) {
+        chess960 = other.chess960;
 
-    chess960 = other.chess960;
+        accumulators_.reset(new Accumulators(*other.accumulators_));
 
-    if (other.accumulators_) {
-        accumulators_ = std::make_unique<Accumulators>(*other.accumulators_);
+        state_history_ = other.state_history_;
+
+        hash_history_ = other.hash_history_;
+
+        pieces_bb_ = other.pieces_bb_;
+        board_ = other.board_;
+
+        occupancy_bb_ = other.occupancy_bb_;
+
+        hash_key_ = other.hash_key_;
+
+        castling_rights_ = other.castling_rights_;
+
+        full_move_number_ = other.full_move_number_;
+
+        half_move_clock_ = other.half_move_clock_;
+
+        side_to_move_ = other.side_to_move_;
+
+        en_passant_square_ = other.en_passant_square_;
     }
-
-    state_history_ = other.state_history_;
-
-    hash_history_ = other.hash_history_;
-
-    pieces_bb_ = other.pieces_bb_;
-    board_ = other.board_;
-
-    occupancy_bb_ = other.occupancy_bb_;
-
-    hash_key_ = other.hash_key_;
-
-    castling_rights_ = other.castling_rights_;
-
-    full_move_number_ = other.full_move_number_;
-
-    half_move_clock_ = other.half_move_clock_;
-
-    side_to_move_ = other.side_to_move_;
-
-    en_passant_square_ = other.en_passant_square_;
 
     return *this;
 }

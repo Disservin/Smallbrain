@@ -25,7 +25,7 @@ class TrainingData {
     std::atomic_bool stop_ = false;
 
     bool use_tb_ = false;
-    Limits limit_;
+    Limits limit_ = {};
 
    public:
     ~TrainingData() {
@@ -50,8 +50,8 @@ class TrainingData {
 
     Board randomStart();
 
-    Side makeMove(Search &search, Board &board, std::vector<fenData> &fens, int &win_count,
-                  int &draw_count, int ply);
+    Side makeMove(Search &search, std::vector<fenData> &fens, int &win_count, int &draw_count,
+                  int ply);
 
     /// @brief starts one selfplay game
     /// @param file
