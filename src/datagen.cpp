@@ -176,7 +176,7 @@ Side TrainingData::makeMove(Search &search, Board &board, std::vector<fenData> &
         fens.emplace_back(sfens);
     }
 
-    if (use_tb_ && board.halfmoves() >= 40 && builtin::popcount(board.all()) <= TB_LARGEST)
+    if (use_tb_ && board.halfmoves() >= 40 && builtin::popcount(board.all()) <= (signed)TB_LARGEST)
         return Side::TB_CHECK;
 
     board.makeMove<true>(result.bestmove);
@@ -227,7 +227,7 @@ void TrainingData::randomPlayout(std::ofstream &file) {
 
     // Set correct winningSide for if (use_tb && board.halfmoves() >= 40 &&
     // builtin::popcount(board.all()) <= TB_LARGEST)
-    if (use_tb_ && builtin::popcount(white | black) <= TB_LARGEST) {
+    if (use_tb_ && builtin::popcount(white | black) <= (signed)TB_LARGEST) {
         Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
 
         unsigned TBresult =
