@@ -66,14 +66,14 @@ Square msb(Bitboard b) {
 
 #endif
 
-unsigned popcount(Bitboard mask) {
+int popcount(Bitboard mask) {
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 
-    return (unsigned)_mm_popcnt_u64(mask);
+    return (uint8_t)_mm_popcnt_u64(mask);
 
 #else  // Assumed gcc or compatible compiler
 
-    return (unsigned)__builtin_popcountll(mask);
+    return __builtin_popcountll(mask);
 
 #endif
 }
