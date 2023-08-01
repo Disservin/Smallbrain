@@ -116,6 +116,7 @@ Side TrainingData::makeMove(Search &search, Board &board, std::vector<fenData> &
                             int &win_count, int &draw_count, int ply) {
     search.nodes = 0;
     board.clearStacks();
+    board.clearHash();
 
     const bool in_check =
         board.isAttacked(~board.sideToMove(), board.kingSQ(board.sideToMove()), board.all());
@@ -125,10 +126,6 @@ Side TrainingData::makeMove(Search &search, Board &board, std::vector<fenData> &
 
     if (movelist.size == 0) {
         return in_check ? Side(~board.sideToMove()) : Side::DRAW;
-    }
-
-    if (board.isRepetition(2)) {
-        return Side::DRAW;
     }
 
     auto drawn = board.isDrawn(in_check);
