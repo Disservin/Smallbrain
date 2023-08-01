@@ -53,13 +53,6 @@ void TrainingData::infinitePlay(int threadId, int depth, int nodes) {
     auto t1 = TimePoint::now();
 
     while (!stop_) {
-        // search->reset();
-
-        // search->silent = true;
-        // search->use_tb = false;
-        // search->id = 0;
-        // search->limit = limit;
-
         randomPlayout(file);
         games++;
 
@@ -113,7 +106,8 @@ Board TrainingData::randomStart() {
         board.makeMove<false>(move);
     }
 
-    board.refreshNNUE();
+    board.clearStacks();
+    board.refreshNNUE(board.getAccumulator());
 
     return board;
 }
@@ -134,7 +128,6 @@ Side TrainingData::makeMove(Search &search, Board &board, std::vector<fenData> &
     }
 
     if (board.isRepetition(2)) {
-        fens.clear();
         return Side::DRAW;
     }
 
@@ -150,7 +143,7 @@ Side TrainingData::makeMove(Search &search, Board &board, std::vector<fenData> &
     // CATCH BUGS
     if (result.score == VALUE_NONE) {
         std::cout << board << std::endl;
-        exit(1);
+        std::exit(1);
     }
 
     const bool capture = board.at(to(result.bestmove)) != NONE;
@@ -267,7 +260,7 @@ void TrainingData::randomPlayout(std::ofstream &file) {
         file << stringFenData(f, score) << "\n";
     }
 
-    file.flush();
+    // file.flush();
 }
 
 }  // namespace datagen
