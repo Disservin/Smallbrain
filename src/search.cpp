@@ -673,10 +673,19 @@ SearchResult Search::iterativeDeepening() {
         const auto previousResult = search_result.score;
         const auto value = aspirationSearch(depth, search_result.score, ss);
 
-        if (limitReached()) break;
+        if (!silent && Threads.stop.load(std::memory_order_relaxed)) break;
 
         // only mainthread manages time control
         if (id != 0) continue;
+
+        if (limit.nodes != 0 && nodes >= limit.nodes) break;
+
+        const auto now = getTime();
+
+        if (now >= limit.time.maximum) {
+            Threads.stop = true;
+            break;
+        }
 
         if (search_result.bestmove != pv_table_[0][0]) bestmove_changes++;
 
@@ -688,9 +697,7 @@ SearchResult Search::iterativeDeepening() {
         eval_average += search_result.score;
 
         // limit type time
-        if (limit.time.optimum != 0) {
-            auto now = getTime();
-
+        if (limit.time.optimum != 0 && !limit.movetime) {
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort =
                 (node_effort[from(search_result.bestmove)][to(search_result.bestmove)] * 100) /

@@ -166,6 +166,8 @@ void Uci::go(const std::string& line) {
     limit.time.maximum = limit.time.optimum =
         str_util::findElement<int64_t>(tokens, "movetime").value_or(0);
 
+    limit.movetime = str_util::contains(line, "movetime");
+
     std::string uci_time = board_.sideToMove() == Color::WHITE ? "wtime" : "btime";
     std::string uci_inc = board_.sideToMove() == Color::WHITE ? "winc" : "binc";
 
