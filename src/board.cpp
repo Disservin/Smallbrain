@@ -153,25 +153,25 @@ void Board::setFen(const std::string &fen, bool update_acc) {
 
     castling_rights_.clearAllCastlingRights();
 
-    for (char i : castling) {
-        if (!chess960) {
-            if (i == 'K')
-                castling_rights_.setCastlingRight<WHITE, CastleSide::KING_SIDE, File::FILE_H>();
-            if (i == 'Q')
-                castling_rights_.setCastlingRight<WHITE, CastleSide::QUEEN_SIDE, File::FILE_A>();
-            if (i == 'k')
-                castling_rights_.setCastlingRight<BLACK, CastleSide::KING_SIDE, File::FILE_H>();
-            if (i == 'q')
-                castling_rights_.setCastlingRight<BLACK, CastleSide::QUEEN_SIDE, File::FILE_A>();
-        } else {
-            const auto color = isupper(i) ? WHITE : BLACK;
-            const auto king_sq = builtin::lsb(pieces(KING, color));
-            const auto file = static_cast<File>(tolower(i) - 97);
-            const auto side = int(file) > int(squareFile(king_sq)) ? CastleSide::KING_SIDE
-                                                                   : CastleSide::QUEEN_SIDE;
-            castling_rights_.setCastlingRight(color, side, file);
-        }
-    }
+    // for (char i : castling) {
+    // if (!chess960) {
+    //     if (i == 'K')
+    //         castling_rights_.setCastlingRight<WHITE, CastleSide::KING_SIDE, File::FILE_H>();
+    //     if (i == 'Q')
+    //         castling_rights_.setCastlingRight<WHITE, CastleSide::QUEEN_SIDE, File::FILE_A>();
+    //     if (i == 'k')
+    //         castling_rights_.setCastlingRight<BLACK, CastleSide::KING_SIDE, File::FILE_H>();
+    //     if (i == 'q')
+    //         castling_rights_.setCastlingRight<BLACK, CastleSide::QUEEN_SIDE, File::FILE_A>();
+    // } else {
+    //     const auto color = isupper(i) ? WHITE : BLACK;
+    //     const auto king_sq = builtin::lsb(pieces(KING, color));
+    //     const auto file = static_cast<File>(tolower(i) - 97);
+    //     const auto side = int(file) > int(squareFile(king_sq)) ? CastleSide::KING_SIDE
+    //                                                            : CastleSide::QUEEN_SIDE;
+    //     castling_rights_.setCastlingRight(color, side, file);
+    // }
+    // }
 
     if (en_passant == "-") {
         en_passant_square_ = NO_SQ;

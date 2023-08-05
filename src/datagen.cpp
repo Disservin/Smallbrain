@@ -72,6 +72,8 @@ Board TrainingData::randomStart() {
 
     Board board;
 
+    board.setFen(DEFAULT_POS, false);
+
     if (opening_book_.size() != 0) {
         std::uniform_int_distribution<> maxLines{0, int(opening_book_.size() - 1)};
 
@@ -79,8 +81,6 @@ Board TrainingData::randomStart() {
 
         board.setFen(opening_book_[randLine], false);
     }
-
-    board.setFen(DEFAULT_POS, false);
 
     Movelist movelist;
 
