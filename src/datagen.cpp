@@ -9,7 +9,7 @@ namespace datagen {
 std::string stringFenData(const fenData &fen_data, double score) {
     std::ostringstream sstream;
     sstream << fen_data.fen << " [" << std::fixed << std::setprecision(1) << score << "] "
-            << fen_data.score;
+            << fen_data.score << "\n";
 
     return sstream.str();
 }
@@ -116,6 +116,7 @@ Board TrainingData::randomStart() {
 Side TrainingData::makeMove(Search &search, std::vector<fenData> &fens, int &win_count,
                             int &draw_count, int ply) {
     search.board.clearStacks();
+    search.board.clearHash();
     search.board.refreshNNUE(search.board.getAccumulator());
 
     search.nodes = 0;
@@ -137,10 +138,6 @@ Side TrainingData::makeMove(Search &search, std::vector<fenData> &fens, int &win
         return drawn == Result::LOST ? Side(~search.board.sideToMove()) : Side::DRAW;
     }
 
-    if (search.board.isRepetition(2)) {
-        return Side::DRAW;
-    }
-
     const auto result = search.iterativeDeepening();
 
     // CATCH BUGS
@@ -155,12 +152,12 @@ Side TrainingData::makeMove(Search &search, std::vector<fenData> &fens, int &win
     sfens.score = search.board.sideToMove() == WHITE ? result.score : -result.score;
     sfens.move = result.bestmove;
 
-    const Score absScore = std::abs(result.score);
+    const Score abs_score = std::abs(result.score);
 
-    if (absScore >= 2000) {
+    if (abs_score >= 2000) {
         win_count++;
         draw_count = 0;
-    } else if (absScore <= 4) {
+    } else if (abs_score <= 4) {
         draw_count++;
         win_count = 0;
     } else {
@@ -168,7 +165,7 @@ Side TrainingData::makeMove(Search &search, std::vector<fenData> &fens, int &win
         win_count = 0;
     }
 
-    if (win_count >= 4 || absScore > VALUE_TB_WIN_IN_MAX_PLY) {
+    if (win_count >= 4 || abs_score > VALUE_TB_WIN_IN_MAX_PLY) {
         return result.score > 0 ? Side(search.board.sideToMove())
                                 : Side(~search.board.sideToMove());
     } else if (draw_count >= 12) {
@@ -195,7 +192,7 @@ void TrainingData::randomPlayout(std::ofstream &file) {
 
     int win_count = 0;
     int draw_count = 0;
-    int ply = 10;
+    int ply = 0;
 
     Side winningSide = Side::NONE;
 
@@ -207,8 +204,11 @@ void TrainingData::randomPlayout(std::ofstream &file) {
     search_player.silent = true;
     search_player.board = randomStart();
 
+    search_player.board.clearHash();
+
     while (winningSide == Side::NONE) {
         winningSide = makeMove(search_player, fens, win_count, draw_count, ply);
+        ply++;
     }
 
     Bitboard white = search_player.board.us<WHITE>();
@@ -216,7 +216,7 @@ void TrainingData::randomPlayout(std::ofstream &file) {
 
     // Set correct winningSide for if (use_tb && search_player.board.halfmoves() >= 40 &&
     // builtin::popcount(search_player.board.all()) <= TB_LARGEST)
-    if (use_tb_ && builtin::popcount(white | black) <= (signed)TB_LARGEST) {
+    if (use_tb_ && builtin::popcount(search_player.board.all()) <= (signed)TB_LARGEST) {
         Square ep =
             search_player.board.enPassant() <= 63 ? search_player.board.enPassant() : Square(0);
 
@@ -248,7 +248,7 @@ void TrainingData::randomPlayout(std::ofstream &file) {
         score = 0.5;
 
     for (auto &f : fens) {
-        file << stringFenData(f, score) << "\n";
+        file << stringFenData(f, score);
     }
 
     // file.flush();

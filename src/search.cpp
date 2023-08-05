@@ -787,11 +787,11 @@ bool Search::limitReached() {
 
     if (id != 0) return false;
 
-    if (limit.nodes != 0 && nodes >= limit.nodes) return true;
-
     if (--check_time_ > 0) return false;
 
-    check_time_ = 2047;
+    check_time_ = limit.nodes != 0 ? std::min(2047, int(limit.nodes / 1024)) : 2047;
+
+    if (limit.nodes != 0 && nodes >= limit.nodes) return true;
 
     if (limit.time.maximum != 0) {
         auto ms = getTime();
