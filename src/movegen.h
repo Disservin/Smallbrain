@@ -398,7 +398,8 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
         if ((check_mask & ep_mask) == 0) return;
 
         const Square k_sq = board.kingSQ(c);
-        const Bitboard king_mask = (1ull << k_sq) & MASK_RANK[squareRank(ep_pawn)];
+        const Bitboard king_mask =
+            (1ull << k_sq) & static_cast<uint64_t>(MASK_RANK[squareRank(ep_pawn)]);
         const Bitboard enemy_queen_rook = board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>();
 
         const bool is_possible_pin = king_mask && enemy_queen_rook;
@@ -415,7 +416,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
              * If the pawn is pinned but the en passant square is not on the
              * pin mask then the move is illegal.
              *******************/
-            if ((1ULL << from) & pin_d && !(pin_d & (1ull << ep))) continue;
+            if ((1ULL << from) & static_cast<uint64_t>(pin_d) && !(pin_d & (1ull << ep))) continue;
 
             const Bitboard connecting_pawns = (1ull << ep_pawn) | (1ull << from);
 
@@ -506,9 +507,11 @@ template <Color c, Movetype mt>
 
         if ((not_attacked_path & empty_not_attacked) == not_attacked_path &&
             ((not_occ_path & ~occ_all) == not_occ_path) &&
-            !((1ull << from_rook_sq) & pin_hv & MASK_RANK[static_cast<int>(squareRank(sq))]) &&
-            !((1ull << end_rook_sq) & (withoutRook & withoutKing)) &&
-            !((1ull << end_king_sq) & (seen | (withoutRook & ~(1ull << sq))))) {
+            !(static_cast<Bitboard>(1ull << from_rook_sq) & pin_hv &
+              MASK_RANK[static_cast<int>(squareRank(sq))]) &&
+            !(static_cast<Bitboard>((1ull << end_rook_sq)) & (withoutRook & withoutKing)) &&
+            !(static_cast<Bitboard>(1ull << end_king_sq) &
+              (seen | (withoutRook & ~(1ull << sq))))) {
             moves |= (1ull << from_rook_sq);
         }
     }

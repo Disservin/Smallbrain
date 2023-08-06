@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bitset>
 #include <cassert>
 #include <chrono>
 #include <iostream>
@@ -22,7 +23,51 @@ using TimePoint = std::chrono::high_resolution_clock;
 // desinction between an unsigned 64 bit integer and a bitboard
 
 using U64 = uint64_t;
-using Bitboard = uint64_t;
+// using Bitboard = ;
+
+struct Bitboard : public std::bitset<64> {
+   public:
+    constexpr Bitboard(std::uint64_t val = 0) : std::bitset<64>(val) {}
+    constexpr Bitboard(const std::bitset<64> &b) : std::bitset<64>(b) {}
+
+    // implicit conversion to uint64_t
+    constexpr operator std::uint64_t() const { return this->to_ullong(); }
+
+    // implict conversion to bool
+    constexpr operator bool() const { return this->any(); }
+
+    // bool operator&(const Bitboard &rhs) const { return (this->to_ullong() & rhs.to_ullong()) !=
+    // 0; }
+
+    constexpr Bitboard operator&(const U64 &rhs) const { return Bitboard(this->to_ullong() & rhs); }
+    constexpr Bitboard operator&(const Bitboard &rhs) const {
+        return Bitboard(this->to_ullong() & rhs.to_ullong());
+    }
+
+    constexpr Bitboard operator<<(const int &rhs) const {
+        return Bitboard(this->to_ullong() << rhs);
+    }
+
+    constexpr Bitboard operator>>(const int &rhs) const {
+        return Bitboard(this->to_ullong() >> rhs);
+    }
+
+    constexpr Bitboard operator[](const int &rhs) const {
+        return Bitboard(this->to_ullong() & (1ULL << rhs));
+    }
+
+    constexpr Bitboard operator~() const { return Bitboard(~this->to_ullong()); }
+
+    constexpr Bitboard operator|(const Bitboard &rhs) const {
+        return Bitboard(this->to_ullong() | rhs.to_ullong());
+    }
+
+    constexpr Bitboard operator|(const U64 &rhs) const { return Bitboard(this->to_ullong() | rhs); }
+
+    constexpr bool operator==(const int &rhs) const {
+        return this->to_ullong() == static_cast<uint16_t>(rhs);
+    }
+};
 
 using Score = int16_t;
 
@@ -165,8 +210,8 @@ static constexpr PieceType PIECE_TO_PIECETYPE[13] = {
 
 // file masks
 static constexpr Bitboard MASK_FILE[8] = {
-    0x101010101010101,  0x202020202020202,  0x404040404040404,  0x808080808080808,
-    0x1010101010101010, 0x2020202020202020, 0x4040404040404040, 0x8080808080808080,
+    0x101010101010101ull,  0x202020202020202ull,  0x404040404040404ull,  0x808080808080808ull,
+    0x1010101010101010ull, 0x2020202020202020ull, 0x4040404040404040ull, 0x8080808080808080ull,
 };
 
 // rank masks

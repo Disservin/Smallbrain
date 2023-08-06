@@ -80,7 +80,8 @@ int popcount(Bitboard mask) {
 
 Square poplsb(Bitboard &mask) {
     int8_t s = lsb(mask);
-    mask &= mask - 1;  // compiler optimizes this to _blsr_u64
+    // mask &= mask - 1;  // compiler optimizes this to _blsr_u64
+    mask.reset(s);
     return Square(s);
 }
 

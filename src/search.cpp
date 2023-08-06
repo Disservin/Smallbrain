@@ -391,7 +391,7 @@ moves:
         /********************
          * Various pruning techniques.
          *******************/
-        if (!root_node && best > VALUE_TB_LOSS_IN_MAX_PLY) {
+        if (!root_node && best > VALUE_TB_LOSS_IN_MAX_PLY && !pv_node) {
             // clang-format off
             if (capture) {
                 // SEE pruning
@@ -401,7 +401,7 @@ moves:
             } else {
                 // late move pruning/movecount pruning
                 if (!in_check
-                    && !pv_node
+                    // && !pv_node
                     && typeOf(move) != PROMOTION
                     && depth <= 5
                     && quiet_count > (4 + depth * depth))

@@ -42,6 +42,12 @@ namespace builtin {
 /// @return the lsb
 [[nodiscard]] Square poplsb(Bitboard &mask);
 
+inline Square poplsb(U64 &mask) {
+    int8_t s = lsb(mask);
+    mask &= mask - 1;  // compiler optimizes this to _blsr_u64
+    return Square(s);
+}
+
 #if defined(__INTEL_COMPILER) || defined(_MSC_VER)
 template <int rw = 0>
 void prefetch(const void *addr) {

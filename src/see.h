@@ -43,7 +43,8 @@ namespace see {
     if (swap < 0) return false;
     swap -= PIECE_VALUES_CLASSICAL[attacker];
     if (swap >= 0) return true;
-    Bitboard occ = (board.all() ^ (1ULL << from_sq)) | (1ULL << to_sq);
+    Bitboard occ = (board.all() ^ static_cast<Bitboard>(1ULL << from_sq)) |
+                   static_cast<Bitboard>(1ULL << to_sq);
     Bitboard attackers = allAttackers(board, to_sq, occ) & occ;
 
     Bitboard queens = board.pieces(WHITEQUEEN) | board.pieces(BLACKQUEEN);
