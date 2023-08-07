@@ -146,10 +146,10 @@ clean:
 	@rm -rf $(TMPDIR) *.o  $(DEPENDS) *.d profdata *.gcda *.profraw
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(NATIVE) -MMD -MP -o $(EXE) $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -MMD -MP -o $(EXE) $^ $(LDFLAGS)
 
 $(TMPDIR)/%.o: %.cpp | $(TMPDIR)
-	$(CXX) $(CXXFLAGS) $(NATIVE) -MMD -MP -c $< -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -MMD -MP -c $< -o $@ $(LDFLAGS)
 
 $(TMPDIR):
 	$(MKDIR) "$(TMPDIR)" "$(TMPDIR)/src" "$(TMPDIR)/syzygy" "$(TMPDIR)/syzygy/Fathom" "$(TMPDIR)/syzygy/Fathom/src" "$(TMPDIR)/tests"
