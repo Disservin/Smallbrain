@@ -21,47 +21,6 @@
 /// @return
 [[nodiscard]] uint8_t squareDistance(Square a, Square b);
 
-namespace builtin {
-/// @brief least significant bit instruction
-/// @param mask
-/// @return the least significant bit as the Square
-[[nodiscard]] Square lsb(Bitboard mask);
-
-/// @brief most significant bit instruction
-/// @param mask
-/// @return the most significant bit as the Square
-[[nodiscard]] Square msb(Bitboard mask);
-
-/// @brief Counts the set bits
-/// @param mask
-/// @return the count
-[[nodiscard]] int popcount(Bitboard mask);
-
-/// @brief remove the lsb and return it
-/// @param mask
-/// @return the lsb
-[[nodiscard]] Square poplsb(Bitboard &mask);
-
-#if defined(__INTEL_COMPILER) || defined(_MSC_VER)
-template <int rw = 0>
-void prefetch(const void *addr) {
-#if defined(__INTEL_COMPILER)
-    __asm__("");
-#endif
-#ifdef __GNUC__
-    _mm_prefetch((const char *)addr, _MM_HINT_T0);
-#else
-    _mm_prefetch((const char *)addr, 0);
-#endif
-}
-#else
-template <int rw = 0>
-void prefetch(const void *addr) {
-    __builtin_prefetch((const char *)addr, 0, rw);
-}
-#endif
-}  // namespace builtin
-
 // returns diagonal of given square
 [[nodiscard]] constexpr uint8_t diagonalOf(Square sq) {
     return 7 + squareRank(sq) - squareFile(sq);

@@ -15,11 +15,13 @@
 #include "types/state.h"
 
 #include "attacks.h"
+#include "builtin.h"
 #include "helper.h"
 #include "nnue.h"
 #include "tt.h"
 #include "types.h"
 #include "zobrist.h"
+
 
 extern TranspositionTable TTable;
 

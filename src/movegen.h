@@ -3,8 +3,10 @@
 #include <iterator>
 
 #include "board.h"
+#include "builtin.h"
 #include "helper.h"
 #include "types.h"
+
 
 static auto init_squares_between = []() constexpr {
     // initialize squares between table

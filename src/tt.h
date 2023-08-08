@@ -2,8 +2,10 @@
 
 #include <vector>
 
+#include "builtin.h"
 #include "helper.h"
 #include "types.h"
+
 
 PACK(struct TEntry {
     U64 key = 0;
