@@ -4,14 +4,17 @@
 #include "castling_rights.h"
 
 struct State {
-    Square en_passant{};
-    CastlingRights castling{};
-    uint8_t half_move{};
-    Piece captured_piece = NONE;
+    U64 hash;
+    CastlingRights castling;
+    Square enpassant;
+    uint8_t half_moves;
+    Piece captured_piece;
 
-    State(Square en_passant, CastlingRights castling, uint8_t half_move, Piece captured_piece)
-        : en_passant(en_passant),
+    State(const U64 &hash, const CastlingRights &castling, const Square &enpassant,
+          const uint8_t &half_moves, const Piece &captured_piece)
+        : hash(hash),
           castling(castling),
-          half_move(half_move),
+          enpassant(enpassant),
+          half_moves(half_moves),
           captured_piece(captured_piece) {}
 };
