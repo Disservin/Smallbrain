@@ -7,7 +7,6 @@
 #include "helper.h"
 #include "types.h"
 
-
 static auto init_squares_between = []() constexpr {
     // initialize squares between table
     std::array<std::array<Bitboard, 64>, 64> squares_between_bb{};
@@ -98,59 +97,62 @@ template <Color c>
  * When there is no check at all all bits are set (DEFAULT_CHECKMASK)
  *******************/
 template <Color c>
-[[nodiscard]] Bitboard checkMask(const Board &board, Square sq, Bitboard occ_all,
-                                 int &double_check) {
-    Bitboard checks = 0ULL;
-    Bitboard pawn_mask = board.pieces<PAWN, ~c>() & attacks::pawn(sq, c);
-    Bitboard knight_mask = board.pieces<KNIGHT, ~c>() & attacks::knight(sq);
-    Bitboard bishop_mask =
-        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::bishop(sq, occ_all);
-    Bitboard rook_mask =
-        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::rook(sq, occ_all);
-
-    /********************
-     * We keep track of the amount of checks, in case there are
-     * two checks on the board only the king can move!
-     *******************/
+[[nodiscard]] Bitboard checkMask(const Board &board, Square sq, int &double_check) {
+    Bitboard mask = 0;
     double_check = 0;
 
-    if (pawn_mask) {
-        checks |= pawn_mask;
-        double_check++;
-    }
-    if (knight_mask) {
-        checks |= knight_mask;
-        double_check++;
-    }
-    if (bishop_mask) {
-        int8_t index = builtin::lsb(bishop_mask);
+    const auto opp_knight = board.pieces(PieceType::KNIGHT, ~c);
+    const auto opp_bishop = board.pieces(PieceType::BISHOP, ~c);
+    const auto opp_rook = board.pieces(PieceType::ROOK, ~c);
+    const auto opp_queen = board.pieces(PieceType::QUEEN, ~c);
 
-        // Now we add the path!
-        checks |= SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
+    const auto opp_pawns = board.pieces(PieceType::PAWN, ~c);
+
+    // check for knight checks
+    Bitboard knight_attacks = attacks::knight(sq) & opp_knight;
+    double_check += bool(knight_attacks);
+
+    mask |= knight_attacks;
+
+    // check for pawn checks
+    Bitboard pawn_attacks = attacks::pawn(sq, board.sideToMove()) & opp_pawns;
+    mask |= pawn_attacks;
+    double_check += bool(pawn_attacks);
+
+    // check for bishop checks
+    Bitboard bishop_attacks = attacks::bishop(sq, board.all()) & (opp_bishop | opp_queen);
+
+    if (bishop_attacks) {
+        const auto index = builtin::lsb(bishop_attacks);
+
+        mask |= SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         double_check++;
     }
-    if (rook_mask) {
+
+    Bitboard rook_attacks = attacks::rook(sq, board.all()) & (opp_rook | opp_queen);
+    if (rook_attacks) {
         /********************
          * 3nk3/4P3/8/8/8/8/8/2K1R3 w - - 0 1, pawn promotes to queen or rook and
          * suddenly the same piecetype gives check two times
          * in that case we have a double check and can return early
          * because king moves dont require the checkmask.
          *******************/
-        if (builtin::popcount(rook_mask) > 1) {
+        if (builtin::popcount(rook_attacks) > 1) {
             double_check = 2;
-            return checks;
+            return mask;
         }
 
-        int8_t index = builtin::lsb(rook_mask);
+        const auto index = builtin::lsb(rook_attacks);
 
-        // Now we add the path!
-        checks |= SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
+        mask |= SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         double_check++;
     }
 
-    if (!checks) return DEFAULT_CHECKMASK;
+    if (!mask) {
+        return DEFAULT_CHECKMASK;
+    }
 
-    return checks;
+    return mask;
 }
 
 /********************
@@ -166,33 +168,41 @@ template <Color c>
 template <Color c>
 [[nodiscard]] Bitboard pinMaskRooks(const Board &board, Square sq, Bitboard occ_us,
                                     Bitboard occ_enemy) {
-    Bitboard rook_mask =
-        (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::rook(sq, occ_enemy);
+    Bitboard pin_hv = 0;
 
-    Bitboard pin_hv = 0ULL;
-    while (rook_mask) {
-        const Square index = builtin::poplsb(rook_mask);
-        const Bitboard possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+    const auto opp_rook = board.pieces(PieceType::ROOK, ~c);
+    const auto opp_queen = board.pieces(PieceType::QUEEN, ~c);
+
+    Bitboard rook_attacks = attacks::rook(sq, occ_enemy) & (opp_rook | opp_queen);
+
+    while (rook_attacks) {
+        const auto index = builtin::poplsb(rook_attacks);
+
+        const Bitboard possible_pin = SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         if (builtin::popcount(possible_pin & occ_us) == 1) pin_hv |= possible_pin;
     }
+
     return pin_hv;
 }
 
 template <Color c>
 [[nodiscard]] Bitboard pinMaskBishops(const Board &board, Square sq, Bitboard occ_us,
                                       Bitboard occ_enemy) {
-    Bitboard bishop_mask =
-        (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & attacks::bishop(sq, occ_enemy);
+    Bitboard pin_diag = 0;
 
-    Bitboard pin_d = 0ULL;
+    const auto opp_bishop = board.pieces(PieceType::BISHOP, ~c);
+    const auto opp_queen = board.pieces(PieceType::QUEEN, ~c);
 
-    while (bishop_mask) {
-        const Square index = builtin::poplsb(bishop_mask);
-        const Bitboard possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
-        if (builtin::popcount(possible_pin & occ_us) == 1) pin_d |= possible_pin;
+    Bitboard bishop_attacks = attacks::bishop(sq, occ_enemy) & (opp_bishop | opp_queen);
+
+    while (bishop_attacks) {
+        const auto index = builtin::poplsb(bishop_attacks);
+
+        const Bitboard possible_pin = SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
+        if (builtin::popcount(possible_pin & occ_us) == 1) pin_diag |= possible_pin;
     }
 
-    return pin_d;
+    return pin_diag;
 }
 
 /********************
@@ -201,8 +211,8 @@ template <Color c>
  * this is used for king move generation.
  *******************/
 template <Color c>
-[[nodiscard]] Bitboard seenSquares(const Board &board, Bitboard occ_all) {
-    const Square k_sq = board.kingSQ(~c);
+[[nodiscard]] Bitboard seenSquares(const Board &board, Bitboard enemy_empty) {
+    const Square king_sq = board.kingSQ(~c);
 
     Bitboard pawns = board.pieces<PAWN, c>();
     Bitboard knights = board.pieces<KNIGHT, c>();
@@ -210,8 +220,16 @@ template <Color c>
     Bitboard bishops = board.pieces<BISHOP, c>() | queens;
     Bitboard rooks = board.pieces<ROOK, c>() | queens;
 
+    auto occ = board.all();
+
+    Bitboard map_king_atk = attacks::king(king_sq) & enemy_empty;
+
+    if (map_king_atk == 0ull && !board.chess960) {
+        return 0ull;
+    }
+
     // Remove our king
-    occ_all &= ~(1ULL << k_sq);
+    occ &= ~(1ULL << king_sq);
 
     Bitboard seen = pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
 
@@ -219,13 +237,15 @@ template <Color c>
         Square index = builtin::poplsb(knights);
         seen |= attacks::knight(index);
     }
+
     while (bishops) {
         Square index = builtin::poplsb(bishops);
-        seen |= attacks::bishop(index, occ_all);
+        seen |= attacks::bishop(index, occ);
     }
+
     while (rooks) {
         Square index = builtin::poplsb(rooks);
-        seen |= attacks::rook(index, occ_all);
+        seen |= attacks::rook(index, occ);
     }
 
     Square index = builtin::lsb(board.pieces<KING, c>());
@@ -536,8 +556,8 @@ void legalmoves(const Board &board, Movelist &movelist) {
     const Bitboard occ_all = occ_us | occ_enemy;
     const Bitboard enemy_empty_bb = ~occ_us;
 
-    const Bitboard seen = seenSquares<~c>(board, occ_all);
-    const Bitboard check_mask = checkMask<c>(board, king_sq, occ_all, double_check);
+    const Bitboard seen = seenSquares<~c>(board, enemy_empty_bb);
+    const Bitboard check_mask = checkMask<c>(board, king_sq, double_check);
     const Bitboard pin_hv = pinMaskRooks<c>(board, king_sq, occ_us, occ_enemy);
     const Bitboard pin_d = pinMaskBishops<c>(board, king_sq, occ_us, occ_enemy);
 
