@@ -5,7 +5,6 @@
 
 Board::Board(const std::string &fen) {
     state_history_.reserve(MAX_PLY);
-    hash_history_.reserve(512);
 
     side_to_move_ = WHITE;
     en_passant_square_ = NO_SQ;
@@ -26,8 +25,6 @@ Board::Board(const Board &other) {
     }
 
     state_history_ = other.state_history_;
-
-    hash_history_ = other.hash_history_;
 
     pieces_bb_ = other.pieces_bb_;
     board_ = other.board_;
@@ -57,8 +54,6 @@ Board &Board::operator=(const Board &other) {
     }
 
     state_history_ = other.state_history_;
-
-    hash_history_ = other.hash_history_;
 
     pieces_bb_ = other.pieces_bb_;
     board_ = other.board_;
@@ -188,7 +183,6 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     }
 
     state_history_.clear();
-    hash_history_.clear();
     accumulators_->clear();
 
     hash_key_ = zobrist();
@@ -261,9 +255,9 @@ std::string Board::getFen() const {
 bool Board::isRepetition(int draw) const {
     uint8_t c = 0;
 
-    for (int i = static_cast<int>(hash_history_.size()) - 2;
-         i >= 0 && i >= static_cast<int>(hash_history_.size()) - half_move_clock_ - 1; i -= 2) {
-        if (hash_history_[i] == hash_key_) c++;
+    for (int i = static_cast<int>(state_history_.size()) - 2;
+         i >= 0 && i >= static_cast<int>(state_history_.size()) - half_move_clock_ - 1; i -= 2) {
+        if (state_history_[i].hash == hash_key_) c++;
         if (c == draw) return true;
     }
 
@@ -326,8 +320,8 @@ bool Board::isAttacked(Color c, Square sq, Bitboard occ) const {
 }
 
 void Board::makeNullMove() {
-    state_history_.emplace_back(en_passant_square_, castling_rights_, half_move_clock_, NONE);
-
+    state_history_.emplace_back(hash_key_, castling_rights_, en_passant_square_, half_move_clock_,
+                                NONE);
     // Update the hash key
     hash_key_ ^= zobrist::sideToMove();
     if (en_passant_square_ != NO_SQ)
@@ -345,15 +339,14 @@ void Board::unmakeNullMove() {
     const State restore = state_history_.back();
     state_history_.pop_back();
 
-    en_passant_square_ = restore.en_passant;
+    en_passant_square_ = restore.enpassant;
 
     hash_key_ ^= zobrist::sideToMove();
     if (en_passant_square_ != NO_SQ)
         hash_key_ ^= zobrist::enpassant(squareFile(en_passant_square_));
 
     castling_rights_ = restore.castling;
-    half_move_clock_ = restore.half_move;
-
+    half_move_clock_ = restore.half_moves;
     full_move_number_--;
     side_to_move_ = ~side_to_move_;
 }

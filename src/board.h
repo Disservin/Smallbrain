@@ -22,7 +22,6 @@
 #include "types.h"
 #include "zobrist.h"
 
-
 extern TranspositionTable TTable;
 
 class Board {
@@ -89,6 +88,14 @@ class Board {
 
     [[nodiscard]] Bitboard all() const;
 
+    /// @brief Returns the square of the king for a certain color
+    /// @param color
+    /// @return
+    [[nodiscard]] Square kingSq(Color color) const {
+        assert(pieces(PieceType::KING, color) != 0);
+        return builtin::lsb(pieces(PieceType::KING, color));
+    }
+
     // Gets individual piece bitboards
 
     [[nodiscard]] constexpr Bitboard pieces(Piece piece) const { return pieces_bb_[piece]; }
@@ -111,6 +118,11 @@ class Board {
     /// @return
     [[nodiscard]] Color colorOf(Square loc) const;
 
+    /// @brief  Checks if a square is attacked by the given color.
+    /// @param c
+    /// @param sq
+    /// @param occ
+    /// @return
     [[nodiscard]] bool isAttacked(Color c, Square sq, Bitboard occ) const;
 
     void updateHash(Move move);
@@ -141,8 +153,6 @@ class Board {
 
     void clearStacks();
 
-    void clearHash() { hash_history_.clear(); }
-
     friend std::ostream &operator<<(std::ostream &os, const Board &b);
 
     bool chess960 = false;
@@ -151,10 +161,6 @@ class Board {
     std::unique_ptr<Accumulators> accumulators_ = std::make_unique<Accumulators>();
 
     std::vector<State> state_history_;
-
-    // keeps track of previous hashes, used for
-    // repetition detection
-    std::vector<U64> hash_history_;
 
     std::array<Bitboard, 12> pieces_bb_ = {};
     std::array<Piece, MAX_SQ> board_{};
@@ -230,10 +236,10 @@ inline void Board::updateHash(Move move) {
     const Piece capture = board_[to_sq];
     const Rank rank = squareRank(to_sq);
 
-    hash_history_.emplace_back(hash_key_);
-
-    if (en_passant_square_ != NO_SQ)
+    if (en_passant_square_ != NO_SQ) {
         hash_key_ ^= zobrist::enpassant(squareFile(en_passant_square_));
+    }
+
     en_passant_square_ = NO_SQ;
 
     hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
@@ -342,7 +348,8 @@ void Board::makeMove(const Move move) {
     // STORE STATE HISTORY
     // *****************************
 
-    state_history_.emplace_back(en_passant_square_, castling_rights_, half_move_clock_, capture);
+    state_history_.emplace_back(hash_key_, castling_rights_, en_passant_square_, half_move_clock_,
+                                capture);
 
     if constexpr (updateNNUE) accumulators_->push();
 
@@ -418,7 +425,6 @@ void Board::makeMove(const Move move) {
 template <bool updateNNUE>
 void Board::unmakeMove(Move move) {
     const State restore = state_history_.back();
-
     const Square from_sq = from(move);
     const Square to_sq = to(move);
 
@@ -433,14 +439,12 @@ void Board::unmakeMove(Move move) {
         accumulators_->pop();
     }
 
-    hash_key_ = hash_history_.back();
-
-    hash_history_.pop_back();
-    state_history_.pop_back();
-
-    en_passant_square_ = restore.en_passant;
+    hash_key_ = restore.hash;
+    en_passant_square_ = restore.enpassant;
     castling_rights_ = restore.castling;
-    half_move_clock_ = restore.half_move;
+    half_move_clock_ = restore.half_moves;
+
+    state_history_.pop_back();
 
     full_move_number_--;
     side_to_move_ = ~side_to_move_;

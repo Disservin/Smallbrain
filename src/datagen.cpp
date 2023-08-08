@@ -5,7 +5,6 @@
 #include "rand.h"
 #include "syzygy/Fathom/src/tbprobe.h"
 
-
 namespace datagen {
 
 std::string stringFenData(const fenData &fen_data, double score) {
@@ -121,7 +120,6 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
     }
 
     board.refreshNNUE(board.getAccumulator());
-    board.clearHash();
     search->board = board;
 
     fenData sfens;
