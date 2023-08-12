@@ -23,9 +23,11 @@ const TEntry *TranspositionTable::probe(bool &tt_hit, Move &ttmove, U64 key) con
 }
 
 uint32_t TranspositionTable::index(U64 key) const {
-    assert((((uint32_t)key * entries_.size()) >> 32) < entries_.size());
-
-    return ((uint32_t)key * entries_.size()) >> 32;
+#ifdef __SIZEOF_INT128__
+    return (uint64_t)(((__uint128_t)key * (__uint128_t)entries_.size()) >> 64);
+#else
+    return key % entries_.size();
+#endif
 }
 
 void TranspositionTable::allocate(U64 size) { entries_.resize(size, TEntry()); }
