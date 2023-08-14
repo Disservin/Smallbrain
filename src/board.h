@@ -229,10 +229,10 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
 }
 
 inline void Board::updateHash(Move move) {
-    const auto piece_type = at<PieceType>(from(move));
+    const auto piece_type = at<PieceType>(move.from());
     const Piece piece = makePiece(piece_type, side_to_move_);
-    const Square from_sq = from(move);
-    const Square to_sq = to(move);
+    const Square from_sq = move.from();
+    const Square to_sq = move.to();
     const Piece capture = board_[to_sq];
     const Rank rank = squareRank(to_sq);
 
@@ -247,7 +247,7 @@ inline void Board::updateHash(Move move) {
     if (piece_type == KING) {
         castling_rights_.clearCastlingRight(side_to_move_);
 
-        if (typeOf(move) == CASTLING) {
+        if (move.typeOf() == Move::CASTLING) {
             assert(at<PieceType>(to_sq) == ROOK);
 
             const Piece rook = makePiece(ROOK, side_to_move_);
@@ -278,7 +278,7 @@ inline void Board::updateHash(Move move) {
 
         half_move_clock_ = 0;
 
-        if (typeOf(move) == ENPASSANT) {
+        if (move.typeOf() == Move::ENPASSANT) {
             hash_key_ ^= zobrist::piece(makePiece(PAWN, ~side_to_move_), ep_sq);
         } else if (std::abs(from_sq - to_sq) == 16) {
             Bitboard ep_mask = attacks::pawn(ep_sq, side_to_move_);
@@ -308,9 +308,9 @@ inline void Board::updateHash(Move move) {
         }
     }
 
-    if (typeOf(move) == PROMOTION) {
+    if (move.typeOf() == Move::PROMOTION) {
         hash_key_ ^= zobrist::piece(makePiece(PAWN, side_to_move_), from_sq);
-        hash_key_ ^= zobrist::piece(makePiece(promotionType(move), side_to_move_), to_sq);
+        hash_key_ ^= zobrist::piece(makePiece(move.promotionType(), side_to_move_), to_sq);
     } else {
         hash_key_ ^= zobrist::piece(piece, from_sq);
         hash_key_ ^= zobrist::piece(piece, to_sq);
@@ -325,17 +325,17 @@ inline void Board::updateHash(Move move) {
 /// @param move
 template <bool updateNNUE>
 void Board::makeMove(const Move move) {
-    assert(from(move) >= 0 && from(move) < 64);
-    assert(to(move) >= 0 && to(move) < 64);
-    assert(typeOfPiece(at(to(move))) != KING);
-    assert(at<PieceType>(from(move)) != NONETYPE);
-    assert(at(from(move)) != NONE);
-    assert((typeOf(move) == PROMOTION &&
-            (promotionType(move) != PAWN && promotionType(move) != KING)) ||
-           typeOf(move) != PROMOTION);
+    assert(move.from() >= 0 && move.from() < 64);
+    assert(move.to() >= 0 && move.to() < 64);
+    assert(typeOfPiece(at(move.to())) != KING);
+    assert(at<PieceType>(move.from()) != NONETYPE);
+    assert(at(move.from()) != NONE);
+    assert((move.typeOf() == Move::PROMOTION &&
+            (move.promotionType() != PAWN && move.promotionType() != KING)) ||
+           move.typeOf() != Move::PROMOTION);
 
-    const Square from_sq = from(move);
-    const Square to_sq = to(move);
+    const Square from_sq = move.from();
+    const Square to_sq = move.to();
 
     const auto piece_type = at<PieceType>(from_sq);
 
@@ -371,7 +371,7 @@ void Board::makeMove(const Move move) {
     // UPDATE PIECES AND NNUE
     // *****************************
 
-    if (typeOf(move) == CASTLING) {
+    if (move.typeOf() == Move::CASTLING) {
         const Piece rook = makePiece(ROOK, side_to_move_);
         Square rook_to_sq = rookCastleSquare(to_sq, from_sq);
         Square king_to_sq = kingCastleSquare(to_sq, from_sq);
@@ -406,12 +406,12 @@ void Board::makeMove(const Move move) {
     }
 
     // The move is differently encoded for promotions to it requires some special care.
-    if (typeOf(move) == PROMOTION) {
+    if (move.typeOf() == Move::PROMOTION) {
         // Captured piece is already removed
         assert(at(to_sq) == Piece::NONE);
 
         removePiece<updateNNUE>(makePiece(PAWN, side_to_move_), from_sq, ksq_white, ksq_black);
-        placePiece<updateNNUE>(makePiece(promotionType(move), side_to_move_), to_sq, ksq_white,
+        placePiece<updateNNUE>(makePiece(move.promotionType(), side_to_move_), to_sq, ksq_white,
                                ksq_black);
     } else {
         assert(at(to_sq) == Piece::NONE);
@@ -425,15 +425,15 @@ void Board::makeMove(const Move move) {
 template <bool updateNNUE>
 void Board::unmakeMove(Move move) {
     const State restore = state_history_.back();
-    const Square from_sq = from(move);
-    const Square to_sq = to(move);
+    const Square from_sq = move.from();
+    const Square to_sq = move.to();
 
     const auto piece_type = at<PieceType>(to_sq);
 
     const Piece piece = makePiece(piece_type, ~side_to_move_);
     const Piece capture = restore.captured_piece;
 
-    const bool promotion = typeOf(move) == PROMOTION;
+    const bool promotion = move.typeOf() == Move::PROMOTION;
 
     if (accumulators_->size()) {
         accumulators_->pop();
@@ -449,7 +449,7 @@ void Board::unmakeMove(Move move) {
     full_move_number_--;
     side_to_move_ = ~side_to_move_;
 
-    if (typeOf(move) == CASTLING) {
+    if (move.typeOf() == Move::CASTLING) {
         const Piece rook = makePiece(ROOK, side_to_move_);
 
         const Square rook_from_sq = rookCastleSquare(to_sq, from_sq);
@@ -464,7 +464,7 @@ void Board::unmakeMove(Move move) {
 
         return;
     } else if (promotion) {
-        removePiece<updateNNUE>(makePiece(promotionType(move), side_to_move_), to_sq);
+        removePiece<updateNNUE>(makePiece(move.promotionType(), side_to_move_), to_sq);
         placePiece<updateNNUE>(makePiece(PAWN, side_to_move_), from_sq);
 
         if (capture != NONE) placePiece<updateNNUE>(capture, to_sq);

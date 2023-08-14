@@ -5,7 +5,7 @@ TranspositionTable::TranspositionTable() { allocateMB(16); }
 void TranspositionTable::store(int depth, Score bestvalue, Flag b, U64 key, Move move) {
     TEntry *tte = &entries_[index(key)];
 
-    if (tte->key != key || move) tte->move = move;
+    if (tte->key != key || bool(move)) tte->move = move;
 
     if (tte->key != key || b == EXACTBOUND || depth + 4 > tte->depth) {
         tte->depth = depth;

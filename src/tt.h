@@ -6,14 +6,13 @@
 #include "helper.h"
 #include "types.h"
 
-
-PACK(struct TEntry {
+struct TEntry {
     U64 key = 0;
     Score score = 0;
-    Move move = NO_MOVE;
+    Move move = Move::NO_MOVE;
     uint8_t depth = 0;
     Flag flag = NONEBOUND;
-});
+};
 
 class TranspositionTable {
    private:

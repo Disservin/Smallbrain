@@ -31,7 +31,7 @@ static const std::array<std::array<Bitboard, 64>, 64> SQUARES_BETWEEN_BB = init_
 
 struct ExtMove {
     int value = 0;
-    Move move = NO_MOVE;
+    Move move = Move::NO_MOVE;
 };
 
 constexpr bool operator==(const ExtMove &a, const ExtMove &b) { return a.move == b.move; }
@@ -343,26 +343,26 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
 
         while (promote_move) {
             Square to = builtin::poplsb(promote_move);
-            movelist.add(make<PROMOTION>(to + DOWN, to, QUEEN));
-            movelist.add(make<PROMOTION>(to + DOWN, to, ROOK));
-            movelist.add(make<PROMOTION>(to + DOWN, to, KNIGHT));
-            movelist.add(make<PROMOTION>(to + DOWN, to, BISHOP));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN, to, QUEEN));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN, to, ROOK));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN, to, KNIGHT));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN, to, BISHOP));
         }
 
         while (promote_right) {
             Square to = builtin::poplsb(promote_right);
-            movelist.add(make<PROMOTION>(to + DOWN_LEFT, to, QUEEN));
-            movelist.add(make<PROMOTION>(to + DOWN_LEFT, to, ROOK));
-            movelist.add(make<PROMOTION>(to + DOWN_LEFT, to, KNIGHT));
-            movelist.add(make<PROMOTION>(to + DOWN_LEFT, to, BISHOP));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN_LEFT, to, QUEEN));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN_LEFT, to, ROOK));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN_LEFT, to, KNIGHT));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN_LEFT, to, BISHOP));
         }
 
         while (promote_left) {
             Square to = builtin::poplsb(promote_left);
-            movelist.add(make<PROMOTION>(to + DOWN_RIGHT, to, QUEEN));
-            movelist.add(make<PROMOTION>(to + DOWN_RIGHT, to, ROOK));
-            movelist.add(make<PROMOTION>(to + DOWN_RIGHT, to, KNIGHT));
-            movelist.add(make<PROMOTION>(to + DOWN_RIGHT, to, BISHOP));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN_RIGHT, to, QUEEN));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN_RIGHT, to, ROOK));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN_RIGHT, to, KNIGHT));
+            movelist.add(Move::make<Move::PROMOTION>(to + DOWN_RIGHT, to, BISHOP));
         }
     }
 
@@ -376,7 +376,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
      *******************/
     while (mt != Movetype::CAPTURE && single_push) {
         Square to = builtin::poplsb(single_push);
-        movelist.add(make(to + DOWN, to));
+        movelist.add(Move::make(to + DOWN, to));
     }
 
     /********************
@@ -384,7 +384,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
      *******************/
     while (mt != Movetype::CAPTURE && double_push) {
         Square to = builtin::poplsb(double_push);
-        movelist.add(make(to + DOWN + DOWN, to));
+        movelist.add(Move::make(to + DOWN + DOWN, to));
     }
 
     /********************
@@ -392,7 +392,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
      *******************/
     while (mt != Movetype::QUIET && r_pawns) {
         Square to = builtin::poplsb(r_pawns);
-        movelist.add(make(to + DOWN_LEFT, to));
+        movelist.add(Move::make(to + DOWN_LEFT, to));
     }
 
     /********************
@@ -400,7 +400,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
      *******************/
     while (mt != Movetype::QUIET && l_pawns) {
         Square to = builtin::poplsb(l_pawns);
-        movelist.add(make(to + DOWN_RIGHT, to));
+        movelist.add(Move::make(to + DOWN_RIGHT, to));
     }
 
     /********************
@@ -453,7 +453,7 @@ void addLegalPawnMoves(const Board &board, Movelist &movelist, Bitboard occ_all,
                 (attacks::rook(k_sq, occ_all & ~connecting_pawns) & enemy_queen_rook) != 0)
                 break;
 
-            movelist.add(make<ENPASSANT>(from, to));
+            movelist.add(Move::make<Move::ENPASSANT>(from, to));
         }
     }
 }
@@ -585,7 +585,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.add(make(king_sq, to));
+            movelist.add(Move::make(king_sq, to));
         }
 
         if (mt != Movetype::CAPTURE && squareRank(king_sq) == (c == WHITE ? RANK_1 : RANK_8) &&
@@ -594,7 +594,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
 
             while (moves) {
                 Square to = builtin::poplsb(moves);
-                movelist.add(make<CASTLING>(king_sq, to));
+                movelist.add(Move::make<Move::CASTLING>(king_sq, to));
             }
         }
     }
@@ -634,7 +634,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         Bitboard moves = generateLegalKnightMoves(from, movable_square);
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.add(make(from, to));
+            movelist.add(Move::make(from, to));
         }
     }
 
@@ -643,7 +643,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         Bitboard moves = generateLegalBishopMoves(from, movable_square, pin_d, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.add(make(from, to));
+            movelist.add(Move::make(from, to));
         }
     }
 
@@ -652,7 +652,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         Bitboard moves = generateLegalRookMoves(from, movable_square, pin_hv, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.add(make(from, to));
+            movelist.add(Move::make(from, to));
         }
     }
 
@@ -661,7 +661,7 @@ void legalmoves(const Board &board, Movelist &movelist) {
         Bitboard moves = generateLegalQueenMoves(from, movable_square, pin_d, pin_hv, occ_all);
         while (moves) {
             Square to = builtin::poplsb(moves);
-            movelist.add(make(from, to));
+            movelist.add(Move::make(from, to));
         }
     }
 }

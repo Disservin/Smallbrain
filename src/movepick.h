@@ -21,14 +21,14 @@ template <SearchType st>
 class MovePicker {
    public:
     MovePicker(const Search &sh, const Stack *s, Movelist &moves, const Move move)
-        :  movelist(moves), search_(sh), ss_(s), available_tt_move_(move) {
+        : movelist(moves), search_(sh), ss_(s), available_tt_move_(move) {
         movelist.size = 0;
         movegen::legalmoves<Movetype::CAPTURE>(search_.board, movelist);
     }
 
     MovePicker(const Search &sh, const Stack *s, Movelist &moves, const Movelist &searchmoves,
                const bool root_node, const Move move)
-        : movelist(moves),search_(sh), ss_(s),  available_tt_move_(move) {
+        : movelist(moves), search_(sh), ss_(s), available_tt_move_(move) {
         if (root_node && searchmoves.size > 0) {
             movelist = searchmoves;
             return;
@@ -48,7 +48,8 @@ class MovePicker {
             case Pick::TT:
                 pick_ = Pick::SCORE;
 
-                if (available_tt_move_ != NO_MOVE && movelist.find(available_tt_move_) != -1) {
+                if (available_tt_move_ != Move::NO_MOVE &&
+                    movelist.find(available_tt_move_) != -1) {
                     tt_move_ = available_tt_move_;
                     return tt_move_;
                 }
@@ -82,7 +83,7 @@ class MovePicker {
                 }
 
                 if constexpr (st == QSEARCH) {
-                    return NO_MOVE;
+                    return Move::NO_MOVE;
                 }
 
                 pick_ = Pick::KILLERS_1;
@@ -91,7 +92,7 @@ class MovePicker {
             case Pick::KILLERS_1:
                 pick_ = Pick::KILLERS_2;
 
-                if (killer_move_1_ != NO_MOVE) {
+                if (killer_move_1_ != Move::NO_MOVE) {
                     return killer_move_1_;
                 }
 
@@ -99,7 +100,7 @@ class MovePicker {
             case Pick::KILLERS_2:
                 pick_ = Pick::COUNTER;
 
-                if (killer_move_2_ != NO_MOVE) {
+                if (killer_move_2_ != Move::NO_MOVE) {
                     return killer_move_2_;
                 }
 
@@ -107,7 +108,7 @@ class MovePicker {
             case Pick::COUNTER:
                 pick_ = Pick::QUIET;
 
-                if (counter_move_ != NO_MOVE) {
+                if (counter_move_ != Move::NO_MOVE) {
                     return counter_move_;
                 }
 
@@ -135,16 +136,16 @@ class MovePicker {
                     played_++;
                 }
 
-                return NO_MOVE;
+                return Move::NO_MOVE;
 
             default:
-                return NO_MOVE;
+                return Move::NO_MOVE;
         }
     }
 
     [[nodiscard]] int mvvlva(Move move) const {
-        int attacker = search_.board.at<PieceType>(from(move)) + 1;
-        int victim = search_.board.at<PieceType>(to(move)) + 1;
+        int attacker = search_.board.at<PieceType>(move.from()) + 1;
+        int victim = search_.board.at<PieceType>(move.to()) + 1;
         return mvvlvaArray[victim][attacker];
     }
 
@@ -153,7 +154,7 @@ class MovePicker {
             return CAPTURE_SCORE + mvvlva(move);
         }
 
-        if (search_.board.at(to(move)) != NONE) {
+        if (search_.board.at(move.to()) != NONE) {
             return see::see(search_.board, move, 0) ? CAPTURE_SCORE + mvvlva(move) : mvvlva(move);
         }
 
@@ -163,13 +164,13 @@ class MovePicker {
         } else if (search_.killers[1][ss_->ply] == move) {
             killer_move_2_ = move;
             return KILLER_TWO_SCORE;
-        } else if (history::get<HistoryType::COUNTER>((ss_ - 1)->currentmove, NO_MOVE, search_) ==
-                   move) {
+        } else if (history::get<HistoryType::COUNTER, Move>((ss_ - 1)->currentmove, Move::NO_MOVE,
+                                                            search_) == move) {
             counter_move_ = move;
             return COUNTER_SCORE;
         }
 
-        return history::get<HistoryType::HH>(move, NO_MOVE, search_) +
+        return history::get<HistoryType::HH>(move, Move::NO_MOVE, search_) +
                2 * (history::get<HistoryType::CONST>(move, (ss_ - 1)->currentmove, search_) +
                     history::get<HistoryType::CONST>(move, (ss_ - 2)->currentmove, search_));
     }
@@ -186,10 +187,10 @@ class MovePicker {
 
     Pick pick_ = Pick::TT;
 
-    Move available_tt_move_ = NO_MOVE;
+    Move available_tt_move_ = Move::NO_MOVE;
 
-    Move tt_move_ = NO_MOVE;
-    Move killer_move_1_ = NO_MOVE;
-    Move killer_move_2_ = NO_MOVE;
-    Move counter_move_ = NO_MOVE;
+    Move tt_move_ = Move::NO_MOVE;
+    Move killer_move_1_ = Move::NO_MOVE;
+    Move killer_move_2_ = Move::NO_MOVE;
+    Move counter_move_ = Move::NO_MOVE;
 };

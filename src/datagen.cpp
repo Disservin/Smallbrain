@@ -159,7 +159,7 @@ void TrainingData::randomPlayout(std::ofstream &file, Board &board, Movelist &mo
             exit(1);
         }
 
-        const bool capture = search->board.at(to(result.bestmove)) != NONE;
+        const bool capture = search->board.at(result.bestmove.to()) != NONE;
 
         sfens.score = search->board.sideToMove() == WHITE ? result.score : -result.score;
         sfens.move = result.bestmove;

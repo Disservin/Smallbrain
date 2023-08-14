@@ -36,8 +36,8 @@ namespace see {
  * licensed under GPL-3.0
  *******************/
 [[nodiscard]] inline bool see(const Board &board, Move move, int threshold) {
-    Square from_sq = from(move);
-    Square to_sq = to(move);
+    Square from_sq = move.from();
+    Square to_sq = move.to();
     auto attacker = board.at<PieceType>(from_sq);
     auto victim = board.at<PieceType>(to_sq);
     int swap = PIECE_VALUES_CLASSICAL[victim] - threshold;

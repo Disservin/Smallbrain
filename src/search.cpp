@@ -73,7 +73,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
      * Adjust alpha and beta for non PV Nodes.
      *******************/
 
-    Move ttmove = NO_MOVE;
+    Move ttmove = Move::NO_MOVE;
     bool tt_hit = false;
 
     const TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
@@ -104,11 +104,11 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
     /********************
      * Search the moves
      *******************/
-    Move bestmove = NO_MOVE;
-    Move move = NO_MOVE;
+    Move bestmove = Move::NO_MOVE;
+    Move move = Move::NO_MOVE;
 
-    while ((move = mp.nextMove()) != NO_MOVE) {
-        auto captured = board.at<PieceType>(to(move));
+    while ((move = mp.nextMove()) != Move::NO_MOVE) {
+        auto captured = board.at<PieceType>(move.to());
 
         if (best_value > VALUE_TB_LOSS_IN_MAX_PLY) {
             // delta pruning, if the move + a large margin is still less then alpha we can safely
@@ -117,7 +117,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
             if (captured != NONETYPE
                 && !in_check
                 && best_value + 400 + PIECE_VALUES_TUNED[1][captured] < alpha
-                && typeOf(move) != PROMOTION
+                && move.typeOf() != Move:: PROMOTION
                 && board.nonPawnMat(color))
                 // clang-format on
                 continue;
@@ -210,7 +210,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     assert(0 < depth && depth < MAX_PLY);
     assert(ss->ply < MAX_PLY);
 
-    (ss + 1)->excluded_move = NO_MOVE;
+    (ss + 1)->excluded_move = Move::NO_MOVE;
 
     /********************
      * Selective depth
@@ -219,7 +219,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     if (pv_node && ss->ply > seldepth_) seldepth_ = ss->ply;
 
     // Look up in the TT
-    Move ttmove = NO_MOVE;
+    Move ttmove = Move::NO_MOVE;
     bool tt_hit = false;
 
     const TEntry *tte = TTable.probe(tt_hit, ttmove, board.hash());
@@ -238,7 +238,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
         && tt_hit
         && tt_score != VALUE_NONE
         && tte->depth >= depth
-        && (ss - 1)->currentmove != NULL_MOVE) {
+        && (ss - 1)->currentmove != Move::NULL_MOVE) {
         // clang-format on
         if (tte->flag == EXACTBOUND)
             return tt_score;
@@ -280,7 +280,7 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
 
         if (flag == EXACTBOUND || (flag == LOWERBOUND && tb_res >= beta) ||
             (flag == UPPERBOUND && tb_res <= alpha)) {
-            TTable.store(depth + 6, scoreToTT(tb_res, ss->ply), flag, board.hash(), NO_MOVE);
+            TTable.store(depth + 6, scoreToTT(tb_res, ss->ply), flag, board.hash(), Move::NO_MOVE);
             return tb_res;
         }
 
@@ -340,13 +340,13 @@ Score Search::absearch(int depth, Score alpha, Score beta, Stack *ss) {
     // clang-format off
     if (board.nonPawnMat(color)
         && !excluded_move
-        && (ss - 1)->currentmove != NULL_MOVE
+        && (ss - 1)->currentmove != Move::NULL_MOVE
         && depth >= 3
         && ss->eval >= beta) {
         // clang-format on
         int R = 5 + std::min(4, depth / 5) + std::min(3, (ss->eval - beta) / 214);
 
-        (ss)->currentmove = NULL_MOVE;
+        (ss)->currentmove = Move::NULL_MOVE;
 
         board.makeNullMove();
         Score score = -absearch<NONPV>(depth - R, -beta, -beta + 1, ss + 1);
@@ -365,13 +365,14 @@ moves:
     Move quiets[64];
 
     Score score = VALUE_NONE;
-    Move bestmove = NO_MOVE;
-    Move move = NO_MOVE;
+    Move bestmove = Move::NO_MOVE;
+    Move move = Move::NO_MOVE;
     uint8_t quiet_count = 0;
     uint8_t made_moves = 0;
     bool do_full_search = false;
 
-    MovePicker<ABSEARCH> mp(*this, ss, moves, searchmoves, root_node, tt_hit ? ttmove : NO_MOVE);
+    MovePicker<ABSEARCH> mp(*this, ss, moves, searchmoves, root_node,
+                            tt_hit ? ttmove : Move::NO_MOVE);
     ss->move_count = mp.movelist.size;
 
     /********************
@@ -379,14 +380,14 @@ moves:
      * It is very important to return the likely best move first,
      * since then we get many cut offs.
      *******************/
-    while ((move = mp.nextMove()) != NO_MOVE) {
+    while ((move = mp.nextMove()) != Move::NO_MOVE) {
         if (move == excluded_move) continue;
 
         made_moves++;
 
         int extension = 0;
 
-        const bool capture = board.at(to(move)) != NONE;
+        const bool capture = board.at(move.to()) != NONE;
 
         /********************
          * Various pruning techniques.
@@ -402,7 +403,7 @@ moves:
                 // late move pruning/movecount pruning
                 if (!in_check
                     && !pv_node
-                    && typeOf(move) != PROMOTION
+                    && move.typeOf() != Move:: PROMOTION
                     && depth <= 5
                     && quiet_count > (4 + depth * depth))
 
@@ -432,7 +433,7 @@ moves:
             ss->excluded_move = move;
             const auto value =
                 absearch<NONPV>(singular_depth, singular_beta - 1, singular_beta, ss);
-            ss->excluded_move = NO_MOVE;
+            ss->excluded_move = Move::NO_MOVE;
 
             if (value < singular_beta)
                 extension = 1;
@@ -519,7 +520,7 @@ moves:
         /********************
          * Node count logic used for time control.
          *******************/
-        if (id == 0) node_effort[from(move)][to(move)] += nodes - node_count;
+        if (id == 0) node_effort[move.from()][move.to()] += nodes - node_count;
 
         /********************
          * Score beat best -> update PV and Bestmove.
@@ -571,8 +572,8 @@ moves:
      *******************/
 
     // Transposition table flag
-    const Flag b =
-        best >= beta ? LOWERBOUND : (pv_node && bestmove != NO_MOVE ? EXACTBOUND : UPPERBOUND);
+    const Flag b = best >= beta ? LOWERBOUND
+                                : (pv_node && bestmove != Move::NO_MOVE ? EXACTBOUND : UPPERBOUND);
 
     if (!excluded_move && !Threads.stop.load(std::memory_order_relaxed))
         TTable.store(depth, scoreToTT(best, ss->ply), b, board.hash(), bestmove);
@@ -641,17 +642,17 @@ SearchResult Search::iterativeDeepening() {
     for (int i = 2; i > 0; --i) {
         (ss - i)->ply = i;
         (ss - i)->move_count = 0;
-        (ss - i)->currentmove = NO_MOVE;
+        (ss - i)->currentmove = Move::NO_MOVE;
         (ss - i)->eval = 0;
-        (ss - i)->excluded_move = NO_MOVE;
+        (ss - i)->excluded_move = Move::NO_MOVE;
     }
 
     for (int i = 0; i <= MAX_PLY + 1; ++i) {
         (ss + i)->ply = i;
         (ss + i)->move_count = 0;
-        (ss + i)->currentmove = NO_MOVE;
+        (ss + i)->currentmove = Move::NO_MOVE;
         (ss + i)->eval = 0;
-        (ss + i)->excluded_move = NO_MOVE;
+        (ss + i)->excluded_move = Move::NO_MOVE;
     }
 
     pv_table_.reset();
@@ -693,7 +694,7 @@ SearchResult Search::iterativeDeepening() {
 
             // node count time management (https://github.com/Luecx/Koivisto 's idea)
             int effort =
-                (node_effort[from(search_result.bestmove)][to(search_result.bestmove)] * 100) /
+                (node_effort[search_result.bestmove.from()][search_result.bestmove.to()] * 100) /
                 nodes;
             if (depth > 10 && limit.time.optimum * (110 - std::min(effort, 90)) / 100 < now) break;
 
@@ -770,7 +771,7 @@ void Search::startThinking() {
      *******************/
     if (id == 0 && limit.time.optimum != 0 && use_tb) {
         const auto dtz = syzygy::probeDTZ(board);
-        if (dtz.second != NO_MOVE) {
+        if (dtz.second != Move::NO_MOVE) {
             uci::output(dtz.first, 1, 1, 1, 1, 1, 0,
                         " " + uci::moveToUci(dtz.second, board.chess960), 0);
             std::cout << "bestmove " << uci::moveToUci(dtz.second, board.chess960) << std::endl;

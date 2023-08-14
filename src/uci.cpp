@@ -219,21 +219,21 @@ Move uciToMove(const Board& board, const std::string& input) {
 
     if (piece == KING && board.at<PieceType>(target) == ROOK &&
         board.at(target) / 6 == board.at(source) / 6) {
-        return make<Move::CASTLING>(source, target);
+        return Move::Move::make<Move::CASTLING>(source, target);
     }
 
     if (piece == PAWN && target == board.enPassant()) {
-        return make<Move::ENPASSANT>(source, target);
+        return Move::make<Move::ENPASSANT>(source, target);
     }
 
     switch (input.length()) {
         case 4:
-            return make(source, target);
+            return Move::Move::make(source, target);
         case 5:
-            return make<Move::PROMOTION>(source, target, CHAR_TO_PIECETYPE[input.at(4)]);
+            return Move::make<Move::PROMOTION>(source, target, CHAR_TO_PIECETYPE[input.at(4)]);
         default:
             std::cout << "FALSE INPUT" << std::endl;
-            return make(NO_SQ, NO_SQ);
+            return Move::make(NO_SQ, NO_SQ);
     }
 }
 
@@ -241,12 +241,12 @@ std::string moveToUci(Move move, bool chess960) {
     std::stringstream ss;
 
     // Get the from and to squares
-    Square from_sq = from(move);
-    Square to_sq = to(move);
+    Square from_sq = move.from();
+    Square to_sq = move.to();
 
     // If the move is not a chess960 castling move and is a king moving more than one square,
     // update the to square to be the correct square for a regular castling move
-    if (!chess960 && typeOf(move) == CASTLING) {
+    if (!chess960 && move.typeOf() == Move::CASTLING) {
         to_sq = fileRankSquare(to_sq > from_sq ? FILE_G : FILE_C, squareRank(from_sq));
     }
 
@@ -255,8 +255,8 @@ std::string moveToUci(Move move, bool chess960) {
     ss << SQUARE_TO_STRING[to_sq];
 
     // If the move is a promotion, add the promoted piece to the string stream
-    if (typeOf(move) == PROMOTION) {
-        ss << PIECETYPE_TO_CHAR[promotionType(move)];
+    if (move.typeOf() == Move::PROMOTION) {
+        ss << PIECETYPE_TO_CHAR[move.promotionType()];
     }
 
     return ss.str();

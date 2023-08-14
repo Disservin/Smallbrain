@@ -16,7 +16,7 @@ struct Stack {
 };
 
 struct SearchResult {
-    Move bestmove = NO_MOVE;
+    Move bestmove = Move::NO_MOVE;
     Score score = -VALUE_INFINITE;
 };
 

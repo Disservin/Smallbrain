@@ -5,7 +5,6 @@
 #include "builtin.h"
 #include "movegen.h"
 
-
 namespace syzygy {
 
 Score probeWDL(const Board &board) {
@@ -39,7 +38,8 @@ Score probeWDL(const Board &board) {
 std::pair<int, Move> probeDTZ(const Board &board) {
     const Bitboard white = board.us<WHITE>();
     const Bitboard black = board.us<BLACK>();
-    if (builtin::popcount(white | black) > (signed)TB_LARGEST) return {TB_RESULT_FAILED, NO_MOVE};
+    if (builtin::popcount(white | black) > (signed)TB_LARGEST)
+        return {TB_RESULT_FAILED, Move::NO_MOVE};
 
     const Square ep = board.enPassant() <= 63 ? board.enPassant() : Square(0);
 
@@ -56,7 +56,7 @@ std::pair<int, Move> probeDTZ(const Board &board) {
 
     if (TBresult == TB_RESULT_FAILED || TBresult == TB_RESULT_CHECKMATE ||
         TBresult == TB_RESULT_STALEMATE)
-        return {TB_RESULT_FAILED, NO_MOVE};
+        return {TB_RESULT_FAILED, Move::NO_MOVE};
 
     const int wdl = TB_GET_WDL(TBresult);
 
@@ -85,10 +85,10 @@ std::pair<int, Move> probeDTZ(const Board &board) {
 
     for (auto ext : legalmoves) {
         const Move move = ext.move;
-        if (from(move) == sqFrom && to(move) == sqTo) {
-            if ((promoTranslation[promo] == NONETYPE && typeOf(move) != PROMOTION) ||
-                (promo < 5 && promoTranslation[promo] == promotionType(move) &&
-                 typeOf(move) == PROMOTION)) {
+        if (move.from() == sqFrom && move.to() == sqTo) {
+            if ((promoTranslation[promo] == NONETYPE && move.typeOf() != Move::PROMOTION) ||
+                (promo < 5 && promoTranslation[promo] == move.promotionType() &&
+                 move.typeOf() == Move::PROMOTION)) {
                 return {s, move};
             }
         }
