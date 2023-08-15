@@ -421,12 +421,7 @@ void Board::unmakeMove(const Move &move) {
     const Square from_sq = move.from();
     const Square to_sq = move.to();
 
-    const auto piece_type = at<PieceType>(to_sq);
-
-    const Piece piece = makePiece(piece_type, ~side_to_move_);
     const Piece capture = restore.captured_piece;
-
-    const bool promotion = move.typeOf() == Move::PROMOTION;
 
     if (accumulators_->size()) {
         accumulators_->pop();
@@ -456,17 +451,19 @@ void Board::unmakeMove(const Move &move) {
         placePiece<updateNNUE>(rook, to_sq);
 
         return;
-    } else if (promotion) {
+    }
+
+    if (move.typeOf() == Move::PROMOTION) {
         removePiece<updateNNUE>(makePiece(move.promotionType(), side_to_move_), to_sq);
         placePiece<updateNNUE>(makePiece(PAWN, side_to_move_), from_sq);
 
         if (capture != NONE) placePiece<updateNNUE>(capture, to_sq);
         return;
-    } else {
-        movePiece<updateNNUE>(piece, to_sq, from_sq);
     }
 
-    if (to_sq == en_passant_square_ && piece_type == PAWN) {
+    movePiece<updateNNUE>(at(to_sq), to_sq, from_sq);
+
+    if (move.typeOf() == Move::ENPASSANT) {
         const auto ep_sq = Square(en_passant_square_ ^ 8);
         placePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), ep_sq);
     } else if (capture != NONE) {
