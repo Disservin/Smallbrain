@@ -266,9 +266,10 @@ void Board::makeMove(const Move move) {
 
     TTable.prefetch(k ^ zobrist::piece(piece, to_sq) ^ zobrist::piece(piece, from_sq));
 
+    const auto move_type = move.typeOf();
     const auto rank = squareRank(to_sq);
     const auto piece_type = at<PieceType>(from_sq);
-    const auto capture = at(move.to()) != Piece::NONE && move.typeOf() != Move::CASTLING;
+    const auto capture = at(move.to()) != Piece::NONE && move_type != Move::CASTLING;
 
     // *****************************
     // STORE STATE HISTORY
@@ -350,7 +351,7 @@ void Board::makeMove(const Move move) {
         }
     }
 
-    if (move.typeOf() == Move::CASTLING) {
+    if (move_type == Move::CASTLING) {
         const Piece rook = makePiece(ROOK, side_to_move_);
         Square rook_to_sq = rookCastleSquare(to_sq, from_sq);
         Square king_to_sq = kingCastleSquare(to_sq, from_sq);
@@ -381,7 +382,7 @@ void Board::makeMove(const Move move) {
         side_to_move_ = ~side_to_move_;
 
         return;
-    } else if (move.typeOf() == Move::PROMOTION) {
+    } else if (move_type == Move::PROMOTION) {
         const auto prom_pawn = makePiece(PAWN, side_to_move_);
         const auto prom_piece = makePiece(move.promotionType(), side_to_move_);
 
@@ -399,7 +400,7 @@ void Board::makeMove(const Move move) {
         hash_key_ ^= zobrist::piece(piece, to_sq);
     }
 
-    if (move.typeOf() == Move::ENPASSANT) {
+    if (move_type == Move::ENPASSANT) {
         const auto ep_sq = Square(to_sq ^ 8);
         const auto ep_pawn = makePiece(PAWN, ~side_to_move_);
 
