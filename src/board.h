@@ -370,6 +370,15 @@ void Board::makeMove(const Move move) {
     // *****************************
     // UPDATE PIECES AND NNUE
     // *****************************
+    if (capture != Piece::NONE) {
+        assert(at(to_sq) != Piece::NONE);
+        removePiece<updateNNUE>(capture, to_sq, ksq_white, ksq_black);
+    }
+
+    if (piece_type == KING && castling_rights_.hasCastlingRight(side_to_move_)) {
+    } else if (piece_type == PieceType::ROOK && ourBackRank(move.from(), side_to_move_)) {
+    } else if (piece_type == PieceType::PAWN) {
+    }
 
     if (move.typeOf() == Move::CASTLING) {
         const Piece rook = makePiece(ROOK, side_to_move_);
@@ -395,18 +404,7 @@ void Board::makeMove(const Move move) {
         side_to_move_ = ~side_to_move_;
 
         return;
-    } else if (piece_type == PAWN && ep) {
-        const auto ep_sq = Square(to_sq ^ 8);
-
-        assert(at<PieceType>(ep_sq) == PAWN);
-        removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), ep_sq, ksq_white, ksq_black);
-    } else if (capture != Piece::NONE) {
-        assert(at(to_sq) != Piece::NONE);
-        removePiece<updateNNUE>(capture, to_sq, ksq_white, ksq_black);
-    }
-
-    // The move is differently encoded for promotions to it requires some special care.
-    if (move.typeOf() == Move::PROMOTION) {
+    } else if (move.typeOf() == Move::PROMOTION) {
         // Captured piece is already removed
         assert(at(to_sq) == Piece::NONE);
 
@@ -417,6 +415,13 @@ void Board::makeMove(const Move move) {
         assert(at(to_sq) == Piece::NONE);
 
         movePiece<updateNNUE>(piece, from_sq, to_sq, ksq_white, ksq_black);
+    }
+
+    if (move.typeOf() == Move::ENPASSANT) {
+        const auto ep_sq = Square(to_sq ^ 8);
+
+        assert(at<PieceType>(ep_sq) == PAWN);
+        removePiece<updateNNUE>(makePiece(PAWN, ~side_to_move_), ep_sq, ksq_white, ksq_black);
     }
 
     side_to_move_ = ~side_to_move_;

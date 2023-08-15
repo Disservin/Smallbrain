@@ -24,8 +24,18 @@ class CastlingRights {
 
     void clearAllCastlingRights() { castling_rights_.clear(); }
 
-    void clearCastlingRight(Color color, CastleSide castle) {
+    int clearCastlingRight(Color color, CastleSide castle) {
         castling_rights_.setGroupValue(2 * static_cast<int>(color) + static_cast<int>(castle), 0);
+
+        switch (castle) {
+            case CastleSide::KING_SIDE:
+                return color == Color::WHITE ? 0 : 2;
+            case CastleSide::QUEEN_SIDE:
+                return color == Color::WHITE ? 1 : 3;
+            default:
+                assert(false);
+                return -1;
+        }
     }
 
     void clearCastlingRight(Color color) {

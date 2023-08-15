@@ -43,6 +43,17 @@
 /// @return the piecetype
 [[nodiscard]] constexpr PieceType typeOfPiece(Piece piece) { return PIECE_TO_PIECETYPE[piece]; }
 
+/// @brief Checks if a square is on the back rank of a color.
+/// @param sq
+/// @param color
+/// @return
+[[nodiscard]] inline bool ourBackRank(Square sq, Color color) {
+    if (color == Color::WHITE)
+        return squareRank(sq) == Rank::RANK_1;
+    else
+        return squareRank(sq) == Rank::RANK_8;
+}
+
 [[maybe_unused]] static std::atomic<int64_t> means[2];
 [[maybe_unused]] static std::atomic<int64_t> min[2];
 [[maybe_unused]] static std::atomic<int64_t> max[2];

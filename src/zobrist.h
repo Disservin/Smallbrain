@@ -232,6 +232,8 @@ static constexpr int MAP_HASH_PIECE[12] = {1, 3, 5, 7, 9, 11, 0, 2, 4, 6, 8, 10}
 
 [[nodiscard]] inline U64 castling(int castling) { return castlingKey[castling]; }
 
+[[nodiscard]] inline U64 castlingIndex(int idx) { return RANDOM_ARRAY[768 + idx]; }
+
 [[nodiscard]] inline U64 sideToMove() { return RANDOM_ARRAY[780]; }
 
 }  // namespace zobrist
