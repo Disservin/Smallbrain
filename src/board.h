@@ -340,7 +340,8 @@ void Board::makeMove(const Move move) {
     const auto piece_type = at<PieceType>(from_sq);
 
     const Piece piece = at(from_sq);
-    const Piece capture = at(to_sq);
+    const Piece captured = at(to_sq);
+    const auto capture = at(move.to()) != Piece::NONE && move.typeOf() != Move::CASTLING;
 
     const bool ep = to_sq == en_passant_square_;
 
@@ -349,7 +350,7 @@ void Board::makeMove(const Move move) {
     // *****************************
 
     state_history_.emplace_back(hash_key_, castling_rights_, en_passant_square_, half_move_clock_,
-                                capture);
+                                capture ? captured : Piece::NONE);
 
     if constexpr (updateNNUE) accumulators_->push();
 
@@ -370,9 +371,9 @@ void Board::makeMove(const Move move) {
     // *****************************
     // UPDATE PIECES AND NNUE
     // *****************************
-    if (capture != Piece::NONE) {
+    if (capture) {
         assert(at(to_sq) != Piece::NONE);
-        removePiece<updateNNUE>(capture, to_sq, ksq_white, ksq_black);
+        removePiece<updateNNUE>(captured, to_sq, ksq_white, ksq_black);
     }
 
     if (piece_type == KING && castling_rights_.hasCastlingRight(side_to_move_)) {

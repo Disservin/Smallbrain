@@ -117,7 +117,7 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
             if (captured != NONETYPE
                 && !in_check
                 && best_value + 400 + PIECE_VALUES_TUNED[1][captured] < alpha
-                && move.typeOf() != Move:: PROMOTION
+                && move.typeOf() != Move::PROMOTION
                 && board.nonPawnMat(color))
                 // clang-format on
                 continue;
@@ -403,7 +403,7 @@ moves:
                 // late move pruning/movecount pruning
                 if (!in_check
                     && !pv_node
-                    && move.typeOf() != Move:: PROMOTION
+                    && move.typeOf() != Move::PROMOTION
                     && depth <= 5
                     && quiet_count > (4 + depth * depth))
 

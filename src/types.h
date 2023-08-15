@@ -322,6 +322,7 @@ struct Move {
 
     static constexpr uint16_t NO_MOVE = 0;
     static constexpr uint16_t NULL_MOVE = 65;
+
     static constexpr uint16_t NORMAL = 0;
     static constexpr uint16_t PROMOTION = 1 << 14;
     static constexpr uint16_t ENPASSANT = 2 << 14;
