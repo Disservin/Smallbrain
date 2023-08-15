@@ -316,7 +316,6 @@ inline void Board::updateHash(Move move) {
     }
 
     hash_key_ ^= zobrist::sideToMove();
-    // hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
 }
 
 /// @brief
