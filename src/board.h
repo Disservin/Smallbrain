@@ -128,10 +128,10 @@ class Board {
     U64 keyAfter(Move move) const;
 
     template <bool updateNNUE>
-    void makeMove(Move move);
+    void makeMove(const Move &move);
 
     template <bool updateNNUE>
-    void unmakeMove(Move move);
+    void unmakeMove(const Move &move);
 
     void makeNullMove();
 
@@ -244,7 +244,7 @@ inline U64 Board::keyAfter(Move move) const {
 /// @tparam updateNNUE
 /// @param move
 template <bool updateNNUE>
-void Board::makeMove(const Move move) {
+void Board::makeMove(const Move &move) {
     assert(move.from() >= 0 && move.from() < 64);
     assert(move.to() >= 0 && move.to() < 64);
     assert(typeOfPiece(at(move.to())) != KING);
@@ -415,7 +415,7 @@ void Board::makeMove(const Move move) {
 }
 
 template <bool updateNNUE>
-void Board::unmakeMove(Move move) {
+void Board::unmakeMove(const Move &move) {
     const State restore = state_history_.back();
     const Square from_sq = move.from();
     const Square to_sq = move.to();
