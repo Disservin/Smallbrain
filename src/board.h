@@ -305,22 +305,6 @@ void Board::makeMove(const Move move) {
         hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
         castling_rights_.clearCastlingRight(side_to_move_);
         hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
-
-        if (move.typeOf() == Move::CASTLING) {
-            assert(at<PieceType>(to_sq) == ROOK);
-
-            const Piece rook = makePiece(ROOK, side_to_move_);
-            const Square rook_sq = rookCastleSquare(to_sq, from_sq);
-            const Square king_to_sq = kingCastleSquare(to_sq, from_sq);
-
-            hash_key_ ^= zobrist::piece(rook, to_sq);
-            hash_key_ ^= zobrist::piece(rook, rook_sq);
-            hash_key_ ^= zobrist::piece(piece, from_sq);
-            hash_key_ ^= zobrist::piece(piece, king_to_sq);
-
-            hash_key_ ^= zobrist::sideToMove();
-        }
-
     } else if (piece_type == PieceType::ROOK && ourBackRank(move.from(), side_to_move_)) {
         const auto king_sq = kingSq(side_to_move_);
         const auto file = move.from() > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
@@ -368,6 +352,13 @@ void Board::makeMove(const Move move) {
             placePiece<updateNNUE>(piece, king_to_sq, ksq_white, ksq_black);
             placePiece<updateNNUE>(rook, rook_to_sq, ksq_white, ksq_black);
         }
+
+        hash_key_ ^= zobrist::piece(rook, to_sq);
+        hash_key_ ^= zobrist::piece(rook, rook_to_sq);
+        hash_key_ ^= zobrist::piece(piece, from_sq);
+        hash_key_ ^= zobrist::piece(piece, king_to_sq);
+
+        hash_key_ ^= zobrist::sideToMove();
 
         side_to_move_ = ~side_to_move_;
 
