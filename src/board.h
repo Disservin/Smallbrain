@@ -220,7 +220,8 @@ void Board::movePiece(Piece piece, Square from_sq, Square to_sq, Square ksq_whit
     occupancy_bb_ |= (1ULL << to_sq);
 
     if constexpr (updateNNUE) {
-        if (typeOfPiece(piece) == KING && nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
+        if ((piece == WHITEKING || piece == BLACKKING) &&
+            nnue::KING_BUCKET[from_sq] != nnue::KING_BUCKET[to_sq]) {
             refreshNNUE(getAccumulator());
         } else {
             nnue::move(getAccumulator(), from_sq, to_sq, piece, ksq_white, ksq_black);
