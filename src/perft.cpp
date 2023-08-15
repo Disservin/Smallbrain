@@ -5,14 +5,13 @@
 #include "uci.h"
 
 U64 PerftTesting::perftFunction(int depth, int max_depth) {
+    if (depth == 0) return 1;
+    // else if (depth == 1 && max_depth != 1) {
+    //     return movelists[depth].size;
+    // }
+
     movelists[depth].size = 0;
     movegen::legalmoves<Movetype::ALL>(board, movelists[depth]);
-
-    if (depth == 0)
-        return 1;
-    else if (depth == 1 && max_depth != 1) {
-        return movelists[depth].size;
-    }
 
     U64 nodes_it = 0;
     for (auto extmove : movelists[depth]) {

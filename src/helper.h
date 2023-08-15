@@ -31,6 +31,21 @@
     return squareRank(sq) + squareFile(sq);
 }
 
+/// @brief Checks if a square is on the back rank of a color.
+/// @param sq
+/// @param color
+/// @return
+[[nodiscard]] inline bool ourBackRank(Square sq, Color color) {
+    if (color == Color::WHITE)
+        return squareRank(sq) == Rank::RANK_1;
+    else
+        return squareRank(sq) == Rank::RANK_8;
+}
+
+[[nodiscard]] constexpr Square relativeSquare(Color c, Square s) {
+    return Square(s ^ (static_cast<int>(c) * 56));
+}
+
 [[nodiscard]] uint8_t manhattenDistance(Square sq1, Square sq2);
 
 /// @brief get the color of the square

@@ -497,10 +497,6 @@ template <Movetype mt>
     return attacks::king(sq) & movable_square & ~seen;
 }
 
-[[nodiscard]] constexpr Square relativeSquare(Color c, Square s) {
-    return Square(s ^ (static_cast<int>(c) * 56));
-}
-
 template <Color c, Movetype mt>
 [[nodiscard]] inline Bitboard generateLegalCastlingMoves(const Board &board, Square sq,
                                                          Bitboard seen, Bitboard pin_hv,

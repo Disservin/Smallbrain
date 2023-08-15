@@ -7,7 +7,7 @@ Board::Board(const std::string &fen) {
     state_history_.reserve(MAX_PLY);
 
     side_to_move_ = WHITE;
-    en_passant_square_ = NO_SQ;
+    enpassant_sq_ = NO_SQ;
     castling_rights_.clearAllCastlingRights();
     half_move_clock_ = 0;
     full_move_number_ = 1;
@@ -41,7 +41,7 @@ Board::Board(const Board &other) {
 
     side_to_move_ = other.side_to_move_;
 
-    en_passant_square_ = other.en_passant_square_;
+    enpassant_sq_ = other.enpassant_sq_;
 }
 
 Board &Board::operator=(const Board &other) {
@@ -70,7 +70,7 @@ Board &Board::operator=(const Board &other) {
 
     side_to_move_ = other.side_to_move_;
 
-    en_passant_square_ = other.en_passant_square_;
+    enpassant_sq_ = other.enpassant_sq_;
 
     return *this;
 }
@@ -174,12 +174,12 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     }
 
     if (en_passant == "-") {
-        en_passant_square_ = NO_SQ;
+        enpassant_sq_ = NO_SQ;
     } else {
         char letter = en_passant[0];
         int file = letter - 96;
         int rank = en_passant[1] - 48;
-        en_passant_square_ = Square((rank - 1) * 8 + file - 1);
+        enpassant_sq_ = Square((rank - 1) * 8 + file - 1);
     }
 
     state_history_.clear();
@@ -241,10 +241,10 @@ std::string Board::getFen() const {
 
     // Append information about the en passant square (if any)
     // and the halfmove clock and fullmove number to the FEN string
-    if (en_passant_square_ == NO_SQ)
+    if (enpassant_sq_ == NO_SQ)
         ss << " - ";
     else
-        ss << " " << SQUARE_TO_STRING[en_passant_square_] << " ";
+        ss << " " << SQUARE_TO_STRING[enpassant_sq_] << " ";
 
     ss << int(half_move_clock_) << " " << int(full_move_number_ / 2);
 
@@ -320,16 +320,14 @@ bool Board::isAttacked(Color c, Square sq, Bitboard occ) const {
 }
 
 void Board::makeNullMove() {
-    state_history_.emplace_back(hash_key_, castling_rights_, en_passant_square_, half_move_clock_,
-                                NONE);
+    state_history_.emplace_back(hash_key_, castling_rights_, enpassant_sq_, half_move_clock_, NONE);
     // Update the hash key
     hash_key_ ^= zobrist::sideToMove();
-    if (en_passant_square_ != NO_SQ)
-        hash_key_ ^= zobrist::enpassant(squareFile(en_passant_square_));
+    if (enpassant_sq_ != NO_SQ) hash_key_ ^= zobrist::enpassant(squareFile(enpassant_sq_));
 
     TTable.prefetch(hash_key_);
 
-    en_passant_square_ = NO_SQ;
+    enpassant_sq_ = NO_SQ;
 
     full_move_number_++;
     side_to_move_ = ~side_to_move_;
@@ -339,11 +337,10 @@ void Board::unmakeNullMove() {
     const State restore = state_history_.back();
     state_history_.pop_back();
 
-    en_passant_square_ = restore.enpassant;
+    enpassant_sq_ = restore.enpassant;
 
     hash_key_ ^= zobrist::sideToMove();
-    if (en_passant_square_ != NO_SQ)
-        hash_key_ ^= zobrist::enpassant(squareFile(en_passant_square_));
+    if (enpassant_sq_ != NO_SQ) hash_key_ ^= zobrist::enpassant(squareFile(enpassant_sq_));
 
     castling_rights_ = restore.castling;
     half_move_clock_ = restore.half_moves;
@@ -369,7 +366,7 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     os << "Castling: " << b.getCastleString() << "\n";
     os << "Halfmoves: " << static_cast<int>(b.half_move_clock_) << "\n";
     os << "Fullmoves: " << static_cast<int>(b.full_move_number_) / 2 << "\n";
-    os << "EP: " << static_cast<int>(b.en_passant_square_) << "\n";
+    os << "EP: " << static_cast<int>(b.enpassant_sq_) << "\n";
     os << "Hash: " << b.hash_key_ << "\n";
     os << "Chess960: " << b.chess960;
 
@@ -396,8 +393,8 @@ U64 Board::zobrist() const {
     // Ep hash
     U64 ep_hash = 0ULL;
 
-    if (en_passant_square_ != NO_SQ) {
-        ep_hash = zobrist::enpassant(squareFile(en_passant_square_));
+    if (enpassant_sq_ != NO_SQ) {
+        ep_hash = zobrist::enpassant(squareFile(enpassant_sq_));
     }
 
     U64 turn_hash = side_to_move_ == WHITE ? zobrist::sideToMove() : 0;
