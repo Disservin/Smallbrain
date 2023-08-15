@@ -254,18 +254,21 @@ void Board::makeMove(const Move move) {
             (move.promotionType() != PAWN && move.promotionType() != KING)) ||
            move.typeOf() != Move::PROMOTION);
 
-    TTable.prefetch(keyAfter(hash_key_));
-
     const auto from_sq = move.from();
     const auto to_sq = move.to();
 
-    const auto piece_type = at<PieceType>(from_sq);
-
     const auto piece = at(from_sq);
     const auto captured = at(to_sq);
-    const auto capture = at(move.to()) != Piece::NONE && move.typeOf() != Move::CASTLING;
+
+    U64 k = hash_key_ ^ zobrist::sideToMove();
+
+    if (captured) k ^= zobrist::piece(captured, to_sq);
+
+    TTable.prefetch(k ^ zobrist::piece(piece, to_sq) ^ zobrist::piece(piece, from_sq));
 
     const auto rank = squareRank(to_sq);
+    const auto piece_type = at<PieceType>(from_sq);
+    const auto capture = at(move.to()) != Piece::NONE && move.typeOf() != Move::CASTLING;
 
     // *****************************
     // STORE STATE HISTORY
