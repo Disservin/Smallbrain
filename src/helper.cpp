@@ -43,7 +43,7 @@ void printMean() {
 }
 
 Piece makePiece(PieceType type, Color c) {
-    if (type == NONETYPE) return NONE;
+    // if (type == NONETYPE) return NONE;
     return Piece(type + 6 * c);
 }
 

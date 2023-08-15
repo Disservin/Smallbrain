@@ -6,7 +6,7 @@
 \****************************************************************************/
 namespace zobrist {
 
-static constexpr U64 RANDOM_ARRAY[781] = {
+inline constexpr U64 RANDOM_ARRAY[781] = {
     0x9D39247E33776D41, 0x2AF7398005AAA5C7, 0x44DB015024623547, 0x9C15F73E62A76AE2,
     0x75834465489C0C89, 0x3290AC3A203001BF, 0x0FBBAD1F61042279, 0xE83A908FF2FB60CA,
     0x0D7E765D58755C10, 0x1A083822CEAFE02D, 0x9605D5F0E25EC3B0, 0xD021FF5CD13A2ED5,
@@ -204,7 +204,7 @@ static constexpr U64 RANDOM_ARRAY[781] = {
     0xCF3145DE0ADD4289, 0xD0E4427A5514FB72, 0x77C621CC9FB3A483, 0x67A34DAC4356550B,
     0xF8D626AAAF278509};
 
-static constexpr U64 castlingKey[16] = {
+inline constexpr U64 castlingKey[16] = {
     0,
     RANDOM_ARRAY[768],
     RANDOM_ARRAY[768 + 1],
@@ -222,10 +222,10 @@ static constexpr U64 castlingKey[16] = {
     RANDOM_ARRAY[768 + 1] ^ RANDOM_ARRAY[768 + 2] ^ RANDOM_ARRAY[768 + 3],
     RANDOM_ARRAY[768 + 1] ^ RANDOM_ARRAY[768 + 2] ^ RANDOM_ARRAY[768 + 3] ^ RANDOM_ARRAY[768]};
 
-static constexpr int MAP_HASH_PIECE[12] = {1, 3, 5, 7, 9, 11, 0, 2, 4, 6, 8, 10};
+inline constexpr int MAP_HASH_PIECE[12] = {1, 3, 5, 7, 9, 11, 0, 2, 4, 6, 8, 10};
 
 [[nodiscard]] inline U64 piece(Piece piece, Square square) {
-    return RANDOM_ARRAY[64 * MAP_HASH_PIECE[static_cast<int>(piece)] + square];
+    return RANDOM_ARRAY[64 * MAP_HASH_PIECE[piece] + square];
 }
 
 [[nodiscard]] inline U64 enpassant(File file) { return RANDOM_ARRAY[772 + static_cast<int>(file)]; }

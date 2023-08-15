@@ -160,7 +160,7 @@ const std::string SQUARE_TO_STRING[64] = {
 
 // clang-format on
 
-static constexpr PieceType PIECE_TO_PIECETYPE[13] = {
+inline constexpr PieceType PIECE_TO_PIECETYPE[13] = {
     PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONETYPE};
 
 // file masks
@@ -176,7 +176,7 @@ static constexpr Bitboard MASK_RANK[8] = {
 
 static constexpr Bitboard DEFAULT_CHECKMASK = 18446744073709551615ULL;
 
-static constexpr Piece FLIPPED_PIECE[] = {
+static constexpr Piece FLIPPED_PIECE[12] = {
     BLACKPAWN, BLACKKNIGHT, BLACKBISHOP, BLACKROOK, BLACKQUEEN, BLACKKING,
     WHITEPAWN, WHITEKNIGHT, WHITEBISHOP, WHITEROOK, WHITEQUEEN, WHITEKING,
 };
@@ -270,7 +270,7 @@ constexpr Square fileRankSquare(File f, Rank r) { return Square((r << 3) + f); }
 struct Move {
    public:
     Move() = default;
-    constexpr Move(uint16_t move) : move_(move), score_(0) {}
+    constexpr Move(uint16_t move) : move_(move) {}
 
     /// @brief Creates a move from a source and target square.
     /// pt is the promotion piece, when you want to create a promotion move you must also
@@ -308,12 +308,7 @@ struct Move {
         return static_cast<PieceType>(((move_ >> 12) & 3) + static_cast<int>(PieceType::KNIGHT));
     }
 
-    /// @brief Set the score for a move. Useful if you later want to sort the moves.
-    /// @param score
-    constexpr void setScore(int16_t score) { score_ = score; }
-
     [[nodiscard]] constexpr uint16_t move() const { return move_; }
-    [[nodiscard]] constexpr int16_t score() const { return score_; }
 
     explicit operator bool() const { return move_ != 0; }
 
@@ -332,7 +327,6 @@ struct Move {
 
    private:
     uint16_t move_;
-    int16_t score_;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Move &move) {

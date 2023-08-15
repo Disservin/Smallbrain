@@ -1,11 +1,9 @@
 #include "board.h"
 #include "movegen.h"
 #include "str_utils.h"
-#include "zobrist.h"
+// #include "zobrist.h"
 
 Board::Board(const std::string &fen) {
-    state_history_.reserve(MAX_PLY);
-
     side_to_move_ = WHITE;
     en_passant_square_ = NO_SQ;
     castling_rights_.clearAllCastlingRights();
@@ -182,10 +180,12 @@ void Board::setFen(const std::string &fen, bool update_acc) {
         en_passant_square_ = Square((rank - 1) * 8 + file - 1);
     }
 
-    state_history_.clear();
     accumulators_->clear();
 
     hash_key_ = zobrist();
+
+    state_history_.clear();
+    state_history_.reserve(250);
 }
 
 std::string Board::getFen() const {
