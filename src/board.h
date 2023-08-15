@@ -242,10 +242,10 @@ inline void Board::updateHash(Move move) {
 
     en_passant_square_ = NO_SQ;
 
-    hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
-
-    if (piece_type == KING) {
+    if (piece_type == KING && castling_rights_.hasCastlingRight(side_to_move_)) {
+        hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
         castling_rights_.clearCastlingRight(side_to_move_);
+        hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
 
         if (move.typeOf() == Move::CASTLING) {
             assert(at<PieceType>(to_sq) == ROOK);
@@ -260,18 +260,16 @@ inline void Board::updateHash(Move move) {
             hash_key_ ^= zobrist::piece(piece, king_to_sq);
 
             hash_key_ ^= zobrist::sideToMove();
-            hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
 
             return;
         }
-    } else if (piece_type == ROOK &&
-               ((squareRank(from_sq) == Rank::RANK_8 && side_to_move_ == BLACK) ||
-                (squareRank(from_sq) == Rank::RANK_1 && side_to_move_ == WHITE))) {
-        const auto king_sq = builtin::lsb(pieces(KING, side_to_move_));
-        const auto side = from_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
+    } else if (piece_type == ROOK && ourBackRank(move.from(), side_to_move_)) {
+        const auto king_sq = kingSq(side_to_move_);
+        const auto file = move.from() > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
 
-        if (castling_rights_.getRookFile(side_to_move_, side) == squareFile(from_sq)) {
-            castling_rights_.clearCastlingRight(side_to_move_, side);
+        if (castling_rights_.getRookFile(side_to_move_, file) == squareFile(move.from())) {
+            const auto idx = castling_rights_.clearCastlingRight(side_to_move_, file);
+            hash_key_ ^= zobrist::castlingIndex(idx);
         }
     } else if (piece_type == PAWN) {
         const auto ep_sq = Square(to_sq ^ 8);
@@ -299,11 +297,12 @@ inline void Board::updateHash(Move move) {
 
         if (typeOfPiece(capture) == ROOK && ((rank == Rank::RANK_1 && side_to_move_ == BLACK) ||
                                              (rank == Rank::RANK_8 && side_to_move_ == WHITE))) {
-            const auto king_sq = builtin::lsb(pieces(KING, ~side_to_move_));
-            const auto side = to_sq > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
+            const auto king_sq = kingSq(~side_to_move_);
+            const auto file = move.to() > king_sq ? CastleSide::KING_SIDE : CastleSide::QUEEN_SIDE;
 
-            if (castling_rights_.getRookFile(~side_to_move_, side) == squareFile(to_sq)) {
-                castling_rights_.clearCastlingRight(~side_to_move_, side);
+            if (castling_rights_.getRookFile(~side_to_move_, file) == squareFile(move.to())) {
+                const auto idx = castling_rights_.clearCastlingRight(~side_to_move_, file);
+                hash_key_ ^= zobrist::castlingIndex(idx);
             }
         }
     }
@@ -317,7 +316,7 @@ inline void Board::updateHash(Move move) {
     }
 
     hash_key_ ^= zobrist::sideToMove();
-    hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
+    // hash_key_ ^= zobrist::castling(castling_rights_.getHashIndex());
 }
 
 /// @brief
