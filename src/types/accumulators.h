@@ -25,12 +25,12 @@ struct Accumulators {
         index--;
     }
 
-    nnue::accumulator &back() {
+    nnue::accumulator& back() {
         assert(index >= 0 && index < MAX_PLY + 1);
         return accumulators[index];
     }
 
-private:
+   private:
     alignas(32) std::array<nnue::accumulator, MAX_PLY + 1> accumulators = {};
     int index = 0;
 };

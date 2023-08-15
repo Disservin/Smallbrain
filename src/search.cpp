@@ -128,6 +128,8 @@ Score Search::qsearch(Score alpha, Score beta, Stack *ss) {
 
         nodes++;
 
+        TTable.prefetch(board.keyAfter(move));
+
         board.makeMove<true>(move);
 
         Score score = -qsearch<node>(-beta, -alpha, ss + 1);
@@ -459,6 +461,8 @@ moves:
                       << " currmove " << uci::moveToUci(move, board.chess960)
                       << " currmovenumber " << signed(made_moves) << std::endl;
         // clang-format on
+
+        TTable.prefetch(board.keyAfter(move));
 
         /********************
          * Play the move on the internal board.

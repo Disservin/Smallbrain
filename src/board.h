@@ -257,11 +257,11 @@ void Board::makeMove(const Move &move) {
     const Square ksq = side_to_move_ == WHITE ? ksq_white : ksq_black;
     const Square ksq_opp = side_to_move_ == WHITE ? ksq_black : ksq_white;
 
-    U64 k = hash_key_ ^ zobrist::sideToMove();
+    // U64 k = hash_key_ ^ zobrist::sideToMove();
 
-    if (captured) k ^= zobrist::piece(captured, to_sq);
+    // if (captured) k ^= zobrist::piece(captured, to_sq);
 
-    TTable.prefetch(k ^ zobrist::piece(piece, to_sq) ^ zobrist::piece(piece, from_sq));
+    // TTable.prefetch(k ^ zobrist::piece(piece, to_sq) ^ zobrist::piece(piece, from_sq));
 
     // *****************************
     // STORE STATE HISTORY
