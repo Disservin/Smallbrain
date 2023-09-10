@@ -10,7 +10,7 @@ Board::Board(const std::string &fen) {
     en_passant_square_ = NO_SQ;
     castling_rights_.clearAllCastlingRights();
     half_move_clock_ = 0;
-    full_move_number_ = 1;
+    plies_played_ = 0;
 
     board_.fill(NONE);
 
@@ -35,7 +35,7 @@ Board::Board(const Board &other) {
 
     castling_rights_ = other.castling_rights_;
 
-    full_move_number_ = other.full_move_number_;
+    plies_played_ = other.plies_played_;
 
     half_move_clock_ = other.half_move_clock_;
 
@@ -64,7 +64,7 @@ Board &Board::operator=(const Board &other) {
 
     castling_rights_ = other.castling_rights_;
 
-    full_move_number_ = other.full_move_number_;
+    plies_played_ = other.plies_played_;
 
     half_move_clock_ = other.half_move_clock_;
 
@@ -124,12 +124,16 @@ void Board::setFen(const std::string &fen, bool update_acc) {
     const std::string en_passant = params[3];
 
     half_move_clock_ = std::stoi(params.size() > 4 ? params[4] : "0");
-    full_move_number_ = std::stoi(params.size() > 4 ? params[5] : "1") * 2;
+    plies_played_ = std::stoi(params.size() > 5 ? params[5] : "1") * 2 - 2;
 
     board_.fill(NONE);
     pieces_bb_.fill(0ULL);
 
     side_to_move_ = (move_right == "w") ? WHITE : BLACK;
+
+    if (side_to_move_ == BLACK) {
+        plies_played_++;
+    }
 
     occupancy_bb_ = 0ULL;
 
@@ -246,7 +250,7 @@ std::string Board::getFen() const {
     else
         ss << " " << SQUARE_TO_STRING[en_passant_square_] << " ";
 
-    ss << int(half_move_clock_) << " " << int(full_move_number_ / 2);
+    ss << halfmoves() << " " << fullMoveNumber();
 
     // Return the resulting FEN string
     return ss.str();
@@ -331,7 +335,7 @@ void Board::makeNullMove() {
 
     en_passant_square_ = NO_SQ;
 
-    full_move_number_++;
+    plies_played_++;
     side_to_move_ = ~side_to_move_;
 }
 
@@ -347,7 +351,7 @@ void Board::unmakeNullMove() {
 
     castling_rights_ = restore.castling;
     half_move_clock_ = restore.half_moves;
-    full_move_number_--;
+    plies_played_--;
     side_to_move_ = ~side_to_move_;
 }
 
@@ -367,8 +371,8 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     os << "Fen: " << b.getFen() << "\n";
     os << "Side to move: " << static_cast<int>(b.side_to_move_) << "\n";
     os << "Castling: " << b.getCastleString() << "\n";
-    os << "Halfmoves: " << static_cast<int>(b.half_move_clock_) << "\n";
-    os << "Fullmoves: " << static_cast<int>(b.full_move_number_) / 2 << "\n";
+    os << "Halfmoves: " << b.halfmoves() << "\n";
+    os << "Fullmoves: " << b.fullMoveNumber() << "\n";
     os << "EP: " << static_cast<int>(b.en_passant_square_) << "\n";
     os << "Hash: " << b.hash_key_ << "\n";
     os << "Chess960: " << b.chess960;
