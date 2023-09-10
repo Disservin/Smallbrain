@@ -39,7 +39,9 @@ class Board {
 
     [[nodiscard]] uint8_t halfmoves() const { return half_move_clock_; }
 
-    [[nodiscard]] int ply() const { return full_move_number_ * 2; }
+    [[nodiscard]] int fullMoveNumber() const { return 1 + plies_played_ / 2; }
+
+    [[nodiscard]] int ply() const { return plies_played_ + 1; }
 
     [[nodiscard]] Color sideToMove() const { return side_to_move_; }
 
@@ -173,7 +175,7 @@ class Board {
     CastlingRights castling_rights_;
 
     // full moves start at 1
-    uint16_t full_move_number_;
+    uint16_t plies_played_;
 
     // halfmoves start at 0
     uint8_t half_move_clock_;
@@ -354,7 +356,7 @@ void Board::makeMove(const Move move) {
     if constexpr (updateNNUE) accumulators_->push();
 
     half_move_clock_++;
-    full_move_number_++;
+    plies_played_++;
 
     // *****************************
     // UPDATE HASH
@@ -446,7 +448,7 @@ void Board::unmakeMove(Move move) {
 
     state_history_.pop_back();
 
-    full_move_number_--;
+    plies_played_--;
     side_to_move_ = ~side_to_move_;
 
     if (typeOf(move) == CASTLING) {
