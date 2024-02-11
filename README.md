@@ -204,7 +204,7 @@ I'd also like to thank the following people for their help and support:
 
 ### Engines
 
-The following engines have tought me a lot about chess programming and I'd like to thank their authors for their work:
+The following engines have taught me a lot about chess programming and I'd like to thank their authors for their work:
 
 - [Stockfish](https://github.com/official-stockfish/Stockfish)
 - [Koivisto](https://github.com/Luecx/Koivisto)
